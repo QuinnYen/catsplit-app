@@ -4,15 +4,20 @@ import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestor
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
+import Avatar from '../components/Avatar'
 
 const HomePage = () => {
-  const { user } = useApp()
+  const { user, loading: authLoading } = useApp()
   const navigate = useNavigate()
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) return
+    if (authLoading) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
     const q = query(
       collection(db, 'groups'),
       where('members', 'array-contains', user.uid),
@@ -25,9 +30,12 @@ const HomePage = () => {
       }))
       setGroups(data)
       setLoading(false)
+    }, (error) => {
+      console.error('Firestore 讀取失敗:', error)
+      setLoading(false)
     })
     return () => unsubscribe()
-  }, [user])
+  }, [user, authLoading])
 
   // 計算所有群組總支出（從 groups 的 totalAmount 欄位，之後新增支出時會更新）
   const totalAmount = groups.reduce((sum, g) => sum + (g.totalAmount || 0), 0)
@@ -45,10 +53,11 @@ const HomePage = () => {
         {/* 使用者資訊 */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img
+            <Avatar
               src={user?.avatar}
-              alt="avatar"
-              style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', background: '#ffe0c8', border: '2px solid rgba(255,255,255,0.6)' }}
+              name={user?.name}
+              size={38}
+              style={{ background: '#ffe0c8', border: '2px solid rgba(255,255,255,0.6)' }}
             />
             <div>
               <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }}>歡迎回來</div>
@@ -71,7 +80,7 @@ const HomePage = () => {
       </div>
 
       {/* 內容 */}
-      <div style={{ padding: '16px', flex: 1 }}>
+      <div style={{ padding: '16px', flex: 1, paddingBottom: 80 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>我的群組</div>
           <button
@@ -123,11 +132,12 @@ const HomePage = () => {
                       {/* 小頭像 */}
                       <div style={{ display: 'flex' }}>
                         {profiles.map((member, i) => (
-                          <img
+                          <Avatar
                             key={i}
                             src={member.avatar}
-                            alt={member.name}
-                            style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3', border: '1.5px solid #fff', marginLeft: i === 0 ? 0 : -5 }}
+                            name={member.name}
+                            size={18}
+                            style={{ border: '1.5px solid #fff', marginLeft: i === 0 ? 0 : -5 }}
                           />
                         ))}
                       </div>

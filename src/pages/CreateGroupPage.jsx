@@ -4,14 +4,13 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
-
-const EMOJIS = ['🐱', '🐶', '🐻', '🦊', '🐼', '🐨', '🦁', '🐯', '🍕', '🍜', '🍣', '🏕️', '✈️', '🎮', '🎉', '💰']
+import Avatar from '../components/Avatar'
 
 const CreateGroupPage = () => {
   const { user } = useApp()
   const navigate = useNavigate()
   const [name, setName] = useState('')
-  const [emoji, setEmoji] = useState('🐱')
+  const emoji = '🐱'
   const [loading, setLoading] = useState(false)
 
   const handleCreate = async () => {
@@ -41,7 +40,7 @@ const CreateGroupPage = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 32 }}>
+    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -58,27 +57,6 @@ const CreateGroupPage = () => {
       </div>
 
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-        {/* 選 Emoji */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>選擇圖示</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
-            {EMOJIS.map(e => (
-              <button
-                key={e}
-                onClick={() => setEmoji(e)}
-                style={{
-                  fontSize: 22, padding: 6, borderRadius: 10, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                  background: emoji === e ? '#fff3ec' : 'transparent',
-                  outline: emoji === e ? '2px solid #FF8C42' : 'none',
-                  transform: emoji === e ? 'scale(1.15)' : 'scale(1)',
-                }}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* 群組名稱 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
@@ -108,10 +86,10 @@ const CreateGroupPage = () => {
                 {name || '群組名稱'}
               </div>
               <div style={{ fontSize: 12, color: '#b08060', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <img
+                <Avatar
                   src={user?.avatar}
-                  alt={user?.name}
-                  style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }}
+                  name={user?.name}
+                  size={18}
                 />
                 1 位成員
               </div>

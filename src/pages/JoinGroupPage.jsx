@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
+import Avatar from '../components/Avatar'
 
 const JoinGroupPage = () => {
   const { id } = useParams()
@@ -117,10 +118,10 @@ const JoinGroupPage = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {profiles.map((member, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <img
+                <Avatar
                   src={member.avatar}
-                  alt={member.name}
-                  style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }}
+                  name={member.name}
+                  size={36}
                 />
                 <div style={{ fontSize: 14, color: '#3d2b1f', fontWeight: 500 }}>{member.name}</div>
               </div>
@@ -132,10 +133,10 @@ const JoinGroupPage = () => {
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>以此身份加入</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff3ec', borderRadius: 12, padding: '10px 12px' }}>
-            <img
+            <Avatar
               src={user?.avatar}
-              alt={user?.name}
-              style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }}
+              name={user?.name}
+              size={40}
             />
             <div>
               <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{user?.name}</div>

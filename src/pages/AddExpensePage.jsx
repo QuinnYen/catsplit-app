@@ -4,11 +4,14 @@ import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment 
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
+import Avatar from '../components/Avatar'
 
-const EMOJIS = ['💰', '🍕', '🍜', '🍣', '🍺', '☕', '🛒', '🚗', '🏨', '🎮', '🎉', '✈️']
+const DEFAULT_CATEGORIES = ['餐飲', '交通', '住宿', '購物', '娛樂', '日用品', '其他']
 const SPLIT_TYPES = [
-  { key: 'equal', label: '均分' },
-  { key: 'custom', label: '自訂金額' },
+  { key: 'equal',      label: '均分' },
+  { key: 'subset',     label: '部分人' },
+  { key: 'percentage', label: '依比例' },
+  { key: 'custom',     label: '自訂金額' },
 ]
 
 const AddExpensePage = () => {
@@ -17,11 +20,16 @@ const AddExpensePage = () => {
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [title, setTitle] = useState('')
-  const [emoji, setEmoji] = useState('💰')
+  const [category, setCategory] = useState('餐飲')
+  const [customCategory, setCustomCategory] = useState('')
+  const [isEditingCategory, setIsEditingCategory] = useState(false)
   const [amount, setAmount] = useState('')
   const [paidBy, setPaidBy] = useState(user?.uid)
+  const [payerExcluded, setPayerExcluded] = useState(false)
   const [splitType, setSplitType] = useState('equal')
   const [customAmounts, setCustomAmounts] = useState({})
+  const [percentages, setPercentages] = useState({})
+  const [subsetMembers, setSubsetMembers] = useState({})
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -33,12 +41,31 @@ const AddExpensePage = () => {
         const init = {}
         data.members.forEach(uid => { init[uid] = '' })
         setCustomAmounts(init)
+        setPercentages(init)
+        const subsetInit = {}
+        data.members.forEach(uid => { subsetInit[uid] = true })
+        setSubsetMembers(subsetInit)
       }
     }
     fetchGroup()
   }, [id])
 
+  // 計算目前分帳的有效成員（subset 模式下排除未勾選；payerExcluded 排除付款者）
+  const effectiveMembers = (allMembers) => {
+    let uids = allMembers.map(([uid]) => uid)
+    if (splitType === 'subset') {
+      uids = uids.filter(uid => subsetMembers[uid])
+    }
+    if (payerExcluded) {
+      uids = uids.filter(uid => uid !== paidBy)
+    }
+    return uids
+  }
+
   const customTotal = Object.values(customAmounts)
+    .reduce((sum, v) => sum + (parseFloat(v) || 0), 0)
+
+  const percentageTotal = Object.values(percentages)
     .reduce((sum, v) => sum + (parseFloat(v) || 0), 0)
 
   const isValid = () => {
@@ -46,6 +73,15 @@ const AddExpensePage = () => {
     if (!amount || parseFloat(amount) <= 0) return false
     if (splitType === 'custom') {
       if (Math.abs(customTotal - parseFloat(amount)) > 0.01) return false
+    }
+    if (splitType === 'percentage') {
+      if (Math.abs(percentageTotal - 100) > 0.01) return false
+    }
+    if (splitType === 'subset') {
+      const selected = Object.values(subsetMembers).filter(Boolean).length
+      const minCount = payerExcluded ? 1 : 1
+      if (selected < minCount) return false
+      if (payerExcluded && selected === 1 && subsetMembers[paidBy]) return false
     }
     return true
   }
@@ -55,20 +91,29 @@ const AddExpensePage = () => {
     setLoading(true)
     try {
       const totalAmount = parseFloat(amount)
-      const members = group.members
+      const allMemberEntries = Object.entries(group.memberProfiles || {})
+      const eff = effectiveMembers(allMemberEntries)
       let splits = {}
-      if (splitType === 'equal') {
-        const each = totalAmount / members.length
-        members.forEach(uid => { splits[uid] = parseFloat(each.toFixed(2)) })
+
+      if (splitType === 'equal' || splitType === 'subset') {
+        const each = parseFloat((totalAmount / eff.length).toFixed(2))
+        eff.forEach(uid => { splits[uid] = each })
+      } else if (splitType === 'percentage') {
+        eff.forEach(uid => {
+          splits[uid] = parseFloat(((parseFloat(percentages[uid]) || 0) / 100 * totalAmount).toFixed(2))
+        })
       } else {
-        members.forEach(uid => { splits[uid] = parseFloat(customAmounts[uid]) || 0 })
+        allMemberEntries.forEach(([uid]) => {
+          splits[uid] = parseFloat(customAmounts[uid]) || 0
+        })
       }
 
       await addDoc(collection(db, 'groups', id, 'expenses'), {
         title: title.trim(),
-        emoji,
+        category,
         amount: totalAmount,
         paidBy,
+        payerExcluded,
         splitType,
         splits,
         createdBy: user.uid,
@@ -98,7 +143,7 @@ const AddExpensePage = () => {
   const members = Object.entries(group.memberProfiles || {})
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 32 }}>
+    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -116,25 +161,46 @@ const AddExpensePage = () => {
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-        {/* 類別 Emoji */}
+        {/* 類別 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>類別</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
-            {EMOJIS.map(e => (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: isEditingCategory ? 10 : 0 }}>
+            {DEFAULT_CATEGORIES.map(c => (
               <button
-                key={e}
-                onClick={() => setEmoji(e)}
+                key={c}
+                onClick={() => { setCategory(c); setIsEditingCategory(false) }}
                 style={{
-                  fontSize: 22, padding: 6, borderRadius: 10, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                  background: emoji === e ? '#fff3ec' : 'transparent',
-                  outline: emoji === e ? '2px solid #FF8C42' : 'none',
-                  transform: emoji === e ? 'scale(1.15)' : 'scale(1)',
+                  padding: '6px 14px', borderRadius: 20, fontSize: 13, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                  background: category === c && !isEditingCategory ? '#FF8C42' : '#fff3ec',
+                  color: category === c && !isEditingCategory ? '#fff' : '#b08060',
+                  fontWeight: category === c && !isEditingCategory ? 500 : 400,
                 }}
               >
-                {e}
+                {c}
               </button>
             ))}
+            <button
+              onClick={() => setIsEditingCategory(true)}
+              style={{
+                padding: '6px 14px', borderRadius: 20, fontSize: 13, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                background: isEditingCategory ? '#FF8C42' : '#fff3ec',
+                color: isEditingCategory ? '#fff' : '#b08060',
+              }}
+            >
+              自訂
+            </button>
           </div>
+          {isEditingCategory && (
+            <input
+              type="text"
+              value={customCategory}
+              onChange={e => { setCustomCategory(e.target.value); setCategory(e.target.value) }}
+              placeholder="輸入自訂類別..."
+              maxLength={10}
+              autoFocus
+              style={{ width: '100%', border: '0.5px solid #FF8C42', borderRadius: 10, padding: '9px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4', marginTop: 4 }}
+            />
+          )}
         </div>
 
         {/* 名稱 & 金額 */}
@@ -179,12 +245,33 @@ const AddExpensePage = () => {
                   outline: paidBy === uid ? '1.5px solid #FF8C42' : '0.5px solid #f0d5c0',
                 }}
               >
-                <img src={profile.avatar} alt={profile.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }} />
+                <Avatar src={profile.avatar} name={profile.name} size={32} />
                 <span style={{ fontSize: 14, color: '#3d2b1f', fontWeight: paidBy === uid ? 500 : 400, flex: 1, textAlign: 'left' }}>{profile.name}</span>
                 {paidBy === uid && <span style={{ color: '#FF8C42', fontSize: 16 }}>✓</span>}
               </button>
             ))}
           </div>
+
+          {/* 付款人不參與分攤 */}
+          <button
+            onClick={() => setPayerExcluded(v => !v)}
+            style={{
+              marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', width: '100%',
+              background: payerExcluded ? '#fff3ec' : '#fff8f4',
+              outline: payerExcluded ? '1.5px solid #FF8C42' : '0.5px solid #f0d5c0',
+            }}
+          >
+            <div style={{
+              width: 18, height: 18, borderRadius: 4, border: payerExcluded ? 'none' : '1.5px solid #d0b09a',
+              background: payerExcluded ? '#FF8C42' : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              {payerExcluded && <span style={{ color: '#fff', fontSize: 12, lineHeight: 1 }}>✓</span>}
+            </div>
+            <span style={{ fontSize: 13, color: payerExcluded ? '#FF6B1A' : '#b08060', fontWeight: payerExcluded ? 500 : 400 }}>
+              付款人不參與分攤（純代墊）
+            </span>
+          </button>
         </div>
 
         {/* 分帳方式 */}
@@ -192,13 +279,13 @@ const AddExpensePage = () => {
           <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>分帳方式</div>
 
           {/* 切換按鈕 */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 12 }}>
             {SPLIT_TYPES.map(type => (
               <button
                 key={type.key}
                 onClick={() => setSplitType(type.key)}
                 style={{
-                  flex: 1, padding: '8px 0', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer', border: 'none', transition: 'all 0.15s',
+                  padding: '8px 0', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: 'none', transition: 'all 0.15s',
                   background: splitType === type.key ? '#FF8C42' : '#fff3ec',
                   color: splitType === type.key ? '#fff' : '#b08060',
                 }}
@@ -211,37 +298,115 @@ const AddExpensePage = () => {
           {/* 均分預覽 */}
           {splitType === 'equal' && amount && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {members.map(([uid, profile]) => (
-                <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src={profile.avatar} alt={profile.name} style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }} />
-                  <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A' }}>
-                    NT$ {(parseFloat(amount) / members.length).toFixed(0)}
-                  </span>
-                </div>
-              ))}
+              {members
+                .filter(([uid]) => !payerExcluded || uid !== paidBy)
+                .map(([uid, profile]) => (
+                  <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Avatar src={profile.avatar} name={profile.name} size={24} />
+                    <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A' }}>
+                      NT$ {(parseFloat(amount) / (payerExcluded ? members.filter(([uid]) => uid !== paidBy).length : members.length)).toFixed(0)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* 部分人分攤 */}
+          {splitType === 'subset' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>勾選參與此項費用的成員</div>
+              {members.map(([uid, profile]) => {
+                const excluded = payerExcluded && uid === paidBy
+                const checked = !excluded && subsetMembers[uid]
+                return (
+                  <button
+                    key={uid}
+                    onClick={() => !excluded && setSubsetMembers(prev => ({ ...prev, [uid]: !prev[uid] }))}
+                    disabled={excluded}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 12, border: 'none', cursor: excluded ? 'default' : 'pointer', transition: 'all 0.15s',
+                      background: excluded ? '#f5f5f5' : checked ? '#fff3ec' : '#fff8f4',
+                      outline: checked ? '1.5px solid #FF8C42' : '0.5px solid #f0d5c0',
+                      opacity: excluded ? 0.4 : 1,
+                    }}
+                  >
+                    <div style={{
+                      width: 18, height: 18, borderRadius: 4, border: checked ? 'none' : '1.5px solid #d0b09a',
+                      background: checked ? '#FF8C42' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      {checked && <span style={{ color: '#fff', fontSize: 12, lineHeight: 1 }}>✓</span>}
+                    </div>
+                    <Avatar src={profile.avatar} name={profile.name} size={24} />
+                    <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f', textAlign: 'left' }}>{profile.name}</span>
+                    {amount && checked && (() => {
+                      const eff = effectiveMembers(members)
+                      return eff.length > 0 ? (
+                        <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A' }}>
+                          NT$ {(parseFloat(amount) / eff.length).toFixed(0)}
+                        </span>
+                      ) : null
+                    })()}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* 依比例 */}
+          {splitType === 'percentage' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {members
+                .filter(([uid]) => !payerExcluded || uid !== paidBy)
+                .map(([uid, profile]) => (
+                  <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Avatar src={profile.avatar} name={profile.name} size={24} />
+                    <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                    <div style={{ position: 'relative', width: 90 }}>
+                      <input
+                        type="number"
+                        value={percentages[uid]}
+                        onChange={e => setPercentages(prev => ({ ...prev, [uid]: e.target.value }))}
+                        placeholder="0"
+                        style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 24px 7px 8px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                      />
+                      <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 12 }}>%</span>
+                    </div>
+                    {amount && percentages[uid] && (
+                      <span style={{ fontSize: 12, color: '#FF6B1A', width: 60, textAlign: 'right' }}>
+                        NT$ {((parseFloat(percentages[uid]) || 0) / 100 * parseFloat(amount)).toFixed(0)}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(percentageTotal - 100) < 0.01 ? '#4caf50' : '#FF6B1A' }}>
+                已分配 {percentageTotal.toFixed(0)}% / 100%
+              </div>
             </div>
           )}
 
           {/* 自訂金額 */}
           {splitType === 'custom' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {members.map(([uid, profile]) => (
-                <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src={profile.avatar} alt={profile.name} style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }} />
-                  <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
-                  <div style={{ position: 'relative', width: 110 }}>
-                    <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 12 }}>NT$</span>
-                    <input
-                      type="number"
-                      value={customAmounts[uid]}
-                      onChange={e => setCustomAmounts(prev => ({ ...prev, [uid]: e.target.value }))}
-                      placeholder="0"
-                      style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 8px 7px 34px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
-                    />
+              {members
+                .filter(([uid]) => !payerExcluded || uid !== paidBy)
+                .map(([uid, profile]) => (
+                  <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Avatar src={profile.avatar} name={profile.name} size={24} />
+                    <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                    <div style={{ position: 'relative', width: 110 }}>
+                      <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 12 }}>NT$</span>
+                      <input
+                        type="number"
+                        value={customAmounts[uid]}
+                        onChange={e => setCustomAmounts(prev => ({ ...prev, [uid]: e.target.value }))}
+                        placeholder="0"
+                        style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 8px 7px 34px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
               <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(customTotal - (parseFloat(amount) || 0)) < 0.01 ? '#4caf50' : '#FF6B1A' }}>
                 已分配 NT$ {customTotal.toFixed(0)} / {amount || 0}
               </div>

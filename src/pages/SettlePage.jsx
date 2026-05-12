@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import TabBar from '../components/TabBar'
+import Avatar from '../components/Avatar'
 
 const SettlePage = () => {
   const { id } = useParams()
@@ -80,7 +81,7 @@ const SettlePage = () => {
     : 0
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
+    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -131,10 +132,10 @@ const SettlePage = () => {
 
               return (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <img
+                  <Avatar
                     src={profile?.avatar}
-                    alt={profile?.name}
-                    style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3', flexShrink: 0 }}
+                    name={profile?.name}
+                    size={36}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', marginBottom: 2 }}>{profile?.name}</div>
@@ -175,13 +176,13 @@ const SettlePage = () => {
                     style={{ background: '#fff3ec', borderRadius: 12, padding: '12px 14px', border: '0.5px solid #f0d5c0' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                      <img src={from?.avatar} alt={from?.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }} />
+                      <Avatar src={from?.avatar} name={from?.name} size={32} />
                       <div style={{ fontSize: 13, color: '#3d2b1f', flex: 1 }}>
                         <span style={{ fontWeight: 500 }}>{from?.name}</span>
                         <span style={{ color: '#b08060' }}> 轉給 </span>
                         <span style={{ fontWeight: 500 }}>{to?.name}</span>
                       </div>
-                      <img src={to?.avatar} alt={to?.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }} />
+                      <Avatar src={to?.avatar} name={to?.name} size={32} />
                     </div>
                     <button
                       onClick={() => {

@@ -51,8 +51,10 @@ const TabBar = ({ context = 'home', groupId }) => {
       borderTop: '0.5px solid #f0d5c0',
       display: 'flex',
       padding: '8px 0 calc(8px + env(safe-area-inset-bottom, 0px))',
-      position: 'sticky',
+      position: 'fixed',
       bottom: 0,
+      left: 0,
+      right: 0,
       zIndex: 10,
     }}>
       {tabs.map((tab, i) => {
