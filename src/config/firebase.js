@@ -2,12 +2,12 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCPic0scZWwesAR12F3UZjN8HUV0Cj-UTQ",
-  authDomain: "catsplit-app.firebaseapp.com",
-  projectId: "catsplit-app",
-  storageBucket: "catsplit-app.firebasestorage.app",
-  messagingSenderId: "210729139240",
-  appId: "1:210729139240:web:341ebc7942d40ec7c3891d"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);

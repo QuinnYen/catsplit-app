@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
+import TabBar from '../components/TabBar'
 
 const HomePage = () => {
   const { user } = useApp()
@@ -12,13 +13,11 @@ const HomePage = () => {
 
   useEffect(() => {
     if (!user) return
-
     const q = query(
       collection(db, 'groups'),
       where('members', 'array-contains', user.uid),
       orderBy('createdAt', 'desc')
     )
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -26,39 +25,58 @@ const HomePage = () => {
       }))
       setGroups(data)
       setLoading(false)
-    }, (error) => {
-      console.error('載入群組失敗:', error)
-      setLoading(false)
     })
-
     return () => unsubscribe()
   }, [user])
 
+  // 計算所有群組總支出（從 groups 的 totalAmount 欄位，之後新增支出時會更新）
+  const totalAmount = groups.reduce((sum, g) => sum + (g.totalAmount || 0), 0)
+  const totalExpenses = groups.reduce((sum, g) => sum + (g.totalExpenses || 0), 0)
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col" style={{ background: '#fff8f4' }}>
+
       {/* Header */}
-      <div className="bg-white shadow-sm px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img
-            src={user?.avatar}
-            alt="avatar"
-            className="w-9 h-9 rounded-full object-cover shrink-0 bg-gray-100"
-          />
-          <div>
-            <p className="text-xs text-gray-400">歡迎回來</p>
-            <p className="font-semibold text-gray-800">{user?.name}</p>
+      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '20px 16px 28px', position: 'relative', overflow: 'hidden' }}>
+
+        {/* 裝飾爪印 */}
+        <div style={{ position: 'absolute', right: 14, bottom: -8, fontSize: 64, opacity: 0.12, userSelect: 'none' }}>🐾</div>
+
+        {/* 使用者資訊 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src={user?.avatar}
+              alt="avatar"
+              style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', background: '#ffe0c8', border: '2px solid rgba(255,255,255,0.6)' }}
+            />
+            <div>
+              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }}>歡迎回來</div>
+              <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 28 }}>🐾</div>
+        </div>
+
+        {/* 總覽卡片 */}
+        <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)' }}>
+          <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>本月總支出</div>
+          <div style={{ color: '#fff', fontSize: 22, fontWeight: 500 }}>
+            NT$ {totalAmount.toLocaleString()}
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4 }}>
+            {groups.length} 個群組 · {totalExpenses} 筆消費
           </div>
         </div>
-        <span className="text-2xl">🐱</span>
       </div>
 
       {/* 內容 */}
-      <div className="px-4 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-800">我的群組</h2>
+      <div style={{ padding: '16px', flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>我的群組</div>
           <button
             onClick={() => navigate('/create')}
-            className="bg-green-500 text-white text-sm px-4 py-2 rounded-full shadow active:scale-95 transition-transform"
+            style={{ background: '#FF8C42', color: '#fff', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
           >
             ＋ 建立群組
           </button>
@@ -66,40 +84,74 @@ const HomePage = () => {
 
         {/* 載入中 */}
         {loading && (
-          <div className="text-center py-16 text-gray-400">載入中...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>載入中...</div>
         )}
 
         {/* 空狀態 */}
         {!loading && groups.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-5xl mb-4">🐱</div>
-            <p className="text-gray-400 mb-1">還沒有任何群組</p>
-            <p className="text-gray-400 text-sm">點右上角建立第一個吧！</p>
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>🐱</div>
+            <div style={{ color: '#b08060', fontSize: 14, marginBottom: 4 }}>還沒有任何群組</div>
+            <div style={{ color: '#c4a882', fontSize: 13 }}>點右上角建立第一個吧！</div>
           </div>
         )}
 
         {/* 群組列表 */}
         {!loading && groups.length > 0 && (
-          <div className="flex flex-col gap-3">
-            {groups.map(group => (
-              <div
-                key={group.id}
-                onClick={() => navigate(`/group/${group.id}`)}
-                className="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between active:scale-95 transition-transform cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="text-3xl">{group.emoji || '🐱'}</div>
-                  <div>
-                    <p className="font-semibold text-gray-800">{group.name}</p>
-                    <p className="text-xs text-gray-400">{group.members?.length} 位成員</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {groups.map(group => {
+              const profiles = Object.values(group.memberProfiles || {}).slice(0, 3)
+              return (
+                <div
+                  key={group.id}
+                  onClick={() => navigate(`/group/${group.id}`)}
+                  style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'transform 0.1s', userSelect: 'none' }}
+                  onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
+                  onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  {/* Emoji */}
+                  <div style={{ width: 48, height: 48, borderRadius: 14, background: '#fff3ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>
+                    {group.emoji || '🐱'}
                   </div>
+
+                  {/* 群組資訊 */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {group.name}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#b08060' }}>
+                      {/* 小頭像 */}
+                      <div style={{ display: 'flex' }}>
+                        {profiles.map((member, i) => (
+                          <img
+                            key={i}
+                            src={member.avatar}
+                            alt={member.name}
+                            style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3', border: '1.5px solid #fff', marginLeft: i === 0 ? 0 : -5 }}
+                          />
+                        ))}
+                      </div>
+                      {group.members?.length} 位成員
+                    </div>
+                  </div>
+
+                  {/* 金額 */}
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: '#FF6B1A' }}>
+                      NT$ {(group.totalAmount || 0).toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#b08060' }}>總支出</div>
+                  </div>
+
+                  <div style={{ color: '#e0b898', fontSize: 18 }}>›</div>
                 </div>
-                <span className="text-gray-300 text-xl">›</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
+
+      <TabBar context="home" />
     </div>
   )
 }

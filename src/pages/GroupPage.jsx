@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
+import TabBar from '../components/TabBar'
 
 const GroupPage = () => {
   const { id } = useParams()
@@ -12,169 +13,176 @@ const GroupPage = () => {
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // 監聽群組資料
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'groups', id), (snap) => {
-      if (snap.exists()) {
-        setGroup({ id: snap.id, ...snap.data() })
-      }
+      if (snap.exists()) setGroup({ id: snap.id, ...snap.data() })
     })
     return () => unsubscribe()
   }, [id])
 
-  // 監聽支出列表
   useEffect(() => {
     const q = query(
       collection(db, 'groups', id, 'expenses'),
       orderBy('createdAt', 'desc')
     )
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       setExpenses(data)
-      setLoading(false)
-    }, (error) => {
-      console.error('載入支出失敗:', error)
       setLoading(false)
     })
     return () => unsubscribe()
   }, [id])
 
-  // 計算總金額
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
 
-  // 邀請連結
   const handleInvite = () => {
-    const url = `${window.location.origin}/group/${id}`
+    const url = `${window.location.origin}/join/${id}`
     if (navigator.share) {
-      navigator.share({ title: group?.name, url })
+      navigator.share({
+        title: `加入「${group?.name}」分帳群組`,
+        text: `${user?.name} 邀請你加入分帳群組！`,
+        url
+      })
     } else {
       navigator.clipboard.writeText(url)
-      alert('連結已複製！')
+      alert('邀請連結已複製！\n貼到 LINE 傳給朋友吧 😄')
     }
   }
 
   if (!group) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-400">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
         載入中...
       </div>
     )
   }
 
+  const profiles = Object.values(group.memberProfiles || {})
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
+
       {/* Header */}
-      <div className="bg-white shadow-sm px-4 py-4">
-        <div className="flex items-center gap-3 mb-3">
+      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 24px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', right: 10, bottom: -10, fontSize: 64, opacity: 0.12, userSelect: 'none' }}>🐾</div>
+
+        {/* 返回列 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <button
             onClick={() => navigate('/')}
-            className="text-gray-500 text-xl"
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >
             ‹
           </button>
-          <div className="flex items-center gap-2 flex-1">
-            <span className="text-2xl">{group.emoji}</span>
-            <h1 className="font-bold text-gray-800 text-lg">{group.name}</h1>
+          <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>{group.emoji}</span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</span>
           </div>
           <button
             onClick={handleInvite}
-            className="text-sm text-green-500 border border-green-400 px-3 py-1 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 12px', fontSize: 12, cursor: 'pointer' }}
           >
             邀請
           </button>
         </div>
 
-        {/* 成員頭像列 */}
-        <div className="flex items-center gap-1 pl-8">
-          {Object.values(group.memberProfiles || {}).map((member, i) => (
+        {/* 成員頭像 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 14 }}>
+          {profiles.map((member, i) => (
             <img
               key={i}
               src={member.avatar}
               alt={member.name}
               title={member.name}
-              className="w-7 h-7 rounded-full object-cover bg-gray-100 border-2 border-white -ml-1 first:ml-0"
+              style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', background: '#ffe0c8', border: '2px solid rgba(255,255,255,0.6)', marginLeft: i === 0 ? 0 : -6 }}
             />
           ))}
-          <span className="text-xs text-gray-400 ml-2">
+          <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginLeft: 8 }}>
             {group.members?.length} 位成員
           </span>
         </div>
-      </div>
 
-      {/* 總金額卡片 */}
-      <div className="mx-4 mt-4 bg-green-500 rounded-2xl p-4 text-white shadow">
-        <p className="text-sm opacity-80">總支出</p>
-        <p className="text-3xl font-bold mt-1">
-          NT$ {total.toLocaleString()}
-        </p>
-        <p className="text-sm opacity-80 mt-1">
-          共 {expenses.length} 筆消費
-        </p>
+        {/* 總金額卡片 */}
+        <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)' }}>
+          <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>總支出</div>
+          <div style={{ color: '#fff', fontSize: 24, fontWeight: 500 }}>
+            NT$ {total.toLocaleString()}
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4 }}>
+            共 {expenses.length} 筆消費
+          </div>
+        </div>
       </div>
 
       {/* 操作按鈕 */}
-      <div className="mx-4 mt-4 grid grid-cols-2 gap-3">
-        <button
-          onClick={() => navigate(`/group/${id}/add`)}
-          className="bg-white rounded-2xl shadow-sm p-4 text-center active:scale-95 transition-transform"
-        >
-          <div className="text-2xl mb-1">➕</div>
-          <p className="text-sm font-semibold text-gray-700">新增支出</p>
-        </button>
-        <button
-          onClick={() => navigate(`/group/${id}/settle`)}
-          className="bg-white rounded-2xl shadow-sm p-4 text-center active:scale-95 transition-transform"
-        >
-          <div className="text-2xl mb-1">🧮</div>
-          <p className="text-sm font-semibold text-gray-700">結算</p>
-        </button>
+      <div style={{ padding: '16px 16px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+          <button
+            onClick={() => navigate(`/group/${id}/add`)}
+            style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, textAlign: 'center', cursor: 'pointer' }}
+            onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
+            onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <div style={{ fontSize: 24, marginBottom: 4 }}>➕</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f' }}>新增支出</div>
+          </button>
+          <button
+            onClick={() => navigate(`/group/${id}/settle`)}
+            style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, textAlign: 'center', cursor: 'pointer' }}
+            onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
+            onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <div style={{ fontSize: 24, marginBottom: 4 }}>🧮</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f' }}>結算</div>
+          </button>
+        </div>
+
+        {/* 消費明細標題 */}
+        <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>消費明細</div>
       </div>
 
       {/* 支出列表 */}
-      <div className="px-4 py-4">
-        <h2 className="text-sm font-semibold text-gray-500 mb-3">消費明細</h2>
-
+      <div style={{ padding: '0 16px 16px', flex: 1 }}>
         {loading && (
-          <div className="text-center py-8 text-gray-400">載入中...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>載入中...</div>
         )}
 
         {!loading && expenses.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-3">🧾</div>
-            <p className="text-gray-400 text-sm">還沒有任何支出</p>
-            <p className="text-gray-400 text-sm">點上方新增第一筆吧！</p>
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🧾</div>
+            <div style={{ color: '#b08060', fontSize: 14, marginBottom: 4 }}>還沒有任何支出</div>
+            <div style={{ color: '#c4a882', fontSize: 13 }}>點上方新增第一筆吧！</div>
           </div>
         )}
 
         {!loading && expenses.length > 0 && (
-          <div className="flex flex-col gap-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {expenses.map(expense => (
               <div
                 key={expense.id}
-                className="bg-white rounded-2xl shadow-sm p-4"
+                style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">{expense.emoji || '💰'}</div>
-                    <div>
-                      <p className="font-semibold text-gray-800">{expense.title}</p>
-                      <p className="text-xs text-gray-400">
-                        {group.memberProfiles?.[expense.paidBy]?.name || '未知'} 付款
-                      </p>
-                    </div>
+                <div style={{ width: 40, height: 40, background: '#fff3ec', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                  {expense.emoji || '💰'}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {expense.title}
                   </div>
-                  <p className="font-bold text-gray-800">
-                    NT$ {expense.amount.toLocaleString()}
-                  </p>
+                  <div style={{ fontSize: 12, color: '#b08060' }}>
+                    {group.memberProfiles?.[expense.paidBy]?.name || '未知'} 付款
+                  </div>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: '#FF6B1A', flexShrink: 0 }}>
+                  NT$ {expense.amount.toLocaleString()}
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      <TabBar context="group" groupId={id} />
     </div>
   )
 }

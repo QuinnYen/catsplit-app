@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
+import TabBar from '../components/TabBar'
 
 const EMOJIS = ['🐱', '🐶', '🐻', '🦊', '🐼', '🐨', '🦁', '🐯', '🍕', '🍜', '🍣', '🏕️', '✈️', '🎮', '🎉', '💰']
 
@@ -16,7 +17,6 @@ const CreateGroupPage = () => {
   const handleCreate = async () => {
     if (!name.trim()) return
     setLoading(true)
-
     try {
       const docRef = await addDoc(collection(db, 'groups'), {
         name: name.trim(),
@@ -29,9 +29,10 @@ const CreateGroupPage = () => {
             avatar: user.avatar,
           }
         },
+        totalAmount: 0,
+        totalExpenses: 0,
         createdAt: serverTimestamp(),
       })
-
       navigate(`/group/${docRef.id}`)
     } catch (error) {
       console.error('建立失敗', error)
@@ -40,32 +41,38 @@ const CreateGroupPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 32 }}>
+
       {/* Header */}
-      <div className="bg-white shadow-sm px-4 py-4 flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-gray-500 text-xl"
-        >
-          ‹
-        </button>
-        <h1 className="font-bold text-gray-800 text-lg">建立新群組</h1>
+      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', right: 10, bottom: -10, fontSize: 64, opacity: 0.12, userSelect: 'none' }}>🐾</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
+          >
+            ‹
+          </button>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>建立新群組</div>
+        </div>
       </div>
 
-      <div className="px-4 py-6 flex flex-col gap-6">
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
         {/* 選 Emoji */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-500 mb-3">選擇圖示</p>
-          <div className="grid grid-cols-8 gap-2">
+        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>選擇圖示</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
             {EMOJIS.map(e => (
               <button
                 key={e}
                 onClick={() => setEmoji(e)}
-                className={`text-2xl p-1 rounded-xl transition-all ${
-                  emoji === e
-                    ? 'bg-green-100 scale-110'
-                    : 'hover:bg-gray-100'
-                }`}
+                style={{
+                  fontSize: 22, padding: 6, borderRadius: 10, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                  background: emoji === e ? '#fff3ec' : 'transparent',
+                  outline: emoji === e ? '2px solid #FF8C42' : 'none',
+                  transform: emoji === e ? 'scale(1.15)' : 'scale(1)',
+                }}
               >
                 {e}
               </button>
@@ -74,29 +81,40 @@ const CreateGroupPage = () => {
         </div>
 
         {/* 群組名稱 */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-500 mb-3">群組名稱</p>
+        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>群組名稱</div>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="例如：墾丁之旅、每週聚餐..."
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:border-green-400 transition-colors"
             maxLength={20}
+            style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
           />
-          <p className="text-xs text-gray-300 text-right mt-1">{name.length} / 20</p>
+          <div style={{ textAlign: 'right', fontSize: 11, color: '#c4a882', marginTop: 6 }}>
+            {name.length} / 20
+          </div>
         </div>
 
-        {/* 預覽 */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-500 mb-3">預覽</p>
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">{emoji}</div>
+        {/* 預覽卡片 */}
+        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>預覽</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: '#fff3ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>
+              {emoji}
+            </div>
             <div>
-              <p className="font-semibold text-gray-800">
+              <div style={{ fontSize: 14, fontWeight: 500, color: name ? '#3d2b1f' : '#c4a882' }}>
                 {name || '群組名稱'}
-              </p>
-              <p className="text-xs text-gray-400">1 位成員</p>
+              </div>
+              <div style={{ fontSize: 12, color: '#b08060', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <img
+                  src={user?.avatar}
+                  alt={user?.name}
+                  style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }}
+                />
+                1 位成員
+              </div>
             </div>
           </div>
         </div>
@@ -105,15 +123,16 @@ const CreateGroupPage = () => {
         <button
           onClick={handleCreate}
           disabled={!name.trim() || loading}
-          className={`w-full py-4 rounded-2xl font-bold text-white shadow transition-all ${
-            name.trim() && !loading
-              ? 'bg-green-500 active:scale-95'
-              : 'bg-gray-300 cursor-not-allowed'
-          }`}
+          style={{
+            width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500, cursor: name.trim() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
+            background: name.trim() && !loading ? '#FF8C42' : '#e0c4b0',
+            color: '#fff',
+          }}
         >
           {loading ? '建立中...' : '🐱 建立群組'}
         </button>
       </div>
+      <TabBar context="create" />
     </div>
   )
 }

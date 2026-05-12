@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
 import { db } from '../config/firebase'
+import TabBar from '../components/TabBar'
 
 const SettlePage = () => {
   const { id } = useParams()
@@ -13,42 +14,31 @@ const SettlePage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      // 載入群組
       const groupSnap = await getDoc(doc(db, 'groups', id))
       if (!groupSnap.exists()) return
       const groupData = { id: groupSnap.id, ...groupSnap.data() }
       setGroup(groupData)
 
-      // 載入支出
       const expensesSnap = await getDocs(collection(db, 'groups', id, 'expenses'))
       const expensesData = expensesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setExpenses(expensesData)
 
-      // 計算每人淨額
-      // balance > 0 代表別人欠他，< 0 代表他欠別人
       const balance = {}
       groupData.members.forEach(uid => { balance[uid] = 0 })
-
       expensesData.forEach(expense => {
-        // 付款人加上總金額
         balance[expense.paidBy] = (balance[expense.paidBy] || 0) + expense.amount
-
-        // 每人扣掉應付金額
         Object.entries(expense.splits || {}).forEach(([uid, amt]) => {
           balance[uid] = (balance[uid] || 0) - amt
         })
       })
 
-      // 最小化轉帳次數演算法
       const result = []
-      const creditors = [] // 被欠錢的人（balance > 0）
-      const debtors = []   // 欠錢的人（balance < 0）
-
+      const creditors = []
+      const debtors = []
       Object.entries(balance).forEach(([uid, amt]) => {
         if (amt > 0.01) creditors.push({ uid, amt })
         else if (amt < -0.01) debtors.push({ uid, amt: -amt })
       })
-
       creditors.sort((a, b) => b.amt - a.amt)
       debtors.sort((a, b) => b.amt - a.amt)
 
@@ -57,7 +47,6 @@ const SettlePage = () => {
         const creditor = creditors[i]
         const debtor = debtors[j]
         const amount = Math.min(creditor.amt, debtor.amt)
-
         if (amount > 0.01) {
           result.push({
             from: debtor.uid,
@@ -65,10 +54,8 @@ const SettlePage = () => {
             amount: parseFloat(amount.toFixed(0)),
           })
         }
-
         creditor.amt -= amount
         debtor.amt -= amount
-
         if (creditor.amt < 0.01) i++
         if (debtor.amt < 0.01) j++
       }
@@ -76,13 +63,12 @@ const SettlePage = () => {
       setSettlements(result)
       setLoading(false)
     }
-
     fetchData()
   }, [id])
 
   if (loading || !group) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-400">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
         計算中...
       </div>
     )
@@ -94,73 +80,74 @@ const SettlePage = () => {
     : 0
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
+
       {/* Header */}
-      <div className="bg-white shadow-sm px-4 py-4 flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-gray-500 text-xl"
-        >
-          ‹
-        </button>
-        <h1 className="font-bold text-gray-800 text-lg">結算</h1>
+      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', right: 10, bottom: -10, fontSize: 64, opacity: 0.12, userSelect: 'none' }}>🐾</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
+          >
+            ‹
+          </button>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>結算</div>
+        </div>
       </div>
 
-      <div className="px-4 py-6 flex flex-col gap-4">
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 總覽卡片 */}
-        <div className="bg-green-500 rounded-2xl p-5 text-white shadow">
-          <p className="text-sm opacity-80 mb-1">{group.emoji} {group.name}</p>
-          <p className="text-3xl font-bold">NT$ {total.toLocaleString()}</p>
-          <div className="flex gap-4 mt-3 text-sm opacity-80">
-            <span>共 {expenses.length} 筆</span>
-            <span>•</span>
-            <span>{group.members.length} 人均攤約 NT$ {parseInt(perPerson).toLocaleString()}</span>
+        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div style={{ fontSize: 28 }}>{group.emoji}</div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>{group.name}</div>
+              <div style={{ fontSize: 12, color: '#b08060' }}>{group.members.length} 位成員 · {expenses.length} 筆消費</div>
+            </div>
+          </div>
+          <div style={{ background: '#fff3ec', borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>總支出</div>
+              <div style={{ fontSize: 22, fontWeight: 500, color: '#FF6B1A' }}>NT$ {total.toLocaleString()}</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>每人均攤</div>
+              <div style={{ fontSize: 22, fontWeight: 500, color: '#FF6B1A' }}>NT$ {parseInt(perPerson).toLocaleString()}</div>
+            </div>
           </div>
         </div>
 
-        {/* 每人支出明細 */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-500 mb-3">每人支出明細</p>
-          <div className="flex flex-col gap-3">
+        {/* 每人明細 */}
+        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>每人支出明細</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {group.members.map(uid => {
               const profile = group.memberProfiles?.[uid]
-              // 計算此人實際付出
-              const paid = expenses
-                .filter(e => e.paidBy === uid)
-                .reduce((sum, e) => sum + e.amount, 0)
-              // 計算此人應付
-              const shouldPay = expenses
-                .reduce((sum, e) => sum + (e.splits?.[uid] || 0), 0)
+              const paid = expenses.filter(e => e.paidBy === uid).reduce((sum, e) => sum + e.amount, 0)
+              const shouldPay = expenses.reduce((sum, e) => sum + (e.splits?.[uid] || 0), 0)
               const diff = paid - shouldPay
 
               return (
-                <div key={uid} className="flex items-center gap-3">
+                <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <img
                     src={profile?.avatar}
                     alt={profile?.name}
-                    className="w-9 h-9 rounded-full object-cover bg-gray-100"
+                    style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3', flexShrink: 0 }}
                   />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-700">{profile?.name}</p>
-                    <p className="text-xs text-gray-400">
-                      付了 NT$ {paid.toLocaleString()}，應付 NT$ {shouldPay.toLocaleString()}
-                    </p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', marginBottom: 2 }}>{profile?.name}</div>
+                    <div style={{ fontSize: 11, color: '#b08060' }}>
+                      付了 NT$ {paid.toLocaleString()} · 應付 NT$ {shouldPay.toLocaleString()}
+                    </div>
                   </div>
-                  <span className={`text-sm font-bold ${
-                    diff > 0.01
-                      ? 'text-green-500'
-                      : diff < -0.01
-                        ? 'text-red-400'
-                        : 'text-gray-400'
-                  }`}>
-                    {diff > 0.01
-                      ? `+${diff.toLocaleString()}`
-                      : diff < -0.01
-                        ? `${diff.toLocaleString()}`
-                        : '✓ 結清'
-                    }
-                  </span>
+                  <div style={{
+                    fontSize: 13, fontWeight: 500, flexShrink: 0,
+                    color: diff > 0.01 ? '#4caf50' : diff < -0.01 ? '#FF6B1A' : '#b08060'
+                  }}>
+                    {diff > 0.01 ? `+${diff.toLocaleString()}` : diff < -0.01 ? `${diff.toLocaleString()}` : '✓ 結清'}
+                  </div>
                 </div>
               )
             })}
@@ -168,37 +155,33 @@ const SettlePage = () => {
         </div>
 
         {/* 轉帳建議 */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-500 mb-3">轉帳建議</p>
+        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>轉帳建議</div>
 
           {settlements.length === 0 ? (
-            <div className="text-center py-6">
-              <div className="text-4xl mb-2">🎉</div>
-              <p className="text-gray-500 font-semibold">大家都結清了！</p>
-              <p className="text-gray-400 text-sm mt-1">不需要任何轉帳</p>
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              <div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', marginBottom: 4 }}>大家都結清了！</div>
+              <div style={{ fontSize: 13, color: '#b08060' }}>不需要任何轉帳</div>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {settlements.map((s, i) => {
                 const from = group.memberProfiles?.[s.from]
                 const to = group.memberProfiles?.[s.to]
                 return (
                   <div
                     key={i}
-                    className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-100"
+                    style={{ background: '#fff3ec', borderRadius: 12, padding: '12px 14px', border: '0.5px solid #f0d5c0' }}
                   >
-                    <img
-                      src={from?.avatar}
-                      alt={from?.name}
-                      className="w-8 h-8 rounded-full object-cover bg-gray-100"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-700">
-                        <span className="font-bold">{from?.name}</span>
-                        <span className="text-gray-400"> 轉給 </span>
-                        <span className="font-bold">{to?.name}</span>
-                      </p>
-                      <p className="text-xs text-gray-400">點選複製提醒訊息</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <img src={from?.avatar} alt={from?.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }} />
+                      <div style={{ fontSize: 13, color: '#3d2b1f', flex: 1 }}>
+                        <span style={{ fontWeight: 500 }}>{from?.name}</span>
+                        <span style={{ color: '#b08060' }}> 轉給 </span>
+                        <span style={{ fontWeight: 500 }}>{to?.name}</span>
+                      </div>
+                      <img src={to?.avatar} alt={to?.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#ffd4b3' }} />
                     </div>
                     <button
                       onClick={() => {
@@ -206,9 +189,9 @@ const SettlePage = () => {
                         navigator.clipboard.writeText(msg)
                         alert('已複製！可以貼到 LINE 提醒對方 😄')
                       }}
-                      className="text-lg font-bold text-orange-500 bg-white border border-orange-200 rounded-xl px-3 py-2"
+                      style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
                     >
-                      NT$ {s.amount.toLocaleString()}
+                      NT$ {s.amount.toLocaleString()} · 點我複製提醒訊息
                     </button>
                   </div>
                 )
@@ -220,11 +203,12 @@ const SettlePage = () => {
         {/* 回群組按鈕 */}
         <button
           onClick={() => navigate(`/group/${id}`)}
-          className="w-full py-4 rounded-2xl font-bold text-white bg-green-500 shadow active:scale-95 transition-all"
+          style={{ width: '100%', padding: '15px 0', borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', color: '#FF8C42', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}
         >
           回到群組
         </button>
       </div>
+      <TabBar context="settle" groupId={id} />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import CreateGroupPage from './pages/CreateGroupPage'
 import GroupPage from './pages/GroupPage'
 import AddExpensePage from './pages/AddExpensePage'
 import SettlePage from './pages/SettlePage'
+import JoinGroupPage from './pages/JoinGroupPage'
 
 const App = () => {
   const { user, loading } = useApp()
@@ -40,6 +41,7 @@ const App = () => {
         <Route path="/group/:id" element={<GroupPage />} />
         <Route path="/group/:id/add" element={<AddExpensePage />} />
         <Route path="/group/:id/settle" element={<SettlePage />} />
+        <Route path="/join/:id" element={<JoinGroupPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
