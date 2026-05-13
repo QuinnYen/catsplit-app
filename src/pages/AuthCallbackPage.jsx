@@ -30,7 +30,7 @@ const AuthCallbackPage = () => {
       .then(() => navigate('/', { replace: true }))
       .catch((e) => {
         console.error(e)
-        setError('登入處理失敗，請再試一次')
+        setError(`登入處理失敗：${e.message}`)
       })
   }, [params, completeOAuthCallback, navigate])
 

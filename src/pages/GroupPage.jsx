@@ -6,6 +6,7 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
+import { getCurrency } from '../config/currencies'
 
 const DEFAULT_CATEGORIES = ['餐飲', '交通', '住宿', '購物', '娛樂', '日用品', '其他']
 
@@ -180,7 +181,7 @@ const GroupPage = () => {
         <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)' }}>
           <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>總支出</div>
           <div style={{ color: '#fff', fontSize: 24, fontWeight: 500 }}>
-            NT$ {total.toLocaleString()}
+            {getCurrency(group.baseCurrency).symbol} {total.toLocaleString()}
           </div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4 }}>
             共 {expenses.length} 筆消費
@@ -246,8 +247,15 @@ const GroupPage = () => {
                     {group.memberProfiles?.[expense.paidBy]?.name || '未知'} 付款
                   </div>
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 500, color: '#FF6B1A', flexShrink: 0 }}>
-                  NT$ {expense.amount.toLocaleString()}
+                <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                  <div style={{ fontSize: 15, fontWeight: 500, color: '#FF6B1A' }}>
+                    {getCurrency(expense.currency || group.baseCurrency).symbol} {(expense.originalAmount ?? expense.amount).toLocaleString()}
+                  </div>
+                  {expense.currency && expense.currency !== (group.baseCurrency || 'TWD') && (
+                    <div style={{ fontSize: 11, color: '#c4a882', marginTop: 1 }}>
+                      ≈ {getCurrency(group.baseCurrency).symbol} {expense.amount.toLocaleString()}
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => openEditExpense(expense)}
@@ -335,7 +343,9 @@ const GroupPage = () => {
             <div>
               <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>金額</div>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>NT$</span>
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>
+                  {getCurrency(editingExpense.currency || group.baseCurrency).symbol}
+                </span>
                 <input
                   type="number"
                   value={editAmount}
@@ -343,6 +353,11 @@ const GroupPage = () => {
                   style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px 10px 44px', fontSize: 18, fontWeight: 500, color: '#FF6B1A', outline: 'none', background: '#fff8f4' }}
                 />
               </div>
+              {editingExpense.currency && editingExpense.currency !== (group.baseCurrency || 'TWD') && editAmount && (
+                <div style={{ textAlign: 'right', fontSize: 11, color: '#c4a882', marginTop: 4 }}>
+                  ≈ {getCurrency(group.baseCurrency).symbol} {(parseFloat(editAmount) * (editingExpense.exchangeRate ?? 1)).toFixed(0)} {group.baseCurrency}
+                </div>
+              )}
             </div>
 
             {/* 按鈕 */}

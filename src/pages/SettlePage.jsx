@@ -4,6 +4,7 @@ import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
+import { CURRENCIES, getCurrency, fetchExchangeRate } from '../config/currencies'
 
 const SettlePage = () => {
   const { id } = useParams()
@@ -12,6 +13,9 @@ const SettlePage = () => {
   const [expenses, setExpenses] = useState([])
   const [settlements, setSettlements] = useState([])
   const [loading, setLoading] = useState(true)
+  const [displayCurrency, setDisplayCurrency] = useState(null) // null = 尚未初始化
+  const [displayRate, setDisplayRate] = useState(1)
+  const [rateLoading, setRateLoading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,10 +66,22 @@ const SettlePage = () => {
       }
 
       setSettlements(result)
+      setDisplayCurrency(groupData.baseCurrency || 'TWD')
       setLoading(false)
     }
     fetchData()
   }, [id])
+
+  useEffect(() => {
+    if (!displayCurrency || !group) return
+    const base = group.baseCurrency || 'TWD'
+    if (displayCurrency === base) { setDisplayRate(1); return }
+    setRateLoading(true)
+    fetchExchangeRate(base, displayCurrency)
+      .then(rate => setDisplayRate(rate))
+      .catch(() => setDisplayRate(1))
+      .finally(() => setRateLoading(false))
+  }, [displayCurrency, group?.baseCurrency])
 
   if (loading || !group) {
     return (
@@ -75,10 +91,12 @@ const SettlePage = () => {
     )
   }
 
+  const baseCurrency = group.baseCurrency || 'TWD'
+  const dispCurr = getCurrency(displayCurrency || baseCurrency)
+  const fmt = (amount) => `${dispCurr.symbol} ${Math.round(amount * displayRate).toLocaleString()}`
+
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
-  const perPerson = group.members.length > 0
-    ? (total / group.members.length).toFixed(0)
-    : 0
+  const perPerson = group.members.length > 0 ? total / group.members.length : 0
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
@@ -108,14 +126,42 @@ const SettlePage = () => {
               <div style={{ fontSize: 12, color: '#b08060' }}>{group.members.length} 位成員 · {expenses.length} 筆消費</div>
             </div>
           </div>
+          {/* 貨幣切換 */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
+            {CURRENCIES.map(c => (
+              <button
+                key={c.code}
+                onClick={() => setDisplayCurrency(c.code)}
+                style={{
+                  padding: '5px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                  background: displayCurrency === c.code ? '#FF8C42' : '#fff3ec',
+                  color: displayCurrency === c.code ? '#fff' : '#b08060',
+                  fontWeight: displayCurrency === c.code ? 500 : 400,
+                }}
+              >
+                {c.symbol} {c.code}
+              </button>
+            ))}
+          </div>
+
+          {displayCurrency !== baseCurrency && (
+            <div style={{ fontSize: 11, color: '#c4a882', marginBottom: 10 }}>
+              ⚠️ 以即時匯率換算僅供參考，實際金額以 {getCurrency(baseCurrency).symbol} {baseCurrency} 為準
+            </div>
+          )}
+
           <div style={{ background: '#fff3ec', borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>總支出</div>
-              <div style={{ fontSize: 22, fontWeight: 500, color: '#FF6B1A' }}>NT$ {total.toLocaleString()}</div>
+              <div style={{ fontSize: 22, fontWeight: 500, color: '#FF6B1A' }}>
+                {rateLoading ? '...' : fmt(total)}
+              </div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>每人均攤</div>
-              <div style={{ fontSize: 22, fontWeight: 500, color: '#FF6B1A' }}>NT$ {parseInt(perPerson).toLocaleString()}</div>
+              <div style={{ fontSize: 22, fontWeight: 500, color: '#FF6B1A' }}>
+                {rateLoading ? '...' : fmt(perPerson)}
+              </div>
             </div>
           </div>
         </div>
@@ -140,14 +186,14 @@ const SettlePage = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', marginBottom: 2 }}>{profile?.name}</div>
                     <div style={{ fontSize: 11, color: '#b08060' }}>
-                      付了 NT$ {paid.toLocaleString()} · 應付 NT$ {shouldPay.toLocaleString()}
+                      付了 {fmt(paid)} · 應付 {fmt(shouldPay)}
                     </div>
                   </div>
                   <div style={{
                     fontSize: 13, fontWeight: 500, flexShrink: 0,
                     color: diff > 0.01 ? '#4caf50' : diff < -0.01 ? '#FF6B1A' : '#b08060'
                   }}>
-                    {diff > 0.01 ? `+${diff.toLocaleString()}` : diff < -0.01 ? `${diff.toLocaleString()}` : '✓ 結清'}
+                    {diff > 0.01 ? `+${fmt(diff)}` : diff < -0.01 ? fmt(diff) : '✓ 結清'}
                   </div>
                 </div>
               )
@@ -186,13 +232,14 @@ const SettlePage = () => {
                     </div>
                     <button
                       onClick={() => {
-                        const msg = `💰 分帳提醒\n${from?.name} 需轉帳 NT$${s.amount} 給 ${to?.name}`
+                        const displayAmt = fmt(s.amount)
+                        const msg = `💰 分帳提醒\n${from?.name} 需轉帳 ${displayAmt} 給 ${to?.name}`
                         navigator.clipboard.writeText(msg)
                         alert('已複製！可以貼到 LINE 提醒對方 😄')
                       }}
                       style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
                     >
-                      NT$ {s.amount.toLocaleString()} · 點我複製提醒訊息
+                      {rateLoading ? '...' : fmt(s.amount)} · 點我複製提醒訊息
                     </button>
                   </div>
                 )

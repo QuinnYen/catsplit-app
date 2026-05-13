@@ -5,11 +5,13 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
+import { CURRENCIES, getCurrency, fetchExchangeRate } from '../config/currencies'
 
 const DEFAULT_CATEGORIES = ['餐飲', '交通', '住宿', '購物', '娛樂', '日用品', '其他']
 const SPLIT_TYPES = [
   { key: 'equal',      label: '均分' },
   { key: 'subset',     label: '部分人' },
+  { key: 'shares',     label: '依份數' },
   { key: 'percentage', label: '依比例' },
   { key: 'custom',     label: '自訂金額' },
 ]
@@ -29,8 +31,13 @@ const AddExpensePage = () => {
   const [splitType, setSplitType] = useState('equal')
   const [customAmounts, setCustomAmounts] = useState({})
   const [percentages, setPercentages] = useState({})
+  const [shares, setShares] = useState({})
   const [subsetMembers, setSubsetMembers] = useState({})
   const [loading, setLoading] = useState(false)
+  const [currency, setCurrency] = useState('TWD')
+  const [exchangeRate, setExchangeRate] = useState(1)
+  const [rateLoading, setRateLoading] = useState(false)
+  const [baseCurrency, setBaseCurrency] = useState('TWD')
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -38,10 +45,16 @@ const AddExpensePage = () => {
       if (snap.exists()) {
         const data = { id: snap.id, ...snap.data() }
         setGroup(data)
+        const base = data.baseCurrency || 'TWD'
+        setBaseCurrency(base)
+        setCurrency(base)
         const init = {}
         data.members.forEach(uid => { init[uid] = '' })
         setCustomAmounts(init)
         setPercentages(init)
+        const sharesInit = {}
+        data.members.forEach(uid => { sharesInit[uid] = '1' })
+        setShares(sharesInit)
         const subsetInit = {}
         data.members.forEach(uid => { subsetInit[uid] = true })
         setSubsetMembers(subsetInit)
@@ -49,6 +62,19 @@ const AddExpensePage = () => {
     }
     fetchGroup()
   }, [id])
+
+  useEffect(() => {
+    if (!baseCurrency) return
+    if (currency === baseCurrency) {
+      setExchangeRate(1)
+      return
+    }
+    setRateLoading(true)
+    fetchExchangeRate(currency, baseCurrency)
+      .then(rate => setExchangeRate(rate))
+      .catch(() => setExchangeRate(null))
+      .finally(() => setRateLoading(false))
+  }, [currency, baseCurrency])
 
   // 計算目前分帳的有效成員（subset 模式下排除未勾選；payerExcluded 排除付款者）
   const effectiveMembers = (allMembers) => {
@@ -68,6 +94,9 @@ const AddExpensePage = () => {
   const percentageTotal = Object.values(percentages)
     .reduce((sum, v) => sum + (parseFloat(v) || 0), 0)
 
+  const sharesTotal = Object.values(shares)
+    .reduce((sum, v) => sum + (parseFloat(v) || 0), 0)
+
   const isValid = () => {
     if (!title.trim()) return false
     if (!amount || parseFloat(amount) <= 0) return false
@@ -82,6 +111,9 @@ const AddExpensePage = () => {
       const minCount = payerExcluded ? 1 : 1
       if (selected < minCount) return false
       if (payerExcluded && selected === 1 && subsetMembers[paidBy]) return false
+    }
+    if (splitType === 'shares') {
+      if (sharesTotal <= 0) return false
     }
     return true
   }
@@ -98,6 +130,11 @@ const AddExpensePage = () => {
       if (splitType === 'equal' || splitType === 'subset') {
         const each = parseFloat((totalAmount / eff.length).toFixed(2))
         eff.forEach(uid => { splits[uid] = each })
+      } else if (splitType === 'shares') {
+        eff.forEach(uid => {
+          const s = parseFloat(shares[uid]) || 0
+          splits[uid] = parseFloat((s / sharesTotal * totalAmount).toFixed(2))
+        })
       } else if (splitType === 'percentage') {
         eff.forEach(uid => {
           splits[uid] = parseFloat(((parseFloat(percentages[uid]) || 0) / 100 * totalAmount).toFixed(2))
@@ -108,20 +145,28 @@ const AddExpensePage = () => {
         })
       }
 
+      const rate = exchangeRate ?? 1
+      const baseAmount = parseFloat((totalAmount * rate).toFixed(2))
+
       await addDoc(collection(db, 'groups', id, 'expenses'), {
         title: title.trim(),
         category,
-        amount: totalAmount,
+        currency,
+        originalAmount: totalAmount,
+        exchangeRate: rate,
+        amount: baseAmount,
         paidBy,
         payerExcluded,
         splitType,
-        splits,
+        splits: Object.fromEntries(
+          Object.entries(splits).map(([uid, v]) => [uid, parseFloat((v * rate).toFixed(2))])
+        ),
         createdBy: user.uid,
         createdAt: serverTimestamp(),
       })
 
       await updateDoc(doc(db, 'groups', id), {
-        totalAmount: increment(totalAmount),
+        totalAmount: increment(baseAmount),
         totalExpenses: increment(1),
       })
 
@@ -217,9 +262,46 @@ const AddExpensePage = () => {
             />
           </div>
           <div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>貨幣</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {CURRENCIES.map(c => (
+                <button
+                  key={c.code}
+                  onClick={() => setCurrency(c.code)}
+                  style={{
+                    padding: '6px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                    background: currency === c.code ? '#FF8C42' : '#fff3ec',
+                    color: currency === c.code ? '#fff' : '#b08060',
+                    fontWeight: currency === c.code ? 500 : 400,
+                  }}
+                >
+                  {c.symbol} {c.code}
+                </button>
+              ))}
+            </div>
+            {currency !== baseCurrency && (
+              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 11, color: '#b08060' }}>匯率 1 {currency} =</span>
+                {rateLoading ? (
+                  <span style={{ fontSize: 11, color: '#c4a882' }}>抓取中...</span>
+                ) : (
+                  <input
+                    type="number"
+                    value={exchangeRate ?? ''}
+                    onChange={e => setExchangeRate(parseFloat(e.target.value) || null)}
+                    style={{ width: 90, border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '4px 8px', fontSize: 12, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                  />
+                )}
+                <span style={{ fontSize: 11, color: '#b08060' }}>{baseCurrency}</span>
+              </div>
+            )}
+          </div>
+          <div>
             <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>金額</div>
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>NT$</span>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>
+                {getCurrency(currency).symbol}
+              </span>
               <input
                 type="number"
                 value={amount}
@@ -228,6 +310,11 @@ const AddExpensePage = () => {
                 style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px 10px 44px', fontSize: 20, fontWeight: 500, color: '#FF6B1A', outline: 'none', background: '#fff8f4' }}
               />
             </div>
+            {currency !== baseCurrency && amount && exchangeRate && (
+              <div style={{ textAlign: 'right', fontSize: 12, color: '#b08060', marginTop: 6 }}>
+                ≈ {getCurrency(baseCurrency).symbol} {(parseFloat(amount) * exchangeRate).toFixed(0)} {baseCurrency}
+              </div>
+            )}
           </div>
         </div>
 
@@ -351,6 +438,42 @@ const AddExpensePage = () => {
                   </button>
                 )
               })}
+            </div>
+          )}
+
+          {/* 依份數 */}
+          {splitType === 'shares' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>輸入每人份數（例：吃兩份填 2）</div>
+              {members
+                .filter(([uid]) => !payerExcluded || uid !== paidBy)
+                .map(([uid, profile]) => {
+                  const s = parseFloat(shares[uid]) || 0
+                  const amountNum = parseFloat(amount) || 0
+                  return (
+                    <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Avatar src={profile.avatar} name={profile.name} size={24} />
+                      <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                      <div style={{ position: 'relative', width: 70 }}>
+                        <input
+                          type="number"
+                          min="0"
+                          value={shares[uid]}
+                          onChange={e => setShares(prev => ({ ...prev, [uid]: e.target.value }))}
+                          placeholder="0"
+                          style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 8px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4', textAlign: 'center' }}
+                        />
+                      </div>
+                      <span style={{ fontSize: 11, color: '#b08060', width: 16 }}>份</span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A', width: 64, textAlign: 'right', visibility: amount ? 'visible' : 'hidden' }}>
+                        {getCurrency(currency).symbol} {sharesTotal > 0 ? (s / sharesTotal * amountNum).toFixed(0) : '0'}
+                      </span>
+                    </div>
+                  )
+                })}
+              <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: '#b08060' }}>
+                共 {sharesTotal} 份
+              </div>
             </div>
           )}
 

@@ -5,9 +5,10 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
+import { getCurrency } from '../config/currencies'
 
 const HomePage = () => {
-  const { user, loading: authLoading } = useApp()
+  const { user, loading: authLoading, logout } = useApp()
   const navigate = useNavigate()
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +39,6 @@ const HomePage = () => {
   }, [user, authLoading])
 
   // 計算所有群組總支出（從 groups 的 totalAmount 欄位，之後新增支出時會更新）
-  const totalAmount = groups.reduce((sum, g) => sum + (g.totalAmount || 0), 0)
   const totalExpenses = groups.reduce((sum, g) => sum + (g.totalExpenses || 0), 0)
 
   return (
@@ -64,14 +64,19 @@ const HomePage = () => {
               <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
             </div>
           </div>
-          <div style={{ fontSize: 28 }}>🐾</div>
+          <button
+            onClick={() => { if (confirm('確定要登出嗎？')) logout() }}
+            style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 20, padding: '5px 12px', fontSize: 12, color: '#fff', cursor: 'pointer' }}
+          >
+            登出
+          </button>
         </div>
 
         {/* 總覽卡片 */}
         <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)' }}>
           <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>本月總支出</div>
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 500 }}>
-            NT$ {totalAmount.toLocaleString()}
+            {totalExpenses} 筆消費
           </div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4 }}>
             {groups.length} 個群組 · {totalExpenses} 筆消費
@@ -148,7 +153,7 @@ const HomePage = () => {
                   {/* 金額 */}
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#FF6B1A' }}>
-                      NT$ {(group.totalAmount || 0).toLocaleString()}
+                      {getCurrency(group.baseCurrency).symbol} {(group.totalAmount || 0).toLocaleString()}
                     </div>
                     <div style={{ fontSize: 11, color: '#b08060' }}>總支出</div>
                   </div>

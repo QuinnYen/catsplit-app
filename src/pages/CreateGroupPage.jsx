@@ -5,11 +5,13 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
+import { CURRENCIES } from '../config/currencies'
 
 const CreateGroupPage = () => {
   const { user } = useApp()
   const navigate = useNavigate()
   const [name, setName] = useState('')
+  const [baseCurrency, setBaseCurrency] = useState('TWD')
   const emoji = '🐱'
   const [loading, setLoading] = useState(false)
 
@@ -30,7 +32,8 @@ const CreateGroupPage = () => {
         },
         totalAmount: 0,
         totalExpenses: 0,
-        createdAt: serverTimestamp(),
+        baseCurrency,
+      createdAt: serverTimestamp(),
       })
       navigate(`/group/${docRef.id}`)
     } catch (error) {
@@ -74,6 +77,30 @@ const CreateGroupPage = () => {
           </div>
         </div>
 
+        {/* 基準貨幣 */}
+        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>結算基準貨幣</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {CURRENCIES.map(c => (
+              <button
+                key={c.code}
+                onClick={() => setBaseCurrency(c.code)}
+                style={{
+                  padding: '7px 14px', borderRadius: 20, fontSize: 13, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                  background: baseCurrency === c.code ? '#FF8C42' : '#fff3ec',
+                  color: baseCurrency === c.code ? '#fff' : '#b08060',
+                  fontWeight: baseCurrency === c.code ? 500 : 400,
+                }}
+              >
+                {c.symbol} {c.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: '#c4a882', marginTop: 8 }}>
+            所有支出都會換算成此貨幣進行結算
+          </div>
+        </div>
+
         {/* 預覽卡片 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>預覽</div>
@@ -86,12 +113,8 @@ const CreateGroupPage = () => {
                 {name || '群組名稱'}
               </div>
               <div style={{ fontSize: 12, color: '#b08060', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Avatar
-                  src={user?.avatar}
-                  name={user?.name}
-                  size={18}
-                />
-                1 位成員
+                <Avatar src={user?.avatar} name={user?.name} size={18} />
+                1 位成員・{CURRENCIES.find(c => c.code === baseCurrency)?.symbol} {baseCurrency}
               </div>
             </div>
           </div>

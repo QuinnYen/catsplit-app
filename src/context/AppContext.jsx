@@ -6,19 +6,26 @@ const AppContext = createContext(null)
 const LINE_CHANNEL_ID = '2010062826'
 const STORAGE_KEY = 'catsplit_user'
 const OAUTH_STATE_KEY = 'catsplit_oauth_state'
+// localStorage 跨 redirect 保留，sessionStorage 在 LINE OAuth 跳轉後可能遺失
+const stateStore = {
+  set: (v) => localStorage.setItem(OAUTH_STATE_KEY, v),
+  get: () => localStorage.getItem(OAUTH_STATE_KEY),
+  remove: () => localStorage.removeItem(OAUTH_STATE_KEY),
+}
 const TOKEN_EXCHANGE_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL
 
 const buildRedirectUri = () => `${window.location.origin}/auth/callback`
 
 const buildAuthorizeUrl = (state) => {
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: LINE_CHANNEL_ID,
-    redirect_uri: buildRedirectUri(),
-    state,
-    scope: 'profile openid',
-  })
-  return `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`
+  const base = 'https://access.line.me/oauth2/v2.1/authorize'
+  const params = [
+    `response_type=code`,
+    `client_id=${LINE_CHANNEL_ID}`,
+    `redirect_uri=${encodeURIComponent(buildRedirectUri())}`,
+    `state=${state}`,
+    `scope=profile%20openid`,
+  ].join('&')
+  return `${base}?${params}`
 }
 
 const generateState = () => {
@@ -27,12 +34,16 @@ const generateState = () => {
   return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('')
 }
 
+const isInLineApp = () => /Line/i.test(navigator.userAgent)
+
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [liffInstance, setLiffInstance] = useState(null)
 
   useEffect(() => {
     const init = async () => {
+      let keepLoading = false
       try {
         // 本機開發模式
         if (import.meta.env.DEV) {
@@ -45,8 +56,9 @@ export const AppProvider = ({ children }) => {
         }
 
         // 在 /auth/callback 路徑時，交給 callback 頁處理，不在這裡初始化
+        // callback 頁會呼叫 completeOAuthCallback 設定 user，再 navigate 到 /
         if (window.location.pathname === '/auth/callback') {
-          return
+          return  // finally 仍會執行，setLoading(false) 正常運作
         }
 
         // 1) 先從 localStorage 還原 session
@@ -59,9 +71,10 @@ export const AppProvider = ({ children }) => {
           }
         }
 
-        // 2) 嘗試 LIFF SDK（LINE 內建瀏覽器最順）
+        // 2) 嘗試 LIFF SDK
         try {
           const liff = await initLiff()
+          setLiffInstance(liff)
           if (liff.isLoggedIn()) {
             const profile = await liff.getProfile()
             const u = {
@@ -71,13 +84,18 @@ export const AppProvider = ({ children }) => {
             }
             setUser(u)
             localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
+          } else if (liff.isInClient()) {
+            // 在 LINE 內建瀏覽器但未登入 → 自動觸發 LIFF 授權
+            // 設 keepLoading=true 讓畫面維持載入中直到跳轉，避免閃出登入引導頁
+            keepLoading = true
+            liff.login()
+            return
           }
         } catch (e) {
-          // LIFF 失敗無所謂，外部瀏覽器/被擋 CDN 的使用者走登入按鈕的 OAuth flow
           console.warn('LIFF init 失敗，將改用 OAuth flow', e?.message || e)
         }
       } finally {
-        setLoading(false)
+        if (!keepLoading) setLoading(false)
       }
     }
 
@@ -85,21 +103,28 @@ export const AppProvider = ({ children }) => {
   }, [])
 
   const loginWithLine = () => {
+    // LINE 內建瀏覽器：用 LIFF SDK login（才能在 LINE app 內正確授權）
+    if (isInLineApp() && liffInstance) {
+      liffInstance.login()
+      return
+    }
+    // 外部瀏覽器：走標準 OAuth flow
     const state = generateState()
-    sessionStorage.setItem(OAUTH_STATE_KEY, state)
+    stateStore.set(state)
     window.location.href = buildAuthorizeUrl(state)
   }
 
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY)
+    if (liffInstance?.isLoggedIn()) liffInstance.logout()
     setUser(null)
   }
 
   const completeOAuthCallback = async ({ code, state }) => {
-    const savedState = sessionStorage.getItem(OAUTH_STATE_KEY)
-    sessionStorage.removeItem(OAUTH_STATE_KEY)
+    const savedState = stateStore.get()
+    stateStore.remove()
     if (!savedState || savedState !== state) {
-      throw new Error('state_mismatch')
+      throw new Error(`state_mismatch: saved="${savedState}", received="${state}"`)
     }
     if (!TOKEN_EXCHANGE_URL) {
       throw new Error('token_exchange_url_not_configured')

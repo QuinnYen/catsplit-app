@@ -17,6 +17,14 @@ dist
 dist-ssr
 *.local
 
+# Local docs
+docs/
+
+# Tool & CLI local data
+.firebase/
+.claude/
+.agents/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
