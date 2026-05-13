@@ -24,6 +24,7 @@ docs/
 .firebase/
 .claude/
 .agents/
+skills-lock.json
 
 # Editor directories and files
 .vscode/*
