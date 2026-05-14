@@ -50,7 +50,7 @@ const CreateGroupPage = () => {
         <div style={{ position: 'absolute', right: 10, bottom: -10, fontSize: 64, opacity: 0.12, userSelect: 'none' }}>🐾</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/')}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >
             ‹

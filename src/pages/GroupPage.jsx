@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, collection, onSnapshot, orderBy, query, updateDoc, deleteDoc, increment } from 'firebase/firestore'
+import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'
 
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import { getCurrency } from '../config/currencies'
-
-const DEFAULT_CATEGORIES = ['餐飲', '交通', '住宿', '購物', '娛樂', '日用品', '其他']
+import { computeMemberBalances } from '../utils/expenseHelpers'
 
 const GroupPage = () => {
   const { id } = useParams()
@@ -16,16 +15,11 @@ const GroupPage = () => {
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
+  const [settlements, setSettlements] = useState([])
   const [loading, setLoading] = useState(true)
-
-  // 編輯消費 modal
-  const [editingExpense, setEditingExpense] = useState(null) // expense object
-  const [editTitle, setEditTitle] = useState('')
-  const [editCategory, setEditCategory] = useState('')
-  const [editAmount, setEditAmount] = useState('')
-  const [editCustomCategory, setEditCustomCategory] = useState('')
-  const [editIsCustomCategory, setEditIsCustomCategory] = useState(false)
-  const [editSaving, setEditSaving] = useState(false)
+  const [activeCategory, setActiveCategory] = useState(null)
+  const [openMenuId, setOpenMenuId] = useState(null)
+  const [joining, setJoining] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'groups', id), (snap) => {
@@ -50,68 +44,108 @@ const GroupPage = () => {
     return () => unsubscribe()
   }, [id])
 
+  useEffect(() => {
+    const q = query(
+      collection(db, 'groups', id, 'settlements'),
+      orderBy('createdAt', 'desc')
+    )
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      setSettlements(data)
+    })
+    return () => unsubscribe()
+  }, [id])
+
+  const handleDeleteExpense = async (expenseId) => {
+    if (!window.confirm('確定要刪除這筆支出嗎？')) return
+    setOpenMenuId(null)
+    try {
+      await deleteDoc(doc(db, 'groups', id, 'expenses', expenseId))
+      const [expSnap, setSnap] = await Promise.all([
+        getDocs(collection(db, 'groups', id, 'expenses')),
+        getDocs(collection(db, 'groups', id, 'settlements')),
+      ])
+      const memberBalances = computeMemberBalances(group.members, expSnap.docs, setSnap.docs)
+      const totalAmount = expSnap.docs.reduce((sum, d) => sum + d.data().amount, 0)
+      await updateDoc(doc(db, 'groups', id), { totalAmount, totalExpenses: expSnap.size, memberBalances })
+    } catch (error) {
+      console.error('刪除支出失敗', error)
+    }
+  }
+
+  const handleDeleteSettlement = async (settlementId, groupSnapshot) => {
+    if (!window.confirm('確定要刪除這筆轉帳紀錄嗎？')) return
+    try {
+      await deleteDoc(doc(db, 'groups', id, 'settlements', settlementId))
+
+      const [expSnap, setSnap] = await Promise.all([
+        getDocs(collection(db, 'groups', id, 'expenses')),
+        getDocs(collection(db, 'groups', id, 'settlements')),
+      ])
+
+      const memberBalances = computeMemberBalances(groupSnapshot.members, expSnap.docs, setSnap.docs)
+      await updateDoc(doc(db, 'groups', id), { memberBalances })
+    } catch (error) {
+      console.error('刪除轉帳失敗', error)
+    }
+  }
+
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
 
-  // 開啟消費編輯 modal
-  const openEditExpense = (expense) => {
-    setEditingExpense(expense)
-    setEditTitle(expense.title)
-    setEditAmount(String(expense.amount))
-    const isCustom = !DEFAULT_CATEGORIES.includes(expense.category)
-    setEditIsCustomCategory(isCustom)
-    setEditCategory(isCustom ? '' : (expense.category || '餐飲'))
-    setEditCustomCategory(isCustom ? (expense.category || '') : '')
-  }
-
-  // 儲存消費編輯
-  const handleSaveExpense = async () => {
-    const newAmount = parseFloat(editAmount)
-    if (!editTitle.trim() || isNaN(newAmount) || newAmount <= 0) return
-    const finalCategory = editIsCustomCategory ? editCustomCategory : editCategory
-    setEditSaving(true)
-    try {
-      const diff = newAmount - editingExpense.amount
-      await updateDoc(doc(db, 'groups', id, 'expenses', editingExpense.id), {
-        title: editTitle.trim(),
-        category: finalCategory,
-        amount: newAmount,
-      })
-      if (Math.abs(diff) > 0.001) {
-        await updateDoc(doc(db, 'groups', id), {
-          totalAmount: increment(diff),
-        })
-      }
-      setEditingExpense(null)
-    } catch (error) {
-      console.error('編輯失敗', error)
-    }
-    setEditSaving(false)
-  }
-
-  // 刪除消費
-  const handleDeleteExpense = async () => {
-    if (!confirm(`確定刪除「${editingExpense.title}」？`)) return
-    setEditSaving(true)
-    try {
-      await deleteDoc(doc(db, 'groups', id, 'expenses', editingExpense.id))
-      await updateDoc(doc(db, 'groups', id), {
-        totalAmount: increment(-editingExpense.amount),
-        totalExpenses: increment(-1),
-      })
-      setEditingExpense(null)
-    } catch (error) {
-      console.error('刪除失敗', error)
-    }
-    setEditSaving(false)
+  const handleExportCSV = () => {
+    const currencySymbol = getCurrency(group.baseCurrency).symbol
+    const header = ['日期', '標題', '類別', '付款人', `原始金額`, '幣別', `換算金額(${group.baseCurrency})`, '分帳方式', '備註']
+    const rows = [...expenses].reverse().map(e => {
+      const date = e.createdAt?.toDate
+        ? e.createdAt.toDate().toLocaleDateString('zh-TW')
+        : ''
+      const payer = group.memberProfiles?.[e.paidBy]?.name || e.paidBy
+      const splitTypes = { equal: '均分', subset: '部分均分', shares: '份數', percentage: '百分比', custom: '自訂' }
+      const splitType = splitTypes[e.splitType] || e.splitType || ''
+      return [
+        date,
+        e.title || '',
+        e.category || '',
+        payer,
+        e.originalAmount ?? e.amount,
+        e.currency || group.baseCurrency,
+        e.amount,
+        splitType,
+        e.note || '',
+      ]
+    })
+    const bom = '﻿'
+    const csv = bom + [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${group.name}_支出明細.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const handleInvite = () => {
-    const url = `${window.location.origin}/join/${id}`
+    const liffId = import.meta.env.VITE_LIFF_ID
+    const url = `https://liff.line.me/${liffId}/group/${id}`
     if (navigator.share) {
-      navigator.share({ title: `加入「${group?.name}」分帳群組`, text: `${user?.name} 邀請你加入分帳群組！`, url })
+      navigator.share({ title: `${group?.emoji} ${group?.name}`, text: `${user?.name} 邀請你加入 CatSplit 分帳群組！`, url })
     } else {
       navigator.clipboard.writeText(url)
       alert('邀請連結已複製！\n貼到 LINE 傳給朋友吧 😄')
+    }
+  }
+
+  const handleJoin = async () => {
+    setJoining(true)
+    try {
+      await updateDoc(doc(db, 'groups', id), {
+        members: arrayUnion(user.uid),
+        [`memberProfiles.${user.uid}`]: { name: user.name, avatar: user.avatar },
+      })
+    } catch (error) {
+      console.error('加入失敗', error)
+      setJoining(false)
     }
   }
 
@@ -119,6 +153,65 @@ const GroupPage = () => {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
         載入中...
+      </div>
+    )
+  }
+
+  // 未加入成員 → 顯示加入畫面
+  if (!group.members?.includes(user?.uid)) {
+    const profiles = Object.values(group.memberProfiles || {})
+    return (
+      <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 32px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', right: 10, bottom: -10, fontSize: 64, opacity: 0.12, userSelect: 'none' }}>🐾</div>
+          <div style={{ textAlign: 'center', paddingTop: 8 }}>
+            <div style={{ fontSize: 56, marginBottom: 8 }}>{group.emoji}</div>
+            <div style={{ color: '#fff', fontSize: 20, fontWeight: 500, marginBottom: 4 }}>{group.name}</div>
+            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>你被邀請加入這個群組！</div>
+          </div>
+        </div>
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>目前成員</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {profiles.map((member, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Avatar src={member.avatar} name={member.name} size={36} />
+                  <div style={{ fontSize: 14, color: '#3d2b1f', fontWeight: 500 }}>{member.name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>以此身份加入</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff3ec', borderRadius: 12, padding: '10px 12px' }}>
+              <Avatar src={user?.avatar} name={user?.name} size={40} />
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{user?.name}</div>
+                <div style={{ fontSize: 12, color: '#b08060', marginTop: 2 }}>LINE 帳號</div>
+              </div>
+              <div style={{ marginLeft: 'auto', color: '#FF8C42', fontSize: 18 }}>✓</div>
+            </div>
+          </div>
+          <div style={{ flex: 1 }} />
+          <button
+            onClick={handleJoin}
+            disabled={joining}
+            style={{
+              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
+              cursor: joining ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
+              background: joining ? '#e0c4b0' : '#FF8C42', color: '#fff',
+            }}
+          >
+            {joining ? '加入中...' : `🐱 加入「${group.name}」`}
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', color: '#b08060', fontSize: 14, cursor: 'pointer' }}
+          >
+            取消
+          </button>
+        </div>
       </div>
     )
   }
@@ -151,6 +244,13 @@ const GroupPage = () => {
             style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 12px', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}
           >
             邀請
+          </button>
+          <button
+            onClick={handleExportCSV}
+            disabled={expenses.length === 0}
+            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 12px', fontSize: 12, cursor: expenses.length === 0 ? 'not-allowed' : 'pointer', flexShrink: 0, opacity: expenses.length === 0 ? 0.5 : 1 }}
+          >
+            匯出
           </button>
           <button
             onClick={() => navigate(`/group/${id}/edit`)}
@@ -212,7 +312,43 @@ const GroupPage = () => {
           </button>
         </div>
 
-        <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>消費明細</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060' }}>消費明細</div>
+          {activeCategory && (
+            <button
+              onClick={() => setActiveCategory(null)}
+              style={{ fontSize: 11, color: '#FF8C42', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              清除篩選 ✕
+            </button>
+          )}
+        </div>
+
+        {/* 類別篩選 chips */}
+        {!loading && expenses.length > 0 && (() => {
+          const cats = ['全部', ...Array.from(new Set(expenses.map(e => e.category || '其他')))]
+          return (
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
+              {cats.map(cat => {
+                const isActive = cat === '全部' ? activeCategory === null : activeCategory === cat
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat === '全部' ? null : cat)}
+                    style={{
+                      flexShrink: 0, padding: '5px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
+                      background: isActive ? '#FF8C42' : '#fff3ec',
+                      color: isActive ? '#fff' : '#b08060',
+                      fontWeight: isActive ? 500 : 400,
+                    }}
+                  >
+                    {cat}
+                  </button>
+                )
+              })}
+            </div>
+          )
+        })()}
       </div>
 
       {/* 支出列表 */}
@@ -221,7 +357,7 @@ const GroupPage = () => {
           <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>載入中...</div>
         )}
 
-        {!loading && expenses.length === 0 && (
+        {!loading && expenses.length === 0 && settlements.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🧾</div>
             <div style={{ color: '#b08060', fontSize: 14, marginBottom: 4 }}>還沒有任何支出</div>
@@ -229,161 +365,163 @@ const GroupPage = () => {
           </div>
         )}
 
-        {!loading && expenses.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {expenses.map(expense => (
-              <div
-                key={expense.id}
-                style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
-              >
-                <div style={{ width: 40, height: 40, background: '#fff3ec', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, textAlign: 'center', padding: '0 4px' }}>
-                  {expense.category || '其他'}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {expense.title}
+        {!loading && (() => {
+          const filteredExpenses = activeCategory
+            ? expenses.filter(e => (e.category || '其他') === activeCategory)
+            : expenses
+
+          if (activeCategory && filteredExpenses.length === 0) return (
+            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+              <div style={{ color: '#b08060', fontSize: 14 }}>此類別沒有支出</div>
+            </div>
+          )
+
+          // Merge expenses and settlements into unified timeline, sorted desc by createdAt
+          const allItems = [
+            ...filteredExpenses.map(e => ({ ...e, _type: 'expense' })),
+            ...(activeCategory ? [] : settlements.map(s => ({ ...s, _type: 'settlement' }))),
+          ].sort((a, b) => {
+            const ta = a.createdAt?.toDate?.() ?? new Date(0)
+            const tb = b.createdAt?.toDate?.() ?? new Date(0)
+            return tb - ta
+          })
+
+          if (allItems.length === 0) return null
+
+          const toDateLabel = (item) => item.createdAt?.toDate
+            ? item.createdAt.toDate().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })
+            : '未知日期'
+
+          const groups = []
+          let currentDate = null
+          allItems.forEach(item => {
+            const dateLabel = toDateLabel(item)
+            if (dateLabel !== currentDate) {
+              currentDate = dateLabel
+              groups.push({ date: dateLabel, items: [] })
+            }
+            groups[groups.length - 1].items.push(item)
+          })
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {groups.map(({ date, items }) => (
+                <div key={date}>
+                  <div style={{ fontSize: 11, color: '#c4a882', fontWeight: 500, padding: '12px 0 6px', letterSpacing: '0.03em' }}>
+                    {date}
                   </div>
-                  <div style={{ fontSize: 12, color: '#b08060' }}>
-                    {group.memberProfiles?.[expense.paidBy]?.name || '未知'} 付款
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {items.map(item => {
+                      if (item._type === 'settlement') {
+                        const from = group.memberProfiles?.[item.from]
+                        const to = group.memberProfiles?.[item.to]
+                        return (
+                          <div
+                            key={item.id}
+                            style={{ background: '#f0faf0', borderRadius: 14, border: '0.5px solid #c8e6c9', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
+                          >
+                            <div style={{ width: 40, height: 40, background: '#e8f5e9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                              💸
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: '#2e7d32', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {from?.name} 轉給 {to?.name}
+                              </div>
+                              <div style={{ fontSize: 11, color: '#66bb6a' }}>
+                                {item.paymentMethod}{item.note ? ` · ${item.note}` : ''}
+                              </div>
+                            </div>
+                            <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                              <div style={{ fontSize: 15, fontWeight: 500, color: '#2e7d32' }}>
+                                {getCurrency(item.currency || group.baseCurrency).symbol} {item.amount.toLocaleString()}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteSettlement(item.id, group)}
+                              style={{ background: '#ffebee', border: 'none', borderRadius: 8, padding: '6px 8px', fontSize: 14, cursor: 'pointer', flexShrink: 0, color: '#e53935' }}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        )
+                      }
+
+                      const isMenuOpen = openMenuId === item.id
+                      return (
+                        <div key={item.id} style={{ position: 'relative' }}>
+                          <div
+                            onClick={() => navigate(`/group/${id}/expense/${item.id}`)}
+                            style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
+                            onTouchEnd={e => e.currentTarget.style.opacity = '1'}
+                          >
+                            <div style={{ width: 40, height: 40, background: '#fff3ec', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, textAlign: 'center', padding: '0 4px' }}>
+                              {item.category || '其他'}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {item.title}
+                              </div>
+                              <div style={{ fontSize: 12, color: '#b08060' }}>
+                                {group.memberProfiles?.[item.paidBy]?.name || '未知'} 付款
+                              </div>
+                            </div>
+                            <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                              <div style={{ fontSize: 15, fontWeight: 500, color: '#FF6B1A' }}>
+                                {getCurrency(item.currency || group.baseCurrency).symbol} {(item.originalAmount ?? item.amount).toLocaleString()}
+                              </div>
+                              {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
+                                <div style={{ fontSize: 11, color: '#c4a882', marginTop: 1 }}>
+                                  ≈ {getCurrency(group.baseCurrency).symbol} {item.amount.toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              onClick={e => { e.stopPropagation(); setOpenMenuId(isMenuOpen ? null : item.id) }}
+                              style={{ background: 'none', border: 'none', padding: '4px 6px', cursor: 'pointer', fontSize: 18, color: '#c4a882', flexShrink: 0, lineHeight: 1 }}
+                            >
+                              ⋮
+                            </button>
+                          </div>
+
+                          {/* 下拉選單 */}
+                          {isMenuOpen && (
+                            <>
+                              {/* 遮罩，點外面關閉 */}
+                              <div
+                                onClick={() => setOpenMenuId(null)}
+                                style={{ position: 'fixed', inset: 0, zIndex: 10 }}
+                              />
+                              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 11, background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 120 }}>
+                                <button
+                                  onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/group/${id}/expense/${item.id}/edit`) }}
+                                  style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: '#3d2b1f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                                >
+                                  ✏️ 編輯
+                                </button>
+                                <div style={{ height: '0.5px', background: '#f0d5c0' }} />
+                                <button
+                                  onClick={e => { e.stopPropagation(); handleDeleteExpense(item.id) }}
+                                  style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: '#e53935', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                                >
+                                  🗑️ 刪除
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
-                <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                  <div style={{ fontSize: 15, fontWeight: 500, color: '#FF6B1A' }}>
-                    {getCurrency(expense.currency || group.baseCurrency).symbol} {(expense.originalAmount ?? expense.amount).toLocaleString()}
-                  </div>
-                  {expense.currency && expense.currency !== (group.baseCurrency || 'TWD') && (
-                    <div style={{ fontSize: 11, color: '#c4a882', marginTop: 1 }}>
-                      ≈ {getCurrency(group.baseCurrency).symbol} {expense.amount.toLocaleString()}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => openEditExpense(expense)}
-                  style={{ background: '#fff3ec', border: 'none', borderRadius: 8, padding: '6px 8px', fontSize: 14, cursor: 'pointer', flexShrink: 0, color: '#FF8C42' }}
-                >
-                  ✏️
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )
+        })()}
       </div>
 
       <TabBar context="group" groupId={id} />
-
-      {/* 編輯消費 Modal */}
-      {editingExpense && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}
-          onClick={e => e.target === e.currentTarget && setEditingExpense(null)}
-        >
-          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', padding: '20px 16px 36px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-            {/* Modal 標題 */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>編輯消費</div>
-              <button onClick={() => setEditingExpense(null)} style={{ background: 'none', border: 'none', fontSize: 22, color: '#b08060', cursor: 'pointer', lineHeight: 1 }}>×</button>
-            </div>
-
-            {/* 類別 */}
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>類別</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: editIsCustomCategory ? 8 : 0 }}>
-                {DEFAULT_CATEGORIES.map(c => (
-                  <button
-                    key={c}
-                    onClick={() => { setEditCategory(c); setEditIsCustomCategory(false) }}
-                    style={{
-                      padding: '5px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
-                      background: editCategory === c && !editIsCustomCategory ? '#FF8C42' : '#fff3ec',
-                      color: editCategory === c && !editIsCustomCategory ? '#fff' : '#b08060',
-                      fontWeight: editCategory === c && !editIsCustomCategory ? 500 : 400,
-                    }}
-                  >
-                    {c}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setEditIsCustomCategory(true)}
-                  style={{
-                    padding: '5px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
-                    background: editIsCustomCategory ? '#FF8C42' : '#fff3ec',
-                    color: editIsCustomCategory ? '#fff' : '#b08060',
-                  }}
-                >
-                  自訂
-                </button>
-              </div>
-              {editIsCustomCategory && (
-                <input
-                  type="text"
-                  value={editCustomCategory}
-                  onChange={e => setEditCustomCategory(e.target.value)}
-                  placeholder="輸入自訂類別..."
-                  maxLength={10}
-                  autoFocus
-                  style={{ width: '100%', border: '0.5px solid #FF8C42', borderRadius: 10, padding: '9px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
-                />
-              )}
-            </div>
-
-            {/* 項目名稱 */}
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>項目名稱</div>
-              <input
-                type="text"
-                value={editTitle}
-                onChange={e => setEditTitle(e.target.value)}
-                maxLength={20}
-                style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
-              />
-            </div>
-
-            {/* 金額 */}
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>金額</div>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>
-                  {getCurrency(editingExpense.currency || group.baseCurrency).symbol}
-                </span>
-                <input
-                  type="number"
-                  value={editAmount}
-                  onChange={e => setEditAmount(e.target.value)}
-                  style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px 10px 44px', fontSize: 18, fontWeight: 500, color: '#FF6B1A', outline: 'none', background: '#fff8f4' }}
-                />
-              </div>
-              {editingExpense.currency && editingExpense.currency !== (group.baseCurrency || 'TWD') && editAmount && (
-                <div style={{ textAlign: 'right', fontSize: 11, color: '#c4a882', marginTop: 4 }}>
-                  ≈ {getCurrency(group.baseCurrency).symbol} {(parseFloat(editAmount) * (editingExpense.exchangeRate ?? 1)).toFixed(0)} {group.baseCurrency}
-                </div>
-              )}
-            </div>
-
-            {/* 按鈕 */}
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={handleDeleteExpense}
-                disabled={editSaving}
-                style={{ flex: 1, padding: '13px 0', borderRadius: 14, border: '1px solid #f0d5c0', background: '#fff', color: '#e57373', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
-              >
-                刪除
-              </button>
-              <button
-                onClick={handleSaveExpense}
-                disabled={editSaving || !editTitle.trim() || !editAmount}
-                style={{
-                  flex: 2, padding: '13px 0', borderRadius: 14, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer',
-                  background: editSaving || !editTitle.trim() || !editAmount ? '#e0c4b0' : '#FF8C42',
-                  color: '#fff',
-                }}
-              >
-                {editSaving ? '儲存中...' : '儲存'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

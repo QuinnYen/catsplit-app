@@ -2,20 +2,27 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
 import { db } from '../config/firebase'
+import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
-import { CURRENCIES, getCurrency, fetchExchangeRate } from '../config/currencies'
+import { CURRENCIES, getCurrency } from '../config/currencies'
+import useExchangeRate from '../hooks/useExchangeRate'
 
 const SettlePage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useApp()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
+  const [settledRecords, setSettledRecords] = useState([])
   const [settlements, setSettlements] = useState([])
   const [loading, setLoading] = useState(true)
-  const [displayCurrency, setDisplayCurrency] = useState(null) // null = 尚未初始化
-  const [displayRate, setDisplayRate] = useState(1)
-  const [rateLoading, setRateLoading] = useState(false)
+  const [displayCurrency, setDisplayCurrency] = useState(null)
+
+  const baseCurrency = group?.baseCurrency || 'TWD'
+  // hook: fetchExchangeRate(from=baseCurrency, to=displayCurrency)
+  const { exchangeRate, rateLoading } = useExchangeRate(baseCurrency, displayCurrency || baseCurrency)
+  const displayRate = exchangeRate ?? 1
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,13 +35,25 @@ const SettlePage = () => {
       const expensesData = expensesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setExpenses(expensesData)
 
+      const settlementsSnap = await getDocs(collection(db, 'groups', id, 'settlements'))
+      const settlementsData = settlementsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      setSettledRecords(settlementsData)
+
+      // 計算餘額：支出分帳 + 已結清紀錄
       const balance = {}
       groupData.members.forEach(uid => { balance[uid] = 0 })
+
       expensesData.forEach(expense => {
         balance[expense.paidBy] = (balance[expense.paidBy] || 0) + expense.amount
         Object.entries(expense.splits || {}).forEach(([uid, amt]) => {
           balance[uid] = (balance[uid] || 0) - amt
         })
+      })
+
+      // 已結清的轉帳紀錄：付款者欠款減少(+)，收款者待收減少(-)
+      settlementsData.forEach(s => {
+        balance[s.from] = (balance[s.from] || 0) + s.amount
+        balance[s.to] = (balance[s.to] || 0) - s.amount
       })
 
       const result = []
@@ -72,17 +91,6 @@ const SettlePage = () => {
     fetchData()
   }, [id])
 
-  useEffect(() => {
-    if (!displayCurrency || !group) return
-    const base = group.baseCurrency || 'TWD'
-    if (displayCurrency === base) { setDisplayRate(1); return }
-    setRateLoading(true)
-    fetchExchangeRate(base, displayCurrency)
-      .then(rate => setDisplayRate(rate))
-      .catch(() => setDisplayRate(1))
-      .finally(() => setRateLoading(false))
-  }, [displayCurrency, group?.baseCurrency])
-
   if (loading || !group) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
@@ -91,12 +99,10 @@ const SettlePage = () => {
     )
   }
 
-  const baseCurrency = group.baseCurrency || 'TWD'
   const dispCurr = getCurrency(displayCurrency || baseCurrency)
   const fmt = (amount) => `${dispCurr.symbol} ${Math.round(amount * displayRate).toLocaleString()}`
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
-  const perPerson = group.members.length > 0 ? total / group.members.length : 0
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
@@ -106,7 +112,7 @@ const SettlePage = () => {
         <div style={{ position: 'absolute', right: 10, bottom: -10, fontSize: 64, opacity: 0.12, userSelect: 'none' }}>🐾</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/group/${id}`)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >
             ‹
@@ -126,6 +132,7 @@ const SettlePage = () => {
               <div style={{ fontSize: 12, color: '#b08060' }}>{group.members.length} 位成員 · {expenses.length} 筆消費</div>
             </div>
           </div>
+
           {/* 貨幣切換 */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
             {CURRENCIES.map(c => (
@@ -158,9 +165,9 @@ const SettlePage = () => {
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>每人均攤</div>
+              <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>我的應付</div>
               <div style={{ fontSize: 22, fontWeight: 500, color: '#FF6B1A' }}>
-                {rateLoading ? '...' : fmt(perPerson)}
+                {rateLoading ? '...' : fmt(expenses.reduce((sum, e) => sum + (e.splits?.[user?.uid] || 0), 0))}
               </div>
             </div>
           </div>
@@ -174,15 +181,15 @@ const SettlePage = () => {
               const profile = group.memberProfiles?.[uid]
               const paid = expenses.filter(e => e.paidBy === uid).reduce((sum, e) => sum + e.amount, 0)
               const shouldPay = expenses.reduce((sum, e) => sum + (e.splits?.[uid] || 0), 0)
-              const diff = paid - shouldPay
+              const transferred = settledRecords
+                .filter(s => s.from === uid).reduce((sum, s) => sum + s.amount, 0)
+              const received = settledRecords
+                .filter(s => s.to === uid).reduce((sum, s) => sum + s.amount, 0)
+              const diff = paid - shouldPay + received - transferred
 
               return (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Avatar
-                    src={profile?.avatar}
-                    name={profile?.name}
-                    size={36}
-                  />
+                  <Avatar src={profile?.avatar} name={profile?.name} size={36} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', marginBottom: 2 }}>{profile?.name}</div>
                     <div style={{ fontSize: 11, color: '#b08060' }}>
@@ -228,18 +235,18 @@ const SettlePage = () => {
                         <span style={{ color: '#b08060' }}> 轉給 </span>
                         <span style={{ fontWeight: 500 }}>{to?.name}</span>
                       </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#FF6B1A' }}>
+                        {rateLoading ? '...' : fmt(s.amount)}
+                      </div>
                       <Avatar src={to?.avatar} name={to?.name} size={32} />
                     </div>
                     <button
-                      onClick={() => {
-                        const displayAmt = fmt(s.amount)
-                        const msg = `💰 分帳提醒\n${from?.name} 需轉帳 ${displayAmt} 給 ${to?.name}`
-                        navigator.clipboard.writeText(msg)
-                        alert('已複製！可以貼到 LINE 提醒對方 😄')
-                      }}
+                      onClick={() => navigate(
+                        `/group/${id}/transfer?from=${s.from}&to=${s.to}&amount=${s.amount}&currency=${baseCurrency}`
+                      )}
                       style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
                     >
-                      {rateLoading ? '...' : fmt(s.amount)} · 點我複製提醒訊息
+                      去轉帳 →
                     </button>
                   </div>
                 )
@@ -247,6 +254,33 @@ const SettlePage = () => {
             </div>
           )}
         </div>
+
+        {/* 已結清紀錄 */}
+        {settledRecords.length > 0 && (
+          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>已結清紀錄</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {settledRecords.map(s => {
+                const from = group.memberProfiles?.[s.from]
+                const to = group.memberProfiles?.[s.to]
+                return (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid #f5e8dc' }}>
+                    <span style={{ fontSize: 16 }}>✅</span>
+                    <div style={{ flex: 1, fontSize: 12, color: '#b08060' }}>
+                      <span style={{ color: '#3d2b1f', fontWeight: 500 }}>{from?.name}</span>
+                      {' 轉給 '}
+                      <span style={{ color: '#3d2b1f', fontWeight: 500 }}>{to?.name}</span>
+                      {s.paymentMethod && <span style={{ marginLeft: 4 }}>· {s.paymentMethod}</span>}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#4caf50' }}>
+                      {getCurrency(s.currency || baseCurrency).symbol} {s.amount.toLocaleString()}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* 回群組按鈕 */}
         <button

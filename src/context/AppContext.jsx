@@ -61,17 +61,7 @@ export const AppProvider = ({ children }) => {
           return  // finally 仍會執行，setLoading(false) 正常運作
         }
 
-        // 1) 先從 localStorage 還原 session
-        const cached = localStorage.getItem(STORAGE_KEY)
-        if (cached) {
-          try {
-            setUser(JSON.parse(cached))
-          } catch (e) {
-            localStorage.removeItem(STORAGE_KEY)
-          }
-        }
-
-        // 2) 嘗試 LIFF SDK
+        // 1) 先嘗試 LIFF SDK（一定要等 init 完，避免後續頁面呼叫 liff.isInClient() 等 API 時 SDK 還沒準備好）
         try {
           const liff = await initLiff()
           setLiffInstance(liff)
@@ -84,15 +74,27 @@ export const AppProvider = ({ children }) => {
             }
             setUser(u)
             localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
-          } else if (liff.isInClient()) {
+            return
+          }
+          if (liff.isInClient()) {
             // 在 LINE 內建瀏覽器但未登入 → 自動觸發 LIFF 授權
-            // 設 keepLoading=true 讓畫面維持載入中直到跳轉，避免閃出登入引導頁
             keepLoading = true
-            liff.login()
+            const currentPath = window.location.pathname + window.location.search
+            liff.login({ redirectUri: `${window.location.origin}${currentPath}` })
             return
           }
         } catch (e) {
           console.warn('LIFF init 失敗，將改用 OAuth flow', e?.message || e)
+        }
+
+        // 2) LIFF 沒拿到使用者（外部瀏覽器或 LIFF init 失敗）→ 從 localStorage 還原 session
+        const cached = localStorage.getItem(STORAGE_KEY)
+        if (cached) {
+          try {
+            setUser(JSON.parse(cached))
+          } catch (e) {
+            localStorage.removeItem(STORAGE_KEY)
+          }
         }
       } finally {
         if (!keepLoading) setLoading(false)
@@ -102,10 +104,12 @@ export const AppProvider = ({ children }) => {
     init()
   }, [])
 
-  const loginWithLine = () => {
+  const loginWithLine = (redirectPath) => {
+    if (redirectPath) localStorage.setItem('catsplit_redirect', redirectPath)
     // LINE 內建瀏覽器：用 LIFF SDK login（才能在 LINE app 內正確授權）
     if (isInLineApp() && liffInstance) {
-      liffInstance.login()
+      const target = redirectPath || (window.location.pathname + window.location.search)
+      liffInstance.login({ redirectUri: `${window.location.origin}${target}` })
       return
     }
     // 外部瀏覽器：走標準 OAuth flow
@@ -153,7 +157,7 @@ export const AppProvider = ({ children }) => {
   }
 
   return (
-    <AppContext.Provider value={{ user, setUser, loading, loginWithLine, logout, completeOAuthCallback }}>
+    <AppContext.Provider value={{ user, setUser, loading, loginWithLine, logout, completeOAuthCallback, liffInstance }}>
       {children}
     </AppContext.Provider>
   )

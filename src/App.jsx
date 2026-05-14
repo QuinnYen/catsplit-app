@@ -1,15 +1,16 @@
-import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useApp } from './context/AppContext'
 
-const HomePage = lazy(() => import('./pages/HomePage'))
-const CreateGroupPage = lazy(() => import('./pages/CreateGroupPage'))
-const GroupPage = lazy(() => import('./pages/GroupPage'))
-const AddExpensePage = lazy(() => import('./pages/AddExpensePage'))
-const SettlePage = lazy(() => import('./pages/SettlePage'))
-const JoinGroupPage = lazy(() => import('./pages/JoinGroupPage'))
-const EditGroupPage = lazy(() => import('./pages/EditGroupPage'))
-const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
+import HomePage from './pages/HomePage'
+import CreateGroupPage from './pages/CreateGroupPage'
+import GroupPage from './pages/GroupPage'
+import AddExpensePage from './pages/AddExpensePage'
+import SettlePage from './pages/SettlePage'
+import EditGroupPage from './pages/EditGroupPage'
+import TransferPage from './pages/TransferPage'
+import EditExpensePage from './pages/EditExpensePage'
+import ExpenseDetailPage from './pages/ExpenseDetailPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
 
 const LoadingScreen = () => (
   <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -73,8 +74,10 @@ const ProtectedRoutes = () => {
       <Route path="/group/:id" element={<GroupPage />} />
       <Route path="/group/:id/add" element={<AddExpensePage />} />
       <Route path="/group/:id/settle" element={<SettlePage />} />
+      <Route path="/group/:id/transfer" element={<TransferPage />} />
+      <Route path="/group/:id/expense/:expenseId" element={<ExpenseDetailPage />} />
+      <Route path="/group/:id/expense/:expenseId/edit" element={<EditExpensePage />} />
       <Route path="/group/:id/edit" element={<EditGroupPage />} />
-      <Route path="/join/:id" element={<JoinGroupPage />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   )
@@ -95,9 +98,7 @@ const AppRoutes = () => {
 
 const App = () => (
   <BrowserRouter>
-    <Suspense fallback={<LoadingScreen />}>
-      <AppRoutes />
-    </Suspense>
+    <AppRoutes />
   </BrowserRouter>
 )
 

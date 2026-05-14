@@ -14,31 +14,37 @@ const TabBar = ({ context = 'home', groupId }) => {
     switch (context) {
       case 'home':
         return [
-          { emoji: '🏠', label: '首頁', path: '/' },
-          { emoji: '➕', label: '建立群組', path: '/create' },
+          { label: '首頁', path: '/' },
+          { label: '建立群組', path: '/create' },
         ]
       case 'create':
         return [
-          { emoji: '🏠', label: '首頁', path: '/' },
-          { emoji: '➕', label: '建立群組', path: '/create' },
+          { label: '首頁', path: '/' },
+          { label: '建立群組', path: '/create' },
         ]
       case 'group':
         return [
-          { emoji: '🏠', label: '首頁', path: '/' },
-          { emoji: '💸', label: '新增支出', path: `/group/${groupId}/add` },
-          { emoji: '🧮', label: '結算', path: `/group/${groupId}/settle` },
+          { label: '首頁', path: '/' },
+          { label: '新增支出', path: `/group/${groupId}/add` },
+          { label: '結算', path: `/group/${groupId}/settle` },
         ]
       case 'expense':
         return [
-          { emoji: '🏠', label: '首頁', path: '/' },
-          { emoji: '◀', label: '群組', path: `/group/${groupId}` },
-          { emoji: '💸', label: '新增支出', path: `/group/${groupId}/add` },
+          { label: '首頁', path: '/' },
+          { label: '群組', path: `/group/${groupId}` },
+          { label: '新增支出', path: `/group/${groupId}/add` },
         ]
       case 'settle':
         return [
-          { emoji: '🏠', label: '首頁', path: '/' },
-          { emoji: '◀', label: '群組', path: `/group/${groupId}` },
-          { emoji: '🧮', label: '結算', path: `/group/${groupId}/settle` },
+          { label: '首頁', path: '/' },
+          { label: '群組', path: `/group/${groupId}` },
+          { label: '結算', path: `/group/${groupId}/settle` },
+        ]
+      case 'transfer':
+        return [
+          { label: '首頁', path: '/' },
+          { label: '群組', path: `/group/${groupId}` },
+          { label: '結算', path: `/group/${groupId}/settle` },
         ]
       default:
         return []
@@ -68,7 +74,7 @@ const TabBar = ({ context = 'home', groupId }) => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
+              gap: 0,
               background: 'none',
               border: 'none',
               cursor: isActive ? 'default' : 'pointer',
@@ -77,16 +83,7 @@ const TabBar = ({ context = 'home', groupId }) => {
             }}
           >
             <span style={{
-              fontSize: 22,
-              lineHeight: 1,
-              filter: isActive ? 'none' : 'grayscale(30%)',
-              opacity: isActive ? 1 : 0.5,
-              transition: 'opacity 0.15s',
-            }}>
-              {tab.emoji}
-            </span>
-            <span style={{
-              fontSize: 10,
+              fontSize: 13,
               fontWeight: isActive ? 600 : 400,
               color: isActive ? '#FF6B1A' : '#b08060',
               transition: 'color 0.15s',

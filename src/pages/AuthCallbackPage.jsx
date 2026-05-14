@@ -27,7 +27,11 @@ const AuthCallbackPage = () => {
     }
 
     completeOAuthCallback({ code, state })
-      .then(() => navigate('/', { replace: true }))
+      .then(() => {
+        const redirect = localStorage.getItem('catsplit_redirect')
+        localStorage.removeItem('catsplit_redirect')
+        navigate(redirect || '/', { replace: true })
+      })
       .catch((e) => {
         console.error(e)
         setError(`登入處理失敗：${e.message}`)
