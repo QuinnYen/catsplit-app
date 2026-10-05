@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'
 
-import { Check, Plus, Calculator, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight } from 'lucide-react'
+import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import GuestJoin from '../components/GuestJoin'
@@ -428,27 +428,6 @@ const GroupPage = () => {
 
       {/* 操作按鈕 */}
       <div style={{ padding: '16px 16px 0' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-          <button
-            onClick={() => navigate(`/group/${id}/add`)}
-            style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, textAlign: 'center', cursor: 'pointer' }}
-            onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
-            onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><Plus size={24} color="#FF8C42" /></div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f' }}>新增支出</div>
-          </button>
-          <button
-            onClick={() => navigate(`/group/${id}/settle`)}
-            style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, textAlign: 'center', cursor: 'pointer' }}
-            onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
-            onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}><Calculator size={24} color="#FF8C42" /></div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f' }}>結算</div>
-          </button>
-        </div>
-
         {searchOpen ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '0.5px solid #f0d5c0', borderRadius: 20, padding: '6px 12px', marginBottom: 8 }}>
             <Search size={14} color="#b08060" style={{ flexShrink: 0 }} />

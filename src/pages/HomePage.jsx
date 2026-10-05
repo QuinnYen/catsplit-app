@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot, getDoc, getDocs, doc, updateDoc } from 'firebase/firestore'
-import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup } from 'lucide-react'
+import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, X, FileText, ShieldCheck, LogOut, Trash2 } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import TabBar from '../components/TabBar'
@@ -44,6 +44,7 @@ const HomePage = () => {
   const loading = authLoading || (!!user && !groupsLoaded)
   const [showArchived, setShowArchived] = useState(false)
   const [deletingData, setDeletingData] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   // 訪客：首頁列出這個瀏覽器選過名字的群組（每個群組的「我」是各自的訪客名字 id）
   const guestKey = user?.guest ? guestNames.map(g => `${g.groupId}:${g.memberId}`).join(',') : ''
@@ -90,6 +91,10 @@ const HomePage = () => {
     })
     return () => unsubscribe()
   }, [user, authLoading])
+
+  const handleLogout = () => {
+    if (confirm(user?.guest ? '登出後，下次點群組連結再選一次你的名字即可。確定要登出嗎？' : '確定要登出嗎？')) logout()
+  }
 
   const handleDeleteMyData = async () => {
     const { toDelete, toLeave } = planDeleteMyData(groups, user.uid)
@@ -201,12 +206,18 @@ const HomePage = () => {
         {/* 使用者資訊 */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Avatar
-              src={user?.avatar}
-              name={user?.name}
-              size={38}
-              style={{ background: '#ffe0c8', border: '2px solid rgba(255,255,255,0.6)' }}
-            />
+            <button
+              onClick={() => setShowSettings(true)}
+              aria-label="設定"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', borderRadius: '50%' }}
+            >
+              <Avatar
+                src={user?.avatar}
+                name={user?.name}
+                size={38}
+                style={{ background: '#ffe0c8', border: '2px solid rgba(255,255,255,0.6)' }}
+              />
+            </button>
             <div>
               <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <GreetingIcon size={12} />{greetingText}
@@ -214,12 +225,6 @@ const HomePage = () => {
               <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
             </div>
           </div>
-          <button
-            onClick={() => { if (confirm(user?.guest ? '登出後，下次點群組連結再選一次你的名字即可。確定要登出嗎？' : '確定要登出嗎？')) logout() }}
-            style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 20, padding: '5px 12px', fontSize: 12, color: '#fff', cursor: 'pointer' }}
-          >
-            登出
-          </button>
         </div>
 
         {/* 總覽卡片 */}
@@ -368,25 +373,44 @@ const HomePage = () => {
           )
         })()}
 
-        <div style={{ marginTop: 'auto', paddingTop: 32, textAlign: 'center', fontSize: 12, color: '#c4a882', lineHeight: 2 }}>
-          <a href="/terms.html" style={{ color: '#b08060' }}>使用條款</a>
-          {' ｜ '}
-          <a href="/privacy.html" style={{ color: '#b08060' }}>隱私權政策</a>
-          {/* 訪客名字屬於群組，不能自行刪除；由群組建立者移除 */}
-          {!user?.guest && (
-            <>
-              {' ｜ '}
-              <button
-                onClick={handleDeleteMyData}
-                disabled={deletingData}
-                style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: '#b08060', textDecoration: 'underline', cursor: 'pointer' }}
-              >
-                {deletingData ? '刪除中...' : '刪除我的資料'}
-              </button>
-            </>
-          )}
-        </div>
       </div>
+
+      {/* 設定彈窗 */}
+      {showSettings && (
+        <div
+          onClick={() => setShowSettings(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: '20px 20px 0 0', padding: 20, paddingBottom: 28 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#3d2b1f' }}>設定</div>
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: '#b08060', display: 'flex' }}
+                aria-label="關閉"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            {[
+              { Icon: FileText, label: '使用條款', href: '/terms.html' },
+              { Icon: ShieldCheck, label: '隱私權政策', href: '/privacy.html' },
+              { Icon: LogOut, label: '登出', onClick: handleLogout },
+              // 訪客名字屬於群組，不能自行刪除；由群組建立者移除
+              ...(!user?.guest ? [{ Icon: Trash2, label: deletingData ? '刪除中...' : '刪除我的資料', onClick: handleDeleteMyData, disabled: deletingData, danger: true }] : []),
+            ].map(({ Icon, label, href, onClick, disabled, danger }) => {
+              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: '0.5px solid #f0d5c0', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: danger ? '#e53935' : '#3d2b1f', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
+              const content = <><Icon size={18} color={danger ? '#e53935' : '#b08060'} />{label}</>
+              return href
+                ? <a key={label} href={href} style={style}>{content}</a>
+                : <button key={label} onClick={onClick} disabled={disabled} style={style}>{content}</button>
+            })}
+          </div>
+        </div>
+      )}
 
       <TabBar context="home" />
     </div>
