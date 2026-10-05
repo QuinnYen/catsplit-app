@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { signInWithCustomToken, signOut, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../config/firebase'
 import { initLiff } from '../config/liff'
-import { mark } from '../utils/bootTrace'
 
 const AppContext = createContext(null)
 
@@ -128,9 +127,7 @@ export const AppProvider = ({ children }) => {
 
         // 1) 先嘗試 LIFF SDK（一定要等 init 完，避免後續頁面呼叫 liff.isInClient() 等 API 時 SDK 還沒準備好）
         try {
-          mark('liff.init 開始')
           const liff = await initLiff()
-          mark('liff.init 完成')
           setLiffInstance(liff)
           if (liff.isLoggedIn()) {
             // 快速路徑：Firebase 已恢復同一個 LINE 使用者的登入（uid 即 LINE userId），
@@ -142,7 +139,6 @@ export const AppProvider = ({ children }) => {
             const lineUid = liff.getDecodedIDToken()?.sub
             if (cached && lineUid && cached.uid === lineUid && auth.currentUser?.uid === lineUid
               && readGuestNames().length === 0) {
-              mark('快速路徑：沿用 Firebase 登入')
               setUser(cached)
               // 名字或頭像可能改過，背景更新即可
               liff.getProfile().then(p => {
@@ -153,7 +149,6 @@ export const AppProvider = ({ children }) => {
               }).catch(() => {})
               return
             }
-            mark(`快速路徑未命中 cached=${!!cached} sub=${!!lineUid} 同uid=${cached?.uid === lineUid} firebase=${auth.currentUser?.uid === lineUid} 訪客名=${readGuestNames().length}`)
             // getIDToken 是同步的，getProfile 與 verifyLiffToken 兩個請求可同時發出
             const idToken = liff.getIDToken()
             const verifying = idToken && VERIFY_LIFF_TOKEN_URL
@@ -164,12 +159,10 @@ export const AppProvider = ({ children }) => {
                 })
               : null
             const [profile, res] = await Promise.all([liff.getProfile(), verifying])
-            mark('getProfile + verifyLiffToken 完成')
             if (res) {
               if (res.ok) {
                 const data = await res.json()
                 await signInWithLineToken(data.firebaseToken, profile.pictureUrl)
-                mark('signInWithCustomToken 完成')
               } else {
                 console.error('verifyLiffToken 失敗', await res.text())
               }
@@ -180,7 +173,6 @@ export const AppProvider = ({ children }) => {
               avatar: profile.pictureUrl,
             }
             setUser(u)
-            mark('setUser（登入畫面結束）')
             localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
             return
           }
