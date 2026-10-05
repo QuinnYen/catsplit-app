@@ -20,7 +20,7 @@
 - [x] 依量測結果優化啟動鏈：已有同一使用者的 Firebase 登入時跳過 `verifyLiffToken` + `signInWithCustomToken` + 等待 `getProfile`（[AppContext.jsx](src/context/AppContext.jsx) 快速路徑）
   - 量測基準（LINE 實機）：總共 ~2.6 s；liff.init 762 ms、getProfile+verify 1015 ms、signIn 437 ms、群組資料 188 ms
 - [ ] 部署後實機再量一次（預期 ~1.3 s），並測：正常開、登出再登入、換 LINE 帳號、有訪客名字待認領
-- [x] `verifyLiffToken` 設 `minInstances: 1` 消除冷啟動（已改 [functions/index.js](functions/index.js)，**尚未部署**：`firebase deploy --only functions:verifyLiffToken`）
+- [x] ~~`verifyLiffToken` 設 `minInstances: 1`~~（已評估，不做：常駐約 $2.88/月，而快速路徑下重複開啟不呼叫此函式；若實測發現完整流程常發生再回頭設）
 - [ ] （可選）完整流程下 `getProfile` 其實可省（verify 回應已含名字與頭像）
 - [x] 優化後再量一次，對照基準
   - 首次載入 JS（`index.html` 的 script + modulepreload 加總）：949.48 kB → 791.64 kB（-16.6%）；gzip 288.16 kB → 243.73 kB（-15.4%）
