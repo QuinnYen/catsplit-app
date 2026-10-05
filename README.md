@@ -2,6 +2,9 @@
 
 > LINE LIFF 分帳應用程式，讓朋友之間的費用分攤變得簡單輕鬆。
 
+![React](https://skillicons.dev/icons?i=react,vite,tailwind,firebase)
+![LINE LIFF](https://img.shields.io/badge/LINE-LIFF-06C755?logo=line&logoColor=white)
+
 ---
 
 ## 功能
@@ -23,14 +26,6 @@
 **結算**
 - 結算總覽：用最少轉帳次數算出誰該轉給誰，並顯示每人明細
 - 記錄轉帳（結清），可附付款方式與備註
-
-## 技術棧
-
-- **Frontend** — React 19 + Vite + Tailwind CSS
-- **Database / Storage** — Firebase Firestore、Firebase Storage
-- **Auth** — LINE LIFF SDK / LINE Login，由 Cloud Functions 換發 Firebase custom token
-- **Backend** — Firebase Cloud Functions（`asia-east1`）
-- **Hosting** — Firebase Hosting
 
 ## 身分與訪客
 
