@@ -16,6 +16,8 @@
 - [x] `vite.config.js` 拆 vendor chunk（react、firebase、liff）
   - Vite 8 用 rolldown，`manualChunks` 已棄用，改用 `output.codeSplitting.groups`
   - 結果：app 程式碼 71 kB、liff 120 kB、react 230 kB、firebase 367 kB；首次載入總量不變，但改版只需重下 app 那一包
+- [ ] 實機量測啟動各階段耗時（已加臨時診斷 [src/utils/bootTrace.jsx](src/utils/bootTrace.jsx)，部署後網址加 `?debug=1`；量完要移除 bootTrace 與各處 `mark()`）
+- [ ] 依量測結果決定優化啟動鏈（候選：已有 Firebase 登入狀態時跳過 `verifyLiffToken` + `signInWithCustomToken`；Cloud Function 冷啟動；`liff.init`）
 - [x] 優化後再量一次，對照基準
   - 首次載入 JS（`index.html` 的 script + modulepreload 加總）：949.48 kB → 791.64 kB（-16.6%）；gzip 288.16 kB → 243.73 kB（-15.4%）
   - CSS、logo 沒變；Vite >500 kB 警告已消失

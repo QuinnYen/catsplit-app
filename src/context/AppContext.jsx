@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { signInWithCustomToken, signOut, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../config/firebase'
 import { initLiff } from '../config/liff'
+import { mark } from '../utils/bootTrace'
 
 const AppContext = createContext(null)
 
@@ -127,7 +128,9 @@ export const AppProvider = ({ children }) => {
 
         // 1) 先嘗試 LIFF SDK（一定要等 init 完，避免後續頁面呼叫 liff.isInClient() 等 API 時 SDK 還沒準備好）
         try {
+          mark('liff.init 開始')
           const liff = await initLiff()
+          mark('liff.init 完成')
           setLiffInstance(liff)
           if (liff.isLoggedIn()) {
             // getIDToken 是同步的，getProfile 與 verifyLiffToken 兩個請求可同時發出
@@ -140,10 +143,12 @@ export const AppProvider = ({ children }) => {
                 })
               : null
             const [profile, res] = await Promise.all([liff.getProfile(), verifying])
+            mark('getProfile + verifyLiffToken 完成')
             if (res) {
               if (res.ok) {
                 const data = await res.json()
                 await signInWithLineToken(data.firebaseToken, profile.pictureUrl)
+                mark('signInWithCustomToken 完成')
               } else {
                 console.error('verifyLiffToken 失敗', await res.text())
               }
@@ -154,6 +159,7 @@ export const AppProvider = ({ children }) => {
               avatar: profile.pictureUrl,
             }
             setUser(u)
+            mark('setUser（登入畫面結束）')
             localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
             return
           }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot, getDoc, getDocs, doc, updateDoc } from 'firebase/firestore'
 import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup } from 'lucide-react'
 import { db } from '../config/firebase'
+import { mark } from '../utils/bootTrace'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
@@ -84,6 +85,7 @@ const HomePage = () => {
       }))
       setGroups(data)
       setGroupsLoaded(true)
+      mark('首頁群組資料到達')
     }, (error) => {
       console.error('Firestore 讀取失敗:', error)
       setGroupsLoaded(true)

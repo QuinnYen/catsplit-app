@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import { AppProvider } from './context/AppContext'
 import App from './App.jsx'
 import './index.css'
+import { BootTrace, mark } from './utils/bootTrace'
+
+mark('main.jsx 開始執行（含 HTML+JS 下載）')
 
 // 從 liff.line.me/{liffId}/group/xxx 開啟時會先落在 /?liff.state=%2Fgroup%2Fxxx；
 // LIFF 在外部瀏覽器未登入時不會自動轉過去，這裡先換成真正的路徑，讓路由與邀請畫面判斷正確
@@ -22,5 +25,6 @@ createRoot(document.getElementById('root')).render(
     <AppProvider>
       <App />
     </AppProvider>
+    <BootTrace />
   </StrictMode>,
 )
