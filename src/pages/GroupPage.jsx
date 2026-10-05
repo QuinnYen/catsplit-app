@@ -26,6 +26,7 @@ const GroupPage = () => {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [menuUp, setMenuUp] = useState(false)
   const [detailSettlementId, setDetailSettlementId] = useState(null)
   const [joining, setJoining] = useState(false)
   const [joinError, setJoinError] = useState('')
@@ -632,7 +633,12 @@ const GroupPage = () => {
                               )}
                             </div>
                             <button
-                              onClick={e => { e.stopPropagation(); setOpenMenuId(isMenuOpen ? null : item.id) }}
+                              onClick={e => {
+                                e.stopPropagation()
+                                // 選單約 90px 高，下方（含底部導覽列）空間不足就往上展開
+                                setMenuUp(window.innerHeight - e.currentTarget.getBoundingClientRect().bottom < 190)
+                                setOpenMenuId(isMenuOpen ? null : item.id)
+                              }}
                               style={{ background: 'none', border: 'none', padding: '4px 6px', cursor: 'pointer', color: '#c4a882', flexShrink: 0, display: 'flex', alignItems: 'center' }}
                             >
                               <MoreVertical size={18} />
@@ -647,7 +653,7 @@ const GroupPage = () => {
                                 onClick={() => setOpenMenuId(null)}
                                 style={{ position: 'fixed', inset: 0, zIndex: 10 }}
                               />
-                              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 11, background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 120 }}>
+                              <div style={{ position: 'absolute', ...(menuUp ? { bottom: 'calc(100% + 4px)' } : { top: 'calc(100% + 4px)' }), right: 0, zIndex: 11, background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 120 }}>
                                 <button
                                   onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/group/${id}/expense/${item.id}/edit`) }}
                                   style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: '#3d2b1f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}

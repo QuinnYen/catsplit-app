@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot, getDoc, getDocs, doc, updateDoc } from 'firebase/firestore'
-import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, X, FileText, ShieldCheck, LogOut, Trash2 } from 'lucide-react'
+import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2 } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import Avatar from '../components/Avatar'
@@ -374,41 +374,27 @@ const HomePage = () => {
 
       </div>
 
-      {/* 設定彈窗 */}
+      {/* 設定氣泡：從頭像旁展開 */}
       {showSettings && (
-        <div
-          onClick={() => setShowSettings(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: '20px 20px 0 0', padding: 20, paddingBottom: 28 }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: '#3d2b1f' }}>設定</div>
-              <button
-                onClick={() => setShowSettings(false)}
-                style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: '#b08060', display: 'flex' }}
-                aria-label="關閉"
-              >
-                <X size={20} />
-              </button>
-            </div>
+        <>
+          <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
+          <div style={{ position: 'fixed', top: 70, left: 16, zIndex: 101, width: 220, background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
+            <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: '#fff', borderTop: '0.5px solid #f0d5c0', borderLeft: '0.5px solid #f0d5c0', transform: 'rotate(45deg)' }} />
             {[
               { Icon: FileText, label: '使用條款', href: '/terms.html' },
               { Icon: ShieldCheck, label: '隱私權政策', href: '/privacy.html' },
               { Icon: LogOut, label: '登出', onClick: handleLogout },
               // 訪客名字屬於群組，不能自行刪除；由群組建立者移除
               ...(!user?.guest ? [{ Icon: Trash2, label: deletingData ? '刪除中...' : '刪除我的資料', onClick: handleDeleteMyData, disabled: deletingData, danger: true }] : []),
-            ].map(({ Icon, label, href, onClick, disabled, danger }) => {
-              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: '0.5px solid #f0d5c0', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: danger ? '#e53935' : '#3d2b1f', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
+            ].map(({ Icon, label, href, onClick, disabled, danger }, i) => {
+              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid #f0d5c0', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: danger ? '#e53935' : '#3d2b1f', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
               const content = <><Icon size={18} color={danger ? '#e53935' : '#b08060'} />{label}</>
               return href
                 ? <a key={label} href={href} style={style}>{content}</a>
                 : <button key={label} onClick={onClick} disabled={disabled} style={style}>{content}</button>
             })}
           </div>
-        </div>
+        </>
       )}
     </div>
   )
