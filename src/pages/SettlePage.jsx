@@ -285,14 +285,6 @@ const SettlePage = () => {
             </div>
           </div>
         )}
-
-        {/* 回群組按鈕 */}
-        <button
-          onClick={() => navigate(`/group/${id}`)}
-          style={{ width: '100%', padding: '15px 0', borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', color: '#FF8C42', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}
-        >
-          回到群組
-        </button>
       </div>
       <TabBar context="settle" groupId={id} />
     </div>

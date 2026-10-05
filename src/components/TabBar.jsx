@@ -41,13 +41,11 @@ const TabBar = ({ context = 'home', groupId }) => {
         return [
           { label: '首頁', path: '/' },
           { label: '群組', path: `/group/${groupId}` },
-          { label: '結算', path: `/group/${groupId}/settle` },
         ]
       case 'transfer':
         return [
           { label: '首頁', path: '/' },
           { label: '群組', path: `/group/${groupId}` },
-          { label: '結算', path: `/group/${groupId}/settle` },
         ]
       default:
         return []

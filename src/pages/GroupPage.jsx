@@ -34,19 +34,25 @@ const GroupPage = () => {
   const [groupMissing, setGroupMissing] = useState(false)
   const [loadedCover, setLoadedCover] = useState(null)
 
+  const [isMember, setIsMember] = useState(false)
+
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'groups', id), (snap) => {
       setGroupMissing(!snap.exists())
-      if (snap.exists()) setGroup({ id: snap.id, ...snap.data() })
+      if (!snap.exists()) return
+      const data = snap.data()
+      setGroup({ id: snap.id, ...data })
+      // 子集合只有成員讀得到；非成員時先不訂閱，否則被拒絕的監聽器不會在加入後自動恢復。
+      // 加入時本地快照會先於伺服器確認就出現新成員身分，此時訂閱會被規則拒絕，
+      // 所以寫入未確認前沿用先前的判斷，等伺服器確認後才開始訂閱
+      const member = !!data.members?.includes(user?.uid)
+      setIsMember(prev => (snap.metadata.hasPendingWrites ? prev : member))
     }, (error) => {
       console.error('讀取群組失敗:', error)
       setGroupMissing(true)
     })
     return () => unsubscribe()
-  }, [id])
-
-  // 子集合只有成員讀得到；非成員時先不訂閱，否則被拒絕的監聽器不會在加入後自動恢復
-  const isMember = !!group?.members?.includes(user?.uid)
+  }, [id, user?.uid])
 
   useEffect(() => {
     if (!isMember) return

@@ -436,7 +436,7 @@ const EditGroupPage = () => {
               onChange={e => setPlaceholderName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddPlaceholder()}
               maxLength={20}
-              placeholder="新增訪客名字（朋友免登入使用）"
+              placeholder="新增訪客名字"
               style={{ flex: 1, minWidth: 0, border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
             />
             <button

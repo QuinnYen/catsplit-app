@@ -127,18 +127,20 @@ const CreateGroupPage = () => {
           </div>
         </div>
 
-        {/* 建立按鈕 */}
-        <button
-          onClick={handleCreate}
-          disabled={!name.trim() || loading}
-          style={{
-            width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500, cursor: name.trim() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
-            background: name.trim() && !loading ? '#FF8C42' : '#e0c4b0',
-            color: '#fff',
-          }}
-        >
-          {loading ? '建立中...' : '建立群組'}
-        </button>
+        {/* 建立按鈕：固定在底部導覽列上方，捲動時一直可見 */}
+        <div style={{ position: 'sticky', bottom: 'calc(55px + env(safe-area-inset-bottom, 0px))', background: '#fff8f4', padding: '8px 0', zIndex: 5 }}>
+          <button
+            onClick={handleCreate}
+            disabled={!name.trim() || loading}
+            style={{
+              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500, cursor: name.trim() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
+              background: name.trim() && !loading ? '#FF8C42' : '#e0c4b0',
+              color: '#fff',
+            }}
+          >
+            {loading ? '建立中...' : '建立群組'}
+          </button>
+        </div>
       </div>
       <TabBar context="create" />
     </div>
