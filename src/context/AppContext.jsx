@@ -153,6 +153,7 @@ export const AppProvider = ({ children }) => {
               }).catch(() => {})
               return
             }
+            mark(`快速路徑未命中 cached=${!!cached} sub=${!!lineUid} 同uid=${cached?.uid === lineUid} firebase=${auth.currentUser?.uid === lineUid} 訪客名=${readGuestNames().length}`)
             // getIDToken 是同步的，getProfile 與 verifyLiffToken 兩個請求可同時發出
             const idToken = liff.getIDToken()
             const verifying = idToken && VERIFY_LIFF_TOKEN_URL
