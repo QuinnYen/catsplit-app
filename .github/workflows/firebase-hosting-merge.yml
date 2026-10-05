@@ -9,6 +9,7 @@ on:
     # 只改文件時不重新部署
     paths-ignore:
       - '**.md'
+      - 'docs/**'
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest

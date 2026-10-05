@@ -17,9 +17,6 @@ dist
 dist-ssr
 *.local
 
-# Local docs
-docs/
-
 # Tool & CLI local data
 .firebase/
 .claude/
