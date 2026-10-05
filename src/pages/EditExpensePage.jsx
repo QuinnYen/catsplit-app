@@ -4,7 +4,6 @@ import { doc, collection, getDoc, getDocs, updateDoc, deleteDoc, Timestamp } fro
 import { ref, uploadBytes } from 'firebase/storage'
 import { CheckCircle2, Trash2 } from 'lucide-react'
 import { db, storage } from '../config/firebase'
-import imageCompression from 'browser-image-compression'
 import TabBar from '../components/TabBar'
 import ExpenseForm from '../components/ExpenseForm'
 import { DEFAULT_CATEGORIES } from '../config/expenseForm'
@@ -177,6 +176,7 @@ const EditExpensePage = () => {
 
   const handleReceiptUpdate = async () => {
     if (receiptFile) {
+      const { default: imageCompression } = await import('browser-image-compression')
       const compressed = await imageCompression(receiptFile, { maxSizeMB: 0.3, maxWidthOrHeight: 1200, useWebWorker: true })
       const ext = receiptFile.type === 'image/png' ? 'png' : 'jpg'
       const storageRef = ref(storage, `receipts/${id}/${expenseId}/${Date.now()}.${ext}`)

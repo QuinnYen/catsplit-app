@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, getDoc, updateDoc, arrayRemove, arrayUnion, collection, getDocs, writeBatch } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import imageCompression from 'browser-image-compression'
 import { db, storage } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
 import GroupIconPicker from '../components/GroupIconPicker'
-import CropModal from '../components/CropModal'
 import PawDecor from '../components/PawDecor'
 import { deleteGroupFiles } from '../utils/storageCleanup'
+
+// 裁圖元件（含 react-easy-crop）選了圖片才需要
+const CropModal = lazy(() => import('../components/CropModal'))
 
 const EditGroupPage = () => {
   const { id } = useParams()
@@ -75,6 +76,7 @@ const EditGroupPage = () => {
     if (!file || !file.type.startsWith('image/')) return
     try {
       // 先縮小，避免相機原圖過大塞爆 canvas；同時修正 EXIF 旋轉
+      const { default: imageCompression } = await import('browser-image-compression')
       const resized = await imageCompression(file, { maxSizeMB: 1.5, maxWidthOrHeight: 1600, useWebWorker: true })
       setCropSrc(URL.createObjectURL(resized))
     } catch (error) {
@@ -498,7 +500,11 @@ const EditGroupPage = () => {
 
       </div>
 
-      {cropSrc && <CropModal imageSrc={cropSrc} onCancel={closeCrop} onConfirm={handleCoverConfirm} />}
+      {cropSrc && (
+        <Suspense fallback={null}>
+          <CropModal imageSrc={cropSrc} onCancel={closeCrop} onConfirm={handleCoverConfirm} />
+        </Suspense>
+      )}
     </div>
   )
 }

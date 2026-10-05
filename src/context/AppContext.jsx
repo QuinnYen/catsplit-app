@@ -130,14 +130,17 @@ export const AppProvider = ({ children }) => {
           const liff = await initLiff()
           setLiffInstance(liff)
           if (liff.isLoggedIn()) {
-            const profile = await liff.getProfile()
+            // getIDToken 是同步的，getProfile 與 verifyLiffToken 兩個請求可同時發出
             const idToken = liff.getIDToken()
-            if (idToken && VERIFY_LIFF_TOKEN_URL) {
-              const res = await fetch(VERIFY_LIFF_TOKEN_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken }),
-              })
+            const verifying = idToken && VERIFY_LIFF_TOKEN_URL
+              ? fetch(VERIFY_LIFF_TOKEN_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ idToken }),
+                })
+              : null
+            const [profile, res] = await Promise.all([liff.getProfile(), verifying])
+            if (res) {
               if (res.ok) {
                 const data = await res.json()
                 await signInWithLineToken(data.firebaseToken, profile.pictureUrl)

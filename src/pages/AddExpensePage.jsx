@@ -11,7 +11,6 @@ import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { todayStr, computeSplits, applyExchangeRate, buildPayments, payerLabel } from '../utils/expenseHelpers'
 import { getCurrency } from '../config/currencies'
-import imageCompression from 'browser-image-compression'
 
 const AddExpensePage = () => {
   const { id } = useParams()
@@ -100,6 +99,7 @@ const AddExpensePage = () => {
 
   const uploadReceipt = async (expenseId) => {
     if (!receiptFile) return null
+    const { default: imageCompression } = await import('browser-image-compression')
     const compressed = await imageCompression(receiptFile, { maxSizeMB: 0.3, maxWidthOrHeight: 1200, useWebWorker: true })
     const ext = receiptFile.type === 'image/png' ? 'png' : 'jpg'
     const storageRef = ref(storage, `receipts/${id}/${expenseId}/${Date.now()}.${ext}`)
