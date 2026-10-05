@@ -51,6 +51,17 @@
 - **Rules 限制訪客**：`isLineUser()` 以 `guest` claim 判斷，訪客不能建立群組、加入其他群組、退出群組。虛擬成員 id 以 `p_` 開頭，LINE userId 不含底線，不會撞號；成員新增虛擬成員的規則是 `addsPlaceholder()`。
 - 訪客同名（忽略大小寫與全半形）會被拒絕，避免同一人變成兩個成員。
 
+## 啟動速度
+
+從 LINE 開啟時，畫面要等登入完成才會出現，所以啟動流程是效能重點（實機約 2.6 秒 → 重複開啟約 0.5 秒、完整流程約 1.2 秒）：
+
+- **快速路徑**（`AppContext.jsx`）：`liff.init` 之後，若 Firebase 已恢復登入，且它的 uid、快取使用者 uid、`liff.getDecodedIDToken().sub` 三者相同，且沒有待認領的訪客名字，就直接沿用快取使用者，**不呼叫 `verifyLiffToken`、不重新 `signInWithCustomToken`**，名字與頭像改在背景更新。任何條件不符就走完整流程。
+- **不要拿掉 `auth.authStateReady()`**：Firestore 查詢必須等 Firebase Auth 恢復，否則 `request.auth` 是 null，`onSnapshot` 會被 rules 拒絕且不會重試。
+- **有待認領的訪客名字時一定要走完整流程**，認領是在 `signInWithLineToken` 裡做的。
+- 完整流程中 `getProfile` 與 `verifyLiffToken` 是平行發出的，因為 `liff.getIDToken()` 是同步的。
+- 首頁與群組頁（邀請連結落地頁）直接載入，其餘頁面用 `React.lazy`；圖片壓縮與裁切套件用到才載入。`vite.config.js` 把 react、firebase、liff 拆成獨立檔案，改版後使用者只需重下 app 本體。
+- 評估後**沒有**設 `minInstances`：`verifyLiffToken` 常駐約每月 $2.88，而快速路徑下重複開啟不會呼叫它。若之後發現完整流程常發生，再回頭設。
+
 ## 開發環境設定
 
 ### 1. 安裝套件
@@ -96,7 +107,7 @@ npm run build
 firebase deploy
 ```
 
-推送到 `main` 時由 GitHub Actions 部署 hosting、functions 與 rules。**若刪除或改名 function，CI 會因為不能互動刪除而中止**，需先手動 `firebase functions:delete <名稱> --region asia-east1`，再重跑部署。
+推送到 `main` 時由 GitHub Actions 部署 hosting、functions 與 rules。**若刪除或改名 function，CI 會因為不能互動刪除而中止**，需先手動 `firebase functions:delete <名稱> --region asia-east1`，再重跑部署。同理，**設定 `minInstances` 會增加最低帳單，CI 也會因為不能互動確認而中止**，需先在本機執行一次 `firebase deploy --only functions:<名稱>` 並確認費用。
 
 ## 安全與維運
 
@@ -162,7 +173,7 @@ gcloud storage buckets update gs://catsplit-app.firebasestorage.app --cors-file=
 ```
 src/
 ├── main.jsx                 # 入口；把 liff.state 換回真正路徑，包上 AppProvider
-├── App.jsx                  # 路由、登入畫面、訪客自動切換群組
+├── App.jsx                  # 路由（多數頁面 lazy）、登入畫面、訪客自動切換群組
 ├── config/                  # firebase、liff、幣別、記帳表單常數、群組圖示
 ├── context/AppContext.jsx   # 全域 user 狀態、LINE / 訪客登入、認領、訪客名字記錄
 ├── hooks/                   # 匯率、Storage 圖片（以登入身分下載）
