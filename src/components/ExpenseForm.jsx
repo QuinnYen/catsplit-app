@@ -459,6 +459,9 @@ const ExpenseForm = ({
         )}
       </div>
 
+      {/* LINE 分享 — 僅在 LINE app 內顯示 */}
+      {showShareOption && <ShareToLineToggle checked={shareToLine} onChange={setShareToLine} />}
+
       {/* 收據上傳 */}
       {setReceiptFile && (
         <div style={cardStyle}>
@@ -512,9 +515,6 @@ const ExpenseForm = ({
           )}
         </div>
       )}
-
-      {/* LINE 分享 — 僅在 LINE app 內顯示 */}
-      {showShareOption && <ShareToLineToggle checked={shareToLine} onChange={setShareToLine} />}
     </>
   )
 }
