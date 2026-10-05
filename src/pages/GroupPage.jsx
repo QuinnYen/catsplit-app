@@ -37,7 +37,8 @@ const GroupPage = () => {
   const [isMember, setIsMember] = useState(false)
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'groups', id), (snap) => {
+    // includeMetadataChanges：伺服器確認寫入時資料沒變，預設不會再觸發，isMember 就卡在 false
+    const unsubscribe = onSnapshot(doc(db, 'groups', id), { includeMetadataChanges: true }, (snap) => {
       setGroupMissing(!snap.exists())
       if (!snap.exists()) return
       const data = snap.data()
