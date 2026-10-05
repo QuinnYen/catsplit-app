@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'
 
 import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight } from 'lucide-react'
-import { db } from '../config/firebase'
+import { db, auth } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import GuestJoin from '../components/GuestJoin'
 import TabBar from '../components/TabBar'
@@ -14,6 +14,8 @@ import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
 import { computeMemberBalances, computeMemberExpenseCounts, matchExpense, payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
+
+const EXPORT_CSV_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/exportCsv')
 
 const GroupPage = () => {
   const { id } = useParams()
@@ -126,7 +128,7 @@ const GroupPage = () => {
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     const header = ['日期', '標題', '類別', '付款人', `原始金額`, '幣別', `換算金額(${group.baseCurrency})`, '分帳方式', '備註']
     const rows = [...expenses].reverse().map(e => {
       const date = e.createdAt?.toDate
@@ -156,13 +158,34 @@ const GroupPage = () => {
       return `"${(typeof v === 'string' && /^[=+\-@\t\r]/.test(s) ? "'" + s : s).replace(/"/g, '""')}"`
     }
     const csv = bom + [header, ...rows].map(r => r.map(escapeCell).join(',')).join('\n')
+    const filename = `${group.name}_支出明細.csv`
+
+    // LINE 內建瀏覽器無法下載 blob：請雲端函式存檔並回傳短效網址，在外部瀏覽器開啟下載
+    if (liffInstance?.isInClient?.() && EXPORT_CSV_URL) {
+      try {
+        const idToken = await auth.currentUser.getIdToken()
+        const res = await fetch(EXPORT_CSV_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+          body: JSON.stringify({ groupId: id, csv, filename }),
+        })
+        if (!res.ok) throw new Error(`exportCsv ${res.status}`)
+        const { url } = await res.json()
+        liffInstance.openWindow({ url, external: true })
+      } catch (e) {
+        console.error('匯出失敗', e)
+        alert('匯出失敗，請稍後再試')
+      }
+      return
+    }
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${group.name}_支出明細.csv`
+    a.download = filename
     a.click()
-    URL.revokeObjectURL(url)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   // 邀請：LINE 內用好友選擇器 → 支援的瀏覽器用系統分享選單 → 最後複製連結

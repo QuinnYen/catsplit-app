@@ -16,6 +16,28 @@
 gcloud storage buckets update gs://catsplit-app.firebasestorage.app --cors-file=storage-cors.json
 ```
 
+## 匯出 CSV（`exportCsv`）
+
+LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 CSV 傳給 `exportCsv`，函式驗證登入與群組成員身分後存到 Storage 的 `exports/`，回傳 **5 分鐘有效的簽名網址**，再用 `liff.openWindow({ external: true })` 開外部瀏覽器下載。一般瀏覽器仍直接下載，不經過函式。
+
+首次部署前要手動設定兩件事（不會隨部署更新）：
+
+1. **簽名權限**：函式用執行時的服務帳號簽網址，該帳號需要「Service Account Token Creator」，並啟用 IAM Service Account Credentials API。
+
+   ```bash
+   gcloud services enable iamcredentials.googleapis.com --project=catsplit-app
+   SA=$(gcloud projects describe catsplit-app --format='value(projectNumber)')-compute@developer.gserviceaccount.com
+   gcloud iam service-accounts add-iam-policy-binding $SA      --member="serviceAccount:$SA" --role=roles/iam.serviceAccountTokenCreator --project=catsplit-app
+   ```
+
+2. **自動清除**：`exports/` 底下的檔案 1 天後刪除（設定在 `storage-lifecycle.json`）。這個指令會**取代整個 bucket 的生命週期設定**，目前沒有其他規則。
+
+   ```bash
+   gcloud storage buckets update gs://catsplit-app.firebasestorage.app --lifecycle-file=storage-lifecycle.json
+   ```
+
+`storage.rules` 沒有 `exports/` 的規則，所以前端無法直接讀寫，只有函式（Admin SDK）能存取。
+
 ## 綁定正式網域時要一起改
 
 漏改會導致登入或收據載入失敗。
@@ -28,7 +50,7 @@ gcloud storage buckets update gs://catsplit-app.firebasestorage.app --cors-file=
 
 - Firestore 已開啟時間點復原（PITR，保留 7 天）。**Storage 的收據圖片沒有備份**。
 - Google Cloud 已設預算警示。
-- Cloud Functions（`lineLogin`、`verifyLiffToken`、`guestLogin`、`claimMember`）為公開端點，已設 `maxInstances: 5`。
+- Cloud Functions（`lineLogin`、`verifyLiffToken`、`guestLogin`、`claimMember`、`exportCsv`）為公開端點，已設 `maxInstances: 5`。
 
 ## 分帳計算
 

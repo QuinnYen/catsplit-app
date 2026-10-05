@@ -62,7 +62,7 @@ VITE_FIREBASE_APP_ID=
 VITE_APPCHECK_SITE_KEY=   # 選填，reCAPTCHA v3 site key；沒設定則不啟用 App Check
 ```
 
-`VITE_TOKEN_EXCHANGE_URL` 是 `lineLogin` 的網址；`verifyLiffToken`、`guestLogin`、`claimMember` 的網址由它把結尾換掉推算出來。
+`VITE_TOKEN_EXCHANGE_URL` 是 `lineLogin` 的網址；`verifyLiffToken`、`guestLogin`、`claimMember`、`exportCsv` 的網址由它把結尾換掉推算出來。
 
 ### 3. 啟動開發伺服器
 

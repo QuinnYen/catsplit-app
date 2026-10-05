@@ -3,6 +3,7 @@ import { defineSecret } from 'firebase-functions/params'
 import { initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
+import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
 
 initializeApp()
@@ -365,6 +366,67 @@ export const claimMember = onRequest(
       res.json({ ok: true })
     } catch (e) {
       console.error('claimMember error', e)
+      res.status(500).json({ error: 'internal_error' })
+    }
+  }
+)
+
+// ---------- 匯出 CSV：LINE 內建瀏覽器無法下載 blob，改給一個短效網址在外部瀏覽器下載 ----------
+
+const EXPORT_URL_TTL_MS = 5 * 60 * 1000
+const MAX_CSV_CHARS = 1_000_000
+
+/**
+ * 把前端產生的 CSV 存到 Storage（exports/，由 bucket 的生命週期規則 1 天後清除），
+ * 回傳 5 分鐘內有效的簽名網址，開啟即下載。需登入且是該群組成員（訪客也可）。
+ * body { groupId, csv, filename }。簽名需要服務帳號有 Service Account Token Creator 權限（見 docs/operations.md）。
+ */
+export const exportCsv = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5 },
+  async (req, res) => {
+    setCors(req, res)
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('')
+      return
+    }
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'method_not_allowed' })
+      return
+    }
+
+    const caller = await verifyBearer(req)
+    if (!caller) {
+      res.status(401).json({ error: 'unauthenticated' })
+      return
+    }
+
+    const { groupId, csv, filename } = req.body || {}
+    if (typeof csv !== 'string' || csv.length === 0 || csv.length > MAX_CSV_CHARS) {
+      res.status(400).json({ error: 'invalid_csv' })
+      return
+    }
+
+    try {
+      const group = await readGroup(groupId)
+      if (!group || !group.members.includes(caller.uid)) {
+        res.status(403).json({ error: 'not_a_member' })
+        return
+      }
+
+      // 檔名只留可見字元，去掉路徑與控制字元，一律以 .csv 結尾
+      const base = String(filename || 'export').replace(/[\u0000-\u001f\\/:*?"<>|]/g, '_').replace(/\.csv$/i, '').slice(0, 80) || 'export'
+      const file = getStorage().bucket().file(`exports/${groupId}/${randomBytes(16).toString('hex')}.csv`)
+      await file.save(Buffer.from(csv, 'utf8'), { contentType: 'text/csv; charset=utf-8', resumable: false })
+      const [url] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + EXPORT_URL_TTL_MS,
+        responseType: 'text/csv; charset=utf-8',
+        responseDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(base + '.csv')}`,
+      })
+      res.json({ url })
+    } catch (e) {
+      console.error('exportCsv error', e)
       res.status(500).json({ error: 'internal_error' })
     }
   }
