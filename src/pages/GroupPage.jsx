@@ -30,6 +30,7 @@ const GroupPage = () => {
   const [searchText, setSearchText] = useState('')
   const [openMenuId, setOpenMenuId] = useState(null)
   const [menuUp, setMenuUp] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [detailSettlementId, setDetailSettlementId] = useState(null)
   const [joining, setJoining] = useState(false)
   const [joinError, setJoinError] = useState('')
@@ -129,6 +130,7 @@ const GroupPage = () => {
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
 
   const handleExportCSV = async () => {
+    if (exporting) return
     const header = ['日期', '標題', '類別', '付款人', `原始金額`, '幣別', `換算金額(${group.baseCurrency})`, '分帳方式', '備註']
     const rows = [...expenses].reverse().map(e => {
       const date = e.createdAt?.toDate
@@ -162,6 +164,7 @@ const GroupPage = () => {
 
     // LINE 內建瀏覽器無法下載 blob：請雲端函式存檔並回傳短效網址，在外部瀏覽器開啟下載
     if (liffInstance?.isInClient?.() && EXPORT_CSV_URL) {
+      setExporting(true)
       try {
         const idToken = await auth.currentUser.getIdToken()
         const res = await fetch(EXPORT_CSV_URL, {
@@ -175,6 +178,8 @@ const GroupPage = () => {
       } catch (e) {
         console.error('匯出失敗', e)
         alert('匯出失敗，請稍後再試')
+      } finally {
+        setExporting(false)
       }
       return
     }
@@ -422,10 +427,10 @@ const GroupPage = () => {
           </button>
           <button
             onClick={handleExportCSV}
-            disabled={expenses.length === 0}
-            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: expenses.length === 0 ? 'not-allowed' : 'pointer', flexShrink: 0, opacity: expenses.length === 0 ? 0.5 : 1 }}
+            disabled={expenses.length === 0 || exporting}
+            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: expenses.length === 0 || exporting ? 'not-allowed' : 'pointer', flexShrink: 0, opacity: expenses.length === 0 || exporting ? 0.5 : 1 }}
           >
-            匯出
+            {exporting ? '匯出中...' : '匯出'}
           </button>
           <button
             onClick={() => navigate(`/group/${id}/edit`)}
