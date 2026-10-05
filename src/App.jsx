@@ -1,21 +1,22 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useApp } from './context/AppContext'
 import GuestJoin from './components/GuestJoin'
 import catLogo from './assets/cat-logo.webp'
 import { MessageCircle, PawPrint, Wallet } from 'lucide-react'
 
+// 首頁與群組頁是主要落地頁（含邀請連結），直接載入；其餘頁面用到才下載
 import HomePage from './pages/HomePage'
-import CreateGroupPage from './pages/CreateGroupPage'
 import GroupPage from './pages/GroupPage'
-import AddExpensePage from './pages/AddExpensePage'
-import SettlePage from './pages/SettlePage'
-import EditGroupPage from './pages/EditGroupPage'
-import TransferPage from './pages/TransferPage'
-import EditExpensePage from './pages/EditExpensePage'
-import ExpenseDetailPage from './pages/ExpenseDetailPage'
-import StatsPage from './pages/StatsPage'
-import AuthCallbackPage from './pages/AuthCallbackPage'
+const CreateGroupPage = lazy(() => import('./pages/CreateGroupPage'))
+const AddExpensePage = lazy(() => import('./pages/AddExpensePage'))
+const SettlePage = lazy(() => import('./pages/SettlePage'))
+const EditGroupPage = lazy(() => import('./pages/EditGroupPage'))
+const TransferPage = lazy(() => import('./pages/TransferPage'))
+const EditExpensePage = lazy(() => import('./pages/EditExpensePage'))
+const ExpenseDetailPage = lazy(() => import('./pages/ExpenseDetailPage'))
+const StatsPage = lazy(() => import('./pages/StatsPage'))
+const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
 
 const LoadingScreen = () => (
   <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -122,7 +123,9 @@ const AppRoutes = () => {
 
 const App = () => (
   <BrowserRouter>
-    <AppRoutes />
+    <Suspense fallback={<LoadingScreen />}>
+      <AppRoutes />
+    </Suspense>
   </BrowserRouter>
 )
 
