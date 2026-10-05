@@ -4,7 +4,6 @@ import { collection, query, where, orderBy, onSnapshot, getDoc, getDocs, doc, up
 import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, X, FileText, ShieldCheck, LogOut, Trash2 } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
-import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
@@ -240,7 +239,7 @@ const HomePage = () => {
       </div>
 
       {/* 內容 */}
-      <div style={{ padding: '16px', flex: 1, paddingBottom: 80, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '16px', flex: 1, paddingBottom: 24, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>我的群組</div>
           {!user?.guest && (
@@ -411,8 +410,6 @@ const HomePage = () => {
           </div>
         </div>
       )}
-
-      <TabBar context="home" />
     </div>
   )
 }

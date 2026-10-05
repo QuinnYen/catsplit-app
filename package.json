@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "emulators": "firebase emulators:start --only auth,firestore,storage --import=.emulator-data --export-on-exit",
     "build": "vite build",
     "lint": "eslint .",
     "test": "node --test",

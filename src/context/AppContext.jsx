@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { signInWithCustomToken, signOut, onAuthStateChanged } from 'firebase/auth'
+import { signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../config/firebase'
 import { initLiff } from '../config/liff'
 
@@ -111,8 +111,11 @@ export const AppProvider = ({ children }) => {
       try {
         // 本機開發模式
         if (import.meta.env.DEV) {
+          // 在 Auth Emulator 匿名登入，uid 才會通過 Firestore rules
+          await auth.authStateReady()
+          const { user: devUser } = auth.currentUser ? { user: auth.currentUser } : await signInAnonymously(auth)
           setUser({
-            uid: 'dev-user-001',
+            uid: devUser.uid,
             name: '開發測試用戶',
             avatar: 'https://api.dicebear.com/7.x/adventurer/png?seed=Felix',
           })

@@ -66,11 +66,14 @@ VITE_APPCHECK_SITE_KEY=   # 選填，reCAPTCHA v3 site key；沒設定則不啟�
 
 ### 3. 啟動開發伺服器
 
+先啟動 Firebase Emulator（需安裝 Java JDK 21+ 與 `firebase-tools`），再開另一個終端機跑 dev：
+
 ```bash
+npm run emulators
 npm run dev
 ```
 
-本機開發模式會直接以假使用者登入，不經過 LINE。
+本機開發模式不經過 LINE，會在 Auth Emulator 匿名登入成假使用者，Firestore / Storage 也都連本機模擬器（套用專案的 rules），不會動到正式資料。模擬器資料離開時匯出到 `.emulator-data/`。
 
 ## 部署
 

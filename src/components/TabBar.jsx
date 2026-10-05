@@ -1,4 +1,13 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { House, Users, CirclePlus, Calculator } from 'lucide-react'
+
+// 導覽類（首頁、群組）用灰褐色；動作類（新增、結算）用主色，讓主要操作更醒目
+const TAB_ICONS = {
+  '首頁': { Icon: House },
+  '群組': { Icon: Users },
+  '新增支出': { Icon: CirclePlus, action: true },
+  '結算': { Icon: Calculator, action: true },
+}
 
 /**
  * TabBar - 共用底部導覽列
@@ -12,15 +21,9 @@ const TabBar = ({ context = 'home', groupId }) => {
 
   const tabs = (() => {
     switch (context) {
-      case 'home':
-        return [
-          { label: '首頁', path: '/' },
-          { label: '建立群組', path: '/create' },
-        ]
       case 'create':
         return [
           { label: '首頁', path: '/' },
-          { label: '建立群組', path: '/create' },
         ]
       case 'group':
         return [
@@ -65,16 +68,19 @@ const TabBar = ({ context = 'home', groupId }) => {
     }}>
       {tabs.map((tab, i) => {
         const isActive = location.pathname === tab.path
+        const { Icon, action } = TAB_ICONS[tab.label]
+        const color = isActive || action ? '#FF6B1A' : '#b08060'
         return (
           <button
             key={i}
+            aria-label={tab.label}
             onClick={() => !isActive && navigate(tab.path)}
             style={{
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 0,
+              gap: 3,
               background: 'none',
               border: 'none',
               cursor: isActive ? 'default' : 'pointer',
@@ -82,14 +88,9 @@ const TabBar = ({ context = 'home', groupId }) => {
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <span style={{
-              fontSize: 13,
-              fontWeight: isActive ? 600 : 400,
-              color: isActive ? '#FF6B1A' : '#b08060',
-              transition: 'color 0.15s',
-            }}>
-              {tab.label}
-            </span>
+            {Icon
+              ? <Icon size={context === 'group' ? 30 : 26} color={color} strokeWidth={isActive ? 2.4 : 1.8} />
+              : <span style={{ fontSize: 20, fontWeight: 600, color }}>{tab.label}</span>}
             {isActive && (
               <span style={{
                 width: 4,
