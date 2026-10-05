@@ -1,3 +1,4 @@
+// /group/:id/add — 新增支出：填寫標題、時間、金額、付款人與分攤方式，可附收據，存檔後更新群組餘額與統計。
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { collection, writeBatch, Timestamp, serverTimestamp, doc, getDoc, updateDoc, increment } from 'firebase/firestore'
@@ -9,7 +10,7 @@ import TabBar from '../components/TabBar'
 import ExpenseForm from '../components/ExpenseForm'
 import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
-import { todayStr, computeSplits, applyExchangeRate, buildPayments, payerLabel } from '../utils/expenseHelpers'
+import { nowStr, computeSplits, applyExchangeRate, buildPayments, payerLabel } from '../utils/expenseHelpers'
 import { getCurrency } from '../config/currencies'
 
 const AddExpensePage = () => {
@@ -34,7 +35,7 @@ const AddExpensePage = () => {
   const [subsetMembers, setSubsetMembers] = useState({})
   const [currency, setCurrency] = useState('TWD')
   const [baseCurrency, setBaseCurrency] = useState('TWD')
-  const [expenseDate, setExpenseDate] = useState(todayStr)
+  const [expenseDate, setExpenseDate] = useState(nowStr)
   const [shareToLine, setShareToLine] = useState(false)
   const [receiptFile, setReceiptFile] = useState(null)
   const [receiptPreview, setReceiptPreview] = useState(null)
@@ -131,6 +132,7 @@ const AddExpensePage = () => {
         ...(splitType === 'shares' && { shares }),
         createdBy: user.uid,
         createdAt: Timestamp.fromDate(new Date(expenseDate)),
+        hasTime: true,
         addedAt: serverTimestamp(),
       })
 

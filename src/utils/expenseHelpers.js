@@ -3,6 +3,18 @@ export const toLocalDateStr = (d) =>
 
 export const todayStr = () => toLocalDateStr(new Date())
 
+// datetime-local 輸入框用的 YYYY-MM-DDTHH:mm（本地時間，精確到分）
+export const toLocalDateTimeStr = (d) =>
+  `${toLocalDateStr(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+
+export const nowStr = () => toLocalDateTimeStr(new Date())
+
+// 消費時間（hh:mm）；只有存了 hasTime 的支出才有真實時間，舊資料只有日期
+export const expenseTimeStr = (item) =>
+  item.hasTime && item.createdAt?.toDate
+    ? item.createdAt.toDate().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
+    : ''
+
 const normalizeText = (s) => String(s ?? '').normalize('NFKC').toLowerCase()
 
 /**

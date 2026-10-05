@@ -1,3 +1,4 @@
+// /group/:id/expense/:expenseId — 單筆支出明細：金額、付款人、分攤與收據，可進入編輯。
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
@@ -7,7 +8,7 @@ import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
-import { toLocalDateStr, payerLabel } from '../utils/expenseHelpers'
+import { toLocalDateStr, expenseTimeStr, payerLabel } from '../utils/expenseHelpers'
 import { useStorageImage } from '../hooks/useStorageImage'
 
 const SPLIT_LABEL = {
@@ -56,6 +57,7 @@ const ExpenseDetailPage = () => {
   const dateStr = expense.createdAt?.toDate
     ? toLocalDateStr(expense.createdAt.toDate())
     : ''
+  const timeStr = expenseTimeStr(expense)
 
   const totalShares = expense.shares
     ? Object.values(expense.shares).reduce((s, v) => s + (Number(v) || 0), 0)
@@ -92,7 +94,7 @@ const ExpenseDetailPage = () => {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 17, fontWeight: 600, color: '#3d2b1f', marginBottom: 4, wordBreak: 'break-word' }}>{expense.title}</div>
-              <div style={{ fontSize: 12, color: '#b08060' }}>{dateStr}</div>
+              <div style={{ fontSize: 12, color: '#b08060' }}>{dateStr}{timeStr && ` ${timeStr}`}</div>
             </div>
           </div>
 

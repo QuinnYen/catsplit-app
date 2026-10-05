@@ -1,3 +1,4 @@
+// /group/:id — 群組首頁：總支出、依時間排列的支出與轉帳紀錄（可搜尋、依類別篩選）；訪客從邀請連結進來時也在此選名字加入。
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'
@@ -11,7 +12,7 @@ import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
-import { computeMemberBalances, computeMemberExpenseCounts, matchExpense, payerLabel } from '../utils/expenseHelpers'
+import { computeMemberBalances, computeMemberExpenseCounts, matchExpense, payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
 
 const GroupPage = () => {
@@ -524,19 +525,22 @@ const GroupPage = () => {
           )
 
           // Merge expenses and settlements into unified timeline: by date (createdAt) desc,
-          // then within the same day by actual add time (addedAt, falling back to createdAt) desc
+          // then within the same day by time desc: 有 hasTime 的支出用消費時間（createdAt），
+          // 其餘（舊支出、轉帳）用實際記帳時間（addedAt，退回 createdAt）
           const dayKey = (item) => {
             const d = item.createdAt?.toDate?.()
             return d ? d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() : 0
           }
           // addedAt 為 null 代表剛寫入、伺服器時間尚未回填，視為最新
-          const addTime = (item) => item.addedAt === null
-            ? Infinity
-            : (item.addedAt?.toMillis?.() ?? item.createdAt?.toMillis?.() ?? 0)
+          const sortTime = (item) => item.hasTime
+            ? (item.createdAt?.toMillis?.() ?? 0)
+            : item.addedAt === null
+              ? Infinity
+              : (item.addedAt?.toMillis?.() ?? item.createdAt?.toMillis?.() ?? 0)
           const allItems = [
             ...filteredExpenses.map(e => ({ ...e, _type: 'expense' })),
             ...(activeCategory || isSearching ? [] : settlements.map(s => ({ ...s, _type: 'settlement' }))),
-          ].sort((a, b) => dayKey(b) - dayKey(a) || addTime(b) - addTime(a))
+          ].sort((a, b) => dayKey(b) - dayKey(a) || sortTime(b) - sortTime(a))
 
           if (allItems.length === 0) return null
 
@@ -619,7 +623,7 @@ const GroupPage = () => {
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {payerLabel(item.payments, group.memberProfiles)}
                                 </span>
-                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;付款</span>
+                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;付款{expenseTimeStr(item) && ` · ${expenseTimeStr(item)}`}</span>
                               </div>
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>

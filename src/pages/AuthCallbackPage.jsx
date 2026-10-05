@@ -1,3 +1,4 @@
+// /auth/callback — LINE OAuth 登入回呼頁：用網址上的 code 與 state 完成登入，成功後導回原本要去的站內頁面。
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext'

@@ -1,3 +1,4 @@
+// /group/:id/expense/:expenseId/edit — 編輯或刪除單筆支出，並重新計算群組餘額與統計。
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore'
@@ -9,7 +10,7 @@ import ExpenseForm from '../components/ExpenseForm'
 import { DEFAULT_CATEGORIES } from '../config/expenseForm'
 import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
-import { toLocalDateStr, computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, buildPayments, primaryPayer } from '../utils/expenseHelpers'
+import { toLocalDateTimeStr, computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, buildPayments, primaryPayer } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
 
 const EditExpensePage = () => {
@@ -80,7 +81,7 @@ const EditExpensePage = () => {
       setSplitType(expense.splitType || 'equal')
 
       const dateTs = expense.createdAt?.toDate?.()
-      setExpenseDate(dateTs ? toLocalDateStr(dateTs) : toLocalDateStr(new Date()))
+      setExpenseDate(toLocalDateTimeStr(dateTs ?? new Date()))
 
       const isCustomCat = !DEFAULT_CATEGORIES.includes(expense.category)
       if (isCustomCat) {
@@ -213,6 +214,7 @@ const EditExpensePage = () => {
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
         createdAt: Timestamp.fromDate(new Date(expenseDate)),
+        hasTime: true,
         ...receiptUpdate,
       })
 

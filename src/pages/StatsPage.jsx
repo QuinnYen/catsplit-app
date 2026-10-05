@@ -1,3 +1,4 @@
+// /group/:id/stats — 群組統計：總覽、類別佔比、每月趨勢與每人付款。
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'

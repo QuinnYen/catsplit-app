@@ -1,3 +1,4 @@
+// /group/:id/settle — 結算：每人餘額、最少轉帳次數的轉帳建議（可換算貨幣）與已結清紀錄。
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'

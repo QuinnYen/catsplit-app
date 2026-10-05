@@ -1,3 +1,4 @@
+// /group/:id/edit — 群組設定：改名稱、圖示與封面、管理成員，以及退出、封存或刪除群組。
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, getDoc, updateDoc, arrayRemove, arrayUnion, collection, getDocs, writeBatch } from 'firebase/firestore'

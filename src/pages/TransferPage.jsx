@@ -1,3 +1,4 @@
+// /group/:id/transfer — 記錄一筆轉帳（結清欠款）：確認金額、付款方式與備註後存檔。
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'

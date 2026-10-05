@@ -1,3 +1,4 @@
+// /create — 建立群組：設定名稱、圖示與結算基準貨幣（訪客不能進入）。
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
