@@ -281,21 +281,24 @@ const AddExpensePage = () => {
           showShareOption={safeIsInClient()}
         />
 
-        <button
-          onClick={handleSubmit}
-          disabled={!isValid() || loading}
-          style={{
-            width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
-            cursor: isValid() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
-            background: isValid() && !loading ? '#FF8C42' : '#e0c4b0', color: '#fff',
-          }}
-        >
-          {loading ? '新增中...' : (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircle2 size={16} /> 確認新增
-            </span>
-          )}
-        </button>
+        {/* 固定在底部導覽列上方，捲動時一直可見 */}
+        <div style={{ position: 'sticky', bottom: 'calc(55px + env(safe-area-inset-bottom, 0px))', background: '#fff8f4', padding: '8px 0', zIndex: 5 }}>
+          <button
+            onClick={handleSubmit}
+            disabled={!isValid() || loading}
+            style={{
+              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
+              cursor: isValid() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
+              background: isValid() && !loading ? '#FF8C42' : '#e0c4b0', color: '#fff',
+            }}
+          >
+            {loading ? '新增中...' : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircle2 size={16} /> 確認新增
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       <TabBar context="expense" groupId={id} />

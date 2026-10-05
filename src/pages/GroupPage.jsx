@@ -17,7 +17,7 @@ import { deleteFileByPath } from '../utils/storageCleanup'
 
 const GroupPage = () => {
   const { id } = useParams()
-  const { user, claimMember } = useApp()
+  const { user, claimMember, liffInstance } = useApp()
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
@@ -158,14 +158,33 @@ const GroupPage = () => {
     URL.revokeObjectURL(url)
   }
 
-  const handleInvite = () => {
+  // 邀請：LINE 內用好友選擇器 → 支援的瀏覽器用系統分享選單 → 最後複製連結
+  const handleInvite = async () => {
     const liffId = import.meta.env.VITE_LIFF_ID
     const url = `https://liff.line.me/${liffId}/group/${id}`
-    if (navigator.share) {
-      navigator.share({ title: group?.name, text: `${user?.name} 邀請你加入 貓咪分帳 CatSplit 的分帳群組！`, url })
-    } else {
-      navigator.clipboard.writeText(url)
+    const text = `${user?.name} 邀請你加入 貓咪分帳 CatSplit 的分帳群組「${group?.name}」！`
+    try {
+      if (liffInstance?.isApiAvailable?.('shareTargetPicker')) {
+        await liffInstance.shareTargetPicker([{ type: 'text', text: `${text}\n${url}` }])
+        return
+      }
+    } catch (e) {
+      console.warn('shareTargetPicker 失敗', e)
+    }
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: group?.name, text, url })
+        return
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') return // 使用者取消分享
+      console.warn('navigator.share 失敗', e)
+    }
+    try {
+      await navigator.clipboard.writeText(url)
       alert('邀請連結已複製！\n貼到 LINE 傳給朋友吧')
+    } catch {
+      prompt('請複製這個邀請連結', url)
     }
   }
 
