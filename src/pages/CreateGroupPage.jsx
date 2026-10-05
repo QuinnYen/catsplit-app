@@ -5,6 +5,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
+import StickyFooter from '../components/StickyFooter'
 import Avatar from '../components/Avatar'
 import { CURRENCIES } from '../config/currencies'
 import GroupIcon from '../components/GroupIcon'
@@ -128,7 +129,7 @@ const CreateGroupPage = () => {
         </div>
 
         {/* 建立按鈕：固定在底部導覽列上方，捲動時一直可見 */}
-        <div style={{ position: 'sticky', bottom: 'calc(55px + env(safe-area-inset-bottom, 0px))', background: '#fff8f4', padding: '8px 0', zIndex: 5 }}>
+        <StickyFooter>
           <button
             onClick={handleCreate}
             disabled={!name.trim() || loading}
@@ -140,7 +141,7 @@ const CreateGroupPage = () => {
           >
             {loading ? '建立中...' : '建立群組'}
           </button>
-        </div>
+        </StickyFooter>
       </div>
       <TabBar context="create" />
     </div>

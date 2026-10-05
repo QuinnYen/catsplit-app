@@ -1,6 +1,13 @@
 export const toLocalDateStr = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
+// 點到輸入欄位時捲到畫面中央，避免被鍵盤擋住；等鍵盤彈出、視窗縮小後再捲
+export const scrollFocusedIntoView = (e) => {
+  const el = e.target
+  if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return
+  setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300)
+}
+
 export const todayStr = () => toLocalDateStr(new Date())
 
 // datetime-local 輸入框用的 YYYY-MM-DDTHH:mm（本地時間，精確到分）

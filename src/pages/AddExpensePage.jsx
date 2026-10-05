@@ -7,10 +7,11 @@ import { CheckCircle2 } from 'lucide-react'
 import { db, storage } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
+import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
 import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
-import { nowStr, computeSplits, applyExchangeRate, buildPayments, payerLabel } from '../utils/expenseHelpers'
+import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, payerLabel } from '../utils/expenseHelpers'
 import { getCurrency } from '../config/currencies'
 
 const AddExpensePage = () => {
@@ -40,13 +41,6 @@ const AddExpensePage = () => {
   const [receiptFile, setReceiptFile] = useState(null)
   const [receiptPreview, setReceiptPreview] = useState(null)
   const [loading, setLoading] = useState(false)
-
-  // 點到輸入欄位時捲到畫面中央，避免被鍵盤擋住；等鍵盤彈出、視窗縮小後再捲
-  const scrollFocusedIntoView = (e) => {
-    const el = e.target
-    if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return
-    setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300)
-  }
 
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 
@@ -292,7 +286,7 @@ const AddExpensePage = () => {
         />
 
         {/* 固定在底部導覽列上方，捲動時一直可見 */}
-        <div style={{ position: 'sticky', bottom: 'calc(55px + env(safe-area-inset-bottom, 0px))', background: '#fff8f4', padding: '8px 0', zIndex: 5 }}>
+        <StickyFooter>
           <button
             onClick={handleSubmit}
             disabled={!isValid() || loading}
@@ -308,7 +302,7 @@ const AddExpensePage = () => {
               </span>
             )}
           </button>
-        </div>
+        </StickyFooter>
       </div>
 
       <TabBar context="expense" groupId={id} />

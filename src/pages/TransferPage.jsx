@@ -7,6 +7,8 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
 import TabBar from '../components/TabBar'
+import StickyFooter from '../components/StickyFooter'
+import ShareToLineToggle from '../components/ShareToLineToggle'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
 
@@ -15,7 +17,7 @@ const PAYMENT_METHODS = ['現金', 'LINE Pay', '街口支付', '銀行轉帳', '
 const TransferPage = () => {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
-  const { user } = useApp()
+  const { user, liffInstance } = useApp()
   const navigate = useNavigate()
 
   const fromUid = searchParams.get('from')
@@ -27,6 +29,7 @@ const TransferPage = () => {
   const [customAmount, setCustomAmount] = useState(String(suggestedAmount))
   const [paymentMethod, setPaymentMethod] = useState('現金')
   const [note, setNote] = useState('')
+  const [shareToLine, setShareToLine] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -34,6 +37,8 @@ const TransferPage = () => {
       if (snap.exists()) setGroup({ id: snap.id, ...snap.data() })
     })
   }, [id])
+
+  const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 
   const actualAmount = parseFloat(customAmount) || 0
   const isValid = actualAmount > 0
@@ -58,6 +63,47 @@ const TransferPage = () => {
         [`memberBalances.${fromUid}`]: increment(actualAmount),
         [`memberBalances.${toUid}`]: increment(-actualAmount),
       })
+
+      if (shareToLine && safeIsInClient()) {
+        const from = group.memberProfiles?.[fromUid]?.name ?? '某人'
+        const to = group.memberProfiles?.[toUid]?.name ?? '某人'
+        const symbol = getCurrency(currency).symbol
+        const row = (label, value) => ({
+          type: 'box', layout: 'horizontal',
+          contents: [
+            { type: 'text', text: label, size: 'sm', color: '#b08060', flex: 1 },
+            { type: 'text', text: value, size: 'sm', color: '#3d2b1f', align: 'end', wrap: true },
+          ],
+        })
+        try {
+          await liffInstance.sendMessages([{
+            type: 'flex',
+            altText: `${from} 轉給 ${to} ${symbol}${actualAmount.toLocaleString()}`,
+            contents: {
+              type: 'bubble',
+              size: 'kilo',
+              header: {
+                type: 'box', layout: 'vertical', paddingAll: '16px',
+                backgroundColor: '#FF8C42',
+                contents: [{ type: 'text', text: '貓咪分帳 CatSplit 記錄轉帳', color: '#ffffff', size: 'sm', weight: 'bold' }],
+              },
+              body: {
+                type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '16px',
+                contents: [
+                  { type: 'text', text: `${from} → ${to}`, weight: 'bold', size: 'lg', color: '#3d2b1f', wrap: true },
+                  { type: 'text', text: `${symbol} ${actualAmount.toLocaleString()}`, size: 'xxl', weight: 'bold', color: '#FF6B1A' },
+                  { type: 'separator', margin: 'md' },
+                  { ...row('付款方式', paymentMethod), margin: 'md' },
+                  ...(note.trim() ? [row('備註', note.trim())] : []),
+                  row('群組', group.name),
+                ],
+              },
+            },
+          }])
+        } catch (e) {
+          console.warn('liff.sendMessages 失敗', e)
+        }
+      }
 
       navigate(`/group/${id}/settle`)
     } catch (error) {
@@ -159,6 +205,8 @@ const TransferPage = () => {
           </select>
         </div>
 
+        {liffInstance && safeIsInClient() && <ShareToLineToggle checked={shareToLine} onChange={setShareToLine} />}
+
         {/* 備註 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>備註（選填）</div>
@@ -173,6 +221,7 @@ const TransferPage = () => {
         </div>
 
         {/* 確認按鈕 */}
+        <StickyFooter>
         <button
           onClick={handleConfirm}
           disabled={loading || !isValid}
@@ -189,6 +238,7 @@ const TransferPage = () => {
             </span>
           )}
         </button>
+        </StickyFooter>
       </div>
 
       <TabBar context="transfer" groupId={id} />

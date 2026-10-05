@@ -6,11 +6,12 @@ import { ref, uploadBytes } from 'firebase/storage'
 import { CheckCircle2, Trash2 } from 'lucide-react'
 import { db, storage } from '../config/firebase'
 import TabBar from '../components/TabBar'
+import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
 import { DEFAULT_CATEGORIES } from '../config/expenseForm'
 import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
-import { toLocalDateTimeStr, computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, buildPayments, primaryPayer } from '../utils/expenseHelpers'
+import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, buildPayments, primaryPayer } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
 
 const EditExpensePage = () => {
@@ -261,7 +262,10 @@ const EditExpensePage = () => {
         </div>
       </div>
 
-      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div
+        onFocus={scrollFocusedIntoView}
+        style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}
+      >
         <ExpenseForm
           title={title} setTitle={setTitle}
           category={category} setCategory={setCategory}
@@ -294,21 +298,24 @@ const EditExpensePage = () => {
           removeExistingReceipt={removeExistingReceipt} setRemoveExistingReceipt={setRemoveExistingReceipt}
         />
 
-        <button
-          onClick={handleSave}
-          disabled={!isValid() || loading}
-          style={{
-            width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
-            cursor: isValid() && !loading ? 'pointer' : 'not-allowed',
-            background: isValid() && !loading ? '#FF8C42' : '#e0c4b0', color: '#fff',
-          }}
-        >
-          {loading ? '儲存中...' : (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircle2 size={16} /> 儲存變更
-            </span>
-          )}
-        </button>
+        {/* 固定在底部導覽列上方，捲動時一直可見；捲到底時回到原位，刪除按鈕在它下方 */}
+        <StickyFooter>
+          <button
+            onClick={handleSave}
+            disabled={!isValid() || loading}
+            style={{
+              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
+              cursor: isValid() && !loading ? 'pointer' : 'not-allowed',
+              background: isValid() && !loading ? '#FF8C42' : '#e0c4b0', color: '#fff',
+            }}
+          >
+            {loading ? '儲存中...' : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircle2 size={16} /> 儲存變更
+              </span>
+            )}
+          </button>
+        </StickyFooter>
 
         <button
           onClick={handleDelete}
