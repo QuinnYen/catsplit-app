@@ -17,7 +17,11 @@
   - Vite 8 用 rolldown，`manualChunks` 已棄用，改用 `output.codeSplitting.groups`
   - 結果：app 程式碼 71 kB、liff 120 kB、react 230 kB、firebase 367 kB；首次載入總量不變，但改版只需重下 app 那一包
 - [ ] 實機量測啟動各階段耗時（已加臨時診斷 [src/utils/bootTrace.jsx](src/utils/bootTrace.jsx)，部署後網址加 `?debug=1`；量完要移除 bootTrace 與各處 `mark()`）
-- [ ] 依量測結果決定優化啟動鏈（候選：已有 Firebase 登入狀態時跳過 `verifyLiffToken` + `signInWithCustomToken`；Cloud Function 冷啟動；`liff.init`）
+- [x] 依量測結果優化啟動鏈：已有同一使用者的 Firebase 登入時跳過 `verifyLiffToken` + `signInWithCustomToken` + 等待 `getProfile`（[AppContext.jsx](src/context/AppContext.jsx) 快速路徑）
+  - 量測基準（LINE 實機）：總共 ~2.6 s；liff.init 762 ms、getProfile+verify 1015 ms、signIn 437 ms、群組資料 188 ms
+- [ ] 部署後實機再量一次（預期 ~1.3 s），並測：正常開、登出再登入、換 LINE 帳號、有訪客名字待認領
+- [x] `verifyLiffToken` 設 `minInstances: 1` 消除冷啟動（已改 [functions/index.js](functions/index.js)，**尚未部署**：`firebase deploy --only functions:verifyLiffToken`）
+- [ ] （可選）完整流程下 `getProfile` 其實可省（verify 回應已含名字與頭像）
 - [x] 優化後再量一次，對照基準
   - 首次載入 JS（`index.html` 的 script + modulepreload 加總）：949.48 kB → 791.64 kB（-16.6%）；gzip 288.16 kB → 243.73 kB（-15.4%）
   - CSS、logo 沒變；Vite >500 kB 警告已消失

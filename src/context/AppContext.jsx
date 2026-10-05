@@ -133,6 +133,26 @@ export const AppProvider = ({ children }) => {
           mark('liff.init 完成')
           setLiffInstance(liff)
           if (liff.isLoggedIn()) {
+            // 快速路徑：Firebase 已恢復同一個 LINE 使用者的登入（uid 即 LINE userId），
+            // 就不用每次重跑 verifyLiffToken + signInWithCustomToken（約 1 秒以上）。
+            // getDecodedIDToken 是同步的，用來確認目前 LIFF 使用者沒被換掉；
+            // 有待認領的訪客名字時要走完整流程（認領在登入時進行）
+            const cached = readCachedUser()
+            await auth.authStateReady()
+            const lineUid = liff.getDecodedIDToken()?.sub
+            if (cached && lineUid && cached.uid === lineUid && auth.currentUser?.uid === lineUid
+              && readGuestNames().length === 0) {
+              mark('快速路徑：沿用 Firebase 登入')
+              setUser(cached)
+              // 名字或頭像可能改過，背景更新即可
+              liff.getProfile().then(p => {
+                if (p.displayName === cached.name && p.pictureUrl === cached.avatar) return
+                const u = { uid: p.userId, name: p.displayName, avatar: p.pictureUrl }
+                setUser(u)
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
+              }).catch(() => {})
+              return
+            }
             // getIDToken 是同步的，getProfile 與 verifyLiffToken 兩個請求可同時發出
             const idToken = liff.getIDToken()
             const verifying = idToken && VERIFY_LIFF_TOKEN_URL

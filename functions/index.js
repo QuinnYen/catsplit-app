@@ -98,7 +98,8 @@ export const lineLogin = onRequest(
 )
 
 export const verifyLiffToken = onRequest(
-  { cors: false, region: 'asia-east1', maxInstances: 5 },
+  // LINE 內每次開啟都會呼叫，常駐一個實例避免冷啟動
+  { cors: false, region: 'asia-east1', maxInstances: 5, minInstances: 1 },
   async (req, res) => {
     setCors(req, res)
     if (req.method === 'OPTIONS') {
