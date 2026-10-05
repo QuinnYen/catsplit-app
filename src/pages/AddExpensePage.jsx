@@ -41,6 +41,13 @@ const AddExpensePage = () => {
   const [receiptPreview, setReceiptPreview] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  // 點到輸入欄位時捲到畫面中央，避免被鍵盤擋住；等鍵盤彈出、視窗縮小後再捲
+  const scrollFocusedIntoView = (e) => {
+    const el = e.target
+    if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return
+    setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300)
+  }
+
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 
   const { exchangeRate, setManualRate, rateLoading, rateError, rateManual } = useExchangeRate(currency, baseCurrency)
@@ -248,7 +255,10 @@ const AddExpensePage = () => {
         </div>
       </div>
 
-      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div
+        onFocus={scrollFocusedIntoView}
+        style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}
+      >
         <ExpenseForm
           title={title} setTitle={setTitle}
           category={category} setCategory={setCategory}
