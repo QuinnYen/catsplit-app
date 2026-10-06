@@ -154,6 +154,7 @@ const AddExpensePage = () => {
       batch.update(doc(db, 'groups', id), {
         totalAmount: increment(baseAmount),
         totalExpenses: increment(1),
+        lastActivity: { at: serverTimestamp(), by: user.uid, text: `${user.name} 新增了「${title.trim()}」` },
         ...balanceDelta,
         ...countDelta,
       })

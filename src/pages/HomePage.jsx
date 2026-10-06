@@ -1,7 +1,7 @@
 // / — 首頁：未登入顯示登入畫面；已登入顯示使用者資訊、消費總覽與我的群組列表，頭像可開啟設定（登出、條款、刪除資料）。
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, query, where, orderBy, onSnapshot, getDoc, getDocs, doc, updateDoc } from 'firebase/firestore'
+import { collection, query, where, orderBy, onSnapshot, getDoc, doc } from 'firebase/firestore'
 import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2, QrCode } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
@@ -9,7 +9,7 @@ import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
-import { computeMemberExpenseCounts } from '../utils/expenseHelpers'
+import { toLocalDateTimeStr } from '../utils/expenseHelpers'
 import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 import catLogo from '../assets/cat-logo.webp'
 
@@ -45,6 +45,11 @@ const HomePage = () => {
   const [showArchived, setShowArchived] = useState(false)
   const [deletingData, setDeletingData] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [now, setNow] = useState(Date.now)
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000)
+    return () => clearInterval(timer)
+  }, [])
 
   // 訪客：首頁列出這個瀏覽器選過名字的群組（每個群組的「我」是各自的訪客名字 id）
   const guestKey = user?.guest ? guestNames.map(g => `${g.groupId}:${g.memberId}`).join(',') : ''
@@ -124,24 +129,13 @@ const HomePage = () => {
   const activeGroups = groups.filter(g => !g.archived)
   const archivedGroups = groups.filter(g => g.archived)
 
-  // 「我參與分攤的支出」筆數，直接讀群組文件上維護的 memberExpenseCounts，不需額外讀取。
-  // 尚未有此欄位的舊群組，在這裡一次性補算寫回；補完前顯示「...」。
-  // 訪客只對目前使用中的群組有寫入權限，不負責補算
-  const needBackfill = user?.guest ? '' : groups.filter(g => g.memberExpenseCounts === undefined).map(g => g.id).join(',')
-  const myExpenseCount = needBackfill
-    ? null
-    : activeGroups.reduce((sum, g) => sum + (g.memberExpenseCounts?.[myIdIn(g)] || 0), 0)
-  useEffect(() => {
-    if (!needBackfill) return
-    needBackfill.split(',').forEach(async gid => {
-      try {
-        const snap = await getDocs(collection(db, 'groups', gid, 'expenses'))
-        await updateDoc(doc(db, 'groups', gid), { memberExpenseCounts: computeMemberExpenseCounts(snap.docs) })
-      } catch (error) {
-        console.error('補算消費筆數失敗', error)
-      }
-    })
-  }, [needBackfill])
+  // 最新動態：所有群組中「別人」最近一次的新增支出／轉帳（群組文件上的 lastActivity），只取最新一筆
+  const latest = activeGroups
+    .filter(g => g.lastActivity && g.lastActivity.by !== myIdIn(g))
+    .map(g => ({ group: g, at: g.lastActivity.at?.toDate?.() ?? new Date(), text: g.lastActivity.text }))
+    .sort((a, b) => b.at - a.at)[0]
+  // 一天內有動靜才顯示訊息，超過只留時間
+  const latestIsRecent = latest && now - latest.at.getTime() < 24 * 60 * 60 * 1000
 
   if (!authLoading && !user) {
     return (
@@ -227,15 +221,19 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* 總覽卡片 */}
-        <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)' }}>
-          <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>消費總覽</div>
+        {/* 最新動態卡片 */}
+        <div
+          onClick={latestIsRecent ? () => navigate(`/group/${latest.group.id}`) : undefined}
+          style={{ cursor: latestIsRecent ? 'pointer' : 'default', background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)' }}
+        >
           <div style={{ color: '#fff', fontSize: 22, fontWeight: 500 }}>
-            {myExpenseCount ?? '...'} 筆消費
+            {toLocalDateTimeStr(new Date(now)).replace('T', ' ')}
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4 }}>
-            {activeGroups.length} 個群組
-          </div>
+          {latestIsRecent && (
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 6 }}>
+              {latest.group.name}・{latest.text}
+            </div>
+          )}
         </div>
       </div>
 

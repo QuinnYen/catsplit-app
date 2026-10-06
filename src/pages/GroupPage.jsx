@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'
 
-import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight } from 'lucide-react'
+import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download } from 'lucide-react'
 import { db, auth } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import GuestJoin from '../components/GuestJoin'
@@ -31,6 +31,7 @@ const GroupPage = () => {
   const [openMenuId, setOpenMenuId] = useState(null)
   const [menuUp, setMenuUp] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [settingsPos, setSettingsPos] = useState(null)
   const [detailSettlementId, setDetailSettlementId] = useState(null)
   const [joining, setJoining] = useState(false)
   const [joinError, setJoinError] = useState('')
@@ -382,6 +383,36 @@ const GroupPage = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
 
+      {/* 設定選單（fixed 避免被 header 的 overflow 裁掉） */}
+      {settingsPos && (
+        <>
+          <div onClick={() => setSettingsPos(null)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+          <div style={{
+            position: 'fixed', top: settingsPos.top, right: settingsPos.right, zIndex: 41, minWidth: 140, padding: 4,
+            background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
+          }}>
+            {[
+              { label: '邀請成員', Icon: UserPlus, onClick: () => { setSettingsPos(null); handleInvite() } },
+              {
+                label: exporting ? '匯出中...' : '匯出 CSV', Icon: Download, disabled: expenses.length === 0 || exporting,
+                onClick: async () => { await handleExportCSV(); setSettingsPos(null) },
+              },
+              { label: '編輯群組', Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
+            ].map(({ label, Icon, onClick, disabled }) => (
+              <button
+                key={label} onClick={onClick} disabled={disabled}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none',
+                  background: 'transparent', fontSize: 14, color: '#3d2b1f', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, textAlign: 'left',
+                }}
+              >
+                <Icon size={16} color="#FF8C42" />{label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* Header */}
       <div style={{
         background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)',
@@ -420,23 +451,14 @@ const GroupPage = () => {
           </div>
 
           <button
-            onClick={handleInvite}
-            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            onClick={e => {
+              const r = e.currentTarget.getBoundingClientRect()
+              setSettingsPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
+            }}
+            aria-label="設定"
+            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
           >
-            邀請
-          </button>
-          <button
-            onClick={handleExportCSV}
-            disabled={expenses.length === 0 || exporting}
-            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: expenses.length === 0 || exporting ? 'not-allowed' : 'pointer', flexShrink: 0, opacity: expenses.length === 0 || exporting ? 0.5 : 1 }}
-          >
-            {exporting ? '匯出中...' : '匯出'}
-          </button>
-          <button
-            onClick={() => navigate(`/group/${id}/edit`)}
-            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
-          >
-            編輯
+            <Settings size={20} />
           </button>
         </div>
 

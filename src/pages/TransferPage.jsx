@@ -62,6 +62,11 @@ const TransferPage = () => {
       await updateDoc(doc(db, 'groups', id), {
         [`memberBalances.${fromUid}`]: increment(actualAmount),
         [`memberBalances.${toUid}`]: increment(-actualAmount),
+        lastActivity: {
+          at: serverTimestamp(),
+          by: user.uid,
+          text: `${group?.memberProfiles?.[fromUid]?.name ?? '某人'} 轉帳給 ${group?.memberProfiles?.[toUid]?.name ?? '某人'}`,
+        },
       })
 
       if (shareToLine && safeIsInClient()) {
