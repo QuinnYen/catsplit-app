@@ -2,12 +2,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
-import { Pencil, Trash2, Eye, Copy, ExternalLink, Check } from 'lucide-react'
+import { Pencil, Trash2, Eye } from 'lucide-react'
 import { db } from '../config/firebase'
-import liff from '../config/liff'
 import { useApp } from '../context/AppContext'
 import PawDecor from '../components/PawDecor'
-import { REGIONS, PROVIDERS, getProvider, normalizeValue, formatValue, validatePayment } from '../config/paymentProviders'
+import PaymentMethodModal from '../components/PaymentMethodModal'
+import { REGIONS, PROVIDERS, getProvider, normalizeValue, describeMethod, validatePayment } from '../config/paymentProviders'
 
 const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }
 const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4', boxSizing: 'border-box' }
@@ -24,53 +24,6 @@ const Switch = ({ checked, onChange }) => (
     <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff' }} />
   </button>
 )
-
-const displayValue = (m) => m.providerId === 'bank' ? `(${m.bankCode}) ${m.value}` : formatValue(getProvider(m.providerId), m.value)
-
-// 預覽：對方在結算頁會看到的內容，可複製、測試開啟 App
-const PreviewModal = ({ method, onClose }) => {
-  const provider = getProvider(method.providerId)
-  const [copied, setCopied] = useState(false)
-  const url = provider?.openUrl?.(method.value) ?? null
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url ?? method.value)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      alert('無法自動複製，請手動選取')
-    }
-  }
-  const open = () => {
-    if (liff.isInClient()) liff.openWindow({ url, external: true })
-    else window.location.href = url
-  }
-
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div onClick={e => e.stopPropagation()} style={{ ...card, width: '100%', maxWidth: 320, padding: 20 }}>
-        <div style={{ fontSize: 12, color: '#b08060', marginBottom: 4 }}>對方會看到</div>
-        <div style={{ fontSize: 16, fontWeight: 500, color: '#3d2b1f', marginBottom: 12 }}>{provider?.name}{method.label ? `・${method.label}` : ''}</div>
-        {method.providerId === 'bank' && <div style={{ fontSize: 13, color: '#5a3e2b', marginBottom: 4 }}>銀行代碼 {method.bankCode}</div>}
-        <div style={{ fontSize: 18, fontWeight: 500, color: '#FF6B1A', wordBreak: 'break-all', marginBottom: 16 }}>{displayValue(method)}</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button onClick={copy} style={{ padding: '11px 0', borderRadius: 12, border: '0.5px solid #f0d5c0', background: '#fff8f4', color: '#3d2b1f', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            {copied ? <><Check size={16} />已複製</> : <><Copy size={16} />複製</>}
-          </button>
-          {provider?.kind === 'app' && (
-            <>
-              <button onClick={open} disabled={!url} style={{ padding: '11px 0', borderRadius: 12, border: 'none', background: url ? '#FF8C42' : '#e0cfc0', color: '#fff', fontSize: 14, fontWeight: 500, cursor: url ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <ExternalLink size={16} />開啟 {provider.name}
-              </button>
-              {!url && <div style={{ fontSize: 11, color: '#c4a882', textAlign: 'center' }}>尚未設定開啟連結，目前只能複製</div>}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 const emptyForm = { regionId: 'tw', providerId: '', value: '', bankCode: '', label: '', isPublic: true }
 
@@ -172,7 +125,7 @@ const PaymentMethodsPage = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{p?.name ?? m.providerId}{m.label ? `・${m.label}` : ''}</div>
-                  <div style={{ fontSize: 13, color: '#b08060', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayValue(m)}</div>
+                  <div style={{ fontSize: 13, color: '#b08060', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{describeMethod(m)}</div>
                 </div>
                 <button onClick={() => setPreview(m)} aria-label="預覽" style={iconBtn}><Eye size={18} color="#b08060" /></button>
                 <button onClick={() => startEdit(m)} aria-label="編輯" style={iconBtn}><Pencil size={18} color="#b08060" /></button>
@@ -249,7 +202,7 @@ const PaymentMethodsPage = () => {
         )}
       </div>
 
-      {preview && <PreviewModal method={preview} onClose={() => setPreview(null)} />}
+      {preview && <PaymentMethodModal method={preview} heading="對方會看到" onClose={() => setPreview(null)} />}
     </div>
   )
 }

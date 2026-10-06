@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
-import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, where, updateDoc, increment } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
@@ -10,9 +10,12 @@ import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import ShareToLineToggle from '../components/ShareToLineToggle'
 import PawDecor from '../components/PawDecor'
+import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
+import { getProvider } from '../config/paymentProviders'
 
-const PAYMENT_METHODS = ['現金', 'LINE Pay', '街口支付', '銀行轉帳', '其他']
+// 名稱與 paymentProviders 的 name 一致的項目，會自動帶出收款人對應的收款方式
+const PAYMENT_METHODS = ['現金', 'LINE Pay', '街口支付', 'Richart', '銀行轉帳', '其他']
 
 const TransferPage = () => {
   const { id } = useParams()
@@ -31,12 +34,23 @@ const TransferPage = () => {
   const [note, setNote] = useState('')
   const [shareToLine, setShareToLine] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [payeeMethods, setPayeeMethods] = useState([]) // 收款人公開的收款方式
 
   useEffect(() => {
     getDoc(doc(db, 'groups', id)).then(snap => {
       if (snap.exists()) setGroup({ id: snap.id, ...snap.data() })
     })
   }, [id])
+
+  // 虛擬成員（p_ 開頭）沒有帳號；讀取失敗就當作沒有，不影響記錄轉帳
+  useEffect(() => {
+    if (!toUid || toUid.startsWith('p_')) return
+    getDocs(query(collection(db, 'users', toUid, 'paymentMethods'), where('isPublic', '==', true)))
+      .then(snap => setPayeeMethods(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+      .catch(() => {})
+  }, [toUid])
+
+  const matchedMethods = payeeMethods.filter(m => getProvider(m.providerId)?.name === paymentMethod)
 
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 
@@ -209,6 +223,12 @@ const TransferPage = () => {
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
+
+          {matchedMethods.map(m => (
+            <div key={m.id} style={{ marginTop: 12, background: '#fff3ec', borderRadius: 12, border: '0.5px solid #f0d5c0', padding: 14 }}>
+              <PaymentMethodBody method={m} heading={`${toProfile?.name ?? '對方'} 的收款方式`} />
+            </div>
+          ))}
         </div>
 
         {liffInstance && safeIsInClient() && <ShareToLineToggle checked={shareToLine} onChange={setShareToLine} />}

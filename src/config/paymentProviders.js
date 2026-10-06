@@ -41,6 +41,10 @@ export const normalizeValue = (provider, raw) => {
 
 export const formatValue = (provider, value) => provider?.display?.(value) ?? value
 
+// 收款方式在畫面上的顯示文字
+export const describeMethod = (m) =>
+  m.providerId === 'bank' ? `(${m.bankCode}) ${m.value}` : formatValue(getProvider(m.providerId), m.value)
+
 // 回傳錯誤訊息，通過則回傳空字串（value 為 normalizeValue 的結果）
 export const validatePayment = (provider, { value, bankCode }) => {
   if (provider.kind === 'bank') {
