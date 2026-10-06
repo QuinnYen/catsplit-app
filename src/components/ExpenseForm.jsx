@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { Check, Camera, ChevronDown } from 'lucide-react'
+﻿import { useState } from 'react'
+import { Check, Camera, ChevronDown, Calculator } from 'lucide-react'
 import ShareToLineToggle from './ShareToLineToggle'
 import Avatar from './Avatar'
 import DateTimeField from './DateTimeField'
+import CalculatorModal from './CalculatorModal'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { DEFAULT_CATEGORIES, SPLIT_TYPES } from '../config/expenseForm'
@@ -112,6 +113,7 @@ const ExpenseForm = ({
   shareToLine, setShareToLine,
   showShareOption,
 }) => {
+  const [showCalc, setShowCalc] = useState(false)
   const amountNum = parseFloat(amount) || 0
   const existingReceiptUrl = useStorageImage(existingReceiptPath)
 
@@ -119,11 +121,10 @@ const ExpenseForm = ({
     <>
       {/* 日期與時間 */}
       <div style={cardStyle}>
-        <div style={labelStyle}>日期與時間</div>
         <DateTimeField value={expenseDate} onChange={setExpenseDate} />
       </div>
 
-      {/* 類別 / 貨幣 / 名稱 / 金額 */}
+      {/* 名稱 / 類別 / 貨幣 / 金額 */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -144,11 +145,16 @@ const ExpenseForm = ({
               <option value={CUSTOM_OPTION}>自訂</option>
             </select>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={labelStyle}>貨幣</div>
-            <select value={currency} onChange={e => setCurrency(e.target.value)} style={inputStyle}>
-              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {c.code}</option>)}
-            </select>
+          <div style={{ flex: 2, minWidth: 0 }}>
+            <div style={labelStyle}>項目名稱</div>
+            <input
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="例如：晚餐、計程車..."
+              maxLength={20}
+              style={inputStyle}
+            />
           </div>
         </div>
         {isEditingCategory && (
@@ -162,6 +168,50 @@ const ExpenseForm = ({
             style={{ ...inputStyle, border: '0.5px solid #FF8C42', marginTop: 10 }}
           />
         )}
+
+        <div style={{ marginTop: 12 }}>
+          <div style={labelStyle}>金額</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...inputStyle, height: '100%' }}>
+                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
+              </select>
+            </div>
+            <div style={{ flex: 2, minWidth: 0, position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>
+                {getCurrency(currency).symbol}
+              </span>
+              <input
+                type="number"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                placeholder="0"
+                style={{ ...inputStyle, padding: '10px 40px 10px 44px', fontSize: 20, fontWeight: 500, color: '#FF6B1A' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCalc(true)}
+                aria-label="計算機"
+                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', padding: 4, cursor: 'pointer', display: 'flex' }}
+              >
+                <Calculator size={20} color="#FF8C42" />
+              </button>
+            </div>
+          </div>
+          {showCalc && (
+            <CalculatorModal
+              initial={amount}
+              onConfirm={v => { setAmount(v); setShowCalc(false) }}
+              onClose={() => setShowCalc(false)}
+            />
+          )}
+          {currency !== baseCurrency && amount && exchangeRate && (
+            <div style={{ textAlign: 'right', fontSize: 12, color: '#b08060', marginTop: 6 }}>
+              ≈ {getCurrency(baseCurrency).symbol} {(amountNum * exchangeRate).toFixed(0)} {baseCurrency}
+            </div>
+          )}
+        </div>
+
         {currency !== baseCurrency && (
           <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: '#fff8f4', border: '0.5px solid #f0d5c0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -192,39 +242,6 @@ const ExpenseForm = ({
             )}
           </div>
         )}
-
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>項目名稱</div>
-          <input
-            type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="例如：晚餐、計程車..."
-            maxLength={20}
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>金額</div>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>
-              {getCurrency(currency).symbol}
-            </span>
-            <input
-              type="number"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              placeholder="0"
-              style={{ ...inputStyle, padding: '10px 12px 10px 44px', fontSize: 20, fontWeight: 500, color: '#FF6B1A' }}
-            />
-          </div>
-          {currency !== baseCurrency && amount && exchangeRate && (
-            <div style={{ textAlign: 'right', fontSize: 12, color: '#b08060', marginTop: 6 }}>
-              ≈ {getCurrency(baseCurrency).symbol} {(amountNum * exchangeRate).toFixed(0)} {baseCurrency}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* 誰付錢 */}
