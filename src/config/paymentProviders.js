@@ -12,6 +12,7 @@ export const PROVIDERS = [
   {
     id: 'richart', region: 'tw', name: 'Richart', kind: 'app',
     valueLabel: '收款連結', placeholder: 'https://richart.tw/...?token=...',
+    hint: '可直接貼上 Richart 分享的整段文字，會自動抓出收款連結',
     invalidMsg: '請貼上 Richart 的收款連結',
     // token 由 Richart App 產生，無法自行組出，所以要使用者貼上 App 分享的連結（也接受只貼 token）
     parse: (raw) => raw.match(/token=([0-9a-f]{32})/i)?.[1] ?? (/^[0-9a-f]{32}$/i.test(raw) ? raw : ''),
@@ -20,7 +21,8 @@ export const PROVIDERS = [
   },
   {
     id: 'jkopay', region: 'tw', name: '街口支付', kind: 'app',
-    valueLabel: '街口帳號', placeholder: '例如：900587854（也可貼上收款連結）',
+    valueLabel: '街口帳號', placeholder: '例如：123456789',
+    hint: '也可直接貼上街口分享的整段文字，會自動抓出帳號',
     invalidMsg: '街口帳號為 6～12 碼數字',
     parse: (raw) => raw.match(/Transfer:(\d{6,12})/)?.[1] ?? (/^\d{6,12}$/.test(raw) ? raw : ''),
     openUrl: (account) => `https://service.jkopay.com/r/transfer?j=Transfer:${account}`,

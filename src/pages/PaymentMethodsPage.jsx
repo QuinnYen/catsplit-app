@@ -154,9 +154,14 @@ const PaymentMethodsPage = () => {
       </div>
 
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>我的收款方式</div>
+          <button onClick={startAdd} style={{ background: '#FF8C42', color: '#fff', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>＋ 新增收款</button>
+        </div>
+
         {methods === null && <div style={{ textAlign: 'center', padding: '32px 0', color: '#b08060' }}>載入中...</div>}
 
-        {methods?.length === 0 && !form && (
+        {methods?.length === 0 && (
           <div style={{ textAlign: 'center', padding: '32px 0', color: '#b08060', fontSize: 14 }}>還沒有收款方式，新增後朋友結算時就能直接轉給你</div>
         )}
 
@@ -181,8 +186,9 @@ const PaymentMethodsPage = () => {
           )
         })}
 
-        {form ? (
-          <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {form && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ ...card, width: '100%', maxWidth: 360, maxHeight: '90vh', overflowY: 'auto', padding: 20, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{editingId ? '編輯收款方式' : '新增收款方式'}</div>
 
             <div>
@@ -216,7 +222,8 @@ const PaymentMethodsPage = () => {
             {provider && (
               <div>
                 <div style={label}>{provider.kind === 'bank' ? '銀行帳號' : provider.valueLabel}</div>
-                <input type="text" inputMode={provider.kind === 'bank' ? 'numeric' : 'text'} maxLength={provider.kind === 'bank' ? 20 : 200} value={form.value} onChange={e => patch({ value: e.target.value })} placeholder={provider.placeholder} style={input} />
+                <input type="text" inputMode={provider.kind === 'bank' ? 'numeric' : 'text'} maxLength={provider.kind === 'bank' ? 20 : 1000} value={form.value} onChange={e => patch({ value: e.target.value })} placeholder={provider.placeholder} style={input} />
+                {provider.hint && <div style={{ fontSize: 11, color: '#c4a882', marginTop: 6 }}>{provider.hint}</div>}
               </div>
             )}
             {provider && (
@@ -238,8 +245,7 @@ const PaymentMethodsPage = () => {
               <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? '儲存中...' : '儲存'}</button>
             </div>
           </div>
-        ) : (
-          <button onClick={startAdd} style={{ padding: '13px 0', borderRadius: 14, border: '1.5px dashed #FF8C42', background: 'transparent', color: '#FF6B1A', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>＋ 新增收款方式</button>
+          </div>
         )}
       </div>
 
