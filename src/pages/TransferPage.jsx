@@ -65,7 +65,8 @@ const TransferPage = () => {
         lastActivity: {
           at: serverTimestamp(),
           by: user.uid,
-          text: `${group?.memberProfiles?.[fromUid]?.name ?? '某人'} 轉帳給 ${group?.memberProfiles?.[toUid]?.name ?? '某人'}`,
+          name: group?.memberProfiles?.[fromUid]?.name ?? '某人',
+          text: `轉帳給 ${group?.memberProfiles?.[toUid]?.name ?? '某人'}`,
         },
       })
 

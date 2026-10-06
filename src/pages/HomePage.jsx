@@ -9,7 +9,6 @@ import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
-import { toLocalDateTimeStr } from '../utils/expenseHelpers'
 import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 import catLogo from '../assets/cat-logo.webp'
 
@@ -45,11 +44,7 @@ const HomePage = () => {
   const [showArchived, setShowArchived] = useState(false)
   const [deletingData, setDeletingData] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [now, setNow] = useState(Date.now)
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 30000)
-    return () => clearInterval(timer)
-  }, [])
+  const [openedAt] = useState(Date.now)
 
   // 訪客：首頁列出這個瀏覽器選過名字的群組（每個群組的「我」是各自的訪客名字 id）
   const guestKey = user?.guest ? guestNames.map(g => `${g.groupId}:${g.memberId}`).join(',') : ''
@@ -129,13 +124,13 @@ const HomePage = () => {
   const activeGroups = groups.filter(g => !g.archived)
   const archivedGroups = groups.filter(g => g.archived)
 
-  // 最新動態：所有群組中「別人」最近一次的新增支出／轉帳（群組文件上的 lastActivity），只取最新一筆
+  // 最新動態：所有群組中最近一次的新增支出／轉帳（群組文件上的 lastActivity），只取最新一筆
   const latest = activeGroups
-    .filter(g => g.lastActivity && g.lastActivity.by !== myIdIn(g))
-    .map(g => ({ group: g, at: g.lastActivity.at?.toDate?.() ?? new Date(), text: g.lastActivity.text }))
+    .filter(g => g.lastActivity)
+    .map(g => ({ group: g, at: g.lastActivity.at?.toDate?.() ?? new Date(), name: g.lastActivity.name, text: g.lastActivity.text }))
     .sort((a, b) => b.at - a.at)[0]
   // 一天內有動靜才顯示訊息，超過只留時間
-  const latestIsRecent = latest && now - latest.at.getTime() < 24 * 60 * 60 * 1000
+  const latestIsRecent = latest && openedAt - latest.at.getTime() < 24 * 60 * 60 * 1000
 
   if (!authLoading && !user) {
     return (
@@ -226,13 +221,13 @@ const HomePage = () => {
           onClick={latestIsRecent ? () => navigate(`/group/${latest.group.id}`) : undefined}
           style={{ cursor: latestIsRecent ? 'pointer' : 'default', background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)' }}
         >
-          <div style={{ color: '#fff', fontSize: 22, fontWeight: 500 }}>
-            {toLocalDateTimeStr(new Date(now)).replace('T', ' ')}
-          </div>
-          {latestIsRecent && (
-            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 6 }}>
-              {latest.group.name}・{latest.text}
-            </div>
+          {latestIsRecent ? (
+            <>
+              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>{latest.group.name}・{latest.name}</div>
+              <div style={{ color: '#fff', fontSize: 22, fontWeight: 500, marginTop: 4 }}>{latest.text}</div>
+            </>
+          ) : (
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>目前沒有動態消息</div>
           )}
         </div>
       </div>
