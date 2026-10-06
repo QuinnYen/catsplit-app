@@ -117,7 +117,13 @@ const ExpenseForm = ({
 
   return (
     <>
-      {/* 類別 */}
+      {/* 日期與時間 */}
+      <div style={cardStyle}>
+        <div style={labelStyle}>日期與時間</div>
+        <DateTimeField value={expenseDate} onChange={setExpenseDate} />
+      </div>
+
+      {/* 類別 / 貨幣 / 名稱 / 金額 */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -186,11 +192,8 @@ const ExpenseForm = ({
             )}
           </div>
         )}
-      </div>
 
-      {/* 名稱 / 日期 / 金額 */}
-      <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div>
+        <div style={{ marginTop: 12 }}>
           <div style={labelStyle}>項目名稱</div>
           <input
             type="text"
@@ -202,12 +205,7 @@ const ExpenseForm = ({
           />
         </div>
 
-        <div>
-          <div style={labelStyle}>日期與時間</div>
-          <DateTimeField value={expenseDate} onChange={setExpenseDate} />
-        </div>
-
-        <div>
+        <div style={{ marginTop: 12 }}>
           <div style={labelStyle}>金額</div>
           <div style={{ position: 'relative' }}>
             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>

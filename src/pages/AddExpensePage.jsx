@@ -37,7 +37,7 @@ const AddExpensePage = () => {
   const [currency, setCurrency] = useState('TWD')
   const [baseCurrency, setBaseCurrency] = useState('TWD')
   const [expenseDate, setExpenseDate] = useState(nowStr)
-  const [shareToLine, setShareToLine] = useState(true)
+  const [shareToLine, setShareToLine] = useState(false)
   const [receiptFile, setReceiptFile] = useState(null)
   const [receiptPreview, setReceiptPreview] = useState(null)
   const [loading, setLoading] = useState(false)

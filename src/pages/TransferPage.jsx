@@ -29,7 +29,7 @@ const TransferPage = () => {
   const [customAmount, setCustomAmount] = useState(String(suggestedAmount))
   const [paymentMethod, setPaymentMethod] = useState('現金')
   const [note, setNote] = useState('')
-  const [shareToLine, setShareToLine] = useState(true)
+  const [shareToLine, setShareToLine] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
