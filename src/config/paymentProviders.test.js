@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getProvider, normalizeValue, validatePayment } from './paymentProviders.js'
+import { getProvider, normalizeValue, validatePayment, getBankName, searchBanks, describeMethod, methodName } from './paymentProviders.js'
 
 const jko = getProvider('jkopay')
 const richart = getProvider('richart')
@@ -28,5 +28,24 @@ test('銀行：代碼 3 碼、帳號 6～16 碼數字，空白與連字號會被
   assert.equal(value, '12345678901234')
   assert.equal(validatePayment(bank, { value, bankCode: '812' }), '')
   assert.notEqual(validatePayment(bank, { value, bankCode: '81' }), '')
+  assert.notEqual(validatePayment(bank, { value, bankCode: '999' }), '')
   assert.notEqual(validatePayment(bank, { value: '123', bankCode: '812' }), '')
+})
+
+test('銀行代碼表：查名稱、依代碼或關鍵字搜尋、顯示文字帶銀行名稱', () => {
+  assert.equal(getBankName('812'), '台新國際商業銀行')
+  assert.equal(getBankName('xyz'), undefined)
+  assert.ok(searchBanks('812').some(b => b.code === '812'))
+  assert.ok(searchBanks('台新').some(b => b.code === '812'))
+  assert.deepEqual(searchBanks(' '), [])
+  assert.equal(describeMethod({ providerId: 'bank', bankCode: '812', value: '12345678901234' }), '台新國際商業銀行 (812) 12345678901234')
+})
+
+test('自行輸入：名稱與收款資訊都必填，顯示用使用者填的名稱', () => {
+  const custom = getProvider('custom')
+  assert.equal(validatePayment(custom, { value: 'abc', customName: '全支付' }), '')
+  assert.notEqual(validatePayment(custom, { value: 'abc', customName: '' }), '')
+  assert.notEqual(validatePayment(custom, { value: '', customName: '全支付' }), '')
+  assert.equal(methodName({ providerId: 'custom', customName: '全支付' }), '全支付')
+  assert.equal(describeMethod({ providerId: 'custom', value: 'abc123' }), 'abc123')
 })

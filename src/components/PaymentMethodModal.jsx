@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Copy, ExternalLink, Check } from 'lucide-react'
 import liff from '../config/liff'
-import { getProvider, describeMethod } from '../config/paymentProviders'
+import { getProvider, methodName, describeMethod } from '../config/paymentProviders'
 
 const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }
 
@@ -28,7 +28,7 @@ export const PaymentMethodBody = ({ method, heading }) => {
   return (
     <>
       {heading && <div style={{ fontSize: 12, color: '#b08060', marginBottom: 4 }}>{heading}</div>}
-      <div style={{ fontSize: 16, fontWeight: 500, color: '#3d2b1f', marginBottom: 12 }}>{provider?.name}{method.label ? `・${method.label}` : ''}</div>
+      <div style={{ fontSize: 16, fontWeight: 500, color: '#3d2b1f', marginBottom: 12 }}>{methodName(method)}{method.label ? `・${method.label}` : ''}</div>
       <div style={{ fontSize: 18, fontWeight: 500, color: '#FF6B1A', wordBreak: 'break-all', marginBottom: 16 }}>{describeMethod(method)}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button onClick={copy} style={{ padding: '11px 0', borderRadius: 12, border: '0.5px solid #f0d5c0', background: '#fff8f4', color: '#3d2b1f', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>

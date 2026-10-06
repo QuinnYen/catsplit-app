@@ -12,7 +12,7 @@ import ShareToLineToggle from '../components/ShareToLineToggle'
 import PawDecor from '../components/PawDecor'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
-import { getProvider } from '../config/paymentProviders'
+import { methodName } from '../config/paymentProviders'
 
 // 名稱與 paymentProviders 的 name 一致的項目，會自動帶出收款人對應的收款方式
 const PAYMENT_METHODS = ['現金', 'LINE Pay', '街口支付', 'Richart', '銀行轉帳', '其他']
@@ -50,7 +50,8 @@ const TransferPage = () => {
       .catch(() => {})
   }, [toUid])
 
-  const matchedMethods = payeeMethods.filter(m => getProvider(m.providerId)?.name === paymentMethod)
+  // 自行輸入的收款方式歸在「其他」底下
+  const matchedMethods = payeeMethods.filter(m => m.providerId === 'custom' ? paymentMethod === '其他' : methodName(m) === paymentMethod)
 
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 

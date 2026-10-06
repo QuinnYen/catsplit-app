@@ -6,8 +6,9 @@ import { Pencil, Trash2, Eye } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import PawDecor from '../components/PawDecor'
+import BankPicker from '../components/BankPicker'
 import PaymentMethodModal from '../components/PaymentMethodModal'
-import { REGIONS, PROVIDERS, getProvider, normalizeValue, describeMethod, validatePayment } from '../config/paymentProviders'
+import { REGIONS, PROVIDERS, getProvider, methodName, normalizeValue, describeMethod, validatePayment } from '../config/paymentProviders'
 
 const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }
 const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4', boxSizing: 'border-box' }
@@ -25,7 +26,8 @@ const Switch = ({ checked, onChange }) => (
   </button>
 )
 
-const emptyForm = { regionId: 'tw', providerId: '', value: '', bankCode: '', label: '', isPublic: true }
+const REGION_IDS = REGIONS.map(r => r.id)
+const emptyForm = { regionId: 'tw', providerId: '', value: '', bankCode: '', customName: '', label: '', isPublic: true }
 
 const PaymentMethodsPage = () => {
   const { user } = useApp()
@@ -50,14 +52,14 @@ const PaymentMethodsPage = () => {
     })
   }, [user.uid])
 
-  const providers = form ? PROVIDERS.filter(p => p.region === form.regionId) : []
+  const providers = form ? PROVIDERS.filter(p => p.region === form.regionId || p.region === '*') : []
   const provider = form ? getProvider(form.providerId) : null
   const patch = (p) => { setForm(f => ({ ...f, ...p })); setError('') }
 
   const startAdd = () => { setEditingId(null); setForm(emptyForm); setError('') }
   const startEdit = (m) => {
     setEditingId(m.id)
-    setForm({ regionId: getProvider(m.providerId)?.region ?? 'tw', providerId: m.providerId, value: m.value, bankCode: m.bankCode ?? '', label: m.label ?? '', isPublic: m.isPublic })
+    setForm({ regionId: REGION_IDS.includes(getProvider(m.providerId)?.region) ? getProvider(m.providerId).region : 'tw', providerId: m.providerId, value: m.value, bankCode: m.bankCode ?? '', customName: m.customName ?? '', label: m.label ?? '', isPublic: m.isPublic })
     setError('')
   }
 
@@ -65,9 +67,10 @@ const PaymentMethodsPage = () => {
     if (!provider) return setError('請選擇收款方式')
     const value = normalizeValue(provider, form.value)
     const bankCode = form.bankCode.trim()
-    const msg = validatePayment(provider, { value, bankCode })
+    const customName = form.customName.trim()
+    const msg = validatePayment(provider, { value, bankCode, customName })
     if (msg) return setError(msg)
-    const data = { providerId: provider.id, value, label: form.label.trim(), isPublic: form.isPublic, ...(provider.kind === 'bank' ? { bankCode } : {}) }
+    const data = { providerId: provider.id, value, label: form.label.trim(), isPublic: form.isPublic, ...(provider.kind === 'bank' ? { bankCode } : {}), ...(provider.kind === 'custom' ? { customName } : {}) }
     setSaving(true)
     try {
       if (editingId) await updateDoc(doc(colRef, editingId), data)
@@ -81,7 +84,7 @@ const PaymentMethodsPage = () => {
   }
 
   const handleDelete = async (m) => {
-    if (!confirm(`確定要刪除「${getProvider(m.providerId)?.name}」嗎？`)) return
+    if (!confirm(`確定要刪除「${methodName(m)}」嗎？`)) return
     try {
       await deleteDoc(doc(colRef, m.id))
     } catch (err) {
@@ -119,12 +122,11 @@ const PaymentMethodsPage = () => {
         )}
 
         {methods?.map(m => {
-          const p = getProvider(m.providerId)
           return (
             <div key={m.id} style={card}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{p?.name ?? m.providerId}{m.label ? `・${m.label}` : ''}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{methodName(m)}{m.label ? `・${m.label}` : ''}</div>
                   <div style={{ fontSize: 13, color: '#b08060', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{describeMethod(m)}</div>
                 </div>
                 <button onClick={() => setPreview(m)} aria-label="預覽" style={iconBtn}><Eye size={18} color="#b08060" /></button>
@@ -160,7 +162,7 @@ const PaymentMethodsPage = () => {
               <div style={label}>收款方式</div>
               {providers.length === 0
                 ? <div style={{ fontSize: 13, color: '#c4a882' }}>此分類還沒有可用的收款方式</div>
-                : <select value={form.providerId} disabled={!!editingId} onChange={e => patch({ providerId: e.target.value, value: '', bankCode: '' })} style={input}>
+                : <select value={form.providerId} disabled={!!editingId} onChange={e => patch({ providerId: e.target.value, value: '', bankCode: '', customName: '' })} style={input}>
                     <option value="">請選擇</option>
                     {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>}
@@ -168,14 +170,20 @@ const PaymentMethodsPage = () => {
 
             {provider?.kind === 'bank' && (
               <div>
-                <div style={label}>銀行代碼</div>
-                <input type="text" inputMode="numeric" maxLength={3} value={form.bankCode} onChange={e => patch({ bankCode: e.target.value })} placeholder="例如：812" style={input} />
+                <div style={label}>銀行</div>
+                <BankPicker value={form.bankCode} onChange={bankCode => patch({ bankCode })} />
+              </div>
+            )}
+            {provider?.kind === 'custom' && (
+              <div>
+                <div style={label}>收款方式</div>
+                <input type="text" maxLength={20} value={form.customName} onChange={e => patch({ customName: e.target.value })} placeholder="例如：全支付、PayPal" style={input} />
               </div>
             )}
             {provider && (
               <div>
-                <div style={label}>{provider.kind === 'bank' ? '銀行帳號' : provider.valueLabel}</div>
-                <input type="text" inputMode={provider.kind === 'bank' ? 'numeric' : 'text'} maxLength={provider.kind === 'bank' ? 20 : 1000} value={form.value} onChange={e => patch({ value: e.target.value })} placeholder={provider.placeholder} style={input} />
+                <div style={label}>{provider.kind === 'bank' ? '銀行帳號' : provider.kind === 'custom' ? '收款資訊' : provider.valueLabel}</div>
+                <input type="text" inputMode={provider.kind === 'bank' ? 'numeric' : 'text'} maxLength={provider.kind === 'bank' ? 20 : provider.kind === 'custom' ? 200 : 1000} value={form.value} onChange={e => patch({ value: e.target.value })} placeholder={provider.kind === 'custom' ? '帳號、收款碼或連結' : provider.placeholder} style={input} />
                 {provider.hint && <div style={{ fontSize: 11, color: '#c4a882', marginTop: 6 }}>{provider.hint}</div>}
               </div>
             )}

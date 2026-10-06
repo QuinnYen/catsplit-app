@@ -1,4 +1,6 @@
 // 收款方式的分類與清單。要新增一家，加進 PROVIDERS 即可。
+import BANKS from './bankCodes.json' with { type: 'json' }
+
 export const REGIONS = [
   { id: 'tw', label: '台灣' },
   { id: 'cn', label: '大陸' },
@@ -28,14 +30,29 @@ export const PROVIDERS = [
     openUrl: (account) => `https://service.jkopay.com/r/transfer?j=Transfer:${account}`,
   },
   { id: 'bank', region: 'tw', name: '銀行轉帳', kind: 'bank' },
+  // 清單裡沒有的收款方式：使用者自己填名稱與收款資訊，所有分類都會出現（region '*'）
+  { id: 'custom', region: '*', name: '自行輸入', kind: 'custom' },
 ]
 
 export const getProvider = (id) => PROVIDERS.find(p => p.id === id)
+
+// 收款方式的名稱；自行輸入的用使用者填的名稱
+export const methodName = (m) => m.providerId === 'custom' ? m.customName : getProvider(m.providerId)?.name ?? m.providerId
+
+export const getBankName = (code) => BANKS.find(b => b.code === code)?.name
+
+// 依代碼開頭或名稱關鍵字搜尋銀行；沒輸入回傳空陣列
+export const searchBanks = (keyword, limit = 8) => {
+  const q = keyword.trim()
+  if (!q) return []
+  return BANKS.filter(b => b.code.startsWith(q) || b.name.includes(q)).slice(0, limit)
+}
 
 // 使用者輸入 → 要儲存的值
 export const normalizeValue = (provider, raw) => {
   const text = raw.trim()
   if (provider.kind === 'bank') return text.replace(/[\s-]/g, '')
+  if (provider.kind === 'custom') return text
   return provider.parse(text)
 }
 
@@ -43,12 +60,16 @@ export const formatValue = (provider, value) => provider?.display?.(value) ?? va
 
 // 收款方式在畫面上的顯示文字
 export const describeMethod = (m) =>
-  m.providerId === 'bank' ? `(${m.bankCode}) ${m.value}` : formatValue(getProvider(m.providerId), m.value)
+  m.providerId === 'custom' ? m.value : m.providerId === 'bank' ? `${getBankName(m.bankCode) ?? ''} (${m.bankCode}) ${m.value}`.trim() : formatValue(getProvider(m.providerId), m.value)
 
 // 回傳錯誤訊息，通過則回傳空字串（value 為 normalizeValue 的結果）
-export const validatePayment = (provider, { value, bankCode }) => {
+export const validatePayment = (provider, { value, bankCode, customName }) => {
+  if (provider.kind === 'custom') {
+    if (!customName) return '請輸入收款方式'
+    return value ? '' : '請輸入收款資訊'
+  }
   if (provider.kind === 'bank') {
-    if (!/^\d{3}$/.test(bankCode)) return '銀行代碼為 3 碼數字'
+    if (!getBankName(bankCode)) return '請選擇銀行'
     if (!/^\d{6,16}$/.test(value)) return '帳號請輸入 6～16 碼數字'
     return ''
   }
