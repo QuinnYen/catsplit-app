@@ -152,7 +152,7 @@ const HomePage = () => {
 
           {/* Logo / Icon */}
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <img src={catLogo} alt="貓咪分帳 CatSplit" style={{ width: 80, height: 80, borderRadius: 24, marginBottom: 16, boxShadow: '0 8px 24px rgba(255,107,26,0.25)' }} />
+            <img src={catLogo} alt="貓咪分帳 CatSplit" style={{ width: 80, height: 80, marginBottom: 16 }} />
             <div style={{ fontSize: 26, fontWeight: 700, color: '#3d2b1f', marginBottom: 6 }}>貓咪分帳 CatSplit</div>
             <div style={{ fontSize: 14, color: '#b08060', lineHeight: 1.6 }}>
               和朋友一起分攤費用<br />簡單記帳，輕鬆結算
