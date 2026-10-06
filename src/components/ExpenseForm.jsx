@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Check, Camera, ChevronDown } from 'lucide-react'
 import ShareToLineToggle from './ShareToLineToggle'
 import Avatar from './Avatar'
+import DateTimeField from './DateTimeField'
 import { CURRENCIES, getCurrency } from '../config/currencies'
-import { nowStr } from '../utils/expenseHelpers'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { DEFAULT_CATEGORIES, SPLIT_TYPES } from '../config/expenseForm'
 
@@ -204,13 +204,7 @@ const ExpenseForm = ({
 
         <div>
           <div style={labelStyle}>日期與時間</div>
-          <input
-            type="datetime-local"
-            value={expenseDate}
-            onChange={e => setExpenseDate(e.target.value)}
-            max={nowStr()}
-            style={inputStyle}
-          />
+          <DateTimeField value={expenseDate} onChange={setExpenseDate} />
         </div>
 
         <div>

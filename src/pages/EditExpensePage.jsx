@@ -151,6 +151,7 @@ const EditExpensePage = () => {
 
   const isValid = () => {
     if (!title.trim()) return false
+    if (!expenseDate) return false
     if (!amount || parseFloat(amount) <= 0) return false
     if (currency !== baseCurrency && (rateLoading || !(exchangeRate > 0))) return false
     if (multiPayer && Math.abs(payerTotal - parseFloat(amount)) > 0.01) return false
