@@ -15,6 +15,7 @@ const EditGroupPage = lazy(() => import('./pages/EditGroupPage'))
 const TransferPage = lazy(() => import('./pages/TransferPage'))
 const EditExpensePage = lazy(() => import('./pages/EditExpensePage'))
 const ExpenseDetailPage = lazy(() => import('./pages/ExpenseDetailPage'))
+const PaymentMethodsPage = lazy(() => import('./pages/PaymentMethodsPage'))
 const StatsPage = lazy(() => import('./pages/StatsPage'))
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
 
@@ -95,6 +96,7 @@ const ProtectedRoutes = () => {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />
+      <Route path="/payment-methods" element={user.guest ? <Navigate to="/" /> : <PaymentMethodsPage />} />
       <Route path="/group/:id" element={<GroupPage />} />
       <Route path="/group/:id/add" element={<AddExpensePage />} />
       <Route path="/group/:id/settle" element={<SettlePage />} />

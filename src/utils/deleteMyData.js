@@ -30,9 +30,18 @@ const leaveGroup = (groupId, uid) =>
     [`memberProfiles.${uid}`]: deleteField(),
   })
 
+const deleteMyPaymentMethods = async (uid) => {
+  const snap = await getDocs(collection(db, 'users', uid, 'paymentMethods'))
+  if (snap.empty) return
+  const batch = writeBatch(db)
+  snap.docs.forEach(d => batch.delete(d.ref))
+  await batch.commit()
+}
+
 // 依序處理；中途失敗會丟出錯誤，已處理的群組不會回復，重按一次即可繼續
 export const deleteMyData = async (groups, uid) => {
   const { toDelete, toLeave } = planDeleteMyData(groups, uid)
   for (const g of toDelete) await deleteWholeGroup(g.id)
   for (const g of toLeave) await leaveGroup(g.id, uid)
+  await deleteMyPaymentMethods(uid)
 }

@@ -15,7 +15,11 @@
 
 ## 待確認（動工前要定案）
 
-- [ ] 支援哪些支付 App？各家個人收款連結的格式需逐一查證（使用者已確認各家都有付款連結，可直接導過去）；使用者貼上自己的連結，App 負責驗證格式並開啟
+- [ ] **收款碼 → 開啟已安裝 App 的機制**（核心，需先驗證）：使用者填入收款碼，App 組出連結並導向已安裝的支付 App
+  - 已查證：街口官方說明頁（jkopay.com/instructions/collect_money.html）只說明「出示 QR 條碼讓對方掃」，**沒有公開連結格式或 deep link**；LINE Pay 官方資料同樣只提到「轉帳代碼／個人 QR Code」，也沒查到公開連結格式
+  - 需要使用者提供：參考的那個分帳軟體實際導向的連結範例（每家一筆），據此反推格式
+  - 備案（依可行性由高到低）：①各家有 https universal link → 直接開；②只有 scheme（如 jkopay://）→ 嘗試開啟，失敗時退回顯示收款碼文字可複製；③都沒有 → 只顯示收款碼文字＋「開啟 App」按鈕（僅開 App 首頁）
+  - LIFF 內建瀏覽器開外部 App 可能受限，需用 liff.openWindow({ external: true }) 實測
 - [ ] 每人可新增幾筆收款方式？同一個 App 可否有多筆？
 - [ ] 刪除資料時（首頁「刪除我的資料」）要一併刪除收款方式
 
@@ -35,3 +39,16 @@
 - 資料位置：`users/{uid}/paymentMethods/{id}`（目前專案沒有 users collection，需新增並補 Firestore rules）
 - 無圖片，因此 Storage rules 不需改動
 - rules：讀取需登入且非訪客；寫入僅本人（isLineUser 且 uid 相符）
+
+## 進度
+
+- [x] 入口：首頁頭像選單「收款方式」（訪客不顯示）
+- [x] 新頁面 `/payment-methods`：新增（分類台灣／大陸）、編輯、刪除、公開顯示開關、預覽
+- [x] 首批清單（台灣）：Richart、街口支付、銀行轉帳（銀行代碼 3 碼＋帳號）；大陸分類目前沒有項目
+- [x] Firestore rules：本人可讀寫；他人只能讀 isPublic == true 的（**尚未部署，需 firebase deploy --only firestore:rules**）
+- [x] 「刪除我的資料」一併刪除收款方式
+- [ ] 預覽的「開啟 App」：Richart、街口的 openUrl 在 src/config/paymentProviders.js 目前是 null，等拿到連結格式範例後填入
+- [ ] 實機／模擬器操作驗證（新增、編輯、刪除、開關、LIFF 內開外部 App）
+- [ ] 結算頁讀取對方公開的收款方式（第二步）
+
+> 注意：可見範圍改為「每筆收款方式一個公開開關」（取代先前的「不做任何設定」）；銀行帳號也已納入（取代先前的「不存銀行帳號」）

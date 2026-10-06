@@ -22,6 +22,7 @@ dist-ssr
 .claude/
 .agents/
 skills-lock.json
+.cursorrules
 
 # Editor directories and files
 .vscode/*

@@ -32,6 +32,20 @@ service cloud.firestore {
         && after.memberProfiles[newId].name.size() <= 20;
     }
 
+    // 個人收款方式：本人可讀寫；其他登入者只能讀「公開顯示」的（列表查詢需帶 isPublic == true）
+    match /users/{userId}/paymentMethods/{methodId} {
+      allow read: if request.auth != null
+        && (request.auth.uid == userId || resource.data.isPublic == true);
+      allow create, update: if isLineUser()
+        && request.auth.uid == userId
+        && request.resource.data.providerId is string
+        && request.resource.data.value is string
+        && request.resource.data.value.size() >= 1
+        && request.resource.data.value.size() <= 100
+        && request.resource.data.isPublic is bool;
+      allow delete: if isLineUser() && request.auth.uid == userId;
+    }
+
     match /groups/{groupId} {
       // 單筆讀取：登入者持有群組 ID（邀請連結）即可讀，加入前需要先看到群組
       allow get: if request.auth != null;

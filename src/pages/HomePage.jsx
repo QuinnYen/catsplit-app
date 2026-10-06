@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot, getDoc, getDocs, doc, updateDoc } from 'firebase/firestore'
-import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2 } from 'lucide-react'
+import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2, QrCode } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import Avatar from '../components/Avatar'
@@ -382,6 +382,8 @@ const HomePage = () => {
           <div style={{ position: 'fixed', top: 70, left: 16, zIndex: 101, width: 220, background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
             <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: '#fff', borderTop: '0.5px solid #f0d5c0', borderLeft: '0.5px solid #f0d5c0', transform: 'rotate(45deg)' }} />
             {[
+              // 訪客沒有穩定身分，不提供收款方式
+              ...(!user?.guest ? [{ Icon: QrCode, label: '收款方式', onClick: () => navigate('/payment-methods') }] : []),
               { Icon: FileText, label: '使用條款', href: '/terms.html' },
               { Icon: ShieldCheck, label: '隱私權政策', href: '/privacy.html' },
               { Icon: LogOut, label: '登出', onClick: handleLogout },
