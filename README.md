@@ -33,6 +33,7 @@
 **結算**
 - 結算總覽：用最少轉帳次數算出誰該轉給誰，並顯示每人明細
 - 記錄轉帳（結清），可附付款方式與備註
+- 收款方式：在首頁頭像選單設定 Richart、街口支付、銀行轉帳或自行輸入的收款資訊，轉帳時自動帶出收款人公開的收款方式，可複製或一鍵開啟已安裝的 App，見[收款方式](docs/payment-methods.md)
 
 ## 開發環境設定
 
@@ -86,6 +87,7 @@ firebase deploy
 
 ## 文件
 
+- [收款方式](docs/payment-methods.md)：支援的收款方式、資料結構、可見範圍與新增一家的做法
 - [身分與訪客](docs/identity-and-guests.md)：LINE 使用者與訪客的差異、認領機制
 - [啟動速度](docs/startup-performance.md)：登入快速路徑與載入策略，改啟動流程前請先看
 - [安全與維運](docs/operations.md)：rules、CORS、換網域、備份、已知取捨與待辦

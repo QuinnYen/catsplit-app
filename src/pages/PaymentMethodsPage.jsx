@@ -146,7 +146,7 @@ const PaymentMethodsPage = () => {
           <div style={{ ...card, width: '100%', maxWidth: 360, maxHeight: '90vh', overflowY: 'auto', padding: 20, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{editingId ? '編輯收款方式' : '新增收款方式'}</div>
 
-            <div>
+            {REGIONS.length > 1 && <div>
               <div style={label}>分類</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {REGIONS.map(r => (
@@ -156,7 +156,7 @@ const PaymentMethodsPage = () => {
                   </button>
                 ))}
               </div>
-            </div>
+            </div>}
 
             <div>
               <div style={label}>收款方式</div>

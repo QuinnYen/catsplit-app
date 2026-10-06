@@ -1,9 +1,9 @@
 // 收款方式的分類與清單。要新增一家，加進 PROVIDERS 即可。
 import BANKS from './bankCodes.json' with { type: 'json' }
 
+// 目前只有台灣；只剩一個分類時，管理頁不顯示分類選擇。要加地區就在這裡加一筆
 export const REGIONS = [
   { id: 'tw', label: '台灣' },
-  { id: 'cn', label: '大陸' },
 ]
 
 // kind: 'app' 填一組識別資料；'bank' 填銀行代碼＋帳號

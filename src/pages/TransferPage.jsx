@@ -15,7 +15,7 @@ import { getCurrency } from '../config/currencies'
 import { methodName } from '../config/paymentProviders'
 
 // 名稱與 paymentProviders 的 name 一致的項目，會自動帶出收款人對應的收款方式
-const PAYMENT_METHODS = ['現金', 'LINE Pay', '街口支付', 'Richart', '銀行轉帳', '其他']
+const PAYMENT_METHODS = ['現金', '街口支付', 'Richart', '銀行轉帳', '其他']
 
 const TransferPage = () => {
   const { id } = useParams()
@@ -241,7 +241,7 @@ const TransferPage = () => {
             type="text"
             value={note}
             onChange={e => setNote(e.target.value)}
-            placeholder="例如：已轉 LINE Pay、現金面交..."
+            placeholder="例如：現金面交、分兩次轉..."
             maxLength={30}
             style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
           />
