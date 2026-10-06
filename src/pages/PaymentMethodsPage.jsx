@@ -7,7 +7,7 @@ import { db } from '../config/firebase'
 import liff from '../config/liff'
 import { useApp } from '../context/AppContext'
 import PawDecor from '../components/PawDecor'
-import { REGIONS, PROVIDERS, getProvider, validatePayment } from '../config/paymentProviders'
+import { REGIONS, PROVIDERS, getProvider, normalizeValue, formatValue, validatePayment } from '../config/paymentProviders'
 
 const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }
 const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4', boxSizing: 'border-box' }
@@ -25,7 +25,7 @@ const Switch = ({ checked, onChange }) => (
   </button>
 )
 
-const displayValue = (m) => m.providerId === 'bank' ? `(${m.bankCode}) ${m.value}` : m.value
+const displayValue = (m) => m.providerId === 'bank' ? `(${m.bankCode}) ${m.value}` : formatValue(getProvider(m.providerId), m.value)
 
 // 預覽：對方在結算頁會看到的內容，可複製、測試開啟 App
 const PreviewModal = ({ method, onClose }) => {
@@ -35,7 +35,7 @@ const PreviewModal = ({ method, onClose }) => {
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(method.value)
+      await navigator.clipboard.writeText(url ?? method.value)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch {
@@ -53,7 +53,7 @@ const PreviewModal = ({ method, onClose }) => {
         <div style={{ fontSize: 12, color: '#b08060', marginBottom: 4 }}>對方會看到</div>
         <div style={{ fontSize: 16, fontWeight: 500, color: '#3d2b1f', marginBottom: 12 }}>{provider?.name}{method.label ? `・${method.label}` : ''}</div>
         {method.providerId === 'bank' && <div style={{ fontSize: 13, color: '#5a3e2b', marginBottom: 4 }}>銀行代碼 {method.bankCode}</div>}
-        <div style={{ fontSize: 18, fontWeight: 500, color: '#FF6B1A', wordBreak: 'break-all', marginBottom: 16 }}>{method.value}</div>
+        <div style={{ fontSize: 18, fontWeight: 500, color: '#FF6B1A', wordBreak: 'break-all', marginBottom: 16 }}>{displayValue(method)}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button onClick={copy} style={{ padding: '11px 0', borderRadius: 12, border: '0.5px solid #f0d5c0', background: '#fff8f4', color: '#3d2b1f', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             {copied ? <><Check size={16} />已複製</> : <><Copy size={16} />複製</>}
@@ -110,7 +110,7 @@ const PaymentMethodsPage = () => {
 
   const handleSave = async () => {
     if (!provider) return setError('請選擇收款方式')
-    const value = provider.kind === 'bank' ? form.value.replace(/[\s-]/g, '') : form.value.trim()
+    const value = normalizeValue(provider, form.value)
     const bankCode = form.bankCode.trim()
     const msg = validatePayment(provider, { value, bankCode })
     if (msg) return setError(msg)
@@ -216,7 +216,7 @@ const PaymentMethodsPage = () => {
             {provider && (
               <div>
                 <div style={label}>{provider.kind === 'bank' ? '銀行帳號' : provider.valueLabel}</div>
-                <input type="text" inputMode={provider.kind === 'bank' ? 'numeric' : 'text'} maxLength={provider.kind === 'bank' ? 20 : 100} value={form.value} onChange={e => patch({ value: e.target.value })} style={input} />
+                <input type="text" inputMode={provider.kind === 'bank' ? 'numeric' : 'text'} maxLength={provider.kind === 'bank' ? 20 : 200} value={form.value} onChange={e => patch({ value: e.target.value })} placeholder={provider.placeholder} style={input} />
               </div>
             )}
             {provider && (
