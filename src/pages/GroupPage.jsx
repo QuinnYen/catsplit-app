@@ -1,7 +1,7 @@
 // /group/:id — 群組首頁：總支出、依時間排列的支出與轉帳紀錄（可搜尋、依類別篩選）；訪客從邀請連結進來時也在此選名字加入。
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'
+import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore'
 
 import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download } from 'lucide-react'
 import { db, auth } from '../config/firebase'
@@ -95,7 +95,7 @@ const GroupPage = () => {
     if (!window.confirm('確定要刪除這筆支出嗎？')) return
     setOpenMenuId(null)
     try {
-      const receiptPath = expenses.find(e => e.id === expenseId)?.receiptPath
+      const { receiptPath, title } = expenses.find(e => e.id === expenseId) ?? {}
       await deleteDoc(doc(db, 'groups', id, 'expenses', expenseId))
       await deleteFileByPath(receiptPath)
       const [expSnap, setSnap] = await Promise.all([
@@ -105,7 +105,10 @@ const GroupPage = () => {
       const memberBalances = computeMemberBalances(group.members, expSnap.docs, setSnap.docs)
       const totalAmount = expSnap.docs.reduce((sum, d) => sum + d.data().amount, 0)
       const memberExpenseCounts = computeMemberExpenseCounts(expSnap.docs)
-      await updateDoc(doc(db, 'groups', id), { totalAmount, totalExpenses: expSnap.size, memberBalances, memberExpenseCounts })
+      await updateDoc(doc(db, 'groups', id), {
+        totalAmount, totalExpenses: expSnap.size, memberBalances, memberExpenseCounts,
+        lastActivity: { at: serverTimestamp(), by: user.uid, name: user.name, text: `刪除了「${title}」` },
+      })
     } catch (error) {
       console.error('刪除支出失敗', error)
     }
@@ -122,7 +125,10 @@ const GroupPage = () => {
       ])
 
       const memberBalances = computeMemberBalances(groupSnapshot.members, expSnap.docs, setSnap.docs)
-      await updateDoc(doc(db, 'groups', id), { memberBalances })
+      await updateDoc(doc(db, 'groups', id), {
+        memberBalances,
+        lastActivity: { at: serverTimestamp(), by: user.uid, name: user.name, text: '刪除了一筆轉帳' },
+      })
     } catch (error) {
       console.error('刪除轉帳失敗', error)
     }

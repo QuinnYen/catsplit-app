@@ -224,7 +224,7 @@ const HomePage = () => {
           {latestIsRecent ? (
             <>
               <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>{latest.group.name}・{latest.name}</div>
-              <div style={{ color: '#fff', fontSize: 22, fontWeight: 500, marginTop: 4 }}>{latest.text}</div>
+              <div style={{ color: '#fff', fontSize: 18, fontWeight: 500, marginTop: 4 }}>{latest.text}</div>
             </>
           ) : (
             <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>目前沒有動態消息</div>
