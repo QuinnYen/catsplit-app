@@ -1,6 +1,6 @@
 // 邀請成員彈窗：QR Code ＋ 各種分享方式。要新增方式（Email、其他平台…）就在 actions 加一筆。
 import { useEffect, useState } from 'react'
-import { X, Copy, Check, Share2, MessageCircle, Pin } from 'lucide-react'
+import { X, Copy, Check, MessageCircle, Pin } from 'lucide-react'
 import { buildLineMessages } from '../utils/shareContent'
 
 const InviteModal = ({ content, text, liff, onClose }) => {
@@ -19,15 +19,21 @@ const InviteModal = ({ content, text, liff, onClose }) => {
   }, [url])
 
   const canLineShare = !!liff?.isApiAvailable?.('shareTargetPicker')
-  const canSystemShare = !!navigator.share
 
-  const copyLink = async () => {
+  // 外部：先自動複製連結，再彈出系統內建分享框（瀏覽器不支援就只複製）
+  const externalShare = async () => {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      prompt('請複製這個邀請連結', url)
+      if (!navigator.share) prompt('請複製這個邀請連結', url)
+    }
+    if (!navigator.share) return
+    try {
+      await navigator.share({ title, text, url })
+    } catch (e) {
+      if (e.name !== 'AbortError') console.warn('navigator.share 失敗', e)
     }
   }
 
@@ -48,19 +54,10 @@ const InviteModal = ({ content, text, liff, onClose }) => {
     }
   }
 
-  const systemShare = async () => {
-    try {
-      await navigator.share({ title, text, url })
-    } catch (e) {
-      if (e.name !== 'AbortError') console.warn('navigator.share 失敗', e)
-    }
-  }
-
   const actions = [
-    canLineShare && { key: 'line', label: '分享到 LINE', Icon: MessageCircle, onClick: lineShare },
-    canLineShare && { key: 'entry', label: '貼到群組當記帳入口', Icon: Pin, onClick: entryShare },
-    canSystemShare && { key: 'system', label: '分享到其他 App', Icon: Share2, onClick: systemShare },
-    { key: 'copy', label: copied ? '已複製' : '複製連結', Icon: copied ? Check : Copy, onClick: copyLink },
+    canLineShare && { key: 'line', label: '[邀請] 分享到 LINE', Icon: MessageCircle, onClick: lineShare },
+    canLineShare && { key: 'entry', label: '[卡片] 貼到群組當公告', Icon: Pin, onClick: entryShare },
+    { key: 'external', label: copied ? '[外部] 已複製連結' : '[外部] 複製連結', Icon: copied ? Check : Copy, onClick: externalShare },
   ].filter(Boolean)
 
   return (

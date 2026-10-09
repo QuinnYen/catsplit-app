@@ -447,9 +447,6 @@ const loadIndexHtml = async () => {
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 
-// 頁面載入前把 /s/:id 換回 /group/:id（含 LIFF 帶回來的 liff.state），之後整個 App 都當一般群組連結處理
-const PATH_FIX_SCRIPT = `<script>(function(){var l=location,p=l.pathname;if(p.indexOf('/s/')!==0)return;var u=new URLSearchParams(l.search),s=u.get('liff.state');if(s&&s.indexOf('/s/')===0)u.set('liff.state','/group/'+s.slice(3));var q=u.toString();history.replaceState(null,'','/group/'+p.slice(3)+(q?'?'+q:'')+l.hash)})()</script>`
-
 /**
  * 分享連結 /s/:groupId（及 /s/:groupId/add）：回傳 index.html，並依群組名稱與封面補上 og: 標籤，
  * 讓 LINE 等平台的連結預覽顯示該群組的封面。群組不存在時退回一般頁面。
@@ -466,7 +463,6 @@ export const sharePage = onRequest(
         ? group.coverUrl
         : `${SITE_ORIGIN}/apple-touch-icon.png`
       const tags = [
-        PATH_FIX_SCRIPT,
         `<meta property="og:type" content="website" />`,
         `<meta property="og:site_name" content="貓咪分帳 CatSplit" />`,
         `<meta property="og:title" content="${escapeHtml(title)}" />`,
