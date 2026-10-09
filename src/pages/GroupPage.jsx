@@ -8,6 +8,7 @@ import { db, auth } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
 import GuestJoin from '../components/GuestJoin'
+import InviteModal from '../components/InviteModal'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
@@ -35,6 +36,7 @@ const GroupPage = () => {
   const [settingsPos, setSettingsPos] = useState(null)
   const [detailSettlementId, setDetailSettlementId] = useState(null)
   const [joining, setJoining] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const [joinError, setJoinError] = useState('')
   const [groupMissing, setGroupMissing] = useState(false)
   const [loadedCover, setLoadedCover] = useState(null)
@@ -199,36 +201,6 @@ const GroupPage = () => {
     a.download = filename
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-  }
-
-  // 邀請：LINE 內用好友選擇器 → 支援的瀏覽器用系統分享選單 → 最後複製連結
-  const handleInvite = async () => {
-    const liffId = import.meta.env.VITE_LIFF_ID
-    const url = `https://liff.line.me/${liffId}/s/${id}`
-    const text = `${user?.name} 邀請你加入 貓咪分帳 CatSplit 的分帳群組「${group?.name}」！`
-    try {
-      if (liffInstance?.isApiAvailable?.('shareTargetPicker')) {
-        await liffInstance.shareTargetPicker([{ type: 'text', text: `${text}\n${url}` }])
-        return
-      }
-    } catch (e) {
-      console.warn('shareTargetPicker 失敗', e)
-    }
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: group?.name, text, url })
-        return
-      }
-    } catch (e) {
-      if (e.name === 'AbortError') return // 使用者取消分享
-      console.warn('navigator.share 失敗', e)
-    }
-    try {
-      await navigator.clipboard.writeText(url)
-      alert('邀請連結已複製！\n貼到 LINE 傳給朋友吧')
-    } catch {
-      prompt('請複製這個邀請連結', url)
-    }
   }
 
   // LINE 使用者認領訪客名字：之後這個名字只有本人能用
@@ -399,7 +371,7 @@ const GroupPage = () => {
             background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
           }}>
             {[
-              { label: '邀請成員', Icon: UserPlus, onClick: () => { setSettingsPos(null); handleInvite() } },
+              { label: '邀請成員', Icon: UserPlus, onClick: () => { setSettingsPos(null); setInviteOpen(true) } },
               {
                 label: exporting ? '匯出中...' : '匯出 CSV', Icon: Download, disabled: expenses.length === 0 || exporting,
                 onClick: async () => { await handleExportCSV(); setSettingsPos(null) },
@@ -772,6 +744,16 @@ const GroupPage = () => {
           )
         })()}
       </div>
+
+      {inviteOpen && (
+        <InviteModal
+          url={`https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/s/${id}`}
+          text={`${user?.name} 邀請你加入 貓咪分帳 CatSplit 的分帳群組「${group.name}」！`}
+          title={group.name}
+          liff={liffInstance}
+          onClose={() => setInviteOpen(false)}
+        />
+      )}
 
       {detailSettlement && (
         <div
