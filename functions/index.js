@@ -431,3 +431,54 @@ export const exportCsv = onRequest(
     }
   }
 )
+
+const SITE_ORIGIN = 'https://catsplit-app.web.app'
+const TEMPLATE_TTL_MS = 60 * 1000
+let templateCache = { html: null, at: 0 }
+
+// 分享連結預覽用：Hosting 靜態檔就是 index.html，這裡抓回來再塞進群組專屬的 OG 標籤
+const loadIndexHtml = async () => {
+  if (templateCache.html && Date.now() - templateCache.at < TEMPLATE_TTL_MS) return templateCache.html
+  const r = await fetch(`${SITE_ORIGIN}/index.html`)
+  if (!r.ok) throw new Error(`index.html ${r.status}`)
+  templateCache = { html: await r.text(), at: Date.now() }
+  return templateCache.html
+}
+
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+
+// 頁面載入前把 /s/:id 換回 /group/:id（含 LIFF 帶回來的 liff.state），之後整個 App 都當一般群組連結處理
+const PATH_FIX_SCRIPT = `<script>(function(){var l=location,p=l.pathname;if(p.indexOf('/s/')!==0)return;var u=new URLSearchParams(l.search),s=u.get('liff.state');if(s&&s.indexOf('/s/')===0)u.set('liff.state','/group/'+s.slice(3));var q=u.toString();history.replaceState(null,'','/group/'+p.slice(3)+(q?'?'+q:'')+l.hash)})()</script>`
+
+/**
+ * 分享連結 /s/:groupId：回傳 index.html，並依群組名稱與封面補上 og: 標籤，
+ * 讓 LINE 等平台的連結預覽顯示該群組的封面。群組不存在時退回一般頁面。
+ */
+export const sharePage = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5 },
+  async (req, res) => {
+    const groupId = req.path.match(/^\/s\/([A-Za-z0-9]{1,40})\/?$/)?.[1]
+    try {
+      let html = await loadIndexHtml()
+      const group = groupId ? await readGroup(groupId) : null
+      const title = group?.name ? `${group.name}｜貓咪分帳 CatSplit` : '貓咪分帳 CatSplit'
+      const image = typeof group?.coverUrl === 'string' && group.coverUrl.startsWith('https://')
+        ? group.coverUrl
+        : `${SITE_ORIGIN}/apple-touch-icon.png`
+      const tags = [
+        PATH_FIX_SCRIPT,
+        `<meta property="og:type" content="website" />`,
+        `<meta property="og:site_name" content="貓咪分帳 CatSplit" />`,
+        `<meta property="og:title" content="${escapeHtml(title)}" />`,
+        `<meta property="og:description" content="你被邀請加入分帳群組，點開加入吧！" />`,
+        `<meta property="og:image" content="${escapeHtml(image)}" />`,
+      ].join('\n    ')
+      html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`).replace('</head>', `    ${tags}\n  </head>`)
+      res.set('Cache-Control', 'public, max-age=0, s-maxage=60')
+      res.type('html').send(html)
+    } catch (e) {
+      console.error('sharePage error', e)
+      res.redirect(302, groupId ? `/group/${groupId}` : '/')
+    }
+  }
+)

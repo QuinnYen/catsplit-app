@@ -204,7 +204,7 @@ const GroupPage = () => {
   // 邀請：LINE 內用好友選擇器 → 支援的瀏覽器用系統分享選單 → 最後複製連結
   const handleInvite = async () => {
     const liffId = import.meta.env.VITE_LIFF_ID
-    const url = `https://liff.line.me/${liffId}/group/${id}`
+    const url = `https://liff.line.me/${liffId}/s/${id}`
     const text = `${user?.name} 邀請你加入 貓咪分帳 CatSplit 的分帳群組「${group?.name}」！`
     try {
       if (liffInstance?.isApiAvailable?.('shareTargetPicker')) {
