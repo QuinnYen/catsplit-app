@@ -98,16 +98,18 @@ const HomePage = () => {
   }
 
   const handleDeleteMyData = async () => {
-    const { toDelete, toLeave } = planDeleteMyData(groups, user.uid)
-    const owing = toLeave.filter(g => Math.abs(g.memberBalances?.[user.uid] ?? 0) >= 0.01)
+    const { toDelete, toLeave, toDissolve } = planDeleteMyData(groups, user.uid)
+    const dissolveIds = new Set(toDissolve.map(g => g.id))
+    const keep = toLeave.filter(g => !dissolveIds.has(g.id))
+    const owing = keep.filter(g => Math.abs(g.memberBalances?.[user.uid] ?? 0) >= 0.01)
     const lines = [
       '確定要刪除你的資料嗎？此操作無法復原。',
       '',
-      `・退出 ${toLeave.length} 個群組（你的名稱與頭像會被移除，歷史帳目保留給其他成員）`,
-      `・刪除 ${toDelete.length} 個只有你一人的群組（含所有支出、收據與封面）`,
+      `・退出 ${keep.length} 個群組：歷史帳目保留，你的名字會留在群組裡成為訪客名字（頭像會移除），之後別人可以認領；若你是建立者，會轉交給最早加入的 LINE 成員`,
+      `・刪除 ${toDelete.length + toDissolve.length} 個沒有其他 LINE 成員的群組（含所有支出、收據與封面）`,
     ]
     if (owing.length > 0) {
-      lines.push('', `注意：以下群組你還有未結清的餘額，退出後其他成員的結算會少了你：`, ...owing.map(g => `  - ${g.name}`))
+      lines.push('', `注意：以下群組你還有未結清的餘額，會跟著你的名字留在群組裡，請先結清或告知其他成員：`, ...owing.map(g => `  - ${g.name}`))
     }
     lines.push('', '完成後會自動登出。')
     if (!confirm(lines.join('\n'))) return

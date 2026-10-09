@@ -9,6 +9,7 @@ import Avatar from '../components/Avatar'
 import GroupIconPicker from '../components/GroupIconPicker'
 import PawDecor from '../components/PawDecor'
 import { deleteGroupFiles } from '../utils/storageCleanup'
+import { detachFromGroups } from '../utils/deleteMyData'
 
 // 裁圖元件（含 react-easy-crop）選了圖片才需要
 const CropModal = lazy(() => import('../components/CropModal'))
@@ -209,15 +210,11 @@ const EditGroupPage = () => {
   }
 
   const handleLeaveGroup = async () => {
-    if (!confirm(`確定退出「${group.name}」？退出後將無法查看此群組。`)) return
+    if (!confirm(`確定退出「${group.name}」？
+你的名字會留在群組裡成為訪客名字，歷史帳目保留，之後別人可以認領。退出後你將無法查看此群組。`)) return
     setLeaving(true)
     try {
-      const updatedProfiles = { ...group.memberProfiles }
-      delete updatedProfiles[user.uid]
-      await updateDoc(doc(db, 'groups', id), {
-        members: arrayRemove(user.uid),
-        memberProfiles: updatedProfiles,
-      })
+      await detachFromGroups([id])
       navigate('/')
     } catch (error) {
       console.error('退出群組失敗', error)

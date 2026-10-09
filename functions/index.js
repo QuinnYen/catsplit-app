@@ -226,6 +226,8 @@ const migrateMember = async (groupId, fromId, toUid, profileOverride = {}) => {
   }
   const balances = moveKey(group.memberBalances, fromId, toUid)
   if (balances) groupPatch.memberBalances = balances
+  const counts = moveKey(group.memberExpenseCounts, fromId, toUid)
+  if (counts) groupPatch.memberExpenseCounts = counts
   if (group.createdBy === fromId) groupPatch.createdBy = toUid
   await groupRef.update(groupPatch)
   return true
@@ -375,6 +377,82 @@ export const claimMember = onRequest(
 
 const EXPORT_URL_TTL_MS = 5 * 60 * 1000
 const MAX_CSV_CHARS = 1_000_000
+
+// 整個群組刪除：子集合（支出、轉帳）、群組文件與 Storage 檔案（收據、封面）
+const deleteGroupCompletely = async (groupId) => {
+  const bucket = getStorage().bucket()
+  await Promise.all([
+    bucket.deleteFiles({ prefix: `receipts/${groupId}/` }),
+    bucket.deleteFiles({ prefix: `groups/${groupId}/` }),
+  ])
+  await getFirestore().recursiveDelete(getFirestore().doc(`groups/${groupId}`))
+}
+
+/**
+ * 成員退出群組但保留帳目：把這位成員轉成訪客名字（沿用原本的名字、清掉頭像），之後別人可以認領。
+ * 建立者退出時，先把建立者轉給最早加入的 LINE 成員；沒有其他 LINE 成員就整個群組刪除。
+ * 先轉建立者、再改帳目：中途失敗時呼叫者仍是成員，重試即可繼續。
+ * 回傳 'detached' | 'deleted' | 'skipped'（已不在群組，視為完成）。
+ */
+const detachFromGroup = async (groupId, uid) => {
+  const group = await readGroup(groupId)
+  if (!group || !group.members.includes(uid)) return 'skipped'
+  if (group.createdBy === uid) {
+    const successor = group.members.find((m) => m !== uid && !isGuestId(m))
+    if (!successor) {
+      await deleteGroupCompletely(groupId)
+      return 'deleted'
+    }
+    await getFirestore().doc(`groups/${groupId}`).update({ createdBy: successor })
+  }
+  const guestId = `p_${randomBytes(10).toString('hex')}`
+  const name = group.memberProfiles?.[uid]?.name || '前成員'
+  await migrateMember(groupId, uid, guestId, { name, avatar: null, placeholder: true })
+  return 'detached'
+}
+
+/**
+ * 退出多個群組並保留帳目（見 detachFromGroup）。需登入且不是訪客。body { groupIds: string[] }。
+ * 回傳 { results: { [groupId]: 結果 }, failed: string[] }。
+ */
+export const detachMember = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5, timeoutSeconds: 300 },
+  async (req, res) => {
+    setCors(req, res)
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('')
+      return
+    }
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'method_not_allowed' })
+      return
+    }
+
+    const caller = await verifyBearer(req)
+    if (!caller || caller.guest) {
+      res.status(401).json({ error: 'unauthenticated' })
+      return
+    }
+
+    const { groupIds } = req.body || {}
+    if (!Array.isArray(groupIds) || groupIds.length === 0 || groupIds.length > 100 || groupIds.some((g) => typeof g !== 'string')) {
+      res.status(400).json({ error: 'invalid_group_ids' })
+      return
+    }
+
+    const results = {}
+    const failed = []
+    for (const groupId of groupIds) {
+      try {
+        results[groupId] = await detachFromGroup(groupId, caller.uid)
+      } catch (e) {
+        console.error('detachMember error', groupId, e)
+        failed.push(groupId)
+      }
+    }
+    res.json({ results, failed })
+  }
+)
 
 /**
  * 把前端產生的 CSV 存到 Storage（exports/，由 bucket 的生命週期規則 1 天後清除），
