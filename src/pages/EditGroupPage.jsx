@@ -409,7 +409,7 @@ const EditGroupPage = () => {
                         autoFocus
                         maxLength={20}
                         placeholder="輸入新名稱..."
-                        style={{ flex: 1, border: '0.5px solid #FF8C42', borderRadius: 10, padding: '9px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                        style={{ flex: 1, minWidth: 0, border: '0.5px solid #FF8C42', borderRadius: 10, padding: '9px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
                       />
                       <button
                         onClick={() => handleRenameMember(uid)}
