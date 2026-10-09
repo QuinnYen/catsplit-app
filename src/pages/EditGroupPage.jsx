@@ -76,9 +76,10 @@ const EditGroupPage = () => {
     e.target.value = ''
     if (!file || !file.type.startsWith('image/')) return
     try {
-      // 先縮小，避免相機原圖過大塞爆 canvas；同時修正 EXIF 旋轉
+      // 先縮小，避免相機原圖過大塞爆 canvas；同時修正 EXIF 旋轉。
+      // 不設 maxSizeMB：裁切後會再輸出較小的圖，這裡只縮尺寸一次，不反覆降畫質
       const { default: imageCompression } = await import('browser-image-compression')
-      const resized = await imageCompression(file, { maxSizeMB: 1.5, maxWidthOrHeight: 1600, useWebWorker: true })
+      const resized = await imageCompression(file, { maxWidthOrHeight: 1600, useWebWorker: true })
       setCropSrc(URL.createObjectURL(resized))
     } catch (error) {
       console.error('讀取圖片失敗', error)
@@ -102,8 +103,9 @@ const EditGroupPage = () => {
       const snapshot = await uploadBytes(storageRef, blob, { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' })
       const coverUrl = await getDownloadURL(snapshot.ref)
       await updateDoc(doc(db, 'groups', id), { coverUrl })
-      await deleteOldCover(group.coverUrl)
       setGroup(prev => ({ ...prev, coverUrl }))
+      // 刪舊檔不用等，背景進行（失敗只記警告）
+      deleteOldCover(group.coverUrl)
     } catch (error) {
       console.error('上傳封面失敗', error)
     }
@@ -115,8 +117,8 @@ const EditGroupPage = () => {
     setCoverSaving(true)
     try {
       await updateDoc(doc(db, 'groups', id), { coverUrl: null })
-      await deleteOldCover(group.coverUrl)
       setGroup(prev => ({ ...prev, coverUrl: null }))
+      deleteOldCover(group.coverUrl)
     } catch (error) {
       console.error('移除封面失敗', error)
     }

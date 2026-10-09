@@ -1,4 +1,4 @@
-const MAX_OUTPUT_WIDTH = 1280
+const MAX_OUTPUT_WIDTH = 960
 
 const loadImage = (src) => new Promise((resolve, reject) => {
   const img = new Image()
@@ -8,7 +8,7 @@ const loadImage = (src) => new Promise((resolve, reject) => {
 })
 
 /**
- * 依 react-easy-crop 回傳的 pixelCrop 裁出 JPEG Blob，輸出寬度上限 1280px
+ * 依 react-easy-crop 回傳的 pixelCrop 裁出 JPEG Blob，輸出寬度上限 960px
  */
 export const getCroppedBlob = async (imageSrc, pixelCrop) => {
   const img = await loadImage(imageSrc)
@@ -22,6 +22,6 @@ export const getCroppedBlob = async (imageSrc, pixelCrop) => {
     0, 0, canvas.width, canvas.height,
   )
   return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('裁切失敗'))), 'image/jpeg', 0.85)
+    canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('裁切失敗'))), 'image/jpeg', 0.8)
   })
 }
