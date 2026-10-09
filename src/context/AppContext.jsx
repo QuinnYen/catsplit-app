@@ -90,7 +90,7 @@ const generateState = () => {
 const isInLineApp = () => /Line/i.test(navigator.userAgent)
 
 // 邀請連結（群組首頁）；liff.state 已在 main.jsx 換成真正的路徑
-const isInvitePath = () => /^\/group\/[^/]+\/?$/.test(window.location.pathname)
+const isInvitePath = () => /^\/group\/[^/]+(?:\/add)?\/?$/.test(window.location.pathname)
 
 const readCachedUser = () => {
   try {

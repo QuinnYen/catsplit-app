@@ -89,7 +89,7 @@ const ProtectedRoutes = () => {
   if (loading || needGuestSwitch) return <LoadingScreen />
   // 登入後要回到原本開啟的頁面（例如邀請連結的群組頁）
   // 只有邀請連結（群組頁）提供訪客名字；訪客不能建立群組
-  const inviteGroupId = location.pathname.match(/^\/group\/([^/]+)\/?$/)?.[1]
+  const inviteGroupId = location.pathname.match(/^\/group\/([^/]+)(?:\/add)?\/?$/)?.[1]
   if (!user) return <LoginScreen onLogin={() => loginWithLine(location.pathname + location.search)} guestGroupId={inviteGroupId} />
 
   return (

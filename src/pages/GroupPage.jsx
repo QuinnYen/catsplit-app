@@ -9,6 +9,7 @@ import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
 import GuestJoin from '../components/GuestJoin'
 import InviteModal from '../components/InviteModal'
+import { buildShareContent } from '../utils/shareContent'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
@@ -747,9 +748,8 @@ const GroupPage = () => {
 
       {inviteOpen && (
         <InviteModal
-          url={`https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/s/${id}`}
+          content={buildShareContent(id, group)}
           text={`${user?.name} 邀請你加入 貓咪分帳 CatSplit 的分帳群組「${group.name}」！`}
-          title={group.name}
           liff={liffInstance}
           onClose={() => setInviteOpen(false)}
         />

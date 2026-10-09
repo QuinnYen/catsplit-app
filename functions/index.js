@@ -451,13 +451,13 @@ const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', 
 const PATH_FIX_SCRIPT = `<script>(function(){var l=location,p=l.pathname;if(p.indexOf('/s/')!==0)return;var u=new URLSearchParams(l.search),s=u.get('liff.state');if(s&&s.indexOf('/s/')===0)u.set('liff.state','/group/'+s.slice(3));var q=u.toString();history.replaceState(null,'','/group/'+p.slice(3)+(q?'?'+q:'')+l.hash)})()</script>`
 
 /**
- * 分享連結 /s/:groupId：回傳 index.html，並依群組名稱與封面補上 og: 標籤，
+ * 分享連結 /s/:groupId（及 /s/:groupId/add）：回傳 index.html，並依群組名稱與封面補上 og: 標籤，
  * 讓 LINE 等平台的連結預覽顯示該群組的封面。群組不存在時退回一般頁面。
  */
 export const sharePage = onRequest(
   { cors: false, region: 'asia-east1', maxInstances: 5 },
   async (req, res) => {
-    const groupId = req.path.match(/^\/s\/([A-Za-z0-9]{1,40})\/?$/)?.[1]
+    const groupId = req.path.match(/^\/s\/([A-Za-z0-9]{1,40})(?:\/add)?\/?$/)?.[1]
     try {
       let html = await loadIndexHtml()
       const group = groupId ? await readGroup(groupId) : null
@@ -470,7 +470,7 @@ export const sharePage = onRequest(
         `<meta property="og:type" content="website" />`,
         `<meta property="og:site_name" content="貓咪分帳 CatSplit" />`,
         `<meta property="og:title" content="${escapeHtml(title)}" />`,
-        `<meta property="og:description" content="你被邀請加入分帳群組，點開加入吧！" />`,
+        `<meta property="og:description" content="分帳群組・點開進入記帳" />`,
         `<meta property="og:image" content="${escapeHtml(image)}" />`,
       ].join('\n    ')
       html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`).replace('</head>', `    ${tags}\n  </head>`)

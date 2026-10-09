@@ -1,8 +1,10 @@
 // 邀請成員彈窗：QR Code ＋ 各種分享方式。要新增方式（Email、其他平台…）就在 actions 加一筆。
 import { useEffect, useState } from 'react'
-import { X, Copy, Check, Share2, MessageCircle } from 'lucide-react'
+import { X, Copy, Check, Share2, MessageCircle, Pin } from 'lucide-react'
+import { buildLineMessages } from '../utils/shareContent'
 
-const InviteModal = ({ url, text, title, liff, onClose }) => {
+const InviteModal = ({ content, text, liff, onClose }) => {
+  const { enterUrl: url, title } = content
   const [qr, setQr] = useState(null)
   const [copied, setCopied] = useState(false)
 
@@ -37,6 +39,15 @@ const InviteModal = ({ url, text, title, liff, onClose }) => {
     }
   }
 
+  // 貼到群組當入口：不帶「邀請」字眼的卡片，平常進來記帳用
+  const entryShare = async () => {
+    try {
+      await liff.shareTargetPicker(buildLineMessages(content))
+    } catch (e) {
+      console.warn('shareTargetPicker 失敗', e)
+    }
+  }
+
   const systemShare = async () => {
     try {
       await navigator.share({ title, text, url })
@@ -47,6 +58,7 @@ const InviteModal = ({ url, text, title, liff, onClose }) => {
 
   const actions = [
     canLineShare && { key: 'line', label: '分享到 LINE', Icon: MessageCircle, onClick: lineShare },
+    canLineShare && { key: 'entry', label: '貼到群組當記帳入口', Icon: Pin, onClick: entryShare },
     canSystemShare && { key: 'system', label: '分享到其他 App', Icon: Share2, onClick: systemShare },
     { key: 'copy', label: copied ? '已複製' : '複製連結', Icon: copied ? Check : Copy, onClick: copyLink },
   ].filter(Boolean)

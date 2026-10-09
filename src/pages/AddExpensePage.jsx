@@ -51,6 +51,11 @@ const AddExpensePage = () => {
       const snap = await getDoc(doc(db, 'groups', id))
       if (!snap.exists()) return
       const data = { id: snap.id, ...snap.data() }
+      // 非成員（例如點到群組公告的「記一筆」）先去群組頁加入
+      if (!data.members?.includes(user?.uid)) {
+        navigate(`/group/${id}`, { replace: true })
+        return
+      }
       setGroup(data)
       const base = data.baseCurrency || 'TWD'
       setBaseCurrency(base)
@@ -67,7 +72,7 @@ const AddExpensePage = () => {
       setSubsetMembers(subsetInit)
     }
     fetchGroup()
-  }, [id])
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const members = Object.entries(group?.memberProfiles || {})
 
