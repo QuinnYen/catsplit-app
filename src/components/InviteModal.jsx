@@ -45,7 +45,7 @@ const InviteModal = ({ content, text, liff, onClose }) => {
     }
   }
 
-  // 貼到群組當入口：不帶「邀請」字眼的卡片，平常進來記帳用
+  // 貼到群組當入口：不帶「邀請」字眼的卡片，平常進來記帳用（卡片只有 LINE 看得到）
   const entryShare = async () => {
     try {
       await liff.shareTargetPicker(buildLineMessages(content))

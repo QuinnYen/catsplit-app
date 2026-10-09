@@ -12,7 +12,8 @@ export const buildShareContent = (groupId, group) => {
     imageUrl: hasCover ? group.coverUrl : FALLBACK_IMAGE,
     hasCover,
     enterUrl: base,
-    addUrl: `${base}/add`,
+    // 記一筆不需要連結預覽，直接指到群組路徑（不經過 /s/ 與雲端函式，也少一次轉址）
+    addUrl: `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/group/${groupId}/add`,
   }
 }
 

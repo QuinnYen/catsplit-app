@@ -448,13 +448,13 @@ const loadIndexHtml = async () => {
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 
 /**
- * 分享連結 /s/:groupId（及 /s/:groupId/add）：回傳 index.html，並依群組名稱與封面補上 og: 標籤，
+ * 分享連結 /s/:groupId：回傳 index.html，並依群組名稱與封面補上 og: 標籤，
  * 讓 LINE 等平台的連結預覽顯示該群組的封面。群組不存在時退回一般頁面。
  */
 export const sharePage = onRequest(
   { cors: false, region: 'asia-east1', maxInstances: 5 },
   async (req, res) => {
-    const groupId = req.path.match(/^\/s\/([A-Za-z0-9]{1,40})(?:\/add)?\/?$/)?.[1]
+    const groupId = req.path.match(/^\/s\/([A-Za-z0-9]{1,40})\/?$/)?.[1]
     try {
       let html = await loadIndexHtml()
       const group = groupId ? await readGroup(groupId) : null
