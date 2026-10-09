@@ -2,8 +2,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot, getDoc, doc } from 'firebase/firestore'
-import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2, QrCode } from 'lucide-react'
+import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2, QrCode, MessageCircle } from 'lucide-react'
 import { db } from '../config/firebase'
+import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
@@ -377,6 +378,7 @@ const HomePage = () => {
             {[
               // 訪客沒有穩定身分，不提供收款方式
               ...(!user?.guest ? [{ Icon: QrCode, label: '收款方式', onClick: () => navigate('/payment-methods') }] : []),
+              { Icon: MessageCircle, label: '官方帳號', href: OFFICIAL_ACCOUNT_URL },
               { Icon: FileText, label: '使用條款', href: '/terms.html' },
               { Icon: ShieldCheck, label: '隱私權政策', href: '/privacy.html' },
               { Icon: LogOut, label: '登出', onClick: handleLogout },

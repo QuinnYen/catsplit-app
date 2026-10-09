@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore'
 
-import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download } from 'lucide-react'
+import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download, MessageCircle } from 'lucide-react'
 import { db, auth } from '../config/firebase'
+import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
 import GuestJoin from '../components/GuestJoin'
 import TabBar from '../components/TabBar'
@@ -404,6 +405,14 @@ const GroupPage = () => {
                 onClick: async () => { await handleExportCSV(); setSettingsPos(null) },
               },
               { label: '編輯群組', Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
+              {
+                label: '官方帳號', Icon: MessageCircle,
+                onClick: () => {
+                  setSettingsPos(null)
+                  if (liffInstance?.isInClient?.()) liffInstance.openWindow({ url: OFFICIAL_ACCOUNT_URL, external: false })
+                  else window.open(OFFICIAL_ACCOUNT_URL, '_blank', 'noopener')
+                },
+              },
             ].map(({ label, Icon, onClick, disabled }) => (
               <button
                 key={label} onClick={onClick} disabled={disabled}
