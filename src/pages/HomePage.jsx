@@ -111,7 +111,7 @@ const HomePage = () => {
     if (owing.length > 0) {
       lines.push('', `注意：以下群組你還有未結清的餘額，會跟著你的名字留在群組裡，請先結清或告知其他成員：`, ...owing.map(g => `  - ${g.name}`))
     }
-    lines.push('', '完成後會自動登出。')
+    lines.push('', '你的登入紀錄與收款方式也會一併刪除，完成後會自動登出。')
     if (!confirm(lines.join('\n'))) return
     setDeletingData(true)
     try {

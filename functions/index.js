@@ -412,8 +412,9 @@ const detachFromGroup = async (groupId, uid) => {
 }
 
 /**
- * 退出多個群組並保留帳目（見 detachFromGroup）。需登入且不是訪客。body { groupIds: string[] }。
- * 回傳 { results: { [groupId]: 結果 }, failed: string[] }。
+ * 退出多個群組並保留帳目（見 detachFromGroup）。需登入且不是訪客。body { groupIds: string[], deleteAccount?: boolean }。
+ * deleteAccount 為 true 時，全部退出成功後再刪除這個人的 Auth 紀錄（此時群組清單可為空）；有任何失敗就不刪，讓使用者能重試。
+ * 回傳 { results: { [groupId]: 結果 }, failed: string[], accountDeleted: boolean }。
  */
 export const detachMember = onRequest(
   { cors: false, region: 'asia-east1', maxInstances: 5, timeoutSeconds: 300 },
@@ -434,8 +435,8 @@ export const detachMember = onRequest(
       return
     }
 
-    const { groupIds } = req.body || {}
-    if (!Array.isArray(groupIds) || groupIds.length === 0 || groupIds.length > 100 || groupIds.some((g) => typeof g !== 'string')) {
+    const { groupIds, deleteAccount } = req.body || {}
+    if (!Array.isArray(groupIds) || (groupIds.length === 0 && deleteAccount !== true) || groupIds.length > 100 || groupIds.some((g) => typeof g !== 'string')) {
       res.status(400).json({ error: 'invalid_group_ids' })
       return
     }
@@ -450,7 +451,20 @@ export const detachMember = onRequest(
         failed.push(groupId)
       }
     }
-    res.json({ results, failed })
+    let accountDeleted = false
+    if (deleteAccount === true && failed.length === 0) {
+      try {
+        await getAuth().deleteUser(caller.uid)
+        accountDeleted = true
+      } catch (e) {
+        if (e.code === 'auth/user-not-found') accountDeleted = true
+        else {
+          console.error('detachMember deleteUser error', e)
+          failed.push('account')
+        }
+      }
+    }
+    res.json({ results, failed, accountDeleted })
   }
 )
 

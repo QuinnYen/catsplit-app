@@ -34,13 +34,14 @@ const deleteWholeGroup = async (groupId) => {
 
 const DETACH_MEMBER_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/detachMember')
 
-// 退出群組但保留帳目：雲端函式把自己轉成訪客名字（沿用原名字）；建立者退出時會轉讓給其他 LINE 成員
-export const detachFromGroups = async (groupIds) => {
+// 退出群組但保留帳目：雲端函式把自己轉成訪客名字（沿用原名字）；建立者退出時會轉讓給其他 LINE 成員。
+// deleteAccount：全部退出後連登入紀錄（Auth）一併刪除
+export const detachFromGroups = async (groupIds, { deleteAccount = false } = {}) => {
   const idToken = await auth.currentUser.getIdToken()
   const res = await fetch(DETACH_MEMBER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-    body: JSON.stringify({ groupIds }),
+    body: JSON.stringify({ groupIds, deleteAccount }),
   })
   if (!res.ok) throw new Error(`detachMember ${res.status}`)
   const { failed } = await res.json()
@@ -55,10 +56,11 @@ const deleteMyPaymentMethods = async (uid) => {
   await batch.commit()
 }
 
-// 依序處理；中途失敗會丟出錯誤，已處理的群組不會回復，重按一次即可繼續
+// 依序處理；中途失敗會丟出錯誤，已處理的群組不會回復，重按一次即可繼續。
+// 登入紀錄必須最後刪（收款方式要用登入身分才刪得掉），前面失敗就不會刪，重試時仍能登入
 export const deleteMyData = async (groups, uid) => {
   const { toDelete, toLeave } = planDeleteMyData(groups, uid)
   for (const g of toDelete) await deleteWholeGroup(g.id)
-  if (toLeave.length > 0) await detachFromGroups(toLeave.map(g => g.id))
   await deleteMyPaymentMethods(uid)
+  await detachFromGroups(toLeave.map(g => g.id), { deleteAccount: true })
 }
