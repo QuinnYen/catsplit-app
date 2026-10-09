@@ -407,11 +407,8 @@ const GroupPage = () => {
               { label: '編輯群組', Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
               {
                 label: '官方帳號', Icon: MessageCircle,
-                onClick: () => {
-                  setSettingsPos(null)
-                  if (liffInstance?.isInClient?.()) liffInstance.openWindow({ url: OFFICIAL_ACCOUNT_URL, external: false })
-                  else window.open(OFFICIAL_ACCOUNT_URL, '_blank', 'noopener')
-                },
+                // 直接導向（同首頁的 <a href>）；liff.openWindow 在三星雙開 LINE 的副本會被導回主 LINE
+                onClick: () => { window.location.href = OFFICIAL_ACCOUNT_URL },
               },
             ].map(({ label, Icon, onClick, disabled }) => (
               <button
