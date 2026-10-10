@@ -95,10 +95,10 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
 
         {/* 主卡片 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-            <div style={{ width: 48, height: 48, background: '#fff3ec', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, textAlign: 'center', padding: '0 4px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, whiteSpace: 'nowrap' }}>
               {categoryLabel(expense.category, t)}
-            </div>
+            </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 17, fontWeight: 600, color: '#3d2b1f', marginBottom: 4, wordBreak: 'break-word' }}>{expense.title}</div>
               <div style={{ fontSize: 12, color: '#b08060' }}>{dateStr}{timeStr && ` ${timeStr}`}</div>

@@ -20,7 +20,6 @@ const SettlePage = () => {
   const { t, fmt: i18nFmt } = useI18n()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
-  const [incomes, setIncomes] = useState([])
   const [balances, setBalances] = useState({})
   const [settledRecords, setSettledRecords] = useState([])
   const [settlements, setSettlements] = useState([])
@@ -49,7 +48,6 @@ const SettlePage = () => {
 
       const incomesSnap = await getDocs(collection(db, 'groups', id, 'incomes'))
       const incomesData = incomesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-      setIncomes(incomesData)
 
       // 計算餘額：支出分帳 + 已結清紀錄 + 收入
       const balance = computeMemberBalances(groupData.members, expensesData, settlementsData, incomesData)
@@ -134,23 +132,20 @@ const SettlePage = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <GroupIcon icon={group.icon} color={group.iconColor} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
-                <div style={{ fontSize: 11, color: '#b08060', flexShrink: 0 }}>{t('group.totalExpense')}</div>
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
               <div style={{ fontSize: 12, color: '#b08060' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
             </div>
           </div>
 
           {/* 貨幣選單 + 總支出 */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <select
                 value={displayCurrency}
                 onChange={e => setDisplayCurrency(e.target.value)}
                 style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '8px 10px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
               >
-                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {c.code}</option>)}
+                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
               </select>
               {displayCurrency !== baseCurrency && (
                 <div style={{ fontSize: 11, color: '#c4a882', marginTop: 6, display: 'flex', alignItems: 'flex-start', gap: 4 }}>
@@ -159,6 +154,7 @@ const SettlePage = () => {
               )}
             </div>
             <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
+              <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{t('settle.total')}</div>
               <div style={{ ...amountStyle(totalText), fontWeight: 500, color: '#FF6B1A' }}>{totalText}</div>
             </div>
           </div>
@@ -172,8 +168,6 @@ const SettlePage = () => {
               const profile = group.memberProfiles?.[uid]
               const paid = expenses.reduce((sum, e) => sum + (e.payments?.[uid] || 0), 0)
               const shouldPay = expenses.reduce((sum, e) => sum + (e.splits?.[uid] || 0), 0)
-              const incomeReceived = incomes.reduce((sum, i) => sum + (i.received?.[uid] || 0), 0)
-              const incomeShare = incomes.reduce((sum, i) => sum + (i.splits?.[uid] || 0), 0)
               const diff = balances[uid] ?? 0
 
               return (
@@ -181,10 +175,8 @@ const SettlePage = () => {
                   <Avatar src={profile?.avatar} name={profile?.name} size={36} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', marginBottom: 2 }}>{profile?.name}</div>
-                    <div style={{ fontSize: 11, color: '#b08060' }}>
-                      {t('settle.paidOwes', { paid: fmt(paid), owes: fmt(shouldPay) })}
-                      {(incomeReceived > 0 || incomeShare > 0) && t('settle.incomeExtra', { received: fmt(incomeReceived), share: fmt(incomeShare) })}
-                    </div>
+                    <div style={{ fontSize: 11, color: '#b08060' }}>{t('settle.paid', { amount: fmt(paid) })}</div>
+                    <div style={{ fontSize: 11, color: '#b08060' }}>{t('settle.owes', { amount: fmt(shouldPay) })}</div>
                   </div>
                   <div style={{
                     fontSize: 13, fontWeight: 500, flexShrink: 0,

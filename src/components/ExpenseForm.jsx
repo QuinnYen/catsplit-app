@@ -335,20 +335,9 @@ const ExpenseForm = ({
       {/* 分帳方式 */}
       <div style={cardStyle}>
         <div style={labelStyle}>{t('form.splitMethod')}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 12 }}>
-          {SPLIT_TYPES.map(type => (
-            <button
-              key={type.key}
-              onClick={() => setSplitType(type.key)}
-              style={{
-                padding: '8px 0', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: 'none', transition: 'all 0.15s',
-                ...(splitType === type.key ? chipActiveStyle : chipIdleStyle),
-              }}
-            >
-              {t(type.labelKey)}
-            </button>
-          ))}
-        </div>
+        <select value={splitType} onChange={e => setSplitType(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }}>
+          {SPLIT_TYPES.map(type => <option key={type.key} value={type.key}>{t(type.labelKey)}</option>)}
+        </select>
 
         {/* 均分預覽 */}
         {splitType === 'equal' && amount && (
