@@ -116,6 +116,12 @@ test('primaryPayer / payerLabel：單人顯示名字，多人顯示「等 N 人�
   assert.equal(payerLabel({ a: 200, b: 500 }, profiles), '小華 等 2 人')
 })
 
+test('matchExpense：提供 categoryText 時以它取代原始 category 比對', () => {
+  assert.ok(matchExpense({ title: 'x', category: 'food' }, '餐飲', {}, '餐飲'))
+  assert.ok(!matchExpense({ title: 'x', category: 'food' }, 'food', {}, '餐飲'))
+  assert.ok(matchExpense({ title: 'x', category: '餐飲' }, '餐飲', {}))
+})
+
 test('matchExpense：可用任一付款人名字搜尋', () => {
   const profiles = { a: { name: '小明' }, b: { name: '小華' } }
   assert.ok(matchExpense({ title: '晚餐', payments: { a: 1, b: 2 } }, '小明', profiles))

@@ -7,6 +7,7 @@ import { db } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
+import { describeActivity } from '../i18n/legacy'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
@@ -132,7 +133,7 @@ const HomePage = () => {
   // 最新動態：所有群組中最近一次的新增支出／轉帳（群組文件上的 lastActivity），只取最新一筆
   const latest = activeGroups
     .filter(g => g.lastActivity)
-    .map(g => ({ group: g, at: g.lastActivity.at?.toDate?.() ?? new Date(), name: g.lastActivity.name, text: g.lastActivity.text }))
+    .map(g => ({ group: g, at: g.lastActivity.at?.toDate?.() ?? new Date(), name: g.lastActivity.name, activity: g.lastActivity }))
     .sort((a, b) => b.at - a.at)[0]
   // 一天內有動靜才顯示訊息，超過只留時間
   const latestIsRecent = latest && openedAt - latest.at.getTime() < 24 * 60 * 60 * 1000
@@ -228,8 +229,8 @@ const HomePage = () => {
         >
           {latestIsRecent ? (
             <>
-              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>{latest.group.name}・{latest.name}</div>
-              <div style={{ color: '#fff', fontSize: 18, fontWeight: 500, marginTop: 4 }}>{latest.text}</div>
+              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>{latest.group.name}・{latest.name ?? t('common.someone')}</div>
+              <div style={{ color: '#fff', fontSize: 18, fontWeight: 500, marginTop: 4 }}>{describeActivity(latest.activity, t)}</div>
             </>
           ) : (
             <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>目前沒有動態消息</div>

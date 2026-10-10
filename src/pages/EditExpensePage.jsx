@@ -15,6 +15,7 @@ import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchange
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useApp } from '../context/AppContext'
+import { categoryForWrite, normalizeCategory, activityForWrite } from '../i18n/legacy'
 
 const EditExpensePage = ({ kind = 'expense' }) => {
   const { user } = useApp()
@@ -29,7 +30,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const [group, setGroup] = useState(null)
   const [originalExpense, setOriginalExpense] = useState(null)
   const [title, setTitle] = useState('')
-  const [category, setCategory] = useState('餐飲')
+  const [category, setCategory] = useState(DEFAULT_CATEGORIES[0])
   const [customCategory, setCustomCategory] = useState('')
   const [isEditingCategory, setIsEditingCategory] = useState(false)
   const [amount, setAmount] = useState('')
@@ -92,13 +93,14 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       const dateTs = expense.createdAt?.toDate?.()
       setExpenseDate(toLocalDateTimeStr(dateTs ?? new Date()))
 
-      const isCustomCat = !categoryList.includes(expense.category)
+      const cat = expense.category ? normalizeCategory(expense.category) : ''
+      const isCustomCat = !categoryList.includes(cat)
       if (isCustomCat) {
         setIsEditingCategory(true)
-        setCustomCategory(expense.category || '')
-        setCategory(expense.category || '')
+        setCustomCategory(cat)
+        setCategory(cat)
       } else {
-        setCategory(expense.category || categoryList[0])
+        setCategory(cat)
       }
 
       const initEmpty = {}
@@ -203,7 +205,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       const receiptUpdate = await handleReceiptUpdate()
       await updateDoc(doc(db, 'groups', id, col, expenseId), {
         title: title.trim(),
-        category,
+        category: categoryForWrite(category),
         currency,
         originalAmount: totalAmount,
         exchangeRate: rate,
@@ -217,7 +219,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         ...receiptUpdate,
       })
 
-      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `修改了${isIncome ? '收入' : ''}「${title.trim()}」` } })
+      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: isIncome ? 'income_updated' : 'expense_updated', title: title.trim(), name: user.name }) } })
       navigate(`/group/${id}`)
     } catch (error) {
       console.error('儲存失敗', error)
@@ -231,7 +233,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
     try {
       await deleteDoc(doc(db, 'groups', id, col, expenseId))
       await deleteFileByPath(existingReceiptPath)
-      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `刪除了${isIncome ? '收入' : ''}「${originalExpense.title}」` } })
+      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: isIncome ? 'income_deleted' : 'expense_deleted', title: originalExpense.title, name: user.name }) } })
       navigate(`/group/${id}`)
     } catch (error) {
       console.error('刪除失敗', error)

@@ -8,6 +8,8 @@ import Avatar from '../components/Avatar'
 import PawDecor from '../components/PawDecor'
 import TabBar from '../components/TabBar'
 import { getCurrency } from '../config/currencies'
+import { useI18n } from '../i18n/I18nProvider'
+import { normalizeCategory, categoryLabel } from '../i18n/legacy'
 
 const CATEGORY_COLORS = ['#FF8C42', '#FFB37A', '#E8703A', '#F5C26B', '#C4A882', '#D98C5F', '#8FBF9F', '#7FA6C9']
 const TREND_MONTHS = 6
@@ -16,6 +18,7 @@ const cardStyle = { background: '#fff', borderRadius: 16, border: '0.5px solid #
 const titleStyle = { fontSize: 13, fontWeight: 500, color: '#b08060', marginBottom: 12 }
 
 const StatsPage = () => {
+  const { t } = useI18n()
   const { id } = useParams()
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
@@ -45,7 +48,7 @@ const StatsPage = () => {
     const byPayer = {}
     const byMonth = {}
     expenses.forEach(e => {
-      const cat = e.category || '其他'
+      const cat = normalizeCategory(e.category)
       byCategory[cat] = (byCategory[cat] || 0) + e.amount
       Object.entries(e.payments || {}).forEach(([uid, amt]) => {
         byPayer[uid] = (byPayer[uid] || 0) + amt
@@ -175,7 +178,7 @@ const StatsPage = () => {
                 {segments.map(s => (
                   <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
                     <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, flexShrink: 0 }} />
-                    <span style={{ flex: 1, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                    <span style={{ flex: 1, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{categoryLabel(s.name, t)}</span>
                     <span style={{ color: '#b08060', flexShrink: 0 }}>{s.pct.toFixed(1)}%</span>
                     <span style={{ color: '#3d2b1f', fontWeight: 500, minWidth: 80, textAlign: 'right', flexShrink: 0 }}>{fmt(s.amount)}</span>
                   </div>

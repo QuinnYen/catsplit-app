@@ -53,14 +53,15 @@ export const payerLabel = (payments, memberProfiles, fallback = '未知') => {
 
 /**
  * 搜尋比對：以空白分詞，每個詞都要出現在 標題/備註/類別/付款人/金額 中（子字串）
+ * categoryText 有提供時，以它（類別的顯示文字）取代原始 category 比對
  */
-export const matchExpense = (expense, searchText, memberProfiles) => {
+export const matchExpense = (expense, searchText, memberProfiles, categoryText) => {
   const tokens = normalizeText(searchText).split(/\s+/).filter(Boolean)
   if (tokens.length === 0) return true
   const haystack = normalizeText([
     expense.title,
     expense.note,
-    expense.category,
+    categoryText ?? expense.category,
     ...Object.keys(expense.payments || {}).map(uid => memberProfiles?.[uid]?.name),
     expense.originalAmount ?? expense.amount,
   ].join('\n'))

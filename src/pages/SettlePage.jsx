@@ -11,10 +11,13 @@ import PawDecor from '../components/PawDecor'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
+import { useI18n } from '../i18n/I18nProvider'
+import { paymentMethodLabel } from '../i18n/legacy'
 
 const SettlePage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
   const [incomes, setIncomes] = useState([])
@@ -264,7 +267,7 @@ const SettlePage = () => {
                       <div style={{ display: 'flex', marginTop: 2 }}>
                         <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>轉給&nbsp;</span>
                         <span style={{ color: '#3d2b1f', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
-                        {s.paymentMethod && <span style={{ marginLeft: 4, flexShrink: 0, whiteSpace: 'nowrap' }}>· {s.paymentMethod}</span>}
+                        {s.paymentMethod && <span style={{ marginLeft: 4, flexShrink: 0, whiteSpace: 'nowrap' }}>· {paymentMethodLabel(s.paymentMethod, t)}</span>}
                       </div>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#4caf50', flexShrink: 0 }}>

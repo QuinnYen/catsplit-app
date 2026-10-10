@@ -7,6 +7,8 @@ import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, 
 import { db, auth } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
+import { useI18n } from '../i18n/I18nProvider'
+import { normalizeCategory, categoryLabel, paymentMethodLabel, activityForWrite } from '../i18n/legacy'
 import GuestJoin from '../components/GuestJoin'
 import InviteModal from '../components/InviteModal'
 import { buildShareContent } from '../utils/shareContent'
@@ -24,6 +26,7 @@ const EXPORT_CSV_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLo
 const GroupPage = () => {
   const { id } = useParams()
   const { user, claimMember, liffInstance } = useApp()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
@@ -119,7 +122,7 @@ const GroupPage = () => {
       const { receiptPath, title } = expenses.find(e => e.id === expenseId) ?? {}
       await deleteDoc(doc(db, 'groups', id, 'expenses', expenseId))
       await deleteFileByPath(receiptPath)
-      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `刪除了「${title}」` } })
+      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: 'expense_deleted', title, name: user.name }) } })
     } catch (error) {
       console.error('刪除支出失敗', error)
     }
@@ -129,7 +132,7 @@ const GroupPage = () => {
     if (!window.confirm('確定要刪除這筆轉帳紀錄嗎？')) return
     try {
       await deleteDoc(doc(db, 'groups', id, 'settlements', settlementId))
-      await recomputeGroupAggregates(id, groupSnapshot.members, { activity: { by: user.uid, name: user.name, text: '刪除了一筆轉帳' } })
+      await recomputeGroupAggregates(id, groupSnapshot.members, { activity: { by: user.uid, ...activityForWrite({ type: 'settlement_deleted', name: user.name }) } })
     } catch (error) {
       console.error('刪除轉帳失敗', error)
     }
@@ -162,7 +165,7 @@ const GroupPage = () => {
         ...(hasIncome ? [type] : []),
         date,
         e.title || '',
-        e.category || '',
+        e.category ? categoryLabel(e.category, t) : '',
         payer,
         e.originalAmount ?? e.amount,
         e.currency || group.baseCurrency,
@@ -544,7 +547,7 @@ const GroupPage = () => {
 
         {/* 類別篩選 chips */}
         {!loading && expenses.length > 0 && (() => {
-          const cats = ['全部', ...Array.from(new Set(expenses.map(e => e.category || '其他')))]
+          const cats = ['全部', ...Array.from(new Set(expenses.map(e => normalizeCategory(e.category))))]
           return (
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
               {cats.map(cat => {
@@ -560,7 +563,7 @@ const GroupPage = () => {
                       fontWeight: isActive ? 500 : 400,
                     }}
                   >
-                    {cat}
+                    {cat === '全部' ? cat : categoryLabel(cat, t)}
                   </button>
                 )
               })}
@@ -586,8 +589,8 @@ const GroupPage = () => {
         {!loading && (() => {
           const isSearching = searchText.trim() !== ''
           const filteredExpenses = expenses.filter(e =>
-            (!activeCategory || (e.category || '其他') === activeCategory) &&
-            matchExpense(e, searchText, group.memberProfiles)
+            (!activeCategory || normalizeCategory(e.category) === activeCategory) &&
+            matchExpense(e, searchText, group.memberProfiles, categoryLabel(e.category, t))
           )
 
           if ((activeCategory || isSearching) && filteredExpenses.length === 0) return (
@@ -660,7 +663,7 @@ const GroupPage = () => {
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
                                 {item.paymentMethod && (
                                   <span style={{ flexShrink: 0, whiteSpace: 'nowrap', marginLeft: 6, fontSize: 11, fontWeight: 400, color: '#66bb6a' }}>
-                                    {item.paymentMethod}
+                                    {paymentMethodLabel(item.paymentMethod, t)}
                                   </span>
                                 )}
                               </div>
@@ -687,7 +690,7 @@ const GroupPage = () => {
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3 }}>
                                 <span style={{ fontSize: 12, fontWeight: 500, color: '#1976d2', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                                  {item.category || '其他'}
+                                  {categoryLabel(item.category, t)}
                                 </span>
                                 <span style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {item.title}
@@ -727,7 +730,7 @@ const GroupPage = () => {
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3 }}>
                                 <span style={{ fontSize: 12, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                                  {item.category || '其他'}
+                                  {categoryLabel(item.category, t)}
                                 </span>
                                 <span style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {item.title}
@@ -835,7 +838,7 @@ const GroupPage = () => {
               {[
                 ['付款方', group.memberProfiles?.[detailSettlement.from]?.name],
                 ['收款方', group.memberProfiles?.[detailSettlement.to]?.name],
-                ['付款方式', detailSettlement.paymentMethod],
+                ['付款方式', detailSettlement.paymentMethod && paymentMethodLabel(detailSettlement.paymentMethod, t)],
                 ['備註', detailSettlement.note],
                 ['轉帳時間', detailSettlement.createdAt?.toDate?.().toLocaleString('zh-TW')],
                 ['記錄人', group.memberProfiles?.[detailSettlement.settledBy]?.name],

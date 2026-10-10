@@ -6,6 +6,8 @@ import DateTimeField from './DateTimeField'
 import CalculatorModal from './CalculatorModal'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
+import { useI18n } from '../i18n/I18nProvider'
+import { categoryLabel, normalizeCategory } from '../i18n/legacy'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, SPLIT_TYPES } from '../config/expenseForm'
 
 const inputStyle = {
@@ -136,6 +138,7 @@ const ExpenseForm = ({
   shareToLine, setShareToLine,
   showShareOption,
 }) => {
+  const { t } = useI18n()
   const [showCalc, setShowCalc] = useState(false)
   const L = LABELS[kind]
   const categories = kind === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
@@ -155,7 +158,7 @@ const ExpenseForm = ({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={labelStyle}>類別</div>
             <select
-              value={isEditingCategory ? CUSTOM_OPTION : category}
+              value={isEditingCategory ? CUSTOM_OPTION : normalizeCategory(category)}
               onChange={e => {
                 if (e.target.value === CUSTOM_OPTION) {
                   setIsEditingCategory(true)
@@ -166,7 +169,7 @@ const ExpenseForm = ({
               }}
               style={inputStyle}
             >
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              {categories.map(c => <option key={c} value={c}>{categoryLabel(c, t)}</option>)}
               <option value={CUSTOM_OPTION}>自訂</option>
             </select>
           </div>

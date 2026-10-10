@@ -10,6 +10,8 @@ import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
 import { toLocalDateStr, expenseTimeStr, payerLabel } from '../utils/expenseHelpers'
 import { useStorageImage } from '../hooks/useStorageImage'
+import { useI18n } from '../i18n/I18nProvider'
+import { categoryLabel } from '../i18n/legacy'
 
 const SPLIT_LABEL = {
   equal: '平均分攤',
@@ -26,6 +28,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
   const payField = isIncome ? 'received' : 'payments'
   const routeSeg = isIncome ? 'income' : 'expense'
   const { user } = useApp()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expense, setExpense] = useState(null)
@@ -94,7 +97,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
             <div style={{ width: 48, height: 48, background: '#fff3ec', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, textAlign: 'center', padding: '0 4px' }}>
-              {expense.category || '其他'}
+              {categoryLabel(expense.category, t)}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 17, fontWeight: 600, color: '#3d2b1f', marginBottom: 4, wordBreak: 'break-word' }}>{expense.title}</div>

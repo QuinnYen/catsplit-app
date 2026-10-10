@@ -14,16 +14,19 @@ import useExchangeRate from '../hooks/useExchangeRate'
 import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, payerLabel, computeMemberBalances } from '../utils/expenseHelpers'
 import { getCurrency } from '../config/currencies'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
+import { useI18n } from '../i18n/I18nProvider'
+import { categoryForWrite, activityForWrite } from '../i18n/legacy'
 
 const AddExpensePage = () => {
   const { id } = useParams()
   const { user, liffInstance } = useApp()
   const navigate = useNavigate()
+  const { t } = useI18n()
 
   const [kind, setKind] = useState('expense')
   const [group, setGroup] = useState(null)
   const [title, setTitle] = useState('')
-  const [category, setCategory] = useState('餐飲')
+  const [category, setCategory] = useState(DEFAULT_CATEGORIES[0])
   const [customCategory, setCustomCategory] = useState('')
   const [isEditingCategory, setIsEditingCategory] = useState(false)
   const [amount, setAmount] = useState('')
@@ -138,7 +141,7 @@ const AddExpensePage = () => {
         const incomeBatch = writeBatch(db)
         incomeBatch.set(doc(collection(db, 'groups', id, 'incomes')), {
           title: title.trim(),
-          category,
+          category: categoryForWrite(category),
           currency,
           originalAmount: totalAmount,
           exchangeRate: rate,
@@ -160,7 +163,7 @@ const AddExpensePage = () => {
         incomeBatch.update(doc(db, 'groups', id), {
           totalIncome: increment(baseAmount),
           incomeCount: increment(1),
-          lastActivity: { at: serverTimestamp(), by: user.uid, name: user.name, text: `新增了收入「${title.trim()}」` },
+          lastActivity: { at: serverTimestamp(), by: user.uid, ...activityForWrite({ type: 'income_added', title: title.trim(), name: user.name }) },
           ...incomeBalanceDelta,
         })
         await incomeBatch.commit()
@@ -172,7 +175,7 @@ const AddExpensePage = () => {
       const docRef = doc(collection(db, 'groups', id, 'expenses'))
       batch.set(docRef, {
         title: title.trim(),
-        category,
+        category: categoryForWrite(category),
         currency,
         originalAmount: totalAmount,
         exchangeRate: rate,
@@ -203,7 +206,7 @@ const AddExpensePage = () => {
       batch.update(doc(db, 'groups', id), {
         totalAmount: increment(baseAmount),
         totalExpenses: increment(1),
-        lastActivity: { at: serverTimestamp(), by: user.uid, name: user.name, text: `新增了「${title.trim()}」` },
+        lastActivity: { at: serverTimestamp(), by: user.uid, ...activityForWrite({ type: 'expense_added', title: title.trim(), name: user.name }) },
         ...balanceDelta,
         ...countDelta,
       })
@@ -218,7 +221,7 @@ const AddExpensePage = () => {
       }
 
       if (shareToLine && safeIsInClient()) {
-        const payerName = payerLabel(basePayments, group.memberProfiles, '某人')
+        const payerName = payerLabel(basePayments, group.memberProfiles, t('common.someone'))
         const currencyObj = getCurrency(currency)
         const splitCount = effectiveUids.length
         const perPerson = splitCount > 0 ? Math.round(parseFloat(amount) / splitCount) : 0

@@ -12,15 +12,17 @@ import ShareToLineToggle from '../components/ShareToLineToggle'
 import PawDecor from '../components/PawDecor'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
-import { methodName } from '../config/paymentProviders'
+import { useI18n } from '../i18n/I18nProvider'
+import { PAYMENT_METHOD_CODES, paymentMethodLabel, paymentMethodForWrite, activityForWrite } from '../i18n/legacy'
 
-// 名稱與 paymentProviders 的 name 一致的項目，會自動帶出收款人對應的收款方式
-const PAYMENT_METHODS = ['現金', '街口支付', 'Richart', '銀行轉帳', '其他']
+// 代碼與 paymentProviders 的 id 一致的項目，會自動帶出收款人對應的收款方式
+const PAYMENT_METHODS = PAYMENT_METHOD_CODES
 
 const TransferPage = () => {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const { user, liffInstance } = useApp()
+  const { t } = useI18n()
   const navigate = useNavigate()
 
   const fromUid = searchParams.get('from')
@@ -30,7 +32,7 @@ const TransferPage = () => {
 
   const [group, setGroup] = useState(null)
   const [customAmount, setCustomAmount] = useState(String(suggestedAmount))
-  const [paymentMethod, setPaymentMethod] = useState('現金')
+  const [paymentMethod, setPaymentMethod] = useState('cash')
   const [note, setNote] = useState('')
   const [shareToLine, setShareToLine] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -51,7 +53,7 @@ const TransferPage = () => {
   }, [toUid])
 
   // 自行輸入的收款方式歸在「其他」底下
-  const matchedMethods = payeeMethods.filter(m => m.providerId === 'custom' ? paymentMethod === '其他' : methodName(m) === paymentMethod)
+  const matchedMethods = payeeMethods.filter(m => m.providerId === 'custom' ? paymentMethod === 'other' : m.providerId === paymentMethod)
 
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 
@@ -69,7 +71,7 @@ const TransferPage = () => {
         to: toUid,
         amount: actualAmount,
         currency,
-        paymentMethod,
+        paymentMethod: paymentMethodForWrite(paymentMethod),
         note: note.trim(),
         settledBy: user.uid,
         settledAt: serverTimestamp(),
@@ -81,15 +83,14 @@ const TransferPage = () => {
         lastActivity: {
           at: serverTimestamp(),
           by: user.uid,
-          name: group?.memberProfiles?.[fromUid]?.name ?? '某人',
-          text: `轉帳給 ${group?.memberProfiles?.[toUid]?.name ?? '某人'}`,
+          ...activityForWrite({ type: 'settlement_added', name: group?.memberProfiles?.[fromUid]?.name ?? null, toName: group?.memberProfiles?.[toUid]?.name ?? null }),
         },
       })
       await batch.commit()
 
       if (shareToLine && safeIsInClient()) {
-        const from = group.memberProfiles?.[fromUid]?.name ?? '某人'
-        const to = group.memberProfiles?.[toUid]?.name ?? '某人'
+        const from = group.memberProfiles?.[fromUid]?.name ?? t('common.someone')
+        const to = group.memberProfiles?.[toUid]?.name ?? t('common.someone')
         const symbol = getCurrency(currency).symbol
         const row = (label, value) => ({
           type: 'box', layout: 'horizontal',
@@ -116,7 +117,7 @@ const TransferPage = () => {
                   { type: 'text', text: `${from} → ${to}`, weight: 'bold', size: 'lg', color: '#3d2b1f', wrap: true },
                   { type: 'text', text: `${symbol} ${actualAmount.toLocaleString()}`, size: 'xxl', weight: 'bold', color: '#FF6B1A' },
                   { type: 'separator', margin: 'md' },
-                  { ...row('付款方式', paymentMethod), margin: 'md' },
+                  { ...row('付款方式', paymentMethodLabel(paymentMethod, t)), margin: 'md' },
                   ...(note.trim() ? [row('備註', note.trim())] : []),
                   row('群組', group.name),
                 ],
@@ -223,7 +224,7 @@ const TransferPage = () => {
             }}
           >
             {PAYMENT_METHODS.map(m => (
-              <option key={m} value={m}>{m}</option>
+              <option key={m} value={m}>{paymentMethodLabel(m, t)}</option>
             ))}
           </select>
 
