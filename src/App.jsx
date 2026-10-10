@@ -18,6 +18,7 @@ const EditExpensePage = lazy(() => import('./pages/EditExpensePage'))
 const ExpenseDetailPage = lazy(() => import('./pages/ExpenseDetailPage'))
 const PaymentMethodsPage = lazy(() => import('./pages/PaymentMethodsPage'))
 const StatsPage = lazy(() => import('./pages/StatsPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
 
 const LoadingScreen = () => {
@@ -103,6 +104,7 @@ const ProtectedRoutes = () => {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
       <Route path="/payment-methods" element={user.guest ? <Navigate to="/" /> : <PaymentMethodsPage />} />
       <Route path="/group/:id" element={<GroupPage />} />
       <Route path="/group/:id/add" element={<AddExpensePage />} />

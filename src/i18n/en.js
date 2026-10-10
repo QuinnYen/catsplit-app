@@ -455,4 +455,6 @@ export default {
   'stats.month.11': 'Nov',
   'stats.month.12': 'Dec',
   'common.saving': 'Saving...',
+  'settings.dangerZone': 'Danger zone',
+  'settings.deleteHint': 'Delete your data and leave all groups. This cannot be undone.',
 }

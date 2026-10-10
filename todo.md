@@ -54,7 +54,7 @@
 
 ### 架構
 - [x] 自建輕量 `I18nProvider` 與 `t(key, params)`，字典放 `src/i18n/zh-TW.js`、`src/i18n/en.js`。**不加套件**，避免多一個依賴；目前不需要複數規則。
-- [x] 語言判定順序：使用者手動選擇（localStorage）→ LINE 內 `liff.getLanguage()` → `navigator.language` → 預設 `zh-TW`。首頁設定氣泡加語言切換。
+- [x] 語言判定順序：使用者手動選擇（localStorage）→ LINE 內 `liff.getLanguage()` → `navigator.language` → 預設 `zh-TW`。設定頁（頭像選單第一項）提供語言切換。
 - [x] `index.html` 的 `lang`、`<title>` 隨語言更新。
 
 ### 資料與顯示拆開（必須向下相容，舊資料不能壞）

@@ -455,4 +455,6 @@ export default {
   'stats.month.11': '11月',
   'stats.month.12': '12月',
   'common.saving': '儲存中...',
+  'settings.dangerZone': '危險區域',
+  'settings.deleteHint': '刪除你的資料並退出所有群組，此操作無法復原。',
 }

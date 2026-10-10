@@ -1,8 +1,8 @@
-// / — 首頁：未登入顯示登入畫面；已登入顯示使用者資訊、消費總覽與我的群組列表，頭像可開啟設定（登出、條款、刪除資料）。
+// / — 首頁：未登入顯示登入畫面；已登入顯示使用者資訊、消費總覽與我的群組列表，頭像可開啟選單（設定、收款方式、條款、登出）。
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot, getDoc, doc } from 'firebase/firestore'
-import { Globe, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2, QrCode, MessageCircle } from 'lucide-react'
+import { Settings, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, QrCode, MessageCircle } from 'lucide-react'
 import { db } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
@@ -12,7 +12,6 @@ import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
-import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 import catLogo from '../assets/cat-logo.webp'
 
 const GREETINGS = [
@@ -39,7 +38,7 @@ const getGreeting = () => {
 
 const HomePage = () => {
   const { user, loading: authLoading, loginWithLine, logout, guestNames } = useApp()
-  const { t, fmt, lang, setLang, enReady } = useI18n()
+  const { t, fmt, lang } = useI18n()
   const navigate = useNavigate()
   // 英文版條款與隱私權政策是另一份靜態頁；中文版維持原網址
   const legalHref = (page) => lang === 'en' ? `/${page}.en.html` : `/${page}.html`
@@ -48,7 +47,6 @@ const HomePage = () => {
   const [groupsLoaded, setGroupsLoaded] = useState(false)
   const loading = authLoading || (!!user && !groupsLoaded)
   const [showArchived, setShowArchived] = useState(false)
-  const [deletingData, setDeletingData] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [openedAt] = useState(Date.now)
 
@@ -100,33 +98,6 @@ const HomePage = () => {
 
   const handleLogout = () => {
     if (confirm(user?.guest ? t('home.logoutConfirmGuest') : t('home.logoutConfirm'))) logout()
-  }
-
-  const handleDeleteMyData = async () => {
-    const { toDelete, toLeave, toDissolve } = planDeleteMyData(groups, user.uid)
-    const dissolveIds = new Set(toDissolve.map(g => g.id))
-    const keep = toLeave.filter(g => !dissolveIds.has(g.id))
-    const owing = keep.filter(g => Math.abs(g.memberBalances?.[user.uid] ?? 0) >= 0.01)
-    const lines = [
-      t('home.del.title'),
-      '',
-      t('home.del.leave', { n: keep.length }),
-      t('home.del.delete', { n: toDelete.length + toDissolve.length }),
-    ]
-    if (owing.length > 0) {
-      lines.push('', t('home.del.owing'), ...owing.map(g => `  - ${g.name}`))
-    }
-    lines.push('', t('home.del.footer'))
-    if (!confirm(lines.join('\n'))) return
-    setDeletingData(true)
-    try {
-      await deleteMyData(groups, user.uid)
-      logout()
-    } catch (error) {
-      console.error('Failed to delete data', error)
-      alert(t('home.del.failed'))
-      setDeletingData(false)
-    }
   }
 
   const activeGroups = groups.filter(g => !g.archived)
@@ -383,22 +354,19 @@ const HomePage = () => {
           <div style={{ position: 'fixed', top: 70, left: 16, zIndex: 101, width: 220, background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
             <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: '#fff', borderTop: '0.5px solid #f0d5c0', borderLeft: '0.5px solid #f0d5c0', transform: 'rotate(45deg)' }} />
             {[
+              { Icon: Settings, label: t('group.settings'), onClick: () => navigate('/settings') },
               // 訪客沒有穩定身分，不提供收款方式
               ...(!user?.guest ? [{ Icon: QrCode, label: t('home.menu.payment'), onClick: () => navigate('/payment-methods') }] : []),
               { Icon: MessageCircle, label: t('group.menu.official'), href: OFFICIAL_ACCOUNT_URL },
               { Icon: FileText, label: t('home.menu.terms'), href: legalHref('terms') },
               { Icon: ShieldCheck, label: t('home.menu.privacy'), href: legalHref('privacy') },
-              // 英文版開放前只有手動切到英文的人（測試用）看得到，讓他們能切回中文
-              ...(enReady || lang === 'en' ? [{ Icon: Globe, label: `${t('settings.language')}: ${t(`lang.${lang}`)}`, onClick: () => setLang(lang === 'en' ? 'zh-TW' : 'en') }] : []),
               { Icon: LogOut, label: t('home.menu.logout'), onClick: handleLogout },
-              // 訪客名字屬於群組，不能自行刪除；由群組建立者移除
-              ...(!user?.guest ? [{ Icon: Trash2, label: deletingData ? t('home.menu.deleting') : t('home.menu.deleteData'), onClick: handleDeleteMyData, disabled: deletingData, danger: true }] : []),
-            ].map(({ Icon, label, href, onClick, disabled, danger }, i) => {
-              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid #f0d5c0', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: danger ? '#e53935' : '#3d2b1f', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
-              const content = <><Icon size={18} color={danger ? '#e53935' : '#b08060'} />{label}</>
+            ].map(({ Icon, label, href, onClick }, i) => {
+              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid #f0d5c0', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: '#3d2b1f', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
+              const content = <><Icon size={18} color="#b08060" />{label}</>
               return href
                 ? <a key={label} href={href} style={style}>{content}</a>
-                : <button key={label} onClick={onClick} disabled={disabled} style={style}>{content}</button>
+                : <button key={label} onClick={onClick} style={style}>{content}</button>
             })}
           </div>
         </>
