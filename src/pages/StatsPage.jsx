@@ -86,6 +86,19 @@ const StatsPage = () => {
   const fmt = (n) => `${symbol} ${Math.round(n).toLocaleString()}`
   const count = expenses.length
   const incomeTotal = incomes.reduce((s, i) => s + i.amount, 0)
+  const incomeCard = incomes.length > 0 && (
+    <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+      {[
+        { label: '總收入', value: fmt(incomeTotal) },
+        { label: '淨支出', value: fmt(stats.total - incomeTotal) },
+      ].map(item => (
+        <div key={item.label}>
+          <div style={{ fontSize: 11, color: '#b08060', marginBottom: 4 }}>{item.label}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#1976d2' }}>{item.value}</div>
+        </div>
+      ))}
+    </div>
+  )
   const maxMonth = Math.max(...stats.months.map(m => m.amount), 1)
   const maxPayer = stats.payers[0]?.amount || 1
 
@@ -116,10 +129,13 @@ const StatsPage = () => {
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {count === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 0' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><BarChart3 size={48} color="#e0c4b0" /></div>
-            <div style={{ color: '#b08060', fontSize: 14 }}>還沒有支出可以統計</div>
-          </div>
+          <>
+            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><BarChart3 size={48} color="#e0c4b0" /></div>
+              <div style={{ color: '#b08060', fontSize: 14 }}>還沒有支出可以統計</div>
+            </div>
+            {incomeCard}
+          </>
         ) : (
           <>
             {/* 總覽 */}
@@ -136,19 +152,7 @@ const StatsPage = () => {
               ))}
             </div>
 
-            {incomes.length > 0 && (
-              <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-                {[
-                  { label: '總收入', value: fmt(incomeTotal) },
-                  { label: '淨支出', value: fmt(stats.total - incomeTotal) },
-                ].map(item => (
-                  <div key={item.label}>
-                    <div style={{ fontSize: 11, color: '#b08060', marginBottom: 4 }}>{item.label}</div>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: '#1976d2' }}>{item.value}</div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {incomeCard}
 
             {/* 類別佔比 */}
             <div style={cardStyle}>

@@ -141,7 +141,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       }
     }
     fetchData()
-  }, [id, expenseId, kind]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, expenseId, col, payField, categoryList])
 
   const members = Object.entries(group?.memberProfiles || {})
 

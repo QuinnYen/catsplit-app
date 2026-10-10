@@ -42,7 +42,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
       setExpense({ id: expenseSnap.id, ...expenseSnap.data() })
     }
     fetchData()
-  }, [id, expenseId, kind]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, expenseId, col])
 
   if (!group || !expense) {
     return (

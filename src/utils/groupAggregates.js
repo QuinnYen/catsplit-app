@@ -3,7 +3,7 @@ import { db } from '../config/firebase'
 import { computeGroupAggregates } from './expenseHelpers'
 
 /**
- * 讀取群組全部支出、轉帳與收入，重算彙總欄位並寫回群組文件（編輯／刪除支出、刪除轉帳共用）。
+ * 讀取群組全部支出、轉帳與收入，重算彙總欄位並寫回群組文件（編輯／刪除支出與收入、刪除轉帳共用）。
  * activity（選填）：{ by, name, text }，會在同一次寫入裡更新 lastActivity。
  * members 以交易內讀到的群組文件為準，傳入的 members 只當備援。
  */

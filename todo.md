@@ -10,7 +10,7 @@
 | P0 | 共用基礎（前置） | [x] | 收斂餘額重算、修已知落差，其他項目的地基（程式已完成，待提交與合併後冒煙測試） |
 | P1 | 多國語言（繁中＋英文） | [ ] | 先建架構，英文先上；資料與顯示拆開 |
 | P2 | 網頁版版型 | [ ] | 先做置中限寬的外殼，雙欄之後再說 |
-| P3 | 收入（群組收入） | [ ] | 退款、預收款、補貼；獨立子集合 |
+| P3 | 收入（群組收入） | [x] | 退款、預收款、補貼；獨立子集合（程式已提交並部署，待畫面實測） |
 | P4 | 預算（總預算＋分類預算） | [ ] | 建立者設定，記帳時顯示剩餘與超支 |
 | P5 | 更多收款碼 | [ ] | 去耦合、QR 圖片、更多 provider、排序與上限 |
 | P6 | 訂閱方式評估 | [ ] | 只評估不實作，輸出決策建議 |
@@ -123,17 +123,17 @@ createdBy, createdAt, hasTime, addedAt, note?
 可重用 `computeSplits`、`applyExchangeRate`、`buildPayments`（`src/utils/expenseHelpers.js`）。
 
 ### 要動的地方
-- [ ] `expenseHelpers.js`：`computeMemberBalances` 加收入參數；補純函式與測試。
-- [ ] P0 的 `recomputeGroupAggregates` 納入 `incomes`。
-- [ ] 新增收入頁與編輯頁、路由（`src/App.jsx` 約 100-107 行）；可共用 `ExpenseForm`，加 `kind` 旗標。
-- [ ] `GroupPage`：第三個 `onSnapshot`、時間軸加 `_type:'income'`（顏色與支出、轉帳區分）、詳情面板與刪除。
-- [ ] `AddExpensePage` 的新增入口：加「支出／收入」選擇。
-- [ ] `StatsPage`：收入與支出對照。
-- [ ] CSV 匯出加類型欄。
-- [ ] `firestore.rules`：新增 `incomes/{id}` 的 `match`（比照 `expenses`，`isMemberOf`）。
-- [ ] `functions/index.js` 的 `migrateMember`（約 181 行）加 `incomes`：`received`、`splits`、`shares`、`createdBy`（`detachFromGroup`、`claimMember` 都靠它）。
-- [ ] `src/utils/deleteMyData.js` 約 25-26 行與 `src/pages/EditGroupPage.jsx` 約 181-182 行的手動刪除清單加 `incomes`（`deleteGroupCompletely` 用 `recursiveDelete`，不用改）。
-- [ ] 文件：`docs/operations.md` 的「分帳計算」補收入規則。
+- [x] `expenseHelpers.js`：`computeMemberBalances` 加收入參數；補純函式與測試。
+- [x] P0 的 `recomputeGroupAggregates` 納入 `incomes`。
+- [x] 新增收入頁與編輯頁、路由（`src/App.jsx` 約 100-107 行）；可共用 `ExpenseForm`，加 `kind` 旗標。
+- [x] `GroupPage`：第三個 `onSnapshot`、時間軸加 `_type:'income'`（顏色與支出、轉帳區分）、詳情面板與刪除。
+- [x] `AddExpensePage` 的新增入口：加「支出／收入」選擇。
+- [x] `StatsPage`：收入與支出對照。
+- [x] CSV 匯出加類型欄。
+- [x] `firestore.rules`：新增 `incomes/{id}` 的 `match`（比照 `expenses`，`isMemberOf`）。
+- [x] `functions/index.js` 的 `migrateMember`（約 181 行）加 `incomes`：`received`、`splits`、`shares`、`createdBy`（`detachFromGroup`、`claimMember` 都靠它）。
+- [x] `src/utils/deleteMyData.js` 約 25-26 行與 `src/pages/EditGroupPage.jsx` 約 181-182 行的手動刪除清單加 `incomes`（`deleteGroupCompletely` 用 `recursiveDelete`，不用改）。
+- [x] 文件：`docs/operations.md` 的「分帳計算」補收入規則。
 
 ### 測試
 - 收入後餘額總和為 0、退款範例、多幣別換算。

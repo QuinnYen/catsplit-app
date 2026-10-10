@@ -61,7 +61,7 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 - 收入存在 `groups/{id}/incomes`，是反向的支出：`balance += splits − received`（分得者加、收款者減），與支出、轉帳一起算進 `memberBalances`。換算成基準幣別時，尾差歸最大收款者（重用 `applyExchangeRate`，把 `received` 當 `payments`）。
 - 收入另有群組彙總欄位 `totalIncome`（各筆 `amount` 加總）與 `incomeCount`；`totalAmount` 仍是純支出。新增收入用 `increment()`（與新增支出一樣，必須和群組文件在同一個 batch）；編輯、刪除收入走 `recomputeGroupAggregates`。只有讀過 `incomes` 的重算才會寫這兩個欄位（沒有收入時寫 0），舊群組沒有這兩個欄位時讀取一律當 0。
 - 上面「所有影響彙總的寫入」的前提同樣適用於收入；`migrateMember` 例外同樣適用（也會轉移 `incomes` 裡的 uid，但不是交易）。
-- `npm test` 可跑 `expenseHelpers` 的單元測試。
+- `npm test`（`node --test`）會跑 `expenseHelpers` 與 `functions/migrate.js` 的單元測試。
 
 ## 已知取捨與未完成
 
