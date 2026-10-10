@@ -17,6 +17,8 @@ const SettlePage = () => {
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
+  const [incomes, setIncomes] = useState([])
+  const [balances, setBalances] = useState({})
   const [settledRecords, setSettledRecords] = useState([])
   const [settlements, setSettlements] = useState([])
   const [loading, setLoading] = useState(true)
@@ -42,8 +44,13 @@ const SettlePage = () => {
       const settlementsData = settlementsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setSettledRecords(settlementsData)
 
-      // 計算餘額：支出分帳 + 已結清紀錄
-      const balance = computeMemberBalances(groupData.members, expensesData, settlementsData)
+      const incomesSnap = await getDocs(collection(db, 'groups', id, 'incomes'))
+      const incomesData = incomesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      setIncomes(incomesData)
+
+      // 計算餘額：支出分帳 + 已結清紀錄 + 收入
+      const balance = computeMemberBalances(groupData.members, expensesData, settlementsData, incomesData)
+      setBalances(balance)
 
       const result = []
       const creditors = []
@@ -162,11 +169,9 @@ const SettlePage = () => {
               const profile = group.memberProfiles?.[uid]
               const paid = expenses.reduce((sum, e) => sum + (e.payments?.[uid] || 0), 0)
               const shouldPay = expenses.reduce((sum, e) => sum + (e.splits?.[uid] || 0), 0)
-              const transferred = settledRecords
-                .filter(s => s.from === uid).reduce((sum, s) => sum + s.amount, 0)
-              const received = settledRecords
-                .filter(s => s.to === uid).reduce((sum, s) => sum + s.amount, 0)
-              const diff = paid - shouldPay - received + transferred
+              const incomeReceived = incomes.reduce((sum, i) => sum + (i.received?.[uid] || 0), 0)
+              const incomeShare = incomes.reduce((sum, i) => sum + (i.splits?.[uid] || 0), 0)
+              const diff = balances[uid] ?? 0
 
               return (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -175,6 +180,7 @@ const SettlePage = () => {
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', marginBottom: 2 }}>{profile?.name}</div>
                     <div style={{ fontSize: 11, color: '#b08060' }}>
                       付了 {fmt(paid)} · 應付 {fmt(shouldPay)}
+                      {(incomeReceived > 0 || incomeShare > 0) && ` · 收款 ${fmt(incomeReceived)} · 分得 ${fmt(incomeShare)}`}
                     </div>
                   </div>
                   <div style={{

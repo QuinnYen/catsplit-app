@@ -8,7 +8,7 @@ import { db, storage } from '../config/firebase'
 import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
-import { DEFAULT_CATEGORIES } from '../config/expenseForm'
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
 import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, primaryPayer } from '../utils/expenseHelpers'
@@ -16,10 +16,15 @@ import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useApp } from '../context/AppContext'
 
-const EditExpensePage = () => {
+const EditExpensePage = ({ kind = 'expense' }) => {
   const { user } = useApp()
   const { id, expenseId } = useParams()
   const navigate = useNavigate()
+  const isIncome = kind === 'income'
+  const col = isIncome ? 'incomes' : 'expenses'
+  const payField = isIncome ? 'received' : 'payments'
+  const detailPath = `/group/${id}/${isIncome ? 'income' : 'expense'}/${expenseId}`
+  const categoryList = isIncome ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
 
   const [group, setGroup] = useState(null)
   const [originalExpense, setOriginalExpense] = useState(null)
@@ -54,7 +59,7 @@ const EditExpensePage = () => {
     const fetchData = async () => {
       const [groupSnap, expenseSnap] = await Promise.all([
         getDoc(doc(db, 'groups', id)),
-        getDoc(doc(db, 'groups', id, 'expenses', expenseId)),
+        getDoc(doc(db, 'groups', id, col, expenseId)),
       ])
       if (!groupSnap.exists() || !expenseSnap.exists()) return
 
@@ -70,7 +75,7 @@ const EditExpensePage = () => {
       setAmount(String(expense.originalAmount ?? expense.amount))
       setCurrency(expense.currency || base)
       setSavedRate({ currency: expense.currency || base, rate: expense.exchangeRate ?? 1 })
-      const payments = expense.payments || {}
+      const payments = expense[payField] || {}
       const payerUids = Object.keys(payments)
       const rate = expense.exchangeRate ?? 1
       if (payerUids.length > 1) {
@@ -87,13 +92,13 @@ const EditExpensePage = () => {
       const dateTs = expense.createdAt?.toDate?.()
       setExpenseDate(toLocalDateTimeStr(dateTs ?? new Date()))
 
-      const isCustomCat = !DEFAULT_CATEGORIES.includes(expense.category)
+      const isCustomCat = !categoryList.includes(expense.category)
       if (isCustomCat) {
         setIsEditingCategory(true)
         setCustomCategory(expense.category || '')
         setCategory(expense.category || '')
       } else {
-        setCategory(expense.category || '餐飲')
+        setCategory(expense.category || categoryList[0])
       }
 
       const initEmpty = {}
@@ -136,7 +141,7 @@ const EditExpensePage = () => {
       }
     }
     fetchData()
-  }, [id, expenseId])
+  }, [id, expenseId, kind]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const members = Object.entries(group?.memberProfiles || {})
 
@@ -196,14 +201,14 @@ const EditExpensePage = () => {
       const { rate, baseAmount, baseSplits, basePayments } = applyExchangeRate({ totalAmount, splits, payments, currency, baseCurrency, exchangeRate })
 
       const receiptUpdate = await handleReceiptUpdate()
-      await updateDoc(doc(db, 'groups', id, 'expenses', expenseId), {
+      await updateDoc(doc(db, 'groups', id, col, expenseId), {
         title: title.trim(),
         category,
         currency,
         originalAmount: totalAmount,
         exchangeRate: rate,
         amount: baseAmount,
-        payments: basePayments,
+        [payField]: basePayments,
         splitType,
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
@@ -212,7 +217,7 @@ const EditExpensePage = () => {
         ...receiptUpdate,
       })
 
-      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `修改了「${title.trim()}」` } })
+      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `修改了${isIncome ? '收入' : ''}「${title.trim()}」` } })
       navigate(`/group/${id}`)
     } catch (error) {
       console.error('儲存失敗', error)
@@ -221,12 +226,12 @@ const EditExpensePage = () => {
   }
 
   const handleDelete = async () => {
-    if (!window.confirm('確定要刪除這筆支出嗎？')) return
+    if (!window.confirm(`確定要刪除這筆${isIncome ? '收入' : '支出'}嗎？`)) return
     setLoading(true)
     try {
-      await deleteDoc(doc(db, 'groups', id, 'expenses', expenseId))
+      await deleteDoc(doc(db, 'groups', id, col, expenseId))
       await deleteFileByPath(existingReceiptPath)
-      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `刪除了「${originalExpense.title}」` } })
+      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `刪除了${isIncome ? '收入' : ''}「${originalExpense.title}」` } })
       navigate(`/group/${id}`)
     } catch (error) {
       console.error('刪除失敗', error)
@@ -248,10 +253,10 @@ const EditExpensePage = () => {
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
-            onClick={() => navigate(`/group/${id}/expense/${expenseId}`)}
+            onClick={() => navigate(detailPath)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>編輯支出</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{isIncome ? '編輯收入' : '編輯支出'}</div>
         </div>
       </div>
 
@@ -260,6 +265,7 @@ const EditExpensePage = () => {
         style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}
       >
         <ExpenseForm
+          kind={kind}
           title={title} setTitle={setTitle}
           category={category} setCategory={setCategory}
           customCategory={customCategory} setCustomCategory={setCustomCategory}
@@ -285,7 +291,7 @@ const EditExpensePage = () => {
           percentageTotal={percentageTotal}
           customTotal={customTotal}
           effectiveUids={effectiveUids}
-          receiptFile={receiptFile} setReceiptFile={setReceiptFile}
+          receiptFile={receiptFile} setReceiptFile={isIncome ? undefined : setReceiptFile}
           receiptPreview={receiptPreview} setReceiptPreview={setReceiptPreview}
           existingReceiptPath={existingReceiptPath}
           removeExistingReceipt={removeExistingReceipt} setRemoveExistingReceipt={setRemoveExistingReceipt}
@@ -321,7 +327,7 @@ const EditExpensePage = () => {
         >
           {loading ? '處理中...' : (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Trash2 size={16} /> 刪除此筆支出
+              <Trash2 size={16} /> {isIncome ? '刪除此筆收入' : '刪除此筆支出'}
             </span>
           )}
         </button>

@@ -6,7 +6,7 @@ import DateTimeField from './DateTimeField'
 import CalculatorModal from './CalculatorModal'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
-import { DEFAULT_CATEGORIES, SPLIT_TYPES } from '../config/expenseForm'
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, SPLIT_TYPES } from '../config/expenseForm'
 
 const inputStyle = {
   width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10,
@@ -31,7 +31,29 @@ const Checkbox = ({ checked }) => (
   </div>
 )
 
-const PayerSelect = ({ members, value, onChange }) => {
+// 與 kind 有關的字串集中在這裡
+const LABELS = {
+  expense: {
+    titlePlaceholder: '例如：晚餐、計程車...',
+    payerTitle: '誰付錢',
+    payerPlaceholder: '選擇付款人',
+    multiPayer: '多人付款',
+    multiPayerHint: '輸入每人實際出的金額',
+    excludeLabel: '付款人不參與分攤（純代墊）',
+    subsetHint: '勾選參與此項費用的成員',
+  },
+  income: {
+    titlePlaceholder: '例如：退款、預收款...',
+    payerTitle: '誰收款',
+    payerPlaceholder: '選擇收款人',
+    multiPayer: '多人收款',
+    multiPayerHint: '輸入每人實際收到的金額',
+    excludeLabel: '收款人不參與分配（純代收）',
+    subsetHint: '勾選分得此筆收入的成員',
+  },
+}
+
+const PayerSelect = ({ members, value, onChange, placeholder }) => {
   const [open, setOpen] = useState(false)
   const current = members.find(([uid]) => uid === value)?.[1]
   return (
@@ -44,7 +66,7 @@ const PayerSelect = ({ members, value, onChange }) => {
         }}
       >
         <Avatar src={current?.avatar} name={current?.name} size={28} />
-        <span style={{ fontSize: 14, color: '#3d2b1f', fontWeight: 500, flex: 1, textAlign: 'left' }}>{current?.name || '選擇付款人'}</span>
+        <span style={{ fontSize: 14, color: '#3d2b1f', fontWeight: 500, flex: 1, textAlign: 'left' }}>{current?.name || placeholder}</span>
         <ChevronDown size={16} color="#FF8C42" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
       </button>
       {open && (
@@ -76,6 +98,7 @@ const PayerSelect = ({ members, value, onChange }) => {
 }
 
 const ExpenseForm = ({
+  kind = 'expense',
   // 欄位值
   title, setTitle,
   category, setCategory,
@@ -114,6 +137,8 @@ const ExpenseForm = ({
   showShareOption,
 }) => {
   const [showCalc, setShowCalc] = useState(false)
+  const L = LABELS[kind]
+  const categories = kind === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
   const amountNum = parseFloat(amount) || 0
   const existingReceiptUrl = useStorageImage(existingReceiptPath)
 
@@ -141,7 +166,7 @@ const ExpenseForm = ({
               }}
               style={inputStyle}
             >
-              {DEFAULT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
               <option value={CUSTOM_OPTION}>自訂</option>
             </select>
           </div>
@@ -151,7 +176,7 @@ const ExpenseForm = ({
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="例如：晚餐、計程車..."
+              placeholder={L.titlePlaceholder}
               maxLength={20}
               style={inputStyle}
             />
@@ -247,7 +272,7 @@ const ExpenseForm = ({
       {/* 誰付錢 */}
       <div style={cardStyle}>
         <div style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>誰付錢</span>
+          <span>{L.payerTitle}</span>
           <button
             onClick={() => { setMultiPayer(v => !v); setPayerExcluded(false) }}
             style={{
@@ -255,12 +280,12 @@ const ExpenseForm = ({
               ...(multiPayer ? chipActiveStyle : chipIdleStyle),
             }}
           >
-            多人付款
+            {L.multiPayer}
           </button>
         </div>
         {multiPayer ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>輸入每人實際出的金額</div>
+            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{L.multiPayerHint}</div>
             {members.map(([uid, profile]) => (
               <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Avatar src={profile.avatar} name={profile.name} size={24} />
@@ -286,7 +311,7 @@ const ExpenseForm = ({
           </div>
         ) : (
           <>
-            <PayerSelect members={members} value={paidBy} onChange={setPaidBy} />
+            <PayerSelect members={members} value={paidBy} onChange={setPaidBy} placeholder={L.payerPlaceholder} />
             <button
               onClick={() => setPayerExcluded(v => !v)}
               style={{
@@ -297,7 +322,7 @@ const ExpenseForm = ({
             >
               <Checkbox checked={payerExcluded} />
               <span style={{ fontSize: 13, color: payerExcluded ? '#FF6B1A' : '#b08060', fontWeight: payerExcluded ? 500 : 400 }}>
-                付款人不參與分攤（純代墊）
+                {L.excludeLabel}
               </span>
             </button>
           </>
@@ -342,7 +367,7 @@ const ExpenseForm = ({
         {/* 部分人分攤 */}
         {splitType === 'subset' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>勾選參與此項費用的成員</div>
+            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{L.subsetHint}</div>
             {members.map(([uid, profile]) => {
               const excluded = payerExcluded && uid === paidBy
               const checked = !excluded && subsetMembers[uid]

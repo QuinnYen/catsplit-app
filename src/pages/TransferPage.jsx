@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
-import { collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, where, updateDoc, increment } from 'firebase/firestore'
+import { collection, serverTimestamp, doc, getDoc, getDocs, query, where, writeBatch, increment } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
@@ -62,7 +62,9 @@ const TransferPage = () => {
     if (!isValid) return
     setLoading(true)
     try {
-      await addDoc(collection(db, 'groups', id, 'settlements'), {
+      // 轉帳紀錄與餘額更新放同一個 batch，確保 recomputeGroupAggregates 的交易能偵測到
+      const batch = writeBatch(db)
+      batch.set(doc(collection(db, 'groups', id, 'settlements')), {
         from: fromUid,
         to: toUid,
         amount: actualAmount,
@@ -73,8 +75,7 @@ const TransferPage = () => {
         settledAt: serverTimestamp(),
         createdAt: serverTimestamp(),
       })
-
-      await updateDoc(doc(db, 'groups', id), {
+      batch.update(doc(db, 'groups', id), {
         [`memberBalances.${fromUid}`]: increment(actualAmount),
         [`memberBalances.${toUid}`]: increment(-actualAmount),
         lastActivity: {
@@ -84,6 +85,7 @@ const TransferPage = () => {
           text: `轉帳給 ${group?.memberProfiles?.[toUid]?.name ?? '某人'}`,
         },
       })
+      await batch.commit()
 
       if (shareToLine && safeIsInClient()) {
         const from = group.memberProfiles?.[fromUid]?.name ?? '某人'

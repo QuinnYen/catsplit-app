@@ -21,13 +21,15 @@ export const planDeleteMyData = (groups, uid) => {
 
 const deleteWholeGroup = async (groupId) => {
   await deleteGroupFiles(groupId)
-  const [expensesSnap, settlementsSnap] = await Promise.all([
+  const [expensesSnap, settlementsSnap, incomesSnap] = await Promise.all([
     getDocs(collection(db, 'groups', groupId, 'expenses')),
     getDocs(collection(db, 'groups', groupId, 'settlements')),
+    getDocs(collection(db, 'groups', groupId, 'incomes')),
   ])
   const batch = writeBatch(db)
   expensesSnap.docs.forEach(d => batch.delete(d.ref))
   settlementsSnap.docs.forEach(d => batch.delete(d.ref))
+  incomesSnap.docs.forEach(d => batch.delete(d.ref))
   batch.delete(doc(db, 'groups', groupId))
   await batch.commit()
 }

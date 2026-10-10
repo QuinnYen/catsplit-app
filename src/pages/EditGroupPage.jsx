@@ -177,13 +177,15 @@ const EditGroupPage = () => {
     setDeleting(true)
     try {
       await deleteGroupFiles(id)
-      const [expensesSnap, settlementsSnap] = await Promise.all([
+      const [expensesSnap, settlementsSnap, incomesSnap] = await Promise.all([
         getDocs(collection(db, 'groups', id, 'expenses')),
         getDocs(collection(db, 'groups', id, 'settlements')),
+        getDocs(collection(db, 'groups', id, 'incomes')),
       ])
       const batch = writeBatch(db)
       expensesSnap.docs.forEach(d => batch.delete(d.ref))
       settlementsSnap.docs.forEach(d => batch.delete(d.ref))
+      incomesSnap.docs.forEach(d => batch.delete(d.ref))
       batch.delete(doc(db, 'groups', id))
       await batch.commit()
       navigate('/')

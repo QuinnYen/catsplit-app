@@ -11,14 +11,16 @@ import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
 import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
-import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, payerLabel } from '../utils/expenseHelpers'
+import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, payerLabel, computeMemberBalances } from '../utils/expenseHelpers'
 import { getCurrency } from '../config/currencies'
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
 
 const AddExpensePage = () => {
   const { id } = useParams()
   const { user, liffInstance } = useApp()
   const navigate = useNavigate()
 
+  const [kind, setKind] = useState('expense')
   const [group, setGroup] = useState(null)
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('餐飲')
@@ -115,6 +117,14 @@ const AddExpensePage = () => {
     return snapshot.ref.fullPath
   }
 
+  const switchKind = (next) => {
+    if (next === kind) return
+    setKind(next)
+    setCategory((next === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES)[0])
+    setIsEditingCategory(false)
+    setCustomCategory('')
+  }
+
   const handleSubmit = async () => {
     if (!isValid()) return
     setLoading(true)
@@ -123,6 +133,40 @@ const AddExpensePage = () => {
       const splits = computeSplits({ splitType, totalAmount, effectiveUids, allMemberEntries: members, shares, percentages, customAmounts })
       const payments = buildPayments({ multiPayer, paidBy, payerAmounts, totalAmount })
       const { rate, baseAmount, baseSplits, basePayments } = applyExchangeRate({ totalAmount, splits, payments, currency, baseCurrency, exchangeRate })
+
+      if (kind === 'income') {
+        const incomeBatch = writeBatch(db)
+        incomeBatch.set(doc(collection(db, 'groups', id, 'incomes')), {
+          title: title.trim(),
+          category,
+          currency,
+          originalAmount: totalAmount,
+          exchangeRate: rate,
+          amount: baseAmount,
+          received: basePayments,
+          splitType,
+          splits: baseSplits,
+          ...(splitType === 'shares' && { shares }),
+          createdBy: user.uid,
+          createdAt: Timestamp.fromDate(new Date(expenseDate)),
+          hasTime: true,
+          addedAt: serverTimestamp(),
+        })
+        const incomeDelta = computeMemberBalances([], [], [], [{ received: basePayments, splits: baseSplits }])
+        const incomeBalanceDelta = {}
+        Object.entries(incomeDelta).forEach(([uid, amt]) => {
+          incomeBalanceDelta[`memberBalances.${uid}`] = increment(amt)
+        })
+        incomeBatch.update(doc(db, 'groups', id), {
+          totalIncome: increment(baseAmount),
+          incomeCount: increment(1),
+          lastActivity: { at: serverTimestamp(), by: user.uid, name: user.name, text: `新增了收入「${title.trim()}」` },
+          ...incomeBalanceDelta,
+        })
+        await incomeBatch.commit()
+        navigate(`/group/${id}`)
+        return
+      }
 
       const batch = writeBatch(db)
       const docRef = doc(collection(db, 'groups', id, 'expenses'))
@@ -252,7 +296,20 @@ const AddExpensePage = () => {
             onClick={() => navigate(`/group/${id}`)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>新增支出</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{kind === 'income' ? '新增收入' : '新增支出'}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
+          {[['expense', '支出'], ['income', '收入']].map(([k, label]) => (
+            <button
+              key={k}
+              onClick={() => switchKind(k)}
+              style={{
+                padding: '5px 18px', borderRadius: 20, fontSize: 13, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.4)',
+                background: kind === k ? '#fff' : 'rgba(255,255,255,0.25)',
+                color: kind === k ? '#FF6B1A' : '#fff', fontWeight: kind === k ? 500 : 400,
+              }}
+            >{label}</button>
+          ))}
         </div>
       </div>
 
@@ -261,6 +318,7 @@ const AddExpensePage = () => {
         style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}
       >
         <ExpenseForm
+          kind={kind}
           title={title} setTitle={setTitle}
           category={category} setCategory={setCategory}
           customCategory={customCategory} setCustomCategory={setCustomCategory}
@@ -286,10 +344,10 @@ const AddExpensePage = () => {
           percentageTotal={percentageTotal}
           customTotal={customTotal}
           effectiveUids={effectiveUids}
-          receiptFile={receiptFile} setReceiptFile={setReceiptFile}
+          receiptFile={receiptFile} setReceiptFile={kind === 'expense' ? setReceiptFile : undefined}
           receiptPreview={receiptPreview} setReceiptPreview={setReceiptPreview}
           shareToLine={shareToLine} setShareToLine={setShareToLine}
-          showShareOption={safeIsInClient()}
+          showShareOption={kind === 'expense' && safeIsInClient()}
         />
 
         {/* 固定在底部導覽列上方，捲動時一直可見 */}

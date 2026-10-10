@@ -147,9 +147,10 @@ export const computeMemberExpenseCounts = (expenseDocs) => {
 }
 
 /**
- * 從所有支出（+ 結清紀錄）重算 memberBalances
+ * 從所有支出（+ 結清紀錄、收入）重算 memberBalances
+ * 收入是反向的支出：分得者 +splits、收款者 -received
  */
-export const computeMemberBalances = (memberUids, expenseDocs, settlementDocs = []) => {
+export const computeMemberBalances = (memberUids, expenseDocs, settlementDocs = [], incomeDocs = []) => {
   const balances = {}
   memberUids.forEach(uid => { balances[uid] = 0 })
   expenseDocs.forEach(d => {
@@ -166,15 +167,28 @@ export const computeMemberBalances = (memberUids, expenseDocs, settlementDocs = 
     balances[s.from] = (balances[s.from] || 0) + s.amount
     balances[s.to] = (balances[s.to] || 0) - s.amount
   })
+  incomeDocs.forEach(d => {
+    const i = typeof d.data === 'function' ? d.data() : d
+    Object.entries(i.received || {}).forEach(([uid, amt]) => {
+      balances[uid] = (balances[uid] || 0) - amt
+    })
+    Object.entries(i.splits || {}).forEach(([uid, amt]) => {
+      balances[uid] = (balances[uid] || 0) + amt
+    })
+  })
   return balances
 }
 
 /**
- * 從所有支出（+ 結清紀錄）重算群組彙總欄位：totalAmount、totalExpenses、memberBalances、memberExpenseCounts
+ * 從所有支出（+ 結清紀錄、收入）重算群組彙總欄位：
+ * totalAmount、totalExpenses、memberBalances、memberExpenseCounts、totalIncome、incomeCount
+ * totalAmount 維持純支出；收入另計於 totalIncome／incomeCount
  */
-export const computeGroupAggregates = (memberUids, expenseDocs, settlementDocs = []) => ({
+export const computeGroupAggregates = (memberUids, expenseDocs, settlementDocs = [], incomeDocs = []) => ({
   totalAmount: expenseDocs.reduce((sum, d) => sum + (typeof d.data === 'function' ? d.data() : d).amount, 0),
   totalExpenses: expenseDocs.length,
-  memberBalances: computeMemberBalances(memberUids, expenseDocs, settlementDocs),
+  memberBalances: computeMemberBalances(memberUids, expenseDocs, settlementDocs, incomeDocs),
   memberExpenseCounts: computeMemberExpenseCounts(expenseDocs),
+  totalIncome: incomeDocs.reduce((sum, d) => sum + (typeof d.data === 'function' ? d.data() : d).amount, 0),
+  incomeCount: incomeDocs.length,
 })

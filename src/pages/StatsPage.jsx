@@ -20,15 +20,18 @@ const StatsPage = () => {
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState(null)
+  const [incomes, setIncomes] = useState([])
 
   useEffect(() => {
     const fetchData = async () => {
-      const [groupSnap, expSnap] = await Promise.all([
+      const [groupSnap, expSnap, incSnap] = await Promise.all([
         getDoc(doc(db, 'groups', id)),
         getDocs(collection(db, 'groups', id, 'expenses')),
+        getDocs(collection(db, 'groups', id, 'incomes')),
       ])
       if (!groupSnap.exists()) return
       setGroup({ id: groupSnap.id, ...groupSnap.data() })
+      setIncomes(incSnap.docs.map(d => ({ id: d.id, ...d.data() })))
       setExpenses(expSnap.docs.map(d => ({ id: d.id, ...d.data() })))
     }
     fetchData()
@@ -82,6 +85,7 @@ const StatsPage = () => {
   const symbol = getCurrency(group.baseCurrency || 'TWD').symbol
   const fmt = (n) => `${symbol} ${Math.round(n).toLocaleString()}`
   const count = expenses.length
+  const incomeTotal = incomes.reduce((s, i) => s + i.amount, 0)
   const maxMonth = Math.max(...stats.months.map(m => m.amount), 1)
   const maxPayer = stats.payers[0]?.amount || 1
 
@@ -131,6 +135,20 @@ const StatsPage = () => {
                 </div>
               ))}
             </div>
+
+            {incomes.length > 0 && (
+              <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+                {[
+                  { label: '總收入', value: fmt(incomeTotal) },
+                  { label: '淨支出', value: fmt(stats.total - incomeTotal) },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div style={{ fontSize: 11, color: '#b08060', marginBottom: 4 }}>{item.label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: '#1976d2' }}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* 類別佔比 */}
             <div style={cardStyle}>

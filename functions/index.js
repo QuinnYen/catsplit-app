@@ -5,6 +5,7 @@ import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
+import { moveKey, swapId, MIGRATION_FIELDS, migrationPatch } from './migrate.js'
 
 initializeApp()
 
@@ -161,19 +162,6 @@ const verifyBearer = async (req) => {
   }
 }
 
-const round2 = (n) => Math.round(n * 100) / 100
-
-// 把 map 的 from 鍵併入 to 鍵（金額相加）；沒有 from 時原樣回傳 null 表示不用改
-const moveKey = (map, from, to) => {
-  if (!map || !(from in map)) return null
-  const next = { ...map }
-  next[to] = round2((next[to] || 0) + next[from])
-  delete next[from]
-  return next
-}
-
-const swapId = (value, from, to) => (value === from ? to : value)
-
 /**
  * 把群組內所有 fromId 的紀錄改成 toUid。先改子集合、最後才改群組文件，
  * 中途失敗時 fromId 仍留在 members，重試即可繼續（已改過的文件不會再被動到）。
@@ -187,29 +175,25 @@ const migrateMember = async (groupId, fromId, toUid, profileOverride = {}) => {
   if (!group.members?.includes(fromId)) return false
 
   const writer = db.bulkWriter()
-  const [expenses, settlements] = await Promise.all([
+  const [expenses, settlements, incomes] = await Promise.all([
     groupRef.collection('expenses').get(),
     groupRef.collection('settlements').get(),
+    groupRef.collection('incomes').get(),
   ])
 
   expenses.docs.forEach((d) => {
-    const e = d.data()
-    const patch = {}
-    for (const field of ['payments', 'splits', 'shares']) {
-      const moved = moveKey(e[field], fromId, toUid)
-      if (moved) patch[field] = moved
-    }
-    if (e.createdBy === fromId) patch.createdBy = toUid
-    if (Object.keys(patch).length) writer.update(d.ref, patch)
+    const patch = migrationPatch(d.data(), MIGRATION_FIELDS.expenses, fromId, toUid)
+    if (patch) writer.update(d.ref, patch)
   })
 
   settlements.docs.forEach((d) => {
-    const s = d.data()
-    const patch = {}
-    for (const field of ['from', 'to', 'settledBy']) {
-      if (s[field] === fromId) patch[field] = toUid
-    }
-    if (Object.keys(patch).length) writer.update(d.ref, patch)
+    const patch = migrationPatch(d.data(), MIGRATION_FIELDS.settlements, fromId, toUid)
+    if (patch) writer.update(d.ref, patch)
+  })
+
+  incomes.docs.forEach((d) => {
+    const patch = migrationPatch(d.data(), MIGRATION_FIELDS.incomes, fromId, toUid)
+    if (patch) writer.update(d.ref, patch)
   })
 
   await writer.close()

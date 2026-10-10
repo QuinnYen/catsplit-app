@@ -28,6 +28,7 @@ const GroupPage = () => {
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
   const [settlements, setSettlements] = useState([])
+  const [incomes, setIncomes] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState(null)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -96,6 +97,21 @@ const GroupPage = () => {
     return () => unsubscribe()
   }, [id, isMember])
 
+  useEffect(() => {
+    if (!isMember) return
+    const q = query(
+      collection(db, 'groups', id, 'incomes'),
+      orderBy('createdAt', 'desc')
+    )
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      setIncomes(data)
+    }, (error) => {
+      console.error('讀取收入紀錄失敗:', error)
+    })
+    return () => unsubscribe()
+  }, [id, isMember])
+
   const handleDeleteExpense = async (expenseId) => {
     if (!window.confirm('確定要刪除這筆支出嗎？')) return
     setOpenMenuId(null)
@@ -120,20 +136,30 @@ const GroupPage = () => {
   }
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
+  const incomeTotal = incomes.reduce((sum, i) => sum + i.amount, 0)
 
   const handleExportCSV = async () => {
     if (exporting) return
-    const header = ['日期', '標題', '類別', '付款人', `原始金額`, '幣別', `換算金額(${group.baseCurrency})`, '分帳方式', '備註']
-    const rows = [...expenses].reverse().map(e => {
+    // 沒有收入時 CSV 與原本完全相同；有收入時加「類型」欄，支出與收入依日期由舊到新合併
+    const hasIncome = incomes.length > 0
+    const header = [...(hasIncome ? ['類型'] : []), '日期', '標題', '類別', hasIncome ? '付款／收款人' : '付款人', `原始金額`, '幣別', `換算金額(${group.baseCurrency})`, '分帳方式', '備註']
+    const csvItems = hasIncome
+      ? [
+          ...[...expenses].reverse().map(e => ({ e, type: '支出' })),
+          ...[...incomes].reverse().map(e => ({ e, type: '收入' })),
+        ].sort((a, b) => (a.e.createdAt?.toMillis?.() ?? 0) - (b.e.createdAt?.toMillis?.() ?? 0))
+      : [...expenses].reverse().map(e => ({ e, type: '支出' }))
+    const rows = csvItems.map(({ e, type }) => {
       const date = e.createdAt?.toDate
         ? e.createdAt.toDate().toLocaleDateString('zh-TW')
         : ''
-      const payer = Object.entries(e.payments || {})
+      const payer = Object.entries((type === '收入' ? e.received : e.payments) || {})
         .map(([uid, amt]) => `${group.memberProfiles?.[uid]?.name || uid}(${amt})`)
         .join('; ')
       const splitTypes = { equal: '均分', subset: '部分均分', shares: '份數', percentage: '百分比', custom: '自訂' }
       const splitType = splitTypes[e.splitType] || e.splitType || ''
       return [
+        ...(hasIncome ? [type] : []),
         date,
         e.title || '',
         e.category || '',
@@ -152,7 +178,7 @@ const GroupPage = () => {
       return `"${(typeof v === 'string' && /^[=+\-@\t\r]/.test(s) ? "'" + s : s).replace(/"/g, '""')}"`
     }
     const csv = bom + [header, ...rows].map(r => r.map(escapeCell).join(',')).join('\n')
-    const filename = `${group.name}_支出明細.csv`
+    const filename = `${group.name}_${hasIncome ? '收支明細' : '支出明細'}.csv`
 
     // LINE 內建瀏覽器無法下載 blob：請雲端函式存檔並回傳短效網址，在外部瀏覽器開啟下載
     if (liffInstance?.isInClient?.() && EXPORT_CSV_URL) {
@@ -355,7 +381,7 @@ const GroupPage = () => {
             {[
               { label: '邀請成員', Icon: UserPlus, onClick: () => { setSettingsPos(null); setInviteOpen(true) } },
               {
-                label: exporting ? '匯出中...' : '匯出 CSV', Icon: Download, disabled: expenses.length === 0 || exporting,
+                label: exporting ? '匯出中...' : '匯出 CSV', Icon: Download, disabled: expenses.length + incomes.length === 0 || exporting,
                 onClick: async () => { await handleExportCSV(); setSettingsPos(null) },
               },
               { label: '編輯群組', Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
@@ -465,6 +491,11 @@ const GroupPage = () => {
             <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4 }}>
               共 {expenses.length} 筆消費
             </div>
+            {incomes.length > 0 && (
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 }}>
+                收入 {getCurrency(group.baseCurrency).symbol} {incomeTotal.toLocaleString()} · 淨支出 {getCurrency(group.baseCurrency).symbol} {(total - incomeTotal).toLocaleString()}
+              </div>
+            )}
           </div>
           <ChevronRight size={22} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />
         </div>
@@ -544,7 +575,7 @@ const GroupPage = () => {
           <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>載入中...</div>
         )}
 
-        {!loading && expenses.length === 0 && settlements.length === 0 && (
+        {!loading && expenses.length === 0 && settlements.length === 0 && incomes.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Receipt size={48} color="#e0c4b0" /></div>
             <div style={{ color: '#b08060', fontSize: 14, marginBottom: 4 }}>還沒有任何支出</div>
@@ -582,6 +613,7 @@ const GroupPage = () => {
           const allItems = [
             ...filteredExpenses.map(e => ({ ...e, _type: 'expense' })),
             ...(activeCategory || isSearching ? [] : settlements.map(s => ({ ...s, _type: 'settlement' }))),
+            ...(activeCategory || isSearching ? [] : incomes.map(i => ({ ...i, _type: 'income' }))),
           ].sort((a, b) => dayKey(b) - dayKey(a) || sortTime(b) - sortTime(a))
 
           if (allItems.length === 0) return null
@@ -639,6 +671,46 @@ const GroupPage = () => {
                               </div>
                             </div>
                             <ChevronRight size={16} color="#66bb6a" style={{ flexShrink: 0 }} />
+                          </div>
+                        )
+                      }
+
+                      if (item._type === 'income') {
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => navigate(`/group/${id}/income/${item.id}`)}
+                            style={{ background: '#f0f6ff', borderRadius: 14, border: '0.5px solid #c5dcf7', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
+                            onTouchEnd={e => e.currentTarget.style.opacity = '1'}
+                          >
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3 }}>
+                                <span style={{ fontSize: 12, fontWeight: 500, color: '#1976d2', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                                  {item.category || '其他'}
+                                </span>
+                                <span style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {item.title}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: 12, color: '#b08060', display: 'flex' }}>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {payerLabel(item.received, group.memberProfiles)}
+                                </span>
+                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;收款{expenseTimeStr(item) && ` · ${expenseTimeStr(item)}`}</span>
+                              </div>
+                            </div>
+                            <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                              <div style={{ fontSize: 15, fontWeight: 500, color: '#1976d2' }}>
+                                {getCurrency(item.currency || group.baseCurrency).symbol} {(item.originalAmount ?? item.amount).toLocaleString()}
+                              </div>
+                              {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
+                                <div style={{ fontSize: 11, color: '#c4a882', marginTop: 1 }}>
+                                  ≈ {getCurrency(group.baseCurrency).symbol} {item.amount.toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                            <ChevronRight size={16} color="#64a8e8" style={{ flexShrink: 0 }} />
                           </div>
                         )
                       }

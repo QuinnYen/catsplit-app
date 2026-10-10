@@ -108,6 +108,10 @@ service cloud.firestore {
         allow read, write: if isMemberOf(groupId);
       }
 
+      match /incomes/{incomeId} {
+        allow read, write: if isMemberOf(groupId);
+      }
+
       match /settlements/{settlementId} {
         allow read, write: if isMemberOf(groupId);
       }

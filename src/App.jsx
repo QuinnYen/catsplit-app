@@ -104,6 +104,8 @@ const ProtectedRoutes = () => {
       <Route path="/group/:id/transfer" element={<TransferPage />} />
       <Route path="/group/:id/expense/:expenseId" element={<ExpenseDetailPage />} />
       <Route path="/group/:id/expense/:expenseId/edit" element={<EditExpensePage />} />
+      <Route path="/group/:id/income/:expenseId" element={<ExpenseDetailPage kind="income" />} />
+      <Route path="/group/:id/income/:expenseId/edit" element={<EditExpensePage kind="income" />} />
       <Route path="/group/:id/edit" element={<EditGroupPage />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
