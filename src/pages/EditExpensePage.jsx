@@ -16,7 +16,7 @@ import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import { categoryForWrite, normalizeCategory, activityForWrite } from '../i18n/legacy'
+import { normalizeCategory, activityForWrite } from '../i18n/codes'
 
 const EditExpensePage = ({ kind = 'expense' }) => {
   const { user } = useApp()
@@ -207,7 +207,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       const receiptUpdate = await handleReceiptUpdate()
       await updateDoc(doc(db, 'groups', id, col, expenseId), {
         title: title.trim(),
-        category: categoryForWrite(category),
+        category,
         currency,
         originalAmount: totalAmount,
         exchangeRate: rate,

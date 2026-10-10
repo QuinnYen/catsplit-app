@@ -12,7 +12,7 @@ import { CURRENCIES, getCurrency } from '../config/currencies'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
 import { useI18n } from '../i18n/I18nProvider'
-import { paymentMethodLabel } from '../i18n/legacy'
+import { paymentMethodLabel } from '../i18n/codes'
 
 const SettlePage = () => {
   const { id } = useParams()

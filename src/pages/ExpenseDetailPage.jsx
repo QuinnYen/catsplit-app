@@ -11,7 +11,7 @@ import { getCurrency } from '../config/currencies'
 import { toLocalDateStr, expenseTimeStr, payerLabel } from '../utils/expenseHelpers'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
-import { categoryLabel } from '../i18n/legacy'
+import { categoryLabel } from '../i18n/codes'
 
 const SPLIT_LABEL = {
   equal: 'detail.split.equal',

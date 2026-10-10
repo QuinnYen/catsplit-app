@@ -15,7 +15,7 @@ import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildP
 import { getCurrency } from '../config/currencies'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
 import { useI18n } from '../i18n/I18nProvider'
-import { categoryForWrite, activityForWrite } from '../i18n/legacy'
+import { activityForWrite } from '../i18n/codes'
 
 const AddExpensePage = () => {
   const { id } = useParams()
@@ -141,7 +141,7 @@ const AddExpensePage = () => {
         const incomeBatch = writeBatch(db)
         incomeBatch.set(doc(collection(db, 'groups', id, 'incomes')), {
           title: title.trim(),
-          category: categoryForWrite(category),
+          category,
           currency,
           originalAmount: totalAmount,
           exchangeRate: rate,
@@ -175,7 +175,7 @@ const AddExpensePage = () => {
       const docRef = doc(collection(db, 'groups', id, 'expenses'))
       batch.set(docRef, {
         title: title.trim(),
-        category: categoryForWrite(category),
+        category,
         currency,
         originalAmount: totalAmount,
         exchangeRate: rate,

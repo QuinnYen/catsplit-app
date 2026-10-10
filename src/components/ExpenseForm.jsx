@@ -7,7 +7,7 @@ import CalculatorModal from './CalculatorModal'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
-import { categoryLabel, normalizeCategory } from '../i18n/legacy'
+import { categoryLabel, normalizeCategory } from '../i18n/codes'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, SPLIT_TYPES } from '../config/expenseForm'
 
 const inputStyle = {

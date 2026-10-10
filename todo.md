@@ -80,13 +80,12 @@
 
 ### 上線前人工驗證（尚未做）
 - [ ] 英文介面逐頁走一遍，320／360px 寬度檢查版面溢出（位置清單見 `.omc/plans/p1-i18n.md`）。
-- [ ] 中文介面確認與改動前相同；用舊資料（中文分類、中文付款方式、舊 `lastActivity`）確認顯示正常。
+- [ ] 中文介面確認與改動前相同。
 - [ ] LINE 內與外部瀏覽器各測一次 `?lang=en`、語言切換、分享卡片（`?hl=en`）。
-- [ ] 確認後把 `EN_READY` 改成 `true`（單獨一個 commit，見 `docs/i18n.md`）。
+- [x] `EN_READY` 已改成 `true`（出問題時改回 `false`，見 `docs/i18n.md`）。
 
-### 收尾：移除舊資料相容層（必做）
-- [ ] 上線前清掉所有舊測試群組與紀錄（目前沒有正式使用者），確認資料庫已無中文分類、中文付款方式與只有 `text` 的 `lastActivity`。
-- [ ] 刪除 `src/i18n/legacy.js` 的舊對照（`LEGACY_CATEGORY`、`LEGACY_PAYMENT`）、`WRITE_CODES` 開關、`describeActivity` 讀 `text` 的分支，以及對應測試。
+### 收尾：移除舊資料相容層（已完成）
+- [x] 已用一次性腳本把舊資料全部轉成代碼（再次 dry-run 為 0），並刪除 `legacy.js` 的舊對照、`WRITE_CODES` 開關與遷移腳本；代碼與顯示現在集中在 `src/i18n/codes.js`。
 
 ---
 

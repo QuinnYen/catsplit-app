@@ -99,6 +99,6 @@ test('makeFormat：數字與月份', () => {
   assert.equal(makeFormat('en').weekdays.length, 7)
 })
 
-test('src 沒有寫死的中文（註解、zh-TW.js、legacy.js、測試檔除外）', () => {
+test('src 沒有寫死的中文（註解、zh-TW.js、測試檔除外）', () => {
   assert.deepEqual(scanCjk(['src']), [])
 })

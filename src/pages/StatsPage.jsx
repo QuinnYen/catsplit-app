@@ -9,7 +9,7 @@ import PawDecor from '../components/PawDecor'
 import TabBar from '../components/TabBar'
 import { getCurrency } from '../config/currencies'
 import { useI18n } from '../i18n/I18nProvider'
-import { normalizeCategory, categoryLabel } from '../i18n/legacy'
+import { normalizeCategory, categoryLabel } from '../i18n/codes'
 
 const CATEGORY_COLORS = ['#FF8C42', '#FFB37A', '#E8703A', '#F5C26B', '#C4A882', '#D98C5F', '#8FBF9F', '#7FA6C9']
 const TREND_MONTHS = 6

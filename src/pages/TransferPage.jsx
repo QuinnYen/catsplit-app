@@ -13,7 +13,7 @@ import PawDecor from '../components/PawDecor'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
 import { useI18n } from '../i18n/I18nProvider'
-import { PAYMENT_METHOD_CODES, paymentMethodLabel, paymentMethodForWrite, activityForWrite } from '../i18n/legacy'
+import { PAYMENT_METHOD_CODES, paymentMethodLabel, activityForWrite } from '../i18n/codes'
 
 // 代碼與 paymentProviders 的 id 一致的項目，會自動帶出收款人對應的收款方式
 const PAYMENT_METHODS = PAYMENT_METHOD_CODES
@@ -71,7 +71,7 @@ const TransferPage = () => {
         to: toUid,
         amount: actualAmount,
         currency,
-        paymentMethod: paymentMethodForWrite(paymentMethod),
+        paymentMethod,
         note: note.trim(),
         settledBy: user.uid,
         settledAt: serverTimestamp(),
