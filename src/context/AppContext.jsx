@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../config/firebase'
 import { initLiff } from '../config/liff'
+import { useI18n } from '../i18n/I18nProvider'
 
 const AppContext = createContext(null)
 
@@ -104,6 +105,7 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [liffInstance, setLiffInstance] = useState(null)
+  const { applyAutoLanguage } = useI18n()
 
   useEffect(() => {
     const init = async () => {
@@ -132,6 +134,7 @@ export const AppProvider = ({ children }) => {
         try {
           const liff = await initLiff()
           setLiffInstance(liff)
+          applyAutoLanguage(liff.getAppLanguage?.() ?? liff.getLanguage?.())
           if (liff.isLoggedIn()) {
             // 快速路徑：Firebase 已恢復同一個 LINE 使用者的登入（uid 即 LINE userId），
             // 就不用每次重跑 verifyLiffToken + signInWithCustomToken（約 1 秒以上）。
@@ -214,7 +217,7 @@ export const AppProvider = ({ children }) => {
     }
 
     init()
-  }, [])
+  }, [applyAutoLanguage])
 
   const loginWithLine = (redirectPath) => {
     if (redirectPath) localStorage.setItem('catsplit_redirect', redirectPath)

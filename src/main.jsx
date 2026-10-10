@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { I18nProvider } from './i18n/I18nProvider'
 import { AppProvider } from './context/AppContext'
 import App from './App.jsx'
 import './index.css'
@@ -19,8 +20,10 @@ if (window.location.pathname === '/' && liffState?.startsWith('/') && !liffState
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AppProvider>
-      <App />
-    </AppProvider>
+    <I18nProvider>
+      <AppProvider>
+        <App />
+      </AppProvider>
+    </I18nProvider>
   </StrictMode>,
 )

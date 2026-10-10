@@ -2,10 +2,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot, getDoc, doc } from 'firebase/firestore'
-import { Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2, QrCode, MessageCircle } from 'lucide-react'
+import { Globe, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, Trash2, QrCode, MessageCircle } from 'lucide-react'
 import { db } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
+import { useI18n } from '../i18n/I18nProvider'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
@@ -37,6 +38,7 @@ const getGreeting = () => {
 
 const HomePage = () => {
   const { user, loading: authLoading, loginWithLine, logout, guestNames } = useApp()
+  const { t, lang, setLang, enReady } = useI18n()
   const navigate = useNavigate()
   const [{ Icon: GreetingIcon, text: greetingText }] = useState(getGreeting)
   const [groups, setGroups] = useState([])
@@ -383,6 +385,8 @@ const HomePage = () => {
               { Icon: MessageCircle, label: '官方帳號', href: OFFICIAL_ACCOUNT_URL },
               { Icon: FileText, label: '使用條款', href: '/terms.html' },
               { Icon: ShieldCheck, label: '隱私權政策', href: '/privacy.html' },
+              // 英文版開放前只有手動切到英文的人（測試用）看得到，讓他們能切回中文
+              ...(enReady || lang === 'en' ? [{ Icon: Globe, label: `${t('settings.language')}: ${t(`lang.${lang}`)}`, onClick: () => setLang(lang === 'en' ? 'zh-TW' : 'en') }] : []),
               { Icon: LogOut, label: '登出', onClick: handleLogout },
               // 訪客名字屬於群組，不能自行刪除；由群組建立者移除
               ...(!user?.guest ? [{ Icon: Trash2, label: deletingData ? '刪除中...' : '刪除我的資料', onClick: handleDeleteMyData, disabled: deletingData, danger: true }] : []),
