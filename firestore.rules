@@ -41,7 +41,8 @@ service cloud.firestore {
         && request.resource.data.providerId is string
         && request.resource.data.value is string
         && request.resource.data.value.size() >= 1
-        && request.resource.data.value.size() <= 100
+        // 上限對齊自訂欄位 maxLength=200（size() 與 maxLength 同以 UTF-16 code unit 計數，已在模擬器實測）；App 類儲存的是 parse 後的短值
+        && request.resource.data.value.size() <= 200
         && request.resource.data.isPublic is bool;
       allow delete: if isLineUser() && request.auth.uid == userId;
     }

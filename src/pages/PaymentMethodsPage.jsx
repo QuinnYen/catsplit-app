@@ -183,6 +183,7 @@ const PaymentMethodsPage = () => {
             {provider && (
               <div>
                 <div style={label}>{provider.kind === 'bank' ? '銀行帳號' : provider.kind === 'custom' ? '收款資訊' : provider.valueLabel}</div>
+                {/* App 類 maxLength=1000 是貼上整段分享文字的上限，儲存前會 parse 成短值；custom 的 200 與 firestore.rules 的 value 上限一致 */}
                 <input type="text" inputMode={provider.kind === 'bank' ? 'numeric' : 'text'} maxLength={provider.kind === 'bank' ? 20 : provider.kind === 'custom' ? 200 : 1000} value={form.value} onChange={e => patch({ value: e.target.value })} placeholder={provider.kind === 'custom' ? '帳號、收款碼或連結' : provider.placeholder} style={input} />
                 {provider.hint && <div style={{ fontSize: 11, color: '#c4a882', marginTop: 6 }}>{provider.hint}</div>}
               </div>

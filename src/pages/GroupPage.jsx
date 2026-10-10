@@ -1,7 +1,7 @@
 // /group/:id — 群組首頁：總支出、依時間排列的支出與轉帳紀錄（可搜尋、依類別篩選）；訪客從邀請連結進來時也在此選名字加入。
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, collection, onSnapshot, orderBy, query, deleteDoc, getDocs, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore'
+import { doc, collection, onSnapshot, orderBy, query, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 
 import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download, MessageCircle } from 'lucide-react'
 import { db, auth } from '../config/firebase'
@@ -15,8 +15,9 @@ import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
-import { computeMemberBalances, computeMemberExpenseCounts, matchExpense, payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
+import { matchExpense, payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
+import { recomputeGroupAggregates } from '../utils/groupAggregates'
 
 const EXPORT_CSV_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/exportCsv')
 
@@ -102,17 +103,7 @@ const GroupPage = () => {
       const { receiptPath, title } = expenses.find(e => e.id === expenseId) ?? {}
       await deleteDoc(doc(db, 'groups', id, 'expenses', expenseId))
       await deleteFileByPath(receiptPath)
-      const [expSnap, setSnap] = await Promise.all([
-        getDocs(collection(db, 'groups', id, 'expenses')),
-        getDocs(collection(db, 'groups', id, 'settlements')),
-      ])
-      const memberBalances = computeMemberBalances(group.members, expSnap.docs, setSnap.docs)
-      const totalAmount = expSnap.docs.reduce((sum, d) => sum + d.data().amount, 0)
-      const memberExpenseCounts = computeMemberExpenseCounts(expSnap.docs)
-      await updateDoc(doc(db, 'groups', id), {
-        totalAmount, totalExpenses: expSnap.size, memberBalances, memberExpenseCounts,
-        lastActivity: { at: serverTimestamp(), by: user.uid, name: user.name, text: `刪除了「${title}」` },
-      })
+      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `刪除了「${title}」` } })
     } catch (error) {
       console.error('刪除支出失敗', error)
     }
@@ -122,17 +113,7 @@ const GroupPage = () => {
     if (!window.confirm('確定要刪除這筆轉帳紀錄嗎？')) return
     try {
       await deleteDoc(doc(db, 'groups', id, 'settlements', settlementId))
-
-      const [expSnap, setSnap] = await Promise.all([
-        getDocs(collection(db, 'groups', id, 'expenses')),
-        getDocs(collection(db, 'groups', id, 'settlements')),
-      ])
-
-      const memberBalances = computeMemberBalances(groupSnapshot.members, expSnap.docs, setSnap.docs)
-      await updateDoc(doc(db, 'groups', id), {
-        memberBalances,
-        lastActivity: { at: serverTimestamp(), by: user.uid, name: user.name, text: '刪除了一筆轉帳' },
-      })
+      await recomputeGroupAggregates(id, groupSnapshot.members, { activity: { by: user.uid, name: user.name, text: '刪除了一筆轉帳' } })
     } catch (error) {
       console.error('刪除轉帳失敗', error)
     }

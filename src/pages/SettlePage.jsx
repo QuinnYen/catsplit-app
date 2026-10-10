@@ -10,6 +10,7 @@ import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import useExchangeRate from '../hooks/useExchangeRate'
+import { computeMemberBalances } from '../utils/expenseHelpers'
 
 const SettlePage = () => {
   const { id } = useParams()
@@ -42,23 +43,7 @@ const SettlePage = () => {
       setSettledRecords(settlementsData)
 
       // 計算餘額：支出分帳 + 已結清紀錄
-      const balance = {}
-      groupData.members.forEach(uid => { balance[uid] = 0 })
-
-      expensesData.forEach(expense => {
-        Object.entries(expense.payments || {}).forEach(([uid, amt]) => {
-          balance[uid] = (balance[uid] || 0) + amt
-        })
-        Object.entries(expense.splits || {}).forEach(([uid, amt]) => {
-          balance[uid] = (balance[uid] || 0) - amt
-        })
-      })
-
-      // 已結清的轉帳紀錄：付款者欠款減少(+)，收款者待收減少(-)
-      settlementsData.forEach(s => {
-        balance[s.from] = (balance[s.from] || 0) + s.amount
-        balance[s.to] = (balance[s.to] || 0) - s.amount
-      })
+      const balance = computeMemberBalances(groupData.members, expensesData, settlementsData)
 
       const result = []
       const creditors = []
@@ -181,7 +166,7 @@ const SettlePage = () => {
                 .filter(s => s.from === uid).reduce((sum, s) => sum + s.amount, 0)
               const received = settledRecords
                 .filter(s => s.to === uid).reduce((sum, s) => sum + s.amount, 0)
-              const diff = paid - shouldPay + received - transferred
+              const diff = paid - shouldPay - received + transferred
 
               return (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

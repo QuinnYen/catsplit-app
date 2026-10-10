@@ -51,12 +51,13 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 
 - Firestore 已開啟時間點復原（PITR，保留 7 天）。**Storage 的收據圖片沒有備份**。
 - Google Cloud 已設預算警示。
-- Cloud Functions（`lineLogin`、`verifyLiffToken`、`guestLogin`、`claimMember`、`exportCsv`）為公開端點，已設 `maxInstances: 5`。
+- Cloud Functions（`lineLogin`、`verifyLiffToken`、`guestLogin`、`claimMember`、`detachMember`、`exportCsv`、`sharePage`）為公開端點，已設 `maxInstances: 5`。
 
 ## 分帳計算
 
 - 四捨五入的尾差歸最大出資者（不在分攤名單時歸第一位成員），確保各人份額總和等於總額。邏輯在 `applyExchangeRate`。
 - 支出以 `payments`（誰出多少）與 `splits`（誰分攤多少）儲存，金額都換算成群組基準幣別。
+- 群組彙總欄位（`totalAmount`、`totalExpenses`、`memberBalances`、`memberExpenseCounts`）：新增支出與轉帳用 `increment()`；編輯、刪除支出與刪除轉帳都透過 `src/utils/groupAggregates.js` 的 `recomputeGroupAggregates` 讀取全部子集合後重算並寫回（計算在 `computeGroupAggregates`）。重算是多筆非交易式寫入，與 `increment()` 同時發生時可能互相覆蓋，下一次重算會修正。
 - `npm test` 可跑 `expenseHelpers` 的單元測試。
 
 ## 已知取捨與未完成
@@ -68,7 +69,7 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 - 訪客名字不是專屬的，任何持有群組連結的人都能選用；`guestLogin` 沒有頻率限制，有人可以反覆輸入新名字塞滿群組（上限 50 人，建立者可移除）。
 - LINE 使用者認領訪客名字後沒有復原機制。
 - 清除瀏覽器資料後，訪客記住的名字會消失，需重新點群組連結選名字（帳目不受影響）。
-- `memberExpenseCounts` 的舊資料補算只有 LINE 成員開首頁時才會執行。
+- `memberExpenseCounts` 沒有回填機制，目前也沒有讀取者；`totalExpenses` 同樣沒有讀取者。
 
 **尚未完成**
 

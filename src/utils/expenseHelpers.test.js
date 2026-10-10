@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, primaryPayer, payerLabel, buildPayments, matchExpense } from './expenseHelpers.js'
+import { computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, computeGroupAggregates, primaryPayer, payerLabel, buildPayments, matchExpense } from './expenseHelpers.js'
 
 const sum = (obj) => Object.values(obj).reduce((s, v) => s + v, 0)
 const members = [['a'], ['b'], ['c']]
@@ -134,4 +134,75 @@ test('computeMemberExpenseCounts：只計入 splits 內有該成員的支出，�
     { splits: {} },
   ]
   assert.deepEqual(computeMemberExpenseCounts(docs), { a: 2, b: 1 })
+})
+
+// 群組彙總重算：收支平衡的 fixture（每筆 splits 總和 = payments 總和）
+const aggExpenses = [
+  { amount: 300, payments: { a: 300 }, splits: { a: 100, b: 100, c: 100 } },
+  { amount: 22.5, payments: { b: 10.5, c: 12 }, splits: { a: 7.5, b: 7.5, c: 7.5 } },
+]
+const aggSettlements = [{ from: 'b', to: 'a', amount: 50 }]
+
+test('computeGroupAggregates：空群組全為 0', () => {
+  assert.deepEqual(computeGroupAggregates(['a', 'b'], []), {
+    totalAmount: 0, totalExpenses: 0, memberBalances: { a: 0, b: 0 }, memberExpenseCounts: {},
+  })
+})
+
+test('computeGroupAggregates：單筆支出', () => {
+  const r = computeGroupAggregates(['a', 'b', 'c'], [aggExpenses[0]])
+  assert.equal(r.totalAmount, 300)
+  assert.equal(r.totalExpenses, 1)
+  assert.deepEqual(r.memberBalances, { a: 200, b: -100, c: -100 })
+  assert.deepEqual(r.memberExpenseCounts, { a: 1, b: 1, c: 1 })
+})
+
+test('computeGroupAggregates：多筆含結清，餘額總和為 0', () => {
+  const r = computeGroupAggregates(['a', 'b', 'c'], aggExpenses, aggSettlements)
+  assert.equal(r.totalAmount, 322.5)
+  assert.equal(r.totalExpenses, 2)
+  assert.deepEqual(r.memberBalances, computeMemberBalances(['a', 'b', 'c'], aggExpenses, aggSettlements))
+  assert.ok(Math.abs(sum(r.memberBalances)) < 1e-9)
+})
+
+test('computeGroupAggregates：Firestore 文件與純物件可混用', () => {
+  const docs = [{ data: () => aggExpenses[0] }, aggExpenses[1]]
+  const setDocs = [{ data: () => aggSettlements[0] }]
+  assert.deepEqual(computeGroupAggregates(['a', 'b', 'c'], docs, setDocs), computeGroupAggregates(['a', 'b', 'c'], aggExpenses, aggSettlements))
+})
+
+// SettlePage 原本手寫的餘額迴圈（原樣保留當 oracle），用來確認改用 computeMemberBalances 不改變結果與 key 順序
+const legacySettleBalance = (memberUids, expensesData, settlementsData) => {
+  const balance = {}
+  memberUids.forEach(uid => { balance[uid] = 0 })
+  expensesData.forEach(expense => {
+    Object.entries(expense.payments || {}).forEach(([uid, amt]) => {
+      balance[uid] = (balance[uid] || 0) + amt
+    })
+    Object.entries(expense.splits || {}).forEach(([uid, amt]) => {
+      balance[uid] = (balance[uid] || 0) - amt
+    })
+  })
+  settlementsData.forEach(s => {
+    balance[s.from] = (balance[s.from] || 0) + s.amount
+    balance[s.to] = (balance[s.to] || 0) - s.amount
+  })
+  return balance
+}
+
+test('computeMemberBalances：與 SettlePage 舊迴圈結果與 key 順序完全相同', () => {
+  const expenses = [
+    ...aggExpenses,
+    { amount: 40, payments: { d: 40 }, splits: { d: 20, a: 20 } }, // d 不在 members 內
+  ]
+  const members = ['c', 'a', 'b']
+  assert.deepStrictEqual(
+    Object.entries(computeMemberBalances(members, expenses, aggSettlements)),
+    Object.entries(legacySettleBalance(members, expenses, aggSettlements)),
+  )
+})
+
+test('computeMemberBalances：A 付 100、A/B 均分，B 轉 50 給 A 後兩人餘額皆為 0', () => {
+  const expenses = [{ amount: 100, payments: { a: 100 }, splits: { a: 50, b: 50 } }]
+  assert.deepEqual(computeMemberBalances(['a', 'b'], expenses, [{ from: 'b', to: 'a', amount: 50 }]), { a: 0, b: 0 })
 })

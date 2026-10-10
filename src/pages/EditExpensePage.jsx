@@ -1,7 +1,7 @@
 // /group/:id/expense/:expenseId/edit — 編輯或刪除單筆支出，並重新計算群組餘額與統計。
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, collection, getDoc, getDocs, updateDoc, deleteDoc, Timestamp, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore'
 import { ref, uploadBytes } from 'firebase/storage'
 import { CheckCircle2, Trash2 } from 'lucide-react'
 import { db, storage } from '../config/firebase'
@@ -11,8 +11,9 @@ import ExpenseForm from '../components/ExpenseForm'
 import { DEFAULT_CATEGORIES } from '../config/expenseForm'
 import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
-import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, buildPayments, primaryPayer } from '../utils/expenseHelpers'
+import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, primaryPayer } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
+import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useApp } from '../context/AppContext'
 
 const EditExpensePage = () => {
@@ -168,19 +169,6 @@ const EditExpensePage = () => {
     return true
   }
 
-  const recomputeAndSaveBalances = async (activityText) => {
-    const [expSnap, setSnap] = await Promise.all([
-      getDocs(collection(db, 'groups', id, 'expenses')),
-      getDocs(collection(db, 'groups', id, 'settlements')),
-    ])
-    const memberBalances = computeMemberBalances(group.members, expSnap.docs, setSnap.docs)
-    const totalAmount = expSnap.docs.reduce((sum, d) => sum + d.data().amount, 0)
-    const memberExpenseCounts = computeMemberExpenseCounts(expSnap.docs)
-    await updateDoc(doc(db, 'groups', id), { totalAmount, totalExpenses: expSnap.size, memberBalances, memberExpenseCounts,
-      lastActivity: { at: serverTimestamp(), by: user.uid, name: user.name, text: activityText },
-    })
-  }
-
   const handleReceiptUpdate = async () => {
     if (receiptFile) {
       const { default: imageCompression } = await import('browser-image-compression')
@@ -224,7 +212,7 @@ const EditExpensePage = () => {
         ...receiptUpdate,
       })
 
-      await recomputeAndSaveBalances(`修改了「${title.trim()}」`)
+      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `修改了「${title.trim()}」` } })
       navigate(`/group/${id}`)
     } catch (error) {
       console.error('儲存失敗', error)
@@ -238,7 +226,7 @@ const EditExpensePage = () => {
     try {
       await deleteDoc(doc(db, 'groups', id, 'expenses', expenseId))
       await deleteFileByPath(existingReceiptPath)
-      await recomputeAndSaveBalances(`刪除了「${originalExpense.title}」`)
+      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, name: user.name, text: `刪除了「${originalExpense.title}」` } })
       navigate(`/group/${id}`)
     } catch (error) {
       console.error('刪除失敗', error)

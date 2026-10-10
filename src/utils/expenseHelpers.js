@@ -168,3 +168,13 @@ export const computeMemberBalances = (memberUids, expenseDocs, settlementDocs = 
   })
   return balances
 }
+
+/**
+ * 從所有支出（+ 結清紀錄）重算群組彙總欄位：totalAmount、totalExpenses、memberBalances、memberExpenseCounts
+ */
+export const computeGroupAggregates = (memberUids, expenseDocs, settlementDocs = []) => ({
+  totalAmount: expenseDocs.reduce((sum, d) => sum + (typeof d.data === 'function' ? d.data() : d).amount, 0),
+  totalExpenses: expenseDocs.length,
+  memberBalances: computeMemberBalances(memberUids, expenseDocs, settlementDocs),
+  memberExpenseCounts: computeMemberExpenseCounts(expenseDocs),
+})
