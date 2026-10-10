@@ -73,6 +73,10 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 - LINE 使用者認領訪客名字後沒有復原機制。
 - 清除瀏覽器資料後，訪客記住的名字會消失，需重新點群組連結選名字（帳目不受影響）。
 - `memberExpenseCounts` 沒有回填機制，目前也沒有讀取者；`totalExpenses` 同樣沒有讀取者。
+- 刪除群組（App 內的 `handleDeleteGroup` 與雲端函式的整群刪除）用單一 `writeBatch`，群組內文件超過 500 筆會失敗。
+- 轉帳建議用 `toFixed(0)` 取整，帶小數的餘額照建議轉帳後會剩下不到 1 的殘差。
+- `firebase.json` 的 `Cache-Control` 只比對 `/index.html`，`/` 與 `/group/*` 實際是 `max-age=3600`，舊版 bundle 最多會存活約 1 小時。
+- 訪客相關的 rules 無法在本機測：模擬器不啟動 functions，產生不了訪客身分，只能在正式環境實測。
 
 **尚未完成**
 
