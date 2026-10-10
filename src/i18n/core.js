@@ -1,7 +1,6 @@
 // 語言判定與翻譯的純函式（不依賴瀏覽器或 Vite，方便用 node:test 直接測）
-
-// 字串全部抽完、確認英文版沒問題之前維持 false：自動判定一律是中文，只有手動選擇才會是英文
-export const EN_READY = false
+// true：沒手動選過語言時，依 LIFF／瀏覽器語言自動判定；false：自動判定一律是中文，只有手動選擇才會是英文（出問題時改回 false 即可）
+export const EN_READY = true
 
 // zh 開頭 → 繁體中文；其他非空語言（ja、ko…）→ 英文；空值 → null
 export const normalizeLang = (tag) => {
