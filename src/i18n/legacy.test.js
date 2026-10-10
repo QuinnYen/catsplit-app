@@ -41,12 +41,10 @@ test('categoryLabel：代碼與舊中文都顯示成目前語言，自訂分類�
   assert.equal(categoryLabel('寵物', te), '寵物')
 })
 
-test('categoryForWrite：WRITE_CODES 為 false 時寫出與現況相同的舊中文標籤', () => {
-  assert.equal(WRITE_CODES, false)
-  assert.equal(categoryForWrite('food'), '餐飲')
-  assert.equal(categoryForWrite('daily'), '日用品')
-  assert.equal(categoryForWrite('refund'), '退款')
-  assert.equal(categoryForWrite('other'), '其他')
+test('categoryForWrite：WRITE_CODES 為 true 時寫代碼，自訂分類原樣', () => {
+  assert.equal(WRITE_CODES, true)
+  assert.equal(categoryForWrite('food'), 'food')
+  assert.equal(categoryForWrite('refund'), 'refund')
   assert.equal(categoryForWrite('寵物'), '寵物')
 })
 
@@ -59,24 +57,13 @@ test('付款方式：舊中文名稱轉代碼、顯示與寫入', () => {
   assert.equal(normalizePaymentMethod('jkopay'), 'jkopay')
   assert.equal(paymentMethodLabel('街口支付', tz), '街口支付')
   assert.equal(paymentMethodLabel('jkopay', te), 'JKOPay')
-  assert.equal(paymentMethodForWrite('jkopay'), '街口支付')
-  assert.equal(paymentMethodForWrite('cash'), '現金')
+  assert.equal(paymentMethodForWrite('jkopay'), 'jkopay')
+  assert.equal(paymentMethodForWrite('cash'), 'cash')
 })
 
-test('activityForWrite：WRITE_CODES 為 false 時，8 種句子與現況逐字相同', () => {
-  const a = (type, extra = {}) => activityForWrite({ type, title: 'X', name: '小明', ...extra })
-  assert.deepEqual(a('expense_added'), { name: '小明', text: '新增了「X」' })
-  assert.deepEqual(a('income_added'), { name: '小明', text: '新增了收入「X」' })
-  assert.deepEqual(a('expense_updated'), { name: '小明', text: '修改了「X」' })
-  assert.deepEqual(a('income_updated'), { name: '小明', text: '修改了收入「X」' })
-  assert.deepEqual(a('expense_deleted'), { name: '小明', text: '刪除了「X」' })
-  assert.deepEqual(a('income_deleted'), { name: '小明', text: '刪除了收入「X」' })
-  assert.deepEqual(a('settlement_added', { toName: '小華' }), { name: '小明', text: '轉帳給 小華' })
-  assert.deepEqual(a('settlement_deleted'), { name: '小明', text: '刪除了一筆轉帳' })
-})
-
-test('activityForWrite：缺少名字時補上「某人」（與現況相同）', () => {
-  assert.deepEqual(activityForWrite({ type: 'settlement_added', name: null, toName: null }), { name: '某人', text: '轉帳給 某人' })
+test('activityForWrite：WRITE_CODES 為 true 時寫結構化資料', () => {
+  assert.deepEqual(activityForWrite({ type: 'expense_added', title: 'X', name: '小明' }), { name: '小明', type: 'expense_added', title: 'X', toName: null })
+  assert.deepEqual(activityForWrite({ type: 'settlement_added', name: null, toName: '小華' }), { name: null, type: 'settlement_added', title: null, toName: '小華' })
 })
 
 test('describeActivity：舊資料顯示原文，結構化資料依語言組句', () => {
@@ -88,9 +75,13 @@ test('describeActivity：舊資料顯示原文，結構化資料依語言組句'
   assert.equal(describeActivity({ type: 'settlement_deleted' }, te), 'Deleted a transfer')
 })
 
+const LEGACY_SENTENCE = {
+  expense_added: '新增了「X」', income_added: '新增了收入「X」', expense_updated: '修改了「X」', income_updated: '修改了收入「X」',
+  expense_deleted: '刪除了「X」', income_deleted: '刪除了收入「X」', settlement_added: '轉帳給 小華', settlement_deleted: '刪除了一筆轉帳',
+}
+
 test('zh 顯示：結構化句子與舊句子逐字相同', () => {
   for (const type of ACTIVITY_TYPES) {
-    const legacy = activityForWrite({ type, title: 'X', name: '小明', toName: '小華' }).text
-    assert.equal(describeActivity({ type, title: 'X', toName: '小華' }, tz), legacy, type)
+    assert.equal(describeActivity({ type, title: 'X', toName: '小華' }, tz), LEGACY_SENTENCE[type], type)
   }
 })

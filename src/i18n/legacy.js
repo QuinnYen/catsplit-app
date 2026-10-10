@@ -1,7 +1,7 @@
 // 資料與顯示拆開：分類、付款方式、最新動態在資料裡存的是中文（舊）或代碼（新），顯示時一律經過這裡。
-// WRITE_CODES 為 false 時寫入仍是與舊版逐字相同的中文，只有讀取端認得代碼（可隨時還原）；
-// 改成 true 之後才開始寫代碼（PR-2b，需等 PR-2a 部署超過 1 小時）。
-export const WRITE_CODES = false
+// WRITE_CODES 為 true 時新資料寫代碼；舊資料的中文仍由讀取端認得。
+// 改回 false 可還原成寫入與舊版逐字相同的中文（讀取端兩種都吃）。
+export const WRITE_CODES = true
 
 // 分類
 const CATEGORY_LABELS = {
