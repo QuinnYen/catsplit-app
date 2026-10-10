@@ -33,25 +33,25 @@ const Checkbox = ({ checked }) => (
   </div>
 )
 
-// 與 kind 有關的字串集中在這裡
+// 與 kind 有關的字串 key 集中在這裡（用 t(L.xxx) 取字）
 const LABELS = {
   expense: {
-    titlePlaceholder: '例如：晚餐、計程車...',
-    payerTitle: '誰付錢',
-    payerPlaceholder: '選擇付款人',
-    multiPayer: '多人付款',
-    multiPayerHint: '輸入每人實際出的金額',
-    excludeLabel: '付款人不參與分攤（純代墊）',
-    subsetHint: '勾選參與此項費用的成員',
+    titlePlaceholder: 'form.expense.titlePlaceholder',
+    payerTitle: 'form.expense.payerTitle',
+    payerPlaceholder: 'form.expense.payerPlaceholder',
+    multiPayer: 'form.expense.multiPayer',
+    multiPayerHint: 'form.expense.multiPayerHint',
+    excludeLabel: 'form.expense.excludeLabel',
+    subsetHint: 'form.expense.subsetHint',
   },
   income: {
-    titlePlaceholder: '例如：退款、預收款...',
-    payerTitle: '誰收款',
-    payerPlaceholder: '選擇收款人',
-    multiPayer: '多人收款',
-    multiPayerHint: '輸入每人實際收到的金額',
-    excludeLabel: '收款人不參與分配（純代收）',
-    subsetHint: '勾選分得此筆收入的成員',
+    titlePlaceholder: 'form.income.titlePlaceholder',
+    payerTitle: 'form.income.payerTitle',
+    payerPlaceholder: 'form.income.payerPlaceholder',
+    multiPayer: 'form.income.multiPayer',
+    multiPayerHint: 'form.income.multiPayerHint',
+    excludeLabel: 'form.income.excludeLabel',
+    subsetHint: 'form.income.subsetHint',
   },
 }
 
@@ -156,7 +156,7 @@ const ExpenseForm = ({
       <div style={cardStyle}>
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={labelStyle}>類別</div>
+            <div style={labelStyle}>{t('form.category')}</div>
             <select
               value={isEditingCategory ? CUSTOM_OPTION : normalizeCategory(category)}
               onChange={e => {
@@ -170,16 +170,16 @@ const ExpenseForm = ({
               style={inputStyle}
             >
               {categories.map(c => <option key={c} value={c}>{categoryLabel(c, t)}</option>)}
-              <option value={CUSTOM_OPTION}>自訂</option>
+              <option value={CUSTOM_OPTION}>{t('form.custom')}</option>
             </select>
           </div>
           <div style={{ flex: 2, minWidth: 0 }}>
-            <div style={labelStyle}>項目名稱</div>
+            <div style={labelStyle}>{t('form.itemName')}</div>
             <input
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder={L.titlePlaceholder}
+              placeholder={t(L.titlePlaceholder)}
               maxLength={20}
               style={inputStyle}
             />
@@ -190,7 +190,7 @@ const ExpenseForm = ({
             type="text"
             value={customCategory}
             onChange={e => { setCustomCategory(e.target.value); setCategory(e.target.value) }}
-            placeholder="輸入自訂類別..."
+            placeholder={t('form.customCategoryPlaceholder')}
             maxLength={10}
             autoFocus
             style={{ ...inputStyle, border: '0.5px solid #FF8C42', marginTop: 10 }}
@@ -198,7 +198,7 @@ const ExpenseForm = ({
         )}
 
         <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>金額</div>
+          <div style={labelStyle}>{t('form.amount')}</div>
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...inputStyle, height: '100%' }}>
@@ -219,7 +219,7 @@ const ExpenseForm = ({
               <button
                 type="button"
                 onClick={() => setShowCalc(true)}
-                aria-label="計算機"
+                aria-label={t('form.calculator')}
                 style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', padding: 4, cursor: 'pointer', display: 'flex' }}
               >
                 <Calculator size={20} color="#FF8C42" />
@@ -243,9 +243,9 @@ const ExpenseForm = ({
         {currency !== baseCurrency && (
           <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: '#fff8f4', border: '0.5px solid #f0d5c0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12, color: '#b08060' }}>匯率 1 {currency} =</span>
+              <span style={{ fontSize: 12, color: '#b08060' }}>{t('form.rate', { currency })}</span>
               {rateLoading ? (
-                <span style={{ fontSize: 12, color: '#c4a882' }}>抓取中...</span>
+                <span style={{ fontSize: 12, color: '#c4a882' }}>{t('form.rateLoading')}</span>
               ) : (
                 <input
                   type="number"
@@ -253,7 +253,7 @@ const ExpenseForm = ({
                   min="0"
                   value={exchangeRate ?? ''}
                   onChange={e => setExchangeRate(parseFloat(e.target.value) || null)}
-                  placeholder="請輸入"
+                  placeholder={t('form.rateEnter')}
                   style={{ width: 100, border: `0.5px solid ${rateError ? '#e05a4f' : '#FF8C42'}`, borderRadius: 8, padding: '6px 8px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff' }}
                 />
               )}
@@ -262,10 +262,10 @@ const ExpenseForm = ({
             {!rateLoading && (
               <div style={{ marginTop: 6, fontSize: 11, color: rateError ? '#e05a4f' : '#c4a882' }}>
                 {rateError
-                  ? '匯率抓取失敗，請手動輸入'
+                  ? t('form.rateError')
                   : rateManual
-                    ? '已手動修改匯率'
-                    : '自動帶入參考匯率，可直接修改'}
+                    ? t('form.rateManual')
+                    : t('form.rateAuto')}
               </div>
             )}
           </div>
@@ -275,7 +275,7 @@ const ExpenseForm = ({
       {/* 誰付錢 */}
       <div style={cardStyle}>
         <div style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>{L.payerTitle}</span>
+          <span>{t(L.payerTitle)}</span>
           <button
             onClick={() => { setMultiPayer(v => !v); setPayerExcluded(false) }}
             style={{
@@ -283,12 +283,12 @@ const ExpenseForm = ({
               ...(multiPayer ? chipActiveStyle : chipIdleStyle),
             }}
           >
-            {L.multiPayer}
+            {t(L.multiPayer)}
           </button>
         </div>
         {multiPayer ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{L.multiPayerHint}</div>
+            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{t(L.multiPayerHint)}</div>
             {members.map(([uid, profile]) => (
               <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Avatar src={profile.avatar} name={profile.name} size={24} />
@@ -309,12 +309,12 @@ const ExpenseForm = ({
               </div>
             ))}
             <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(payerTotal - amountNum) < 0.01 ? '#4caf50' : '#FF6B1A' }}>
-              已填 {getCurrency(currency).symbol} {payerTotal.toFixed(0)} / {amount || 0}
+              {t('form.paidSum', { symbol: getCurrency(currency).symbol, paid: payerTotal.toFixed(0), total: amount || 0 })}
             </div>
           </div>
         ) : (
           <>
-            <PayerSelect members={members} value={paidBy} onChange={setPaidBy} placeholder={L.payerPlaceholder} />
+            <PayerSelect members={members} value={paidBy} onChange={setPaidBy} placeholder={t(L.payerPlaceholder)} />
             <button
               onClick={() => setPayerExcluded(v => !v)}
               style={{
@@ -325,7 +325,7 @@ const ExpenseForm = ({
             >
               <Checkbox checked={payerExcluded} />
               <span style={{ fontSize: 13, color: payerExcluded ? '#FF6B1A' : '#b08060', fontWeight: payerExcluded ? 500 : 400 }}>
-                {L.excludeLabel}
+                {t(L.excludeLabel)}
               </span>
             </button>
           </>
@@ -334,7 +334,7 @@ const ExpenseForm = ({
 
       {/* 分帳方式 */}
       <div style={cardStyle}>
-        <div style={labelStyle}>分帳方式</div>
+        <div style={labelStyle}>{t('form.splitMethod')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 12 }}>
           {SPLIT_TYPES.map(type => (
             <button
@@ -345,7 +345,7 @@ const ExpenseForm = ({
                 ...(splitType === type.key ? chipActiveStyle : chipIdleStyle),
               }}
             >
-              {type.label}
+              {t(type.labelKey)}
             </button>
           ))}
         </div>
@@ -370,7 +370,7 @@ const ExpenseForm = ({
         {/* 部分人分攤 */}
         {splitType === 'subset' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{L.subsetHint}</div>
+            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{t(L.subsetHint)}</div>
             {members.map(([uid, profile]) => {
               const excluded = payerExcluded && uid === paidBy
               const checked = !excluded && subsetMembers[uid]
@@ -404,7 +404,7 @@ const ExpenseForm = ({
         {/* 依份數 */}
         {splitType === 'shares' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>輸入每人份數（例：吃兩份填 2）</div>
+            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{t('form.sharesHint')}</div>
             {members
               .filter(([uid]) => !payerExcluded || uid !== paidBy)
               .map(([uid, profile]) => {
@@ -421,7 +421,7 @@ const ExpenseForm = ({
                       placeholder="0"
                       style={{ width: 70, border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 8px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4', textAlign: 'center' }}
                     />
-                    <span style={{ fontSize: 11, color: '#b08060', width: 16 }}>份</span>
+                    <span style={{ fontSize: 11, color: '#b08060', width: 16 }}>{t('form.shareUnit')}</span>
                     <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A', width: 64, textAlign: 'right', visibility: amount ? 'visible' : 'hidden' }}>
                       {getCurrency(currency).symbol} {sharesTotal > 0 ? (s / sharesTotal * amountNum).toFixed(0) : '0'}
                     </span>
@@ -429,7 +429,7 @@ const ExpenseForm = ({
                 )
               })}
             <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: '#b08060' }}>
-              共 {sharesTotal} 份
+              {t('form.sharesTotal', { n: sharesTotal })}
             </div>
           </div>
         )}
@@ -461,7 +461,7 @@ const ExpenseForm = ({
                 </div>
               ))}
             <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(percentageTotal - 100) < 0.01 ? '#4caf50' : '#FF6B1A' }}>
-              已分配 {percentageTotal.toFixed(0)}% / 100%
+              {t('form.allocatedPercent', { p: percentageTotal.toFixed(0) })}
             </div>
           </div>
         )}
@@ -490,7 +490,7 @@ const ExpenseForm = ({
                 </div>
               ))}
             <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(customTotal - amountNum) < 0.01 ? '#4caf50' : '#FF6B1A' }}>
-              已分配 {getCurrency(currency).symbol} {customTotal.toFixed(0)} / {amount || 0}
+              {t('form.allocatedSum', { symbol: getCurrency(currency).symbol, a: customTotal.toFixed(0), b: amount || 0 })}
             </div>
           </div>
         )}
@@ -502,14 +502,14 @@ const ExpenseForm = ({
       {/* 收據上傳 */}
       {setReceiptFile && (
         <div style={cardStyle}>
-          <div style={labelStyle}>收據照片（選填）</div>
+          <div style={labelStyle}>{t('form.receiptLabel')}</div>
 
           {/* 已有圖片（既有 URL 或本次選擇的預覽） */}
           {(receiptPreview || (existingReceiptPath && !removeExistingReceipt)) ? (
             <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
               <img
                 src={receiptPreview || existingReceiptUrl}
-                alt="收據"
+                alt={t('form.receiptAlt')}
                 style={{ width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 10, background: '#f5f0eb', display: 'block' }}
               />
               <button
@@ -533,7 +533,7 @@ const ExpenseForm = ({
               border: '1.5px dashed #f0d5c0', background: '#fff8f4', color: '#b08060',
             }}>
               <Camera size={28} color="#b08060" />
-              <span style={{ fontSize: 13 }}>點擊上傳收據照片</span>
+              <span style={{ fontSize: 13 }}>{t('form.receiptUpload')}</span>
               <input
                 type="file"
                 accept="image/*"

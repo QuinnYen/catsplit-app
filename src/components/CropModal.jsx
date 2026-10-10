@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import Cropper from 'react-easy-crop'
 import { getCroppedBlob } from '../utils/cropImage'
+import { useI18n } from '../i18n/I18nProvider'
 
 export const COVER_ASPECT = 1.6
 
 const CropModal = ({ imageSrc, aspect = COVER_ASPECT, onCancel, onConfirm }) => {
+  const { t } = useI18n()
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [pixelCrop, setPixelCrop] = useState(null)
@@ -22,7 +24,7 @@ const CropModal = ({ imageSrc, aspect = COVER_ASPECT, onCancel, onConfirm }) => 
     try {
       onConfirm(await getCroppedBlob(imageSrc, pixelCrop))
     } catch (error) {
-      console.error('裁切失敗', error)
+      console.error('Crop failed', error)
       setWorking(false)
     }
   }
@@ -49,7 +51,7 @@ const CropModal = ({ imageSrc, aspect = COVER_ASPECT, onCancel, onConfirm }) => 
           step={0.01}
           value={zoom}
           onChange={e => setZoom(parseFloat(e.target.value))}
-          aria-label="縮放"
+          aria-label={t('crop.zoom')}
           style={{ width: '100%', accentColor: '#FF8C42', marginBottom: 14 }}
         />
         <div style={{ display: 'flex', gap: 10 }}>
@@ -58,14 +60,14 @@ const CropModal = ({ imageSrc, aspect = COVER_ASPECT, onCancel, onConfirm }) => 
             disabled={working}
             style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1px solid #555', background: 'transparent', color: '#fff', fontSize: 14, cursor: 'pointer' }}
           >
-            取消
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={!pixelCrop || working}
             style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: !pixelCrop || working ? '#8a6a55' : '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
           >
-            {working ? '處理中...' : '確認'}
+            {working ? t('common.processing') : t('eg.confirm')}
           </button>
         </div>
       </div>

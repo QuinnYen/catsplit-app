@@ -26,7 +26,7 @@ const EXPORT_CSV_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLo
 const GroupPage = () => {
   const { id } = useParams()
   const { user, claimMember, liffInstance } = useApp()
-  const { t } = useI18n()
+  const { t, fmt, lang } = useI18n()
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
@@ -62,7 +62,7 @@ const GroupPage = () => {
       const member = !!data.members?.includes(user?.uid)
       setIsMember(prev => (snap.metadata.hasPendingWrites ? prev : member))
     }, (error) => {
-      console.error('讀取群組失敗:', error)
+      console.error('Failed to load group:', error)
       setGroupMissing(true)
     })
     return () => unsubscribe()
@@ -79,7 +79,7 @@ const GroupPage = () => {
       setExpenses(data)
       setLoading(false)
     }, (error) => {
-      console.error('Firestore 讀取失敗:', error)
+      console.error('Failed to load expenses:', error)
       setLoading(false)
     })
     return () => unsubscribe()
@@ -95,7 +95,7 @@ const GroupPage = () => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       setSettlements(data)
     }, (error) => {
-      console.error('讀取轉帳紀錄失敗:', error)
+      console.error('Failed to load settlements:', error)
     })
     return () => unsubscribe()
   }, [id, isMember])
@@ -110,13 +110,13 @@ const GroupPage = () => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       setIncomes(data)
     }, (error) => {
-      console.error('讀取收入紀錄失敗:', error)
+      console.error('Failed to load incomes:', error)
     })
     return () => unsubscribe()
   }, [id, isMember])
 
   const handleDeleteExpense = async (expenseId) => {
-    if (!window.confirm('確定要刪除這筆支出嗎？')) return
+    if (!window.confirm(t('group.confirmDeleteExpense'))) return
     setOpenMenuId(null)
     try {
       const { receiptPath, title } = expenses.find(e => e.id === expenseId) ?? {}
@@ -124,17 +124,17 @@ const GroupPage = () => {
       await deleteFileByPath(receiptPath)
       await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: 'expense_deleted', title, name: user.name }) } })
     } catch (error) {
-      console.error('刪除支出失敗', error)
+      console.error('Failed to delete expense', error)
     }
   }
 
   const handleDeleteSettlement = async (settlementId, groupSnapshot) => {
-    if (!window.confirm('確定要刪除這筆轉帳紀錄嗎？')) return
+    if (!window.confirm(t('group.confirmDeleteSettlement'))) return
     try {
       await deleteDoc(doc(db, 'groups', id, 'settlements', settlementId))
       await recomputeGroupAggregates(id, groupSnapshot.members, { activity: { by: user.uid, ...activityForWrite({ type: 'settlement_deleted', name: user.name }) } })
     } catch (error) {
-      console.error('刪除轉帳失敗', error)
+      console.error('Failed to delete settlement', error)
     }
   }
 
@@ -145,24 +145,24 @@ const GroupPage = () => {
     if (exporting) return
     // 沒有收入時 CSV 與原本完全相同；有收入時加「類型」欄，支出與收入依日期由舊到新合併
     const hasIncome = incomes.length > 0
-    const header = [...(hasIncome ? ['類型'] : []), '日期', '標題', '類別', hasIncome ? '付款／收款人' : '付款人', `原始金額`, '幣別', `換算金額(${group.baseCurrency})`, '分帳方式', '備註']
+    const header = [...(hasIncome ? [t('csv.type')] : []), t('csv.date'), t('csv.title'), t('csv.category'), hasIncome ? t('csv.payerOrReceiver') : t('csv.payer'), t('csv.originalAmount'), t('csv.currency'), t('csv.converted', { currency: group.baseCurrency }), t('csv.splitType'), t('csv.note')]
     const csvItems = hasIncome
       ? [
-          ...[...expenses].reverse().map(e => ({ e, type: '支出' })),
-          ...[...incomes].reverse().map(e => ({ e, type: '收入' })),
+          ...[...expenses].reverse().map(e => ({ e, type: 'expense' })),
+          ...[...incomes].reverse().map(e => ({ e, type: 'income' })),
         ].sort((a, b) => (a.e.createdAt?.toMillis?.() ?? 0) - (b.e.createdAt?.toMillis?.() ?? 0))
-      : [...expenses].reverse().map(e => ({ e, type: '支出' }))
+      : [...expenses].reverse().map(e => ({ e, type: 'expense' }))
     const rows = csvItems.map(({ e, type }) => {
       const date = e.createdAt?.toDate
-        ? e.createdAt.toDate().toLocaleDateString('zh-TW')
+        ? fmt.shortDate(e.createdAt.toDate())
         : ''
-      const payer = Object.entries((type === '收入' ? e.received : e.payments) || {})
+      const payer = Object.entries((type === 'income' ? e.received : e.payments) || {})
         .map(([uid, amt]) => `${group.memberProfiles?.[uid]?.name || uid}(${amt})`)
         .join('; ')
-      const splitTypes = { equal: '均分', subset: '部分均分', shares: '份數', percentage: '百分比', custom: '自訂' }
+      const splitTypes = { equal: t('csv.split.equal'), subset: t('csv.split.subset'), shares: t('csv.split.shares'), percentage: t('csv.split.percentage'), custom: t('csv.split.custom') }
       const splitType = splitTypes[e.splitType] || e.splitType || ''
       return [
-        ...(hasIncome ? [type] : []),
+        ...(hasIncome ? [type === 'income' ? t('csv.typeIncome') : t('csv.typeExpense')] : []),
         date,
         e.title || '',
         e.category ? categoryLabel(e.category, t) : '',
@@ -181,7 +181,7 @@ const GroupPage = () => {
       return `"${(typeof v === 'string' && /^[=+\-@\t\r]/.test(s) ? "'" + s : s).replace(/"/g, '""')}"`
     }
     const csv = bom + [header, ...rows].map(r => r.map(escapeCell).join(',')).join('\n')
-    const filename = `${group.name}_${hasIncome ? '收支明細' : '支出明細'}.csv`
+    const filename = `${group.name}_${hasIncome ? t('csv.fileBoth') : t('csv.fileExpense')}.csv`
 
     // LINE 內建瀏覽器無法下載 blob：請雲端函式存檔並回傳短效網址，在外部瀏覽器開啟下載
     if (liffInstance?.isInClient?.() && EXPORT_CSV_URL) {
@@ -197,8 +197,8 @@ const GroupPage = () => {
         const { url } = await res.json()
         liffInstance.openWindow({ url, external: true })
       } catch (e) {
-        console.error('匯出失敗', e)
-        alert('匯出失敗，請稍後再試')
+        console.error('Export failed', e)
+        alert(t('group.exportFailed'))
       } finally {
         setExporting(false)
       }
@@ -217,15 +217,14 @@ const GroupPage = () => {
   // LINE 使用者認領訪客名字：之後這個名字只有本人能用
   const handleClaim = async (placeholderId) => {
     const name = group.memberProfiles?.[placeholderId]?.name
-    if (!window.confirm(`確定你就是「${name}」嗎？
-認領後，這個名字底下的帳目都會算在你的 LINE 帳號，其他人就不能再選這個名字。`)) return
+    if (!window.confirm(t('group.claimConfirm', { name }))) return
     setJoining(true)
     setJoinError('')
     try {
       await claimMember(id, placeholderId)
     } catch (error) {
-      console.error('認領失敗', error)
-      setJoinError('認領失敗，可能已被其他人認領，請重新整理後再試')
+      console.error('Claim failed', error)
+      setJoinError(t('group.claimFailed'))
       setJoining(false)
     }
   }
@@ -239,10 +238,10 @@ const GroupPage = () => {
         [`memberProfiles.${user.uid}`]: { name: user.name, avatar: user.avatar ?? null },
       })
     } catch (error) {
-      console.error('加入失敗', error)
+      console.error('Join failed', error)
       setJoinError(error?.code === 'permission-denied'
-        ? '無法加入：群組可能已滿 50 人，或邀請連結已失效'
-        : '加入失敗，請稍後再試')
+        ? t('group.joinDenied')
+        : t('group.joinFailed'))
       setJoining(false)
     }
   }
@@ -250,12 +249,12 @@ const GroupPage = () => {
   if (groupMissing) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060', gap: 16, padding: 24, textAlign: 'center' }}>
-        <div>找不到這個群組，可能已被刪除，或連結有誤</div>
+        <div>{t('group.notFound')}</div>
         <button
           onClick={() => navigate('/')}
           style={{ padding: '10px 24px', borderRadius: 12, border: '0.5px solid #f0d5c0', background: '#fff', color: '#3d2b1f', fontSize: 14, cursor: 'pointer' }}
         >
-          回首頁
+          {t('group.backHome')}
         </button>
       </div>
     )
@@ -264,7 +263,7 @@ const GroupPage = () => {
   if (!group) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
-        載入中...
+        {t('common.loading')}
       </div>
     )
   }
@@ -282,12 +281,12 @@ const GroupPage = () => {
               <GroupIcon icon={group.icon} color={group.iconColor} size={72} onDark />
             </div>
             <div style={{ color: '#fff', fontSize: 20, fontWeight: 500, marginBottom: 4 }}>{group.name}</div>
-            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>你被邀請加入這個群組！</div>
+            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>{t('group.invitedBanner')}</div>
           </div>
         </div>
         <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
           <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>目前成員</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('group.currentMembers')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {profiles.slice(0, 3).map((member, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -300,18 +299,18 @@ const GroupPage = () => {
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#f0d5c0', color: '#b08060', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     +{group.members.length - 3}
                   </div>
-                  <div style={{ fontSize: 14, color: '#b08060' }}>位成員</div>
+                  <div style={{ fontSize: 14, color: '#b08060' }}>{t('group.memberUnit')}</div>
                 </div>
               )}
             </div>
           </div>
           {!user.guest && <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>以此身份加入</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('group.joinAs')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff3ec', borderRadius: 12, padding: '10px 12px' }}>
               <Avatar src={user?.avatar} name={user?.name} size={40} />
               <div>
                 <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{user?.name}</div>
-                <div style={{ fontSize: 12, color: '#b08060', marginTop: 2 }}>LINE 帳號</div>
+                <div style={{ fontSize: 12, color: '#b08060', marginTop: 2 }}>{t('group.lineAccount')}</div>
               </div>
               <Check size={18} color="#FF8C42" strokeWidth={3} style={{ marginLeft: 'auto', flexShrink: 0 }} />
             </div>
@@ -322,8 +321,8 @@ const GroupPage = () => {
           )}
           {!user.guest && placeholders.length > 0 && (
             <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 4 }}>或者，你是下面其中一位嗎？</div>
-              <div style={{ fontSize: 11, color: '#c4a882', marginBottom: 10 }}>群組已經幫你記了帳，認領後就能接手這個名字</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 4 }}>{t('group.claimTitle')}</div>
+              <div style={{ fontSize: 11, color: '#c4a882', marginBottom: 10 }}>{t('group.claimHint')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {placeholders.map(pid => (
                   <button
@@ -334,7 +333,7 @@ const GroupPage = () => {
                   >
                     <Avatar src={null} name={group.memberProfiles[pid].name} size={36} />
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{group.memberProfiles[pid].name}</span>
-                    <span style={{ fontSize: 12, color: '#FF8C42' }}>我是他</span>
+                    <span style={{ fontSize: 12, color: '#FF8C42' }}>{t('group.claimButton')}</span>
                   </button>
                 ))}
               </div>
@@ -353,13 +352,13 @@ const GroupPage = () => {
               background: joining ? '#e0c4b0' : '#FF8C42', color: '#fff',
             }}
           >
-            {joining ? '處理中...' : placeholders.length > 0 ? `以新成員加入「${group.name}」` : `加入「${group.name}」`}
+            {joining ? t('common.processing') : placeholders.length > 0 ? t('group.joinAsNew', { group: group.name }) : t('group.join', { group: group.name })}
           </button>}
           <button
             onClick={() => navigate('/')}
             style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', color: '#b08060', fontSize: 14, cursor: 'pointer' }}
           >
-            取消
+            {t('common.cancel')}
           </button>
         </div>
       </div>
@@ -382,14 +381,14 @@ const GroupPage = () => {
             background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
           }}>
             {[
-              { label: '邀請成員', Icon: UserPlus, onClick: () => { setSettingsPos(null); setInviteOpen(true) } },
+              { label: t('group.menu.invite'), Icon: UserPlus, onClick: () => { setSettingsPos(null); setInviteOpen(true) } },
               {
-                label: exporting ? '匯出中...' : '匯出 CSV', Icon: Download, disabled: expenses.length + incomes.length === 0 || exporting,
+                label: exporting ? t('group.menu.exporting') : t('group.menu.export'), Icon: Download, disabled: expenses.length + incomes.length === 0 || exporting,
                 onClick: async () => { await handleExportCSV(); setSettingsPos(null) },
               },
-              { label: '編輯群組', Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
+              { label: t('group.menu.edit'), Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
               {
-                label: '官方帳號', Icon: MessageCircle,
+                label: t('group.menu.official'), Icon: MessageCircle,
                 // 直接導向（同首頁的 <a href>）；liff.openWindow 在三星雙開 LINE 的副本會被導回主 LINE
                 onClick: () => { window.location.href = OFFICIAL_ACCOUNT_URL },
               },
@@ -450,7 +449,7 @@ const GroupPage = () => {
               const r = e.currentTarget.getBoundingClientRect()
               setSettingsPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
             }}
-            aria-label="設定"
+            aria-label={t('group.settings')}
             style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
           >
             <Settings size={20} />
@@ -475,7 +474,7 @@ const GroupPage = () => {
             </div>
           )}
           <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginLeft: 8 }}>
-            {group.members?.length} 位成員
+            {t('group.memberCount', { n: group.members?.length })}
           </span>
         </div>
 
@@ -487,16 +486,16 @@ const GroupPage = () => {
           onTouchEnd={e => e.currentTarget.style.opacity = '1'}
         >
           <div style={{ flex: 1 }}>
-            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>總支出</div>
+            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>{t('group.totalExpense')}</div>
             <div style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>
-              {getCurrency(group.baseCurrency).symbol} {total.toLocaleString()}
+              {getCurrency(group.baseCurrency).symbol} {fmt.num(total)}
             </div>
             <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4 }}>
-              共 {expenses.length} 筆消費
+              {t('group.expenseCount', { n: expenses.length })}
             </div>
             {incomes.length > 0 && (
               <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 }}>
-                收入 {getCurrency(group.baseCurrency).symbol} {incomeTotal.toLocaleString()} · 淨支出 {getCurrency(group.baseCurrency).symbol} {(total - incomeTotal).toLocaleString()}
+                {t('group.incomeNet', { income: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(incomeTotal)}`, net: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(total - incomeTotal)}` })}
               </div>
             )}
           </div>
@@ -513,7 +512,7 @@ const GroupPage = () => {
               autoFocus
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
-              placeholder="搜尋標題、備註、類別、付款人、金額"
+              placeholder={t('group.searchPlaceholder')}
               style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'none', fontSize: 14, color: '#3d2b1f' }}
             />
             <button
@@ -525,14 +524,14 @@ const GroupPage = () => {
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060' }}>消費明細</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060' }}>{t('group.listTitle')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               {activeCategory && (
                 <button
                   onClick={() => setActiveCategory(null)}
                   style={{ fontSize: 11, color: '#FF8C42', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
                 >
-                  清除篩選 <X size={11} strokeWidth={3} />
+                  {t('group.clearFilter')} <X size={11} strokeWidth={3} />
                 </button>
               )}
               <button
@@ -547,15 +546,15 @@ const GroupPage = () => {
 
         {/* 類別篩選 chips */}
         {!loading && expenses.length > 0 && (() => {
-          const cats = ['全部', ...Array.from(new Set(expenses.map(e => normalizeCategory(e.category))))]
+          const cats = [null, ...Array.from(new Set(expenses.map(e => normalizeCategory(e.category))))]
           return (
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
               {cats.map(cat => {
-                const isActive = cat === '全部' ? activeCategory === null : activeCategory === cat
+                const isActive = activeCategory === cat
                 return (
                   <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat === '全部' ? null : cat)}
+                    key={cat ?? 'all'}
+                    onClick={() => setActiveCategory(cat)}
                     style={{
                       flexShrink: 0, padding: '5px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
                       background: isActive ? '#FF8C42' : '#fff3ec',
@@ -563,7 +562,7 @@ const GroupPage = () => {
                       fontWeight: isActive ? 500 : 400,
                     }}
                   >
-                    {cat === '全部' ? cat : categoryLabel(cat, t)}
+                    {cat === null ? t('group.filterAll') : categoryLabel(cat, t)}
                   </button>
                 )
               })}
@@ -575,14 +574,14 @@ const GroupPage = () => {
       {/* 支出列表 */}
       <div style={{ padding: '0 16px 80px', flex: 1 }}>
         {loading && (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>載入中...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>{t('common.loading')}</div>
         )}
 
         {!loading && expenses.length === 0 && settlements.length === 0 && incomes.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Receipt size={48} color="#e0c4b0" /></div>
-            <div style={{ color: '#b08060', fontSize: 14, marginBottom: 4 }}>還沒有任何支出</div>
-            <div style={{ color: '#c4a882', fontSize: 13 }}>點上方新增第一筆吧！</div>
+            <div style={{ color: '#b08060', fontSize: 14, marginBottom: 4 }}>{t('group.emptyTitle')}</div>
+            <div style={{ color: '#c4a882', fontSize: 13 }}>{t('group.emptyHint')}</div>
           </div>
         )}
 
@@ -596,7 +595,7 @@ const GroupPage = () => {
           if ((activeCategory || isSearching) && filteredExpenses.length === 0) return (
             <div style={{ textAlign: 'center', padding: '48px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Search size={40} color="#e0c4b0" /></div>
-              <div style={{ color: '#b08060', fontSize: 14 }}>{isSearching ? '找不到符合的支出' : '此類別沒有支出'}</div>
+              <div style={{ color: '#b08060', fontSize: 14 }}>{isSearching ? t('group.noMatch') : t('group.noCategoryMatch')}</div>
             </div>
           )
 
@@ -622,8 +621,8 @@ const GroupPage = () => {
           if (allItems.length === 0) return null
 
           const toDateLabel = (item) => item.createdAt?.toDate
-            ? item.createdAt.toDate().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })
-            : '未知日期'
+            ? fmt.date(item.createdAt.toDate())
+            : t('group.unknownDate')
 
           const groups = []
           let currentDate = null
@@ -657,7 +656,7 @@ const GroupPage = () => {
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', fontSize: 13, fontWeight: 500, color: '#2e7d32', marginBottom: 2 }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</span>
-                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;轉給</span>
+                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;{t('group.transferTo')}</span>
                               </div>
                               <div style={{ display: 'flex', fontSize: 13, fontWeight: 500, color: '#2e7d32' }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
@@ -670,7 +669,7 @@ const GroupPage = () => {
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
                               <div style={{ fontSize: 15, fontWeight: 500, color: '#2e7d32' }}>
-                                {getCurrency(item.currency || group.baseCurrency).symbol} {item.amount.toLocaleString()}
+                                {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.amount)}
                               </div>
                             </div>
                             <ChevronRight size={16} color="#66bb6a" style={{ flexShrink: 0 }} />
@@ -698,18 +697,18 @@ const GroupPage = () => {
                               </div>
                               <div style={{ fontSize: 12, color: '#b08060', display: 'flex' }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {payerLabel(item.received, group.memberProfiles)}
+                                  {payerLabel(item.received, group.memberProfiles, t)}
                                 </span>
-                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;收款{expenseTimeStr(item) && ` · ${expenseTimeStr(item)}`}</span>
+                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;{t('group.receivedSuffix')}{expenseTimeStr(item) && ` · ${expenseTimeStr(item)}`}</span>
                               </div>
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
                               <div style={{ fontSize: 15, fontWeight: 500, color: '#1976d2' }}>
-                                {getCurrency(item.currency || group.baseCurrency).symbol} {(item.originalAmount ?? item.amount).toLocaleString()}
+                                {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
                               </div>
                               {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
                                 <div style={{ fontSize: 11, color: '#c4a882', marginTop: 1 }}>
-                                  ≈ {getCurrency(group.baseCurrency).symbol} {item.amount.toLocaleString()}
+                                  ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(item.amount)}
                                 </div>
                               )}
                             </div>
@@ -738,18 +737,18 @@ const GroupPage = () => {
                               </div>
                               <div style={{ fontSize: 12, color: '#b08060', display: 'flex' }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {payerLabel(item.payments, group.memberProfiles)}
+                                  {payerLabel(item.payments, group.memberProfiles, t)}
                                 </span>
-                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;付款{expenseTimeStr(item) && ` · ${expenseTimeStr(item)}`}</span>
+                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;{t('group.paidSuffix')}{expenseTimeStr(item) && ` · ${expenseTimeStr(item)}`}</span>
                               </div>
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
                               <div style={{ fontSize: 15, fontWeight: 500, color: '#FF6B1A' }}>
-                                {getCurrency(item.currency || group.baseCurrency).symbol} {(item.originalAmount ?? item.amount).toLocaleString()}
+                                {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
                               </div>
                               {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
                                 <div style={{ fontSize: 11, color: '#c4a882', marginTop: 1 }}>
-                                  ≈ {getCurrency(group.baseCurrency).symbol} {item.amount.toLocaleString()}
+                                  ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(item.amount)}
                                 </div>
                               )}
                             </div>
@@ -779,14 +778,14 @@ const GroupPage = () => {
                                   onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/group/${id}/expense/${item.id}/edit`) }}
                                   style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: '#3d2b1f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                                 >
-                                  <Pencil size={14} /> 編輯
+                                  <Pencil size={14} /> {t('common.edit')}
                                 </button>
                                 <div style={{ height: '0.5px', background: '#f0d5c0' }} />
                                 <button
                                   onClick={e => { e.stopPropagation(); handleDeleteExpense(item.id) }}
                                   style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: '#e53935', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                                 >
-                                  <Trash2 size={14} /> 刪除
+                                  <Trash2 size={14} /> {t('common.delete')}
                                 </button>
                               </div>
                             </>
@@ -804,8 +803,8 @@ const GroupPage = () => {
 
       {inviteOpen && (
         <InviteModal
-          content={buildShareContent(id, group)}
-          text={`${user?.name} 邀請你加入 貓咪分帳 CatSplit 的分帳群組「${group.name}」！`}
+          content={buildShareContent(id, group, t, lang)}
+          text={t('group.inviteText', { user: user?.name, group: group.name })}
           liff={liffInstance}
           onClose={() => setInviteOpen(false)}
         />
@@ -821,7 +820,7 @@ const GroupPage = () => {
             style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: '20px 20px 0 0', padding: 20, paddingBottom: 28 }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>轉帳明細</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>{t('group.settlementDetail')}</div>
               <button
                 onClick={() => setDetailSettlementId(null)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}
@@ -831,17 +830,17 @@ const GroupPage = () => {
             </div>
 
             <div style={{ textAlign: 'center', fontSize: 26, fontWeight: 500, color: '#2e7d32', marginBottom: 16 }}>
-              {getCurrency(detailSettlement.currency || group.baseCurrency).symbol} {detailSettlement.amount.toLocaleString()}
+              {getCurrency(detailSettlement.currency || group.baseCurrency).symbol} {fmt.num(detailSettlement.amount)}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
               {[
-                ['付款方', group.memberProfiles?.[detailSettlement.from]?.name],
-                ['收款方', group.memberProfiles?.[detailSettlement.to]?.name],
-                ['付款方式', detailSettlement.paymentMethod && paymentMethodLabel(detailSettlement.paymentMethod, t)],
-                ['備註', detailSettlement.note],
-                ['轉帳時間', detailSettlement.createdAt?.toDate?.().toLocaleString('zh-TW')],
-                ['記錄人', group.memberProfiles?.[detailSettlement.settledBy]?.name],
+                [t('group.detail.from'), group.memberProfiles?.[detailSettlement.from]?.name],
+                [t('group.detail.to'), group.memberProfiles?.[detailSettlement.to]?.name],
+                [t('group.detail.method'), detailSettlement.paymentMethod && paymentMethodLabel(detailSettlement.paymentMethod, t)],
+                [t('group.detail.note'), detailSettlement.note],
+                [t('group.detail.time'), detailSettlement.createdAt?.toDate && fmt.dateTimeFull(detailSettlement.createdAt.toDate())],
+                [t('group.detail.by'), group.memberProfiles?.[detailSettlement.settledBy]?.name],
               ].filter(([, v]) => v).map(([label, value]) => (
                 <div key={label} style={{ display: 'flex', gap: 12, fontSize: 13 }}>
                   <div style={{ width: 64, flexShrink: 0, color: '#b08060' }}>{label}</div>
@@ -854,7 +853,7 @@ const GroupPage = () => {
               onClick={() => handleDeleteSettlement(detailSettlement.id, group)}
               style={{ width: '100%', padding: '12px 0', borderRadius: 12, border: '1px solid #ffcdd2', background: '#fff', color: '#e57373', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
-              <Trash2 size={14} /> 刪除這筆轉帳
+              <Trash2 size={14} /> {t('group.deleteSettlement')}
             </button>
           </div>
         </div>

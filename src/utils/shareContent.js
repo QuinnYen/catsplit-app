@@ -3,12 +3,15 @@
 const SITE_ORIGIN = 'https://catsplit-app.web.app'
 const FALLBACK_IMAGE = `${SITE_ORIGIN}/apple-touch-icon.png`
 
-export const buildShareContent = (groupId, group) => {
-  const base = `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/s/${groupId}`
+// 預覽卡片的語言由雲端函式依 ?hl= 決定（只認 en），不影響 App 內的 ?lang=
+export const buildShareContent = (groupId, group, t, lang) => {
+  const base = `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/s/${groupId}${lang === 'en' ? '?hl=en' : ''}`
   const hasCover = typeof group.coverUrl === 'string' && group.coverUrl.startsWith('https://')
   return {
     title: group.name,
-    subtitle: '分帳群組',
+    subtitle: t('share.subtitle'),
+    enterLabel: t('share.enter'),
+    addLabel: t('share.add'),
     imageUrl: hasCover ? group.coverUrl : FALLBACK_IMAGE,
     hasCover,
     enterUrl: base,
@@ -18,13 +21,13 @@ export const buildShareContent = (groupId, group) => {
 }
 
 // 純文字版：沒有卡片按鈕的平台用
-export const buildShareText = (c) => `${c.title}（${c.subtitle}）\n進入群組：${c.enterUrl}\n記一筆：${c.addUrl}`
+export const buildShareText = (c) => `${c.title} (${c.subtitle})\n${c.enterLabel}: ${c.enterUrl}\n${c.addLabel}: ${c.addUrl}`
 
 // LINE：Flex 卡片（封面、群組名稱、兩個按鈕）。不另外附連結文字，否則 LINE 會再產生一張重複封面的預覽
 export const buildLineMessages = (c) => [
   {
     type: 'flex',
-    altText: `${c.title}｜${c.subtitle}`,
+    altText: `${c.title} | ${c.subtitle}`,
     contents: {
       type: 'bubble',
       hero: {
@@ -34,7 +37,7 @@ export const buildLineMessages = (c) => [
         aspectRatio: '8:5',
         aspectMode: c.hasCover ? 'cover' : 'fit',
         backgroundColor: '#fff8f4',
-        action: { type: 'uri', label: '進入群組', uri: c.enterUrl },
+        action: { type: 'uri', label: c.enterLabel, uri: c.enterUrl },
       },
       body: {
         type: 'box',
@@ -50,8 +53,8 @@ export const buildLineMessages = (c) => [
         layout: 'vertical',
         spacing: 'sm',
         contents: [
-          { type: 'button', style: 'primary', color: '#FF8C42', height: 'sm', action: { type: 'uri', label: '進入群組', uri: c.enterUrl } },
-          { type: 'button', style: 'secondary', height: 'sm', action: { type: 'uri', label: '記一筆', uri: c.addUrl } },
+          { type: 'button', style: 'primary', color: '#FF8C42', height: 'sm', action: { type: 'uri', label: c.enterLabel, uri: c.enterUrl } },
+          { type: 'button', style: 'secondary', height: 'sm', action: { type: 'uri', label: c.addLabel, uri: c.addUrl } },
         ],
       },
     },

@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, CalendarDays, Clock } from 'lucide-react'
 import { toLocalDateStr } from '../utils/expenseHelpers'
+import { useI18n } from '../i18n/I18nProvider'
 
-const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
+const WEEKDAY_KEYS = ['date.weekday.0', 'date.weekday.1', 'date.weekday.2', 'date.weekday.3', 'date.weekday.4', 'date.weekday.5', 'date.weekday.6']
+const MONTH_KEYS = ['date.month.1', 'date.month.2', 'date.month.3', 'date.month.4', 'date.month.5', 'date.month.6', 'date.month.7', 'date.month.8', 'date.month.9', 'date.month.10', 'date.month.11', 'date.month.12']
 const pad = (n) => String(n).padStart(2, '0')
 
 const segmentStyle = (active) => ({
@@ -18,6 +20,7 @@ const cellStyle = (selected, outlined) => ({
 
 // 日曆：日 → 點標題進月份 → 再點標題進年份，選完逐層返回
 const CalendarPopup = ({ datePart, onPick }) => {
+  const { t } = useI18n()
   const [y0, m0] = datePart.split('-').map(Number)
   const [view, setView] = useState({ y: y0, m: m0 - 1 })
   const [level, setLevel] = useState('day')
@@ -51,12 +54,12 @@ const CalendarPopup = ({ datePart, onPick }) => {
       <>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <button type="button" onClick={() => setView(v => ({ ...v, y: v.y - 1 }))} style={navBtnStyle}><ChevronLeft size={18} color="#b08060" /></button>
-          <button type="button" onClick={() => { setYearPageStart(view.y - 4); setLevel('year') }} style={titleBtnStyle}>{view.y} 年</button>
+          <button type="button" onClick={() => { setYearPageStart(view.y - 4); setLevel('year') }} style={titleBtnStyle}>{t('date.year', { y: view.y })}</button>
           <button type="button" onClick={() => setView(v => ({ ...v, y: v.y + 1 }))} style={navBtnStyle}><ChevronRight size={18} color="#b08060" /></button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
           {Array.from({ length: 12 }, (_, m) => (
-            <button key={m} type="button" onClick={() => { setView(v => ({ ...v, m })); setLevel('day') }} style={{ ...cellStyle(m === view.m, false), padding: '12px 0' }}>{m + 1} 月</button>
+            <button key={m} type="button" onClick={() => { setView(v => ({ ...v, m })); setLevel('day') }} style={{ ...cellStyle(m === view.m, false), padding: '12px 0' }}>{t(MONTH_KEYS[m])}</button>
           ))}
         </div>
       </>
@@ -70,11 +73,11 @@ const CalendarPopup = ({ datePart, onPick }) => {
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <button type="button" onClick={() => moveMonth(-1)} style={navBtnStyle}><ChevronLeft size={18} color="#b08060" /></button>
-        <button type="button" onClick={() => setLevel('month')} style={titleBtnStyle}>{view.y} 年 {view.m + 1} 月 ▾</button>
+        <button type="button" onClick={() => setLevel('month')} style={titleBtnStyle}>{t('date.monthTitle', { y: view.y, month: t(MONTH_KEYS[view.m]) })}</button>
         <button type="button" onClick={() => moveMonth(1)} style={navBtnStyle}><ChevronRight size={18} color="#b08060" /></button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, textAlign: 'center' }}>
-        {WEEKDAYS.map(w => <div key={w} style={{ fontSize: 11, color: '#c4a882', padding: '4px 0' }}>{w}</div>)}
+        {WEEKDAY_KEYS.map(k => <div key={k} style={{ fontSize: 11, color: '#c4a882', padding: '4px 0' }}>{t(k)}</div>)}
         {cells.map((day, i) => {
           if (!day) return <div key={i} />
           const d = `${view.y}-${pad(view.m + 1)}-${pad(day)}`
@@ -90,6 +93,7 @@ const CLOCK_R = 90
 
 // 時鐘：先選小時（12 小時制 + 上午/下午），選完自動切到分鐘，放開手指即套用並關閉
 const ClockPopup = ({ hour, minute, onChange, onDone }) => {
+  const { t } = useI18n()
   const [mode, setMode] = useState('hour')
   const [dragging, setDragging] = useState(false)
   const pm = hour >= 12
@@ -128,8 +132,8 @@ const ClockPopup = ({ hour, minute, onChange, onDone }) => {
         <span style={{ fontSize: 32, color: '#b08060' }}>:</span>
         <button type="button" onClick={() => setMode('minute')} style={bigBtn(mode === 'minute')}>{pad(minute)}</button>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 8 }}>
-          <button type="button" onClick={() => setPeriod(false)} style={periodBtn(!pm)}>上午</button>
-          <button type="button" onClick={() => setPeriod(true)} style={periodBtn(pm)}>下午</button>
+          <button type="button" onClick={() => setPeriod(false)} style={periodBtn(!pm)}>{t('time.am')}</button>
+          <button type="button" onClick={() => setPeriod(true)} style={periodBtn(pm)}>{t('time.pm')}</button>
         </div>
       </div>
       <svg

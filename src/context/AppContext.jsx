@@ -55,7 +55,7 @@ const signInWithLineToken = async (firebaseToken, avatar) => {
     try {
       await requestClaim(lineIdToken, g.groupId, g.memberId, avatar)
     } catch (e) {
-      console.error('綁定訪客名字失敗', g, e)
+      console.error('Failed to bind guest name', g, e)
     }
   }
 }
@@ -118,7 +118,7 @@ export const AppProvider = ({ children }) => {
           const { user: devUser } = auth.currentUser ? { user: auth.currentUser } : await signInAnonymously(auth)
           setUser({
             uid: devUser.uid,
-            name: '開發測試用戶',
+            name: 'Dev Test User',
             avatar: 'https://api.dicebear.com/7.x/adventurer/png?seed=Felix',
           })
           return
@@ -170,7 +170,7 @@ export const AppProvider = ({ children }) => {
                 const data = await res.json()
                 await signInWithLineToken(data.firebaseToken, profile.pictureUrl)
               } else {
-                console.error('verifyLiffToken 失敗', await res.text())
+                console.error('verifyLiffToken failed', await res.text())
               }
             }
             const u = {
@@ -191,7 +191,7 @@ export const AppProvider = ({ children }) => {
             return
           }
         } catch (e) {
-          console.warn('LIFF init 失敗，將改用 OAuth flow', e?.message || e)
+          console.warn('LIFF init failed, falling back to OAuth flow', e?.message || e)
         }
 
         // 2) LIFF 沒拿到使用者（外部瀏覽器或 LIFF init 失敗）→ 從 localStorage 還原 session
@@ -282,7 +282,7 @@ export const AppProvider = ({ children }) => {
     try {
       await loginAsGuest(entry.groupId, entry.memberId)
     } catch (e) {
-      console.error('切換訪客名字失敗', e)
+      console.error('Failed to switch guest name', e)
       writeGuestNames(readGuestNames().filter(g => g.groupId !== groupId))
       setUser(prev => ({ ...prev }))
     }
@@ -335,7 +335,7 @@ export const AppProvider = ({ children }) => {
 // eslint-disable-next-line react-refresh/only-export-components
 export const useApp = () => {
   const context = useContext(AppContext)
-  if (!context) throw new Error('useApp 必須在 AppProvider 內使用')
+  if (!context) throw new Error('useApp must be used inside AppProvider')
   return context
 }
 

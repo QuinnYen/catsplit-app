@@ -11,6 +11,7 @@ export const makeFormat = (lang) => {
     date: (d) => date(d, { year: 'numeric', month: 'long', day: 'numeric' }),
     shortDate,
     time,
+    dateTimeFull: (d) => new Date(d).toLocaleString(locale),
     dateTime: (d) => `${shortDate(d)} ${time(d)}`,
     month: (d) => date(d, { month: 'long' }),
     yearMonth: (d) => date(d, { year: 'numeric', month: 'long' }),

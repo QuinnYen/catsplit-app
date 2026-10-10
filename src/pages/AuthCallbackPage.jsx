@@ -2,12 +2,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useI18n } from '../i18n/I18nProvider'
 import GroupIcon from '../components/GroupIcon'
 
 const AuthCallbackPage = () => {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const { completeOAuthCallback } = useApp()
+  const { t } = useI18n()
   const [exchangeError, setError] = useState(null)
   const ranRef = useRef(false)
 
@@ -15,8 +17,8 @@ const AuthCallbackPage = () => {
   const state = params.get('state')
   const oauthError = params.get('error')
   const paramError = oauthError
-    ? `授權失敗：${oauthError}`
-    : (!code || !state) ? '缺少授權參數' : null
+    ? t('auth.failed', { error: oauthError })
+    : (!code || !state) ? t('auth.missingParams') : null
   const error = paramError || exchangeError
 
   useEffect(() => {
@@ -32,9 +34,9 @@ const AuthCallbackPage = () => {
       })
       .catch((e) => {
         console.error(e)
-        setError(`登入處理失敗：${e.message}`)
+        setError(t('auth.processFailed', { message: e.message }))
       })
-  }, [code, state, paramError, completeOAuthCallback, navigate])
+  }, [code, state, paramError, completeOAuthCallback, navigate, t])
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #fff8f4 0%, #ffe8d6 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -48,11 +50,11 @@ const AuthCallbackPage = () => {
             onClick={() => navigate('/', { replace: true })}
             style={{ background: '#fff', color: '#3d2b1f', border: '0.5px solid #f0d5c0', borderRadius: 12, padding: '10px 24px', fontSize: 14, cursor: 'pointer' }}
           >
-            回首頁
+            {t('group.backHome')}
           </button>
         </>
       ) : (
-        <div style={{ fontSize: 14, color: '#b08060' }}>登入中…</div>
+        <div style={{ fontSize: 14, color: '#b08060' }}>{t('auth.signingIn')}</div>
       )}
     </div>
   )

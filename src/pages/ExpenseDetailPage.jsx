@@ -14,11 +14,11 @@ import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel } from '../i18n/legacy'
 
 const SPLIT_LABEL = {
-  equal: '平均分攤',
-  subset: '部分成員',
-  shares: '按份數',
-  percentage: '按百分比',
-  custom: '自訂金額',
+  equal: 'detail.split.equal',
+  subset: 'detail.split.subset',
+  shares: 'detail.split.shares',
+  percentage: 'detail.split.percentage',
+  custom: 'detail.split.custom',
 }
 
 const ExpenseDetailPage = ({ kind = 'expense' }) => {
@@ -28,7 +28,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
   const payField = isIncome ? 'received' : 'payments'
   const routeSeg = isIncome ? 'income' : 'expense'
   const { user } = useApp()
-  const { t } = useI18n()
+  const { t, fmt } = useI18n()
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expense, setExpense] = useState(null)
@@ -50,7 +50,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
   if (!group || !expense) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
-        載入中...
+        {t('common.loading')}
       </div>
     )
   }
@@ -81,12 +81,12 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
             onClick={() => navigate(`/group/${id}`)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500 }}>{isIncome ? '收入明細' : '支出明細'}</div>
+          <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500 }}>{isIncome ? t('detail.incomeTitle') : t('detail.expenseTitle')}</div>
           <button
             onClick={() => navigate(`/group/${id}/${routeSeg}/${expenseId}/edit`)}
             style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 14px', fontSize: 13, cursor: 'pointer' }}
           >
-            編輯
+            {t('common.edit')}
           </button>
         </div>
       </div>
@@ -108,14 +108,14 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           {/* 金額 */}
           <div style={{ background: '#fff3ec', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <div style={{ fontSize: 11, color: '#b08060' }}>{isIncome ? '收入金額' : '消費金額'}</div>
+              <div style={{ fontSize: 11, color: '#b08060' }}>{isIncome ? t('detail.amountIncome') : t('detail.amountExpense')}</div>
               <div style={{ fontSize: 24, fontWeight: 600, color: '#FF6B1A' }}>
-                {expCurr.symbol} {(expense.originalAmount ?? expense.amount).toLocaleString()}
+                {expCurr.symbol} {fmt.num(expense.originalAmount ?? expense.amount)}
               </div>
             </div>
             {hasFx && (
               <div style={{ textAlign: 'right', fontSize: 11, color: '#c4a882', marginTop: 2 }}>
-                ≈ {baseCurr.symbol} {expense.amount.toLocaleString()}（匯率 {expense.exchangeRate?.toFixed(4)}）
+                ≈ {baseCurr.symbol} {fmt.num(expense.amount)}{t('detail.rate', { rate: expense.exchangeRate?.toFixed(4) })}
               </div>
             )}
           </div>
@@ -123,13 +123,13 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           {/* 付款人 */}
           {payerEntries.length > 1 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 12, color: '#b08060' }}>{isIncome ? '由誰收款' : '由誰付款'}</div>
+              <div style={{ fontSize: 12, color: '#b08060' }}>{isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
               {payerEntries.map(([uid, amt]) => (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar src={group.memberProfiles?.[uid]?.avatar} name={group.memberProfiles?.[uid]?.name} size={28} />
                   <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{group.memberProfiles?.[uid]?.name}</span>
                   <span style={{ fontSize: 14, color: '#FF6B1A', fontWeight: 500 }}>
-                    {expCurr.symbol} {parseFloat((hasFx && expense.exchangeRate ? amt / expense.exchangeRate : amt).toFixed(2)).toLocaleString()}
+                    {expCurr.symbol} {fmt.num(parseFloat((hasFx && expense.exchangeRate ? amt / expense.exchangeRate : amt).toFixed(2)))}
                   </span>
                 </div>
               ))}
@@ -142,10 +142,10 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 size={32}
               />
               <div>
-                <div style={{ fontSize: 12, color: '#b08060' }}>{isIncome ? '由誰收款' : '由誰付款'}</div>
+                <div style={{ fontSize: 12, color: '#b08060' }}>{isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
                 <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>
-                  {payerLabel(expense[payField], group.memberProfiles)}
-                  {!(expense.splits?.[payerEntries[0]?.[0]] > 0) && <span style={{ fontSize: 11, color: '#b08060', fontWeight: 400 }}> （{isIncome ? '不參與分配' : '不參與分攤'}）</span>}
+                  {payerLabel(expense[payField], group.memberProfiles, t)}
+                  {!(expense.splits?.[payerEntries[0]?.[0]] > 0) && <span style={{ fontSize: 11, color: '#b08060', fontWeight: 400 }}> {isIncome ? t('detail.notInIncome') : t('detail.notInSplit')}</span>}
                 </div>
               </div>
             </div>
@@ -155,9 +155,9 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         {/* 分攤明細 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060' }}>{isIncome ? '分配方式' : '分攤方式'}</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060' }}>{isIncome ? t('detail.splitIncome') : t('detail.splitExpense')}</div>
             <div style={{ fontSize: 12, color: '#FF8C42', fontWeight: 500 }}>
-              {SPLIT_LABEL[expense.splitType] || expense.splitType}
+              {SPLIT_LABEL[expense.splitType] ? t(SPLIT_LABEL[expense.splitType]) : expense.splitType}
             </div>
           </div>
 
@@ -173,7 +173,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
 
               let hint = null
               if (expense.splitType === 'shares' && expense.shares?.[uid] != null) {
-                hint = `${expense.shares[uid]} 份 / ${totalShares} 份`
+                hint = t('detail.sharesHint', { n: expense.shares[uid], total: totalShares })
               } else if (expense.splitType === 'percentage') {
                 const pct = expense.amount > 0 ? ((splitAmt / expense.amount) * 100).toFixed(1) : '0'
                 hint = `${pct}%`
@@ -188,11 +188,11 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#FF6B1A' }}>
-                      {expCurr.symbol} {parseFloat(originalSplitAmt.toFixed(2)).toLocaleString()}
+                      {expCurr.symbol} {fmt.num(parseFloat(originalSplitAmt.toFixed(2)))}
                     </div>
                     {hasFx && (
                       <div style={{ fontSize: 11, color: '#c4a882' }}>
-                        ≈ {baseCurr.symbol} {Math.round(splitAmt).toLocaleString()}
+                        ≈ {baseCurr.symbol} {fmt.num(Math.round(splitAmt))}
                       </div>
                     )}
                   </div>
@@ -205,12 +205,12 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         {/* 收據圖片 */}
         {expense.receiptPath && (
           <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>收據照片</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('detail.receipt')}</div>
             {receiptUrl && (
               <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
                 <img
                   src={receiptUrl}
-                  alt="收據"
+                  alt={t('form.receiptAlt')}
                   style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 10, background: '#f5f0eb', display: 'block' }}
                 />
               </a>
@@ -223,14 +223,14 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           <div style={{ background: isPayer ? '#f0faf0' : '#fff3ec', borderRadius: 16, border: `0.5px solid ${isPayer ? '#c8e6c9' : '#f0d5c0'}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 12, color: isPayer ? '#4caf50' : '#b08060', marginBottom: 2 }}>
-                {isIncome ? (isPayer ? '你收款，待分配' : '你分得') : (isPayer ? '你付款，待收回' : '你應付')}
+                {isIncome ? (isPayer ? t('detail.myShare.incomePayer') : t('detail.myShare.incomeOther')) : (isPayer ? t('detail.myShare.expensePayer') : t('detail.myShare.expenseOther'))}
               </div>
               <div style={{ fontSize: 20, fontWeight: 600, color: isPayer ? '#2e7d32' : '#FF6B1A' }}>
-                {expCurr.symbol} {parseFloat(
+                {expCurr.symbol} {fmt.num(parseFloat(
                   hasFx && expense.exchangeRate
                     ? (expense.splits[user.uid] / expense.exchangeRate).toFixed(2)
                     : expense.splits[user.uid].toFixed(2)
-                ).toLocaleString()}
+                ))}
               </div>
             </div>
             <div>{isPayer ? <HandCoins size={32} color="#4caf50" /> : <Banknote size={32} color="#FF6B1A" />}</div>

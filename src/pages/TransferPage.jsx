@@ -22,7 +22,7 @@ const TransferPage = () => {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const { user, liffInstance } = useApp()
-  const { t } = useI18n()
+  const { t, fmt } = useI18n()
   const navigate = useNavigate()
 
   const fromUid = searchParams.get('from')
@@ -102,36 +102,36 @@ const TransferPage = () => {
         try {
           await liffInstance.sendMessages([{
             type: 'flex',
-            altText: `${from} 轉給 ${to} ${symbol}${actualAmount.toLocaleString()}`,
+            altText: t('flex.transferAlt', { from, to, amount: `${symbol}${fmt.num(actualAmount)}` }),
             contents: {
               type: 'bubble',
               size: 'kilo',
               header: {
                 type: 'box', layout: 'vertical', paddingAll: '16px',
                 backgroundColor: '#FF8C42',
-                contents: [{ type: 'text', text: '貓咪分帳 CatSplit 記錄轉帳', color: '#ffffff', size: 'sm', weight: 'bold' }],
+                contents: [{ type: 'text', text: t('flex.transferTitle'), color: '#ffffff', size: 'sm', weight: 'bold' }],
               },
               body: {
                 type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '16px',
                 contents: [
                   { type: 'text', text: `${from} → ${to}`, weight: 'bold', size: 'lg', color: '#3d2b1f', wrap: true },
-                  { type: 'text', text: `${symbol} ${actualAmount.toLocaleString()}`, size: 'xxl', weight: 'bold', color: '#FF6B1A' },
+                  { type: 'text', text: `${symbol} ${fmt.num(actualAmount)}`, size: 'xxl', weight: 'bold', color: '#FF6B1A' },
                   { type: 'separator', margin: 'md' },
-                  { ...row('付款方式', paymentMethodLabel(paymentMethod, t)), margin: 'md' },
-                  ...(note.trim() ? [row('備註', note.trim())] : []),
-                  row('群組', group.name),
+                  { ...row(t('group.detail.method'), paymentMethodLabel(paymentMethod, t)), margin: 'md' },
+                  ...(note.trim() ? [row(t('group.detail.note'), note.trim())] : []),
+                  row(t('flex.group'), group.name),
                 ],
               },
             },
           }])
         } catch (e) {
-          console.warn('liff.sendMessages 失敗', e)
+          console.warn('liff.sendMessages failed', e)
         }
       }
 
       navigate(`/group/${id}/settle`)
     } catch (error) {
-      console.error('記錄轉帳失敗', error)
+      console.error('Failed to record transfer', error)
       setLoading(false)
     }
   }
@@ -139,7 +139,7 @@ const TransferPage = () => {
   if (!group) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
-        載入中...
+        {t('common.loading')}
       </div>
     )
   }
@@ -161,7 +161,7 @@ const TransferPage = () => {
           >
             ‹
           </button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>記錄轉帳</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{t('transfer.title')}</div>
         </div>
       </div>
 
@@ -173,7 +173,7 @@ const TransferPage = () => {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
               <Avatar src={fromProfile?.avatar} name={fromProfile?.name} size={48} />
               <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fromProfile?.name}</div>
-              <div style={{ fontSize: 11, color: '#b08060' }}>付款方</div>
+              <div style={{ fontSize: 11, color: '#b08060' }}>{t('group.detail.from')}</div>
             </div>
 
             <div style={{ fontSize: 22, color: '#FF8C42', flexShrink: 0 }}>→</div>
@@ -181,7 +181,7 @@ const TransferPage = () => {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
               <Avatar src={toProfile?.avatar} name={toProfile?.name} size={48} />
               <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{toProfile?.name}</div>
-              <div style={{ fontSize: 11, color: '#b08060' }}>收款方</div>
+              <div style={{ fontSize: 11, color: '#b08060' }}>{t('group.detail.to')}</div>
             </div>
           </div>
 
@@ -201,7 +201,7 @@ const TransferPage = () => {
                 onClick={() => setCustomAmount(String(suggestedAmount))}
                 style={{ fontSize: 11, color: '#b08060', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
               >
-                建議 {currencyObj.symbol} {suggestedAmount.toLocaleString()}
+                {t('transfer.suggested', { amount: `${currencyObj.symbol} ${fmt.num(suggestedAmount)}` })}
               </button>
             </div>
           )}
@@ -209,7 +209,7 @@ const TransferPage = () => {
 
         {/* 付款方式 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>付款方式</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('group.detail.method')}</div>
           <select
             value={paymentMethod}
             onChange={e => setPaymentMethod(e.target.value)}
@@ -230,7 +230,7 @@ const TransferPage = () => {
 
           {matchedMethods.map(m => (
             <div key={m.id} style={{ marginTop: 12, background: '#fff3ec', borderRadius: 12, border: '0.5px solid #f0d5c0', padding: 14 }}>
-              <PaymentMethodBody method={m} heading={`${toProfile?.name ?? '對方'} 的收款方式`} />
+              <PaymentMethodBody method={m} heading={t('transfer.payeeMethods', { name: toProfile?.name ?? t('transfer.counterparty') })} />
             </div>
           ))}
         </div>
@@ -239,12 +239,12 @@ const TransferPage = () => {
 
         {/* 備註 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>備註（選填）</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>{t('pay.note')}</div>
           <input
             type="text"
             value={note}
             onChange={e => setNote(e.target.value)}
-            placeholder="例如：現金面交、分兩次轉..."
+            placeholder={t('transfer.notePlaceholder')}
             maxLength={30}
             style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
           />
@@ -262,9 +262,9 @@ const TransferPage = () => {
             color: '#fff', transition: 'all 0.15s',
           }}
         >
-          {loading ? '記錄中...' : (
+          {loading ? t('transfer.submitting') : (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircle2 size={16} /> 確認已轉帳
+              <CheckCircle2 size={16} /> {t('transfer.submit')}
             </span>
           )}
         </button>

@@ -6,6 +6,7 @@ import zhTW from './zh-TW.js'
 import en from './en.js'
 import { normalizeLang, pickLanguage, translate } from './core.js'
 import { makeFormat } from './format.js'
+import { scanCjk } from '../../scripts/check-cjk.mjs'
 
 const placeholders = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',')
 
@@ -96,4 +97,8 @@ test('makeFormat：數字與月份', () => {
   assert.equal(makeFormat('zh-TW').date(new Date(2026, 9, 10)), '2026年10月10日')
   assert.equal(makeFormat('zh-TW').shortDate(new Date(2026, 9, 10)), '2026/10/10')
   assert.equal(makeFormat('en').weekdays.length, 7)
+})
+
+test('src 沒有寫死的中文（註解、zh-TW.js、legacy.js、測試檔除外）', () => {
+  assert.deepEqual(scanCjk(['src']), [])
 })

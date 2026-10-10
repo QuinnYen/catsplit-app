@@ -21,7 +21,7 @@ const AddExpensePage = () => {
   const { id } = useParams()
   const { user, liffInstance } = useApp()
   const navigate = useNavigate()
-  const { t } = useI18n()
+  const { t, fmt } = useI18n()
 
   const [kind, setKind] = useState('expense')
   const [group, setGroup] = useState(null)
@@ -216,19 +216,19 @@ const AddExpensePage = () => {
         const receiptPath = await uploadReceipt(docRef.id)
         if (receiptPath) await updateDoc(docRef, { receiptPath })
       } catch (uploadErr) {
-        console.error('收據上傳失敗', uploadErr)
-        alert('支出已儲存，但收據上傳失敗：' + (uploadErr?.code || uploadErr?.message || '未知錯誤'))
+        console.error('Receipt upload failed', uploadErr)
+        alert(t('add.receiptFailed', { reason: uploadErr?.code || uploadErr?.message || t('add.unknownError') }))
       }
 
       if (shareToLine && safeIsInClient()) {
-        const payerName = payerLabel(basePayments, group.memberProfiles, t('common.someone'))
+        const payerName = payerLabel(basePayments, group.memberProfiles, t, t('common.someone'))
         const currencyObj = getCurrency(currency)
         const splitCount = effectiveUids.length
         const perPerson = splitCount > 0 ? Math.round(parseFloat(amount) / splitCount) : 0
         try {
           await liffInstance.sendMessages([{
             type: 'flex',
-            altText: `${payerName} 新增了一筆支出：${title.trim()} ${currencyObj.symbol}${parseFloat(amount).toLocaleString()}`,
+            altText: t('flex.alt', { payer: payerName, title: title.trim(), amount: `${currencyObj.symbol}${fmt.num(parseFloat(amount))}` }),
             contents: {
               type: 'bubble',
               size: 'kilo',
@@ -236,33 +236,33 @@ const AddExpensePage = () => {
                 type: 'box', layout: 'vertical', paddingAll: '16px',
                 backgroundColor: '#FF8C42',
                 contents: [{
-                  type: 'text', text: '貓咪分帳 CatSplit 新增支出', color: '#ffffff', size: 'sm', weight: 'bold',
+                  type: 'text', text: t('flex.title'), color: '#ffffff', size: 'sm', weight: 'bold',
                 }],
               },
               body: {
                 type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '16px',
                 contents: [
                   { type: 'text', text: title.trim(), weight: 'bold', size: 'lg', color: '#3d2b1f', wrap: true },
-                  { type: 'text', text: `${currencyObj.symbol} ${parseFloat(amount).toLocaleString()}`, size: 'xxl', weight: 'bold', color: '#FF6B1A' },
+                  { type: 'text', text: `${currencyObj.symbol} ${fmt.num(parseFloat(amount))}`, size: 'xxl', weight: 'bold', color: '#FF6B1A' },
                   { type: 'separator', margin: 'md' },
                   {
                     type: 'box', layout: 'horizontal', margin: 'md',
                     contents: [
-                      { type: 'text', text: '付款人', size: 'sm', color: '#b08060', flex: 1 },
+                      { type: 'text', text: t('flex.payer'), size: 'sm', color: '#b08060', flex: 1 },
                       { type: 'text', text: payerName, size: 'sm', color: '#3d2b1f', align: 'end' },
                     ],
                   },
                   {
                     type: 'box', layout: 'horizontal',
                     contents: [
-                      { type: 'text', text: '每人分攤', size: 'sm', color: '#b08060', flex: 1 },
-                      { type: 'text', text: `${currencyObj.symbol} ${perPerson.toLocaleString()}`, size: 'sm', color: '#3d2b1f', align: 'end' },
+                      { type: 'text', text: t('flex.perPerson'), size: 'sm', color: '#b08060', flex: 1 },
+                      { type: 'text', text: `${currencyObj.symbol} ${fmt.num(perPerson)}`, size: 'sm', color: '#3d2b1f', align: 'end' },
                     ],
                   },
                   {
                     type: 'box', layout: 'horizontal',
                     contents: [
-                      { type: 'text', text: '群組', size: 'sm', color: '#b08060', flex: 1 },
+                      { type: 'text', text: t('flex.group'), size: 'sm', color: '#b08060', flex: 1 },
                       { type: 'text', text: group.name, size: 'sm', color: '#3d2b1f', align: 'end' },
                     ],
                   },
@@ -271,13 +271,13 @@ const AddExpensePage = () => {
             },
           }])
         } catch (e) {
-          console.warn('liff.sendMessages 失敗', e)
+          console.warn('liff.sendMessages failed', e)
         }
       }
 
       navigate(`/group/${id}`)
     } catch (error) {
-      console.error('新增失敗', error)
+      console.error('Failed to add', error)
       setLoading(false)
     }
   }
@@ -285,7 +285,7 @@ const AddExpensePage = () => {
   if (!group) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
-        載入中...
+        {t('common.loading')}
       </div>
     )
   }
@@ -299,10 +299,10 @@ const AddExpensePage = () => {
             onClick={() => navigate(`/group/${id}`)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{kind === 'income' ? '新增收入' : '新增支出'}</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{kind === 'income' ? t('add.income') : t('add.expense')}</div>
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-          {[['expense', '支出'], ['income', '收入']].map(([k, label]) => (
+          {[['expense', t('kind.expense')], ['income', t('kind.income')]].map(([k, label]) => (
             <button
               key={k}
               onClick={() => switchKind(k)}
@@ -364,9 +364,9 @@ const AddExpensePage = () => {
               background: isValid() && !loading ? '#FF8C42' : '#e0c4b0', color: '#fff',
             }}
           >
-            {loading ? '新增中...' : (
+            {loading ? t('add.submitting') : (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <CheckCircle2 size={16} /> 確認新增
+                <CheckCircle2 size={16} /> {t('add.submit')}
               </span>
             )}
           </button>

@@ -15,10 +15,12 @@ import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchange
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useApp } from '../context/AppContext'
+import { useI18n } from '../i18n/I18nProvider'
 import { categoryForWrite, normalizeCategory, activityForWrite } from '../i18n/legacy'
 
 const EditExpensePage = ({ kind = 'expense' }) => {
   const { user } = useApp()
+  const { t } = useI18n()
   const { id, expenseId } = useParams()
   const navigate = useNavigate()
   const isIncome = kind === 'income'
@@ -222,13 +224,13 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: isIncome ? 'income_updated' : 'expense_updated', title: title.trim(), name: user.name }) } })
       navigate(`/group/${id}`)
     } catch (error) {
-      console.error('儲存失敗', error)
+      console.error('Failed to save', error)
       setLoading(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!window.confirm(`確定要刪除這筆${isIncome ? '收入' : '支出'}嗎？`)) return
+    if (!window.confirm(isIncome ? t('edit.confirmDeleteIncome') : t('group.confirmDeleteExpense'))) return
     setLoading(true)
     try {
       await deleteDoc(doc(db, 'groups', id, col, expenseId))
@@ -236,7 +238,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: isIncome ? 'income_deleted' : 'expense_deleted', title: originalExpense.title, name: user.name }) } })
       navigate(`/group/${id}`)
     } catch (error) {
-      console.error('刪除失敗', error)
+      console.error('Failed to delete', error)
       setLoading(false)
     }
   }
@@ -244,7 +246,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   if (!group || !originalExpense) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
-        載入中...
+        {t('common.loading')}
       </div>
     )
   }
@@ -258,7 +260,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
             onClick={() => navigate(detailPath)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{isIncome ? '編輯收入' : '編輯支出'}</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{isIncome ? t('edit.income') : t('edit.expense')}</div>
         </div>
       </div>
 
@@ -310,9 +312,9 @@ const EditExpensePage = ({ kind = 'expense' }) => {
               background: isValid() && !loading ? '#FF8C42' : '#e0c4b0', color: '#fff',
             }}
           >
-            {loading ? '儲存中...' : (
+            {loading ? t('edit.saving') : (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <CheckCircle2 size={16} /> 儲存變更
+                <CheckCircle2 size={16} /> {t('edit.save')}
               </span>
             )}
           </button>
@@ -327,9 +329,9 @@ const EditExpensePage = ({ kind = 'expense' }) => {
             background: '#fff', color: '#e53935',
           }}
         >
-          {loading ? '處理中...' : (
+          {loading ? t('common.processing') : (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Trash2 size={16} /> {isIncome ? '刪除此筆收入' : '刪除此筆支出'}
+              <Trash2 size={16} /> {isIncome ? t('edit.deleteIncome') : t('edit.deleteExpense')}
             </span>
           )}
         </button>

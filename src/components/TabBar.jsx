@@ -1,12 +1,13 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { House, Users, CirclePlus, Calculator } from 'lucide-react'
+import { useI18n } from '../i18n/I18nProvider'
 
 // 導覽類（首頁、群組）用灰褐色；動作類（新增、結算）用主色，讓主要操作更醒目
 const TAB_ICONS = {
-  '首頁': { Icon: House },
-  '群組': { Icon: Users },
-  '新增支出': { Icon: CirclePlus, action: true },
-  '結算': { Icon: Calculator, action: true },
+  home: { Icon: House, label: 'tab.home' },
+  group: { Icon: Users, label: 'tab.group' },
+  add: { Icon: CirclePlus, label: 'tab.add', action: true },
+  settle: { Icon: Calculator, label: 'tab.settle', action: true },
 }
 
 /**
@@ -17,35 +18,36 @@ const TAB_ICONS = {
  */
 const TabBar = ({ context = 'home', groupId }) => {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const location = useLocation()
 
   const tabs = (() => {
     switch (context) {
       case 'create':
         return [
-          { label: '首頁', path: '/' },
+          { id: 'home', path: '/' },
         ]
       case 'group':
         return [
-          { label: '首頁', path: '/' },
-          { label: '新增支出', path: `/group/${groupId}/add` },
-          { label: '結算', path: `/group/${groupId}/settle` },
+          { id: 'home', path: '/' },
+          { id: 'add', path: `/group/${groupId}/add` },
+          { id: 'settle', path: `/group/${groupId}/settle` },
         ]
       case 'expense':
         return [
-          { label: '首頁', path: '/' },
-          { label: '群組', path: `/group/${groupId}` },
-          { label: '新增支出', path: `/group/${groupId}/add` },
+          { id: 'home', path: '/' },
+          { id: 'group', path: `/group/${groupId}` },
+          { id: 'add', path: `/group/${groupId}/add` },
         ]
       case 'settle':
         return [
-          { label: '首頁', path: '/' },
-          { label: '群組', path: `/group/${groupId}` },
+          { id: 'home', path: '/' },
+          { id: 'group', path: `/group/${groupId}` },
         ]
       case 'transfer':
         return [
-          { label: '首頁', path: '/' },
-          { label: '群組', path: `/group/${groupId}` },
+          { id: 'home', path: '/' },
+          { id: 'group', path: `/group/${groupId}` },
         ]
       default:
         return []
@@ -66,12 +68,12 @@ const TabBar = ({ context = 'home', groupId }) => {
     }}>
       {tabs.map((tab, i) => {
         const isActive = location.pathname === tab.path
-        const { Icon, action } = TAB_ICONS[tab.label]
+        const { Icon, action, label } = TAB_ICONS[tab.id]
         const color = isActive || action ? '#FF6B1A' : '#b08060'
         return (
           <button
             key={i}
-            aria-label={tab.label}
+            aria-label={t(label)}
             onClick={() => !isActive && navigate(tab.path)}
             style={{
               flex: 1,
@@ -88,7 +90,7 @@ const TabBar = ({ context = 'home', groupId }) => {
           >
             {Icon
               ? <Icon size={context === 'group' ? 30 : 26} color={color} strokeWidth={isActive ? 2.4 : 1.8} />
-              : <span style={{ fontSize: 20, fontWeight: 600, color }}>{tab.label}</span>}
+              : <span style={{ fontSize: 20, fontWeight: 600, color }}>{t(label)}</span>}
             {isActive && (
               <span style={{
                 width: 4,

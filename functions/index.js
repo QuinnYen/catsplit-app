@@ -6,6 +6,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
 import { moveKey, swapId, MIGRATION_FIELDS, migrationPatch } from './migrate.js'
+import { normalizeHl, previewText } from './sharePreview.js'
 
 initializeApp()
 
@@ -534,18 +535,20 @@ export const sharePage = onRequest(
     try {
       let html = await loadIndexHtml()
       const group = groupId ? await readGroup(groupId) : null
-      const title = group?.name ? `${group.name}｜貓咪分帳 CatSplit` : '貓咪分帳 CatSplit'
+      const preview = previewText(group?.name, req.query.hl)
+      const title = preview.title
       const image = typeof group?.coverUrl === 'string' && group.coverUrl.startsWith('https://')
         ? group.coverUrl
         : `${SITE_ORIGIN}/apple-touch-icon.png`
       const tags = [
         `<meta property="og:type" content="website" />`,
-        `<meta property="og:site_name" content="貓咪分帳 CatSplit" />`,
+        `<meta property="og:site_name" content="${escapeHtml(preview.site)}" />`,
         `<meta property="og:title" content="${escapeHtml(title)}" />`,
-        `<meta property="og:description" content="分帳群組・點開進入記帳" />`,
+        `<meta property="og:description" content="${escapeHtml(preview.description)}" />`,
         `<meta property="og:image" content="${escapeHtml(image)}" />`,
       ].join('\n    ')
       html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`).replace('</head>', `    ${tags}\n  </head>`)
+      if (normalizeHl(req.query.hl) === 'en') html = html.replace('<html lang="zh-Hant">', '<html lang="en">')
       res.set('Cache-Control', 'public, max-age=0, s-maxage=60')
       res.type('html').send(html)
     } catch (e) {

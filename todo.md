@@ -53,23 +53,23 @@
 現況：約 700 行含中文、分布在約 40 個檔案，全部寫死在 JSX；沒有 i18n 套件、沒有 `Intl`、沒有呼叫 `liff.getLanguage()`。字串最多的檔案：`GroupPage`（93）、`HomePage`（72）、`EditGroupPage`（56）、`ExpenseForm`（46）、`AppContext`（40）、`PaymentMethodsPage`（37）、`TransferPage`（34）。
 
 ### 架構
-- [ ] 自建輕量 `I18nProvider` 與 `t(key, params)`，字典放 `src/i18n/zh-TW.js`、`src/i18n/en.js`。**不加套件**，避免多一個依賴；目前不需要複數規則。
-- [ ] 語言判定順序：使用者手動選擇（localStorage）→ LINE 內 `liff.getLanguage()` → `navigator.language` → 預設 `zh-TW`。首頁設定氣泡加語言切換。
-- [ ] `index.html` 的 `lang`、`<title>` 隨語言更新。
+- [x] 自建輕量 `I18nProvider` 與 `t(key, params)`，字典放 `src/i18n/zh-TW.js`、`src/i18n/en.js`。**不加套件**，避免多一個依賴；目前不需要複數規則。
+- [x] 語言判定順序：使用者手動選擇（localStorage）→ LINE 內 `liff.getLanguage()` → `navigator.language` → 預設 `zh-TW`。首頁設定氣泡加語言切換。
+- [x] `index.html` 的 `lang`、`<title>` 隨語言更新。
 
 ### 資料與顯示拆開（必須向下相容，舊資料不能壞）
-- [ ] **分類**：`src/config/expenseForm.js:1` 的 `DEFAULT_CATEGORIES` 改成代碼（`food`、`transport`…）。讀取時把既有中文標籤對應到代碼；自訂分類維持原字串。`GroupPage`、`StatsPage` 的篩選與統計用代碼比對。
-- [ ] **付款方式**：`settlements.paymentMethod` 現在存中文名稱（`TransferPage.jsx:18`）。改存 `providerId`，舊中文名稱讀取時對應（與 P5 一起做最省事）。
-- [ ] **最新動態**：`lastActivity.text` 現在存整句中文。改存結構化 `{type, title}`，畫面依檢視者語言組句；舊資料以原文顯示。寫入點：`AddExpensePage`、`EditExpensePage`、`GroupPage`、`TransferPage`。
-- [ ] CSV 標題、檔名後綴（`GroupPage`）依語言輸出。
-- [ ] `bankCodes.json` 銀行名稱是台灣銀行，英文版維持原名即可。
+- [x] **分類**：`src/config/expenseForm.js:1` 的 `DEFAULT_CATEGORIES` 改成代碼（`food`、`transport`…）。讀取時把既有中文標籤對應到代碼；自訂分類維持原字串。`GroupPage`、`StatsPage` 的篩選與統計用代碼比對。
+- [x] **付款方式**：`settlements.paymentMethod` 現在存中文名稱（`TransferPage.jsx:18`）。改存 `providerId`，舊中文名稱讀取時對應（與 P5 一起做最省事）。
+- [x] **最新動態**：`lastActivity.text` 現在存整句中文。改存結構化 `{type, title}`，畫面依檢視者語言組句；舊資料以原文顯示。寫入點：`AddExpensePage`、`EditExpensePage`、`GroupPage`、`TransferPage`。
+- [x] CSV 標題、檔名後綴（`GroupPage`）依語言輸出。
+- [x] `bankCodes.json` 銀行名稱是台灣銀行，英文版維持原名即可。
 
 ### 格式與其他固定字串
-- [ ] 日期、時間、金額改用 `Intl`（目前寫死 `toLocaleDateString('zh-TW')`、`toLocaleString()` 沒帶 locale）：`GroupPage`、`expenseHelpers.js`、`AddExpensePage`、`StatsPage` 等。
-- [ ] 幣別名稱（`src/config/currencies.js`）加英文名。
-- [ ] LINE Flex 訊息：`src/utils/shareContent.js`、`AddExpensePage`、`TransferPage` 依**發送者**語言輸出（收到的人可能語言不同，先接受）。
-- [ ] `functions/index.js`：`sharePage` 的 OG 文字、`前成員` 預設名稱。HTTP 錯誤碼本來就是英文，由客戶端對應顯示。`sharePage` 先預設 zh-TW，必要時以 `Accept-Language` 判斷。
-- [ ] `public/terms.html`、`public/privacy.html` 補英文版（或單頁雙語）。
+- [x] 日期、時間、金額改用 `Intl`（目前寫死 `toLocaleDateString('zh-TW')`、`toLocaleString()` 沒帶 locale）：`GroupPage`、`expenseHelpers.js`、`AddExpensePage`、`StatsPage` 等。
+- [x] 幣別名稱（`src/config/currencies.js`）加英文名。
+- [x] LINE Flex 訊息：`src/utils/shareContent.js`、`AddExpensePage`、`TransferPage` 依**發送者**語言輸出（收到的人可能語言不同，先接受）。
+- [x] `functions/index.js`：`sharePage` 的 OG 文字（已完成，依 `?hl=en`）；`前成員` 預設名稱會存進資料庫，維持中文。HTTP 錯誤碼本來就是英文，由客戶端對應顯示。`sharePage` 先預設 zh-TW，必要時以 `Accept-Language` 判斷。
+- [x] `public/terms.html`、`public/privacy.html` 補英文版（或單頁雙語）。
 
 ### 抽字串順序
 `GroupPage` → `HomePage` → `EditGroupPage` → `ExpenseForm` → `AppContext` → 其餘頁面與元件。
@@ -77,6 +77,12 @@
 **驗證**：寫一個 grep 腳本確認 `src/**/*.jsx` 沒有殘留中文；兩種語言逐頁手動走一遍；LINE 內與外部瀏覽器各測一次；用舊資料（中文分類、中文付款方式、舊 `lastActivity`）確認顯示正常。
 
 **風險**：資料拆開要做成「讀取時對應」，不要一次性遷移資料；英文字串較長，注意按鈕與窄欄位溢出（改名那列才剛修過）。
+
+### 上線前人工驗證（尚未做）
+- [ ] 英文介面逐頁走一遍，320／360px 寬度檢查版面溢出（位置清單見 `.omc/plans/p1-i18n.md`）。
+- [ ] 中文介面確認與改動前相同；用舊資料（中文分類、中文付款方式、舊 `lastActivity`）確認顯示正常。
+- [ ] LINE 內與外部瀏覽器各測一次 `?lang=en`、語言切換、分享卡片（`?hl=en`）。
+- [ ] 確認後把 `EN_READY` 改成 `true`（單獨一個 commit，見 `docs/i18n.md`）。
 
 ### 收尾：移除舊資料相容層（必做）
 - [ ] 上線前清掉所有舊測試群組與紀錄（目前沒有正式使用者），確認資料庫已無中文分類、中文付款方式與只有 `text` 的 `lastActivity`。

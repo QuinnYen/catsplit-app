@@ -17,7 +17,7 @@ import { paymentMethodLabel } from '../i18n/legacy'
 const SettlePage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { t } = useI18n()
+  const { t, fmt: i18nFmt } = useI18n()
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState([])
   const [incomes, setIncomes] = useState([])
@@ -93,13 +93,13 @@ const SettlePage = () => {
   if (loading || !group) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
-        計算中...
+        {t('settle.calculating')}
       </div>
     )
   }
 
   const dispCurr = getCurrency(displayCurrency || baseCurrency)
-  const fmt = (amount) => `${dispCurr.symbol} ${Math.round(amount * displayRate).toLocaleString()}`
+  const fmt = (amount) => `${dispCurr.symbol} ${i18nFmt.num(Math.round(amount * displayRate))}`
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
   const totalText = rateLoading ? '...' : fmt(total)
@@ -123,7 +123,7 @@ const SettlePage = () => {
           >
             ‹
           </button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>結算</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{t('settle.title')}</div>
         </div>
       </div>
 
@@ -136,9 +136,9 @@ const SettlePage = () => {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
-                <div style={{ fontSize: 11, color: '#b08060', flexShrink: 0 }}>總支出</div>
+                <div style={{ fontSize: 11, color: '#b08060', flexShrink: 0 }}>{t('group.totalExpense')}</div>
               </div>
-              <div style={{ fontSize: 12, color: '#b08060' }}>{group.members.length} 位成員 · {expenses.length} 筆消費</div>
+              <div style={{ fontSize: 12, color: '#b08060' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
             </div>
           </div>
 
@@ -154,7 +154,7 @@ const SettlePage = () => {
               </select>
               {displayCurrency !== baseCurrency && (
                 <div style={{ fontSize: 11, color: '#c4a882', marginTop: 6, display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-                  <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} /> 以即時匯率換算僅供參考，實際金額以 {getCurrency(baseCurrency).symbol} {baseCurrency} 為準
+                  <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} /> {t('settle.fxNote', { currency: `${getCurrency(baseCurrency).symbol} ${baseCurrency}` })}
                 </div>
               )}
             </div>
@@ -166,7 +166,7 @@ const SettlePage = () => {
 
         {/* 每人明細 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>每人支出明細</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>{t('settle.perPerson')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {group.members.map(uid => {
               const profile = group.memberProfiles?.[uid]
@@ -182,8 +182,8 @@ const SettlePage = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', marginBottom: 2 }}>{profile?.name}</div>
                     <div style={{ fontSize: 11, color: '#b08060' }}>
-                      付了 {fmt(paid)} · 應付 {fmt(shouldPay)}
-                      {(incomeReceived > 0 || incomeShare > 0) && ` · 收款 ${fmt(incomeReceived)} · 分得 ${fmt(incomeShare)}`}
+                      {t('settle.paidOwes', { paid: fmt(paid), owes: fmt(shouldPay) })}
+                      {(incomeReceived > 0 || incomeShare > 0) && t('settle.incomeExtra', { received: fmt(incomeReceived), share: fmt(incomeShare) })}
                     </div>
                   </div>
                   <div style={{
@@ -192,7 +192,7 @@ const SettlePage = () => {
                   }}>
                     {diff > 0.01 ? `+${fmt(diff)}` : diff < -0.01 ? fmt(diff) : (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                        <Check size={13} strokeWidth={3} /> 結清
+                        <Check size={13} strokeWidth={3} /> {t('home.settled')}
                       </span>
                     )}
                   </div>
@@ -204,13 +204,13 @@ const SettlePage = () => {
 
         {/* 轉帳建議 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>轉帳建議</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>{t('settle.suggestions')}</div>
 
           {settlements.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><PartyPopper size={48} color="#FF8C42" /></div>
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', marginBottom: 4 }}>大家都結清了！</div>
-              <div style={{ fontSize: 13, color: '#b08060' }}>不需要任何轉帳</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', marginBottom: 4 }}>{t('settle.allSettled')}</div>
+              <div style={{ fontSize: 13, color: '#b08060' }}>{t('settle.noTransfers')}</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -227,7 +227,7 @@ const SettlePage = () => {
                       <div style={{ fontSize: 13, color: '#3d2b1f', flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</div>
                         <div style={{ display: 'flex', marginTop: 2 }}>
-                          <span style={{ color: '#b08060', flexShrink: 0, whiteSpace: 'nowrap' }}>轉給&nbsp;</span>
+                          <span style={{ color: '#b08060', flexShrink: 0, whiteSpace: 'nowrap' }}>{t('settle.to')}&nbsp;</span>
                           <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
                         </div>
                       </div>
@@ -242,7 +242,7 @@ const SettlePage = () => {
                       )}
                       style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
                     >
-                      去轉帳 →
+                      {t('settle.goTransfer')}
                     </button>
                   </div>
                 )
@@ -254,7 +254,7 @@ const SettlePage = () => {
         {/* 已結清紀錄 */}
         {settledRecords.length > 0 && (
           <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>已結清紀錄</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>{t('settle.history')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {settledRecords.map(s => {
                 const from = group.memberProfiles?.[s.from]
@@ -265,13 +265,13 @@ const SettlePage = () => {
                     <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: '#b08060' }}>
                       <div style={{ color: '#3d2b1f', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</div>
                       <div style={{ display: 'flex', marginTop: 2 }}>
-                        <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>轉給&nbsp;</span>
+                        <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{t('settle.to')}&nbsp;</span>
                         <span style={{ color: '#3d2b1f', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
                         {s.paymentMethod && <span style={{ marginLeft: 4, flexShrink: 0, whiteSpace: 'nowrap' }}>· {paymentMethodLabel(s.paymentMethod, t)}</span>}
                       </div>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#4caf50', flexShrink: 0 }}>
-                      {getCurrency(s.currency || baseCurrency).symbol} {s.amount.toLocaleString()}
+                      {getCurrency(s.currency || baseCurrency).symbol} {i18nFmt.num(s.amount)}
                     </div>
                   </div>
                 )

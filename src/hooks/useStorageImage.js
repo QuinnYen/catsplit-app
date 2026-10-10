@@ -16,7 +16,7 @@ export const useStorageImage = (path) => {
         objectUrl = URL.createObjectURL(blob)
         setLoaded({ path, url: objectUrl })
       })
-      .catch(err => console.error('圖片載入失敗', err))
+      .catch(err => console.error('Failed to load image', err))
     return () => {
       cancelled = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)

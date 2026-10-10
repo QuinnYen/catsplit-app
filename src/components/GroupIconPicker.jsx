@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { GROUP_ICONS, GROUP_COLORS, DEFAULT_GROUP_ICON, DEFAULT_GROUP_COLOR } from '../config/groupIcons'
+import { useI18n } from '../i18n/I18nProvider'
 
 const labelStyle = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 6 }
 
 const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
+  const { t } = useI18n()
   const [open, setOpen] = useState(null) // 'color' | 'icon' | null
   const currentIcon = icon || DEFAULT_GROUP_ICON
   const currentColor = color || DEFAULT_GROUP_COLOR
@@ -31,11 +33,11 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
     <div style={{ position: 'relative', opacity: disabled ? 0.6 : 1 }}>
       <div style={{ display: 'flex', gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={labelStyle}>顏色</div>
+          <div style={labelStyle}>{t('picker.color')}</div>
           {trigger('color', <span style={{ width: 24, height: 24, borderRadius: '50%', background: palette.fg }} />)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={labelStyle}>圖示</div>
+          <div style={labelStyle}>{t('picker.icon')}</div>
           {trigger('icon', <CurrentIcon size={24} color={palette.fg} strokeWidth={2} />)}
         </div>
       </div>

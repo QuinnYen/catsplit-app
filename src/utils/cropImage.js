@@ -22,6 +22,6 @@ export const getCroppedBlob = async (imageSrc, pixelCrop) => {
     0, 0, canvas.width, canvas.height,
   )
   return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('裁切失敗'))), 'image/jpeg', 0.8)
+    canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('Crop failed'))), 'image/jpeg', 0.8)
   })
 }

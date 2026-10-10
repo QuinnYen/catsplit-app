@@ -1,9 +1,9 @@
 export const CURRENCIES = [
-  { code: 'TWD', symbol: 'NT$', label: '台幣' },
-  { code: 'JPY', symbol: '¥',   label: '日圓' },
-  { code: 'USD', symbol: '$',   label: '美元' },
-  { code: 'EUR', symbol: '€',   label: '歐元' },
-  { code: 'CNY', symbol: 'CN¥', label: '人民幣' },
+  { code: 'TWD', symbol: 'NT$', labelKey: 'currency.TWD' },
+  { code: 'JPY', symbol: '¥',   labelKey: 'currency.JPY' },
+  { code: 'USD', symbol: '$',   labelKey: 'currency.USD' },
+  { code: 'EUR', symbol: '€',   labelKey: 'currency.EUR' },
+  { code: 'CNY', symbol: 'CN¥', labelKey: 'currency.CNY' },
 ]
 
 export const getCurrency = (code) =>
@@ -14,9 +14,9 @@ export const getCurrency = (code) =>
 export const fetchExchangeRate = async (from, to) => {
   if (from === to) return 1
   const res = await fetch(`https://open.er-api.com/v6/latest/${from}`)
-  if (!res.ok) throw new Error('匯率抓取失敗')
+  if (!res.ok) throw new Error('Failed to fetch exchange rate')
   const data = await res.json()
   const rate = data.rates?.[to]
-  if (!rate) throw new Error(`找不到匯率：${to}`)
+  if (!rate) throw new Error(`Exchange rate not found: ${to}`)
   return rate
 }

@@ -1,9 +1,11 @@
 // 邀請成員彈窗：QR Code ＋ 各種分享方式。要新增方式（Email、其他平台…）就在 actions 加一筆。
 import { useEffect, useState } from 'react'
 import { X, Copy, Check, MessageCircle, Pin } from 'lucide-react'
+import { useI18n } from '../i18n/I18nProvider'
 import { buildLineMessages } from '../utils/shareContent'
 
 const InviteModal = ({ content, text, liff, onClose }) => {
+  const { t } = useI18n()
   const { enterUrl: url, title } = content
   const [qr, setQr] = useState(null)
   const [copied, setCopied] = useState(false)
@@ -14,7 +16,7 @@ const InviteModal = ({ content, text, liff, onClose }) => {
     import('qrcode')
       .then(({ default: QRCode }) => QRCode.toDataURL(url, { width: 480, margin: 1, color: { dark: '#3d2b1f', light: '#ffffff' } }))
       .then(dataUrl => { if (!cancelled) setQr(dataUrl) })
-      .catch(e => console.warn('QR Code 產生失敗', e))
+      .catch(e => console.warn('QR code generation failed', e))
     return () => { cancelled = true }
   }, [url])
 
@@ -27,13 +29,13 @@ const InviteModal = ({ content, text, liff, onClose }) => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      if (!navigator.share) prompt('請複製這個邀請連結', url)
+      if (!navigator.share) prompt(t('invite.copyPrompt'), url)
     }
     if (!navigator.share) return
     try {
       await navigator.share({ title, text, url })
     } catch (e) {
-      if (e.name !== 'AbortError') console.warn('navigator.share 失敗', e)
+      if (e.name !== 'AbortError') console.warn('navigator.share failed', e)
     }
   }
 
@@ -41,7 +43,7 @@ const InviteModal = ({ content, text, liff, onClose }) => {
     try {
       await liff.shareTargetPicker([{ type: 'text', text: `${text}\n${url}` }])
     } catch (e) {
-      console.warn('shareTargetPicker 失敗', e)
+      console.warn('shareTargetPicker failed', e)
     }
   }
 
@@ -50,14 +52,14 @@ const InviteModal = ({ content, text, liff, onClose }) => {
     try {
       await liff.shareTargetPicker(buildLineMessages(content))
     } catch (e) {
-      console.warn('shareTargetPicker 失敗', e)
+      console.warn('shareTargetPicker failed', e)
     }
   }
 
   const actions = [
-    canLineShare && { key: 'line', label: '[邀請] 分享到 LINE', Icon: MessageCircle, onClick: lineShare },
-    canLineShare && { key: 'entry', label: '[卡片] 貼到群組當公告', Icon: Pin, onClick: entryShare },
-    { key: 'external', label: copied ? '[外部] 已複製連結' : '[外部] 複製連結', Icon: copied ? Check : Copy, onClick: externalShare },
+    canLineShare && { key: 'line', label: t('invite.shareLine'), Icon: MessageCircle, onClick: lineShare },
+    canLineShare && { key: 'entry', label: t('invite.shareEntry'), Icon: Pin, onClick: entryShare },
+    { key: 'external', label: copied ? t('invite.copied') : t('invite.copyLink'), Icon: copied ? Check : Copy, onClick: externalShare },
   ].filter(Boolean)
 
   return (
@@ -70,8 +72,8 @@ const InviteModal = ({ content, text, liff, onClose }) => {
         style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: '20px 20px 0 0', padding: 20, paddingBottom: 28 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>邀請成員</div>
-          <button onClick={onClose} aria-label="關閉" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>{t('invite.title')}</div>
+          <button onClick={onClose} aria-label={t('invite.close')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
             <X size={20} color="#b08060" />
           </button>
         </div>
@@ -79,10 +81,10 @@ const InviteModal = ({ content, text, liff, onClose }) => {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 18 }}>
           <div style={{ width: 200, height: 200, borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             {qr
-              ? <img src={qr} alt="邀請 QR Code" style={{ width: '100%', height: '100%' }} />
-              : <span style={{ fontSize: 12, color: '#b08060' }}>產生中...</span>}
+              ? <img src={qr} alt={t('invite.qrAlt')} style={{ width: '100%', height: '100%' }} />
+              : <span style={{ fontSize: 12, color: '#b08060' }}>{t('invite.generating')}</span>}
           </div>
-          <div style={{ fontSize: 12, color: '#b08060', marginTop: 8 }}>用手機相機或 LINE 掃描即可加入</div>
+          <div style={{ fontSize: 12, color: '#b08060', marginTop: 8 }}>{t('invite.scanHint')}</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

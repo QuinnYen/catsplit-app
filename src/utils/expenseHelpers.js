@@ -1,3 +1,9 @@
+import zhTW from '../i18n/zh-TW.js'
+import { translate } from '../i18n/core.js'
+
+// 預設用中文，讓不傳 t 的呼叫與測試維持原本輸出
+const zhT = (key, params) => translate({ 'zh-TW': zhTW }, 'zh-TW', key, params)
+
 export const toLocalDateStr = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
@@ -45,10 +51,10 @@ export const buildPayments = ({ multiPayer, paidBy, payerAmounts, totalAmount })
 /**
  * 付款人顯示文字：一人顯示名字，多人顯示「A 等 N 人」
  */
-export const payerLabel = (payments, memberProfiles, fallback = '未知') => {
+export const payerLabel = (payments, memberProfiles, t = zhT, fallback) => {
   const uids = Object.keys(payments || {})
-  const name = memberProfiles?.[primaryPayer(payments)]?.name || fallback
-  return uids.length > 1 ? `${name} 等 ${uids.length} 人` : name
+  const name = memberProfiles?.[primaryPayer(payments)]?.name || fallback || t('payer.unknown')
+  return uids.length > 1 ? t('payer.andOthers', { name, n: uids.length }) : name
 }
 
 /**

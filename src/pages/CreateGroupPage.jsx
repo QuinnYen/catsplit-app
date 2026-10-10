@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
+import { useI18n } from '../i18n/I18nProvider'
 import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import Avatar from '../components/Avatar'
@@ -15,6 +16,7 @@ import { DEFAULT_GROUP_ICON, DEFAULT_GROUP_COLOR } from '../config/groupIcons'
 
 const CreateGroupPage = () => {
   const { user } = useApp()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [baseCurrency, setBaseCurrency] = useState('TWD')
@@ -46,7 +48,7 @@ const CreateGroupPage = () => {
       })
       navigate(`/group/${docRef.id}`)
     } catch (error) {
-      console.error('建立失敗', error)
+      console.error('Failed to create group', error)
       setLoading(false)
     }
   }
@@ -64,7 +66,7 @@ const CreateGroupPage = () => {
           >
             ‹
           </button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>建立新群組</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{t('cg.title')}</div>
         </div>
       </div>
 
@@ -73,14 +75,14 @@ const CreateGroupPage = () => {
         {/* 群組名稱 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060' }}>群組名稱</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060' }}>{t('eg.name')}</div>
             <div style={{ fontSize: 11, color: '#c4a882' }}>{name.length} / 20</div>
           </div>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="例如：墾丁之旅、每週聚餐..."
+            placeholder={t('cg.namePlaceholder')}
             maxLength={20}
             style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
           />
@@ -88,22 +90,22 @@ const CreateGroupPage = () => {
 
         {/* 基準貨幣 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>結算基準貨幣</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('cg.baseCurrency')}</div>
           <select
             value={baseCurrency}
             onChange={e => setBaseCurrency(e.target.value)}
             style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
           >
-            {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {c.label}</option>)}
+            {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
           </select>
           <div style={{ fontSize: 11, color: '#c4a882', marginTop: 8 }}>
-            所有支出都會換算成此貨幣進行結算
+            {t('cg.baseCurrencyHint')}
           </div>
         </div>
 
         {/* 群組圖示 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>群組圖示</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('eg.icon')}</div>
           <GroupIconPicker
             icon={icon}
             color={iconColor}
@@ -113,16 +115,16 @@ const CreateGroupPage = () => {
 
         {/* 預覽卡片 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>預覽</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('cg.preview')}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <GroupIcon icon={icon} color={iconColor} size={48} />
             <div>
               <div style={{ fontSize: 14, fontWeight: 500, color: name ? '#3d2b1f' : '#c4a882' }}>
-                {name || '群組名稱'}
+                {name || t('cg.previewName')}
               </div>
               <div style={{ fontSize: 12, color: '#b08060', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Avatar src={user?.avatar} name={user?.name} size={18} />
-                1 位成員・{CURRENCIES.find(c => c.code === baseCurrency)?.symbol} {baseCurrency}
+                {t('cg.previewMeta', { symbol: CURRENCIES.find(c => c.code === baseCurrency)?.symbol, code: baseCurrency })}
               </div>
             </div>
           </div>
@@ -139,7 +141,7 @@ const CreateGroupPage = () => {
               color: '#fff',
             }}
           >
-            {loading ? '建立中...' : '建立群組'}
+            {loading ? t('cg.creating') : t('cg.create')}
           </button>
         </StickyFooter>
       </div>

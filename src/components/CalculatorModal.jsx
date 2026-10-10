@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Delete } from 'lucide-react'
+import { useI18n } from '../i18n/I18nProvider'
 
 const OPS = ['+', '-', '×', '÷']
 
@@ -38,6 +39,7 @@ const evaluate = (expr) => {
 }
 
 const CalculatorModal = ({ initial, onConfirm, onClose }) => {
+  const { t } = useI18n()
   const [expr, setExpr] = useState(initial ? String(initial) : '')
   const result = expr ? evaluate(expr) : null
 
@@ -100,7 +102,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
               cursor: result !== null && result > 0 ? 'pointer' : 'not-allowed',
             }}
           >
-            確定
+            {t('common.confirm')}
           </button>
         </div>
       </div>

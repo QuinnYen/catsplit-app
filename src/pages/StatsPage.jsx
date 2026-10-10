@@ -17,8 +17,10 @@ const TREND_MONTHS = 6
 const cardStyle = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }
 const titleStyle = { fontSize: 13, fontWeight: 500, color: '#b08060', marginBottom: 12 }
 
+const MONTH_KEYS = ['stats.month.1', 'stats.month.2', 'stats.month.3', 'stats.month.4', 'stats.month.5', 'stats.month.6', 'stats.month.7', 'stats.month.8', 'stats.month.9', 'stats.month.10', 'stats.month.11', 'stats.month.12']
+
 const StatsPage = () => {
-  const { t } = useI18n()
+  const { t, fmt: i18nFmt } = useI18n()
   const { id } = useParams()
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
@@ -71,7 +73,7 @@ const StatsPage = () => {
     const months = Array.from({ length: TREND_MONTHS }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (TREND_MONTHS - 1 - i), 1)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      return { key, label: `${d.getMonth() + 1}月`, amount: byMonth[key] || 0 }
+      return { key, label: MONTH_KEYS[d.getMonth()], amount: byMonth[key] || 0 }
     })
 
     return { total, categories, payers, months }
@@ -80,20 +82,20 @@ const StatsPage = () => {
   if (!group || !stats) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
-        載入中...
+        {t('common.loading')}
       </div>
     )
   }
 
   const symbol = getCurrency(group.baseCurrency || 'TWD').symbol
-  const fmt = (n) => `${symbol} ${Math.round(n).toLocaleString()}`
+  const fmt = (n) => `${symbol} ${i18nFmt.num(Math.round(n))}`
   const count = expenses.length
   const incomeTotal = incomes.reduce((s, i) => s + i.amount, 0)
   const incomeCard = incomes.length > 0 && (
     <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
       {[
-        { label: '總收入', value: fmt(incomeTotal) },
-        { label: '淨支出', value: fmt(stats.total - incomeTotal) },
+        { label: t('stats.totalIncome'), value: fmt(incomeTotal) },
+        { label: t('stats.netExpense'), value: fmt(stats.total - incomeTotal) },
       ].map(item => (
         <div key={item.label}>
           <div style={{ fontSize: 11, color: '#b08060', marginBottom: 4 }}>{item.label}</div>
@@ -125,7 +127,7 @@ const StatsPage = () => {
             onClick={() => navigate(`/group/${id}`)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500 }}>圖表與統計</div>
+          <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500 }}>{t('stats.title')}</div>
         </div>
       </div>
 
@@ -135,7 +137,7 @@ const StatsPage = () => {
           <>
             <div style={{ textAlign: 'center', padding: '48px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><BarChart3 size={48} color="#e0c4b0" /></div>
-              <div style={{ color: '#b08060', fontSize: 14 }}>還沒有支出可以統計</div>
+              <div style={{ color: '#b08060', fontSize: 14 }}>{t('stats.empty')}</div>
             </div>
             {incomeCard}
           </>
@@ -144,9 +146,9 @@ const StatsPage = () => {
             {/* 總覽 */}
             <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
               {[
-                { label: '總支出', value: fmt(stats.total) },
-                { label: '筆數', value: count },
-                { label: '平均每筆', value: fmt(stats.total / count) },
+                { label: t('group.totalExpense'), value: fmt(stats.total) },
+                { label: t('stats.count'), value: count },
+                { label: t('stats.avg'), value: fmt(stats.total / count) },
               ].map(item => (
                 <div key={item.label}>
                   <div style={{ fontSize: 11, color: '#b08060', marginBottom: 4 }}>{item.label}</div>
@@ -159,7 +161,7 @@ const StatsPage = () => {
 
             {/* 類別佔比 */}
             <div style={cardStyle}>
-              <div style={titleStyle}>類別佔比</div>
+              <div style={titleStyle}>{t('stats.byCategory')}</div>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
                 <svg width="160" height="160" viewBox="0 0 42 42" style={{ transform: 'rotate(-90deg)' }}>
                   <circle cx="21" cy="21" r="15.915" fill="none" stroke="#fff3ec" strokeWidth="6" />
@@ -188,12 +190,12 @@ const StatsPage = () => {
 
             {/* 每月趨勢 */}
             <div style={cardStyle}>
-              <div style={titleStyle}>近 {TREND_MONTHS} 個月趨勢</div>
+              <div style={titleStyle}>{t('stats.trend', { n: TREND_MONTHS })}</div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
                 {stats.months.map(m => (
                   <div key={m.key} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', minWidth: 0 }}>
                     <div style={{ fontSize: 10, color: '#b08060', marginBottom: 4, whiteSpace: 'nowrap' }}>
-                      {m.amount > 0 ? Math.round(m.amount).toLocaleString() : ''}
+                      {m.amount > 0 ? i18nFmt.num(Math.round(m.amount)) : ''}
                     </div>
                     <div style={{ width: '100%', maxWidth: 32, height: `${(m.amount / maxMonth) * 100}%`, minHeight: m.amount > 0 ? 3 : 0, background: '#FF8C42', borderRadius: '6px 6px 0 0' }} />
                   </div>
@@ -201,14 +203,14 @@ const StatsPage = () => {
               </div>
               <div style={{ display: 'flex', gap: 8, borderTop: '0.5px solid #f0d5c0', paddingTop: 6, marginTop: 0 }}>
                 {stats.months.map(m => (
-                  <div key={m.key} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#b08060' }}>{m.label}</div>
+                  <div key={m.key} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#b08060' }}>{t(m.label)}</div>
                 ))}
               </div>
             </div>
 
             {/* 每人付款 */}
             <div style={cardStyle}>
-              <div style={titleStyle}>每人付款總額</div>
+              <div style={titleStyle}>{t('stats.byPayer')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {stats.payers.map(p => {
                   const profile = group.memberProfiles?.[p.uid]
@@ -217,7 +219,7 @@ const StatsPage = () => {
                       <Avatar src={profile?.avatar} name={profile?.name} size={28} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                          <span style={{ color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.name || '未知'}</span>
+                          <span style={{ color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.name || t('payer.unknown')}</span>
                           <span style={{ color: '#3d2b1f', fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>{fmt(p.amount)}</span>
                         </div>
                         <div style={{ height: 6, background: '#fff3ec', borderRadius: 3 }}>
