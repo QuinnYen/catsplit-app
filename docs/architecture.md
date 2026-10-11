@@ -3,12 +3,12 @@
 ```
 src/
 ├── main.jsx                 # 入口；把 liff.state 換回真正路徑，包上 AppProvider
-├── App.jsx                  # 路由（多數頁面 lazy）、登入畫面、訪客自動切換群組
+├── App.jsx                  # 路由（多數頁面 lazy）、登入畫面、訪客自動切換群組；桌機（≥1024）加側欄
 ├── config/                  # firebase、liff、幣別、記帳表單常數、群組圖示、收款方式清單與銀行代碼表
 ├── context/AppContext.jsx   # 全域 user 狀態、LINE / 訪客登入、認領、訪客名字記錄
-├── hooks/                   # 匯率、Storage 圖片（以登入身分下載）
+├── hooks/                   # 匯率、Storage 圖片（以登入身分下載）、我的群組（useMyGroups）、桌機判斷（useIsDesktop）
 ├── utils/                   # 分帳計算、群組彙總重算、刪除我的資料、Storage 清理、封面裁切
-├── components/              # Avatar、TabBar、ExpenseForm、GuestJoin（訪客入口）、BankPicker、PaymentMethodModal…
+├── components/              # Avatar、TabBar、Sidebar（桌機側欄）、ExpenseForm、GuestJoin（訪客入口）、BankPicker、PaymentMethodModal…
 └── pages/                   # Home、Group、AddExpense、Settle、Transfer、EditGroup、PaymentMethods…
 functions/index.js           # lineLogin、verifyLiffToken、guestLogin、claimMember、detachMember、exportCsv、sharePage
 firestore.rules              # Firestore 存取規則
