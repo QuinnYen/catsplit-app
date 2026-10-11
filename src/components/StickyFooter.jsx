@@ -1,6 +1,6 @@
-// 固定在底部導覽列（TabBar）上方的操作區，捲動時一直可見；50px 是導覽列高度
+// 固定在底部導覽列（TabBar）上方的操作區，捲動時一直可見；導覽列高度讀 index.css 的 --tabbar-h
 const StickyFooter = ({ children }) => (
-  <div style={{ position: 'sticky', bottom: `calc(50px + env(safe-area-inset-bottom, 0px))`, background: '#fff8f4', padding: '8px 0', zIndex: 5 }}>
+  <div style={{ position: 'sticky', bottom: `calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px))`, background: '#fff8f4', padding: '8px 0', zIndex: 5 }}>
     {children}
   </div>
 )

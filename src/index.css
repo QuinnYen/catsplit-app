@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+/*
+ * 網頁版版型（P2）：視窗寬度超過手機時，內容置中、限寬 480px，兩側補底色。
+ * 480px 以下完全不命中新規則，手機（LINE 內）的畫面與以前相同。
+ *
+ * 480 的同步點（改欄寬時要一起改）：
+ *   本檔的 #root、src/components/TabBar.jsx、src/components/CalculatorModal.jsx、
+ *   src/components/InviteModal.jsx、src/pages/GroupPage.jsx（明細面板）、
+ *   src/pages/HomePage.jsx（設定氣泡的 left 算式）
+ * 注意：
+ *   - 不要對 #root 設 overflow、transform、contain、filter，會讓 sticky 失效或改變 fixed 的定位基準。
+ *   - 新增貼齊畫面底部的 fixed 元素時，要加 maxWidth: 480、margin: '0 auto'，否則桌機上會撐滿視窗。
+ *   - media query 不用 range 語法 (width > 480px)，舊版 iOS WKWebView 不支援。
+ */
+:root {
+  /* TabBar 不含啟用圓點、不含 safe-area 的基準高度。實際高度依頁面為 50.5／54.5／56.5，
+     StickyFooter 沿用 50 是既有行為 */
+  --tabbar-h: 50px;
+}
+
+@media (min-width: 481px) {
+  body {
+    background: #f3e4d7;
+  }
+  #root {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: #fff8f4;
+    box-shadow: 0 0 24px rgba(61, 43, 31, 0.08);
+  }
+}

@@ -447,7 +447,7 @@ const GroupPage = () => {
           <button
             onClick={e => {
               const r = e.currentTarget.getBoundingClientRect()
-              setSettingsPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
+              setSettingsPos({ top: r.bottom + 6, right: document.documentElement.clientWidth - r.right })
             }}
             aria-label={t('group.settings')}
             style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}

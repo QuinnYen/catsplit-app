@@ -9,7 +9,7 @@
 |---|---|---|---|
 | P0 | 共用基礎（前置） | [x] | 收斂餘額重算、修已知落差，其他項目的地基（程式已完成，待提交與合併後冒煙測試） |
 | P1 | 多國語言（繁中＋英文） | [x] | 繁中＋英文已上線，`EN_READY` 已開；資料與顯示拆開、舊資料已遷移完成 |
-| P2 | 網頁版版型 | [ ] | 先做置中限寬的外殼，雙欄之後再說 |
+| P2 | 網頁版版型 | [~] | 階段 1 程式已完成（`#root` 限寬 480、兩側底色）；待部署後在 LINE 真機驗證（AC10）。雙欄之後再說 |
 | P3 | 收入（群組收入） | [x] | 退款、預收款、補貼；獨立子集合（程式已提交並部署，待畫面實測） |
 | P4 | 預算（總預算＋分類預算） | [ ] | 建立者設定，記帳時顯示剩餘與超支 |
 | P5 | 更多收款碼 | [ ] | 去耦合、QR 圖片、更多 provider、排序與上限 |
@@ -91,21 +91,22 @@
 
 ## P2 網頁版版型
 
-現況：全站 inline style、沒有 media query、沒有 `max-width`；`TabBar` 是 `fixed; left:0; right:0` 全寬；`StickyFooter` 寫死 50px 的 TabBar 高度；`InviteModal` 與 `GroupPage` 的轉帳詳情面板有 `maxWidth:480` 但沒有置中；`src/App.css` 是沒在用的 Vite 範本殘留。桌機打開時內容會撐滿整個視窗。
+現況：全站 inline style、沒有 media query、沒有 `max-width`；`TabBar` 是 `fixed; left:0; right:0` 全寬；`StickyFooter` 寫死 50px 的 TabBar 高度；`InviteModal` 與 `GroupPage` 的轉帳詳情面板其實已經水平置中（外層 flex、內層 `maxWidth:480`）；`src/App.css` 是沒在用的 Vite 範本殘留。桌機打開時內容會撐滿整個視窗。
 
 ### 階段 1（必做、成本低）
-- [ ] 新增 `AppShell`：寬度超過手機時內容置中、限寬（建議 480～560px），背景補色。
-- [ ] 要能寫 media query：用 Tailwind 4（已安裝，目前只有 `LoadingScreen` 用到）或在 `src/index.css` 寫 class；inline style 做不到。
-- [ ] `TabBar` 的內層限制在同樣寬度；`StickyFooter` 不再寫死 50px。
-- [ ] `InviteModal`、`GroupPage` 詳情面板補水平置中（`CalculatorModal` 已正確，可當範本）。
-- [ ] 統計頁圖表寬度、`HomePage` 空狀態等逐頁檢查。
-- [ ] 刪除未使用的 `src/App.css`（先確認沒有被 import）。
+- [x] 外殼：寬度超過 480px 時內容置中、限寬 480，背景補色。以 `src/index.css` 的 `#root` 規則實作（不新增元件），規則全在 `@media (min-width: 481px)` 內，手機不命中。
+- [x] media query：直接寫在 `src/index.css`。
+- [x] `TabBar` 整條限寬 480（與 `CalculatorModal` 一致；原文寫「內層」，改整條是刻意的）；`StickyFooter` 改讀 `--tabbar-h`（值仍固定 50px，AddExpense 頁既有約 6.5px 的重疊不在本次處理）。
+- [x] `InviteModal`、`GroupPage` 詳情面板：檢查後本來就置中，不需修改。另修：首頁頭像氣泡的 `left`、`GroupPage` 設定選單的 `innerWidth` 在桌機會錯位，已改。
+- [x] 統計頁圖表、首頁、各頁在 1280 目視與量測（無水平捲動）。
+- [x] 刪除未使用的 `src/App.css`。
+- [ ] **部署後 30 分鐘內**在 iOS、Android 的 LINE 內走一遍（首頁開頭像選單、群組開齒輪選單與邀請、新增支出、結算、轉帳），對照改動前的畫面；任何底部導覽列、固定按鈕或選單位置異常就 revert。
 
 ### 階段 2（選做，階段 1 之後再評估）
 - [ ] 桌機雙欄：左側群組列表、右側群組內容；統計頁改寬版版面。
 - [ ] 鍵盤操作與滑鼠 hover 狀態。
 
-**驗證**：瀏覽器寬度 360 / 768 / 1280 三種逐頁檢查；LINE 內不得退步（尤其底部導覽列與固定按鈕）。
+**驗證**：360、430 寬以版面座標（fixed／sticky 元素與 `#root`）前後比對，8 個狀態差異為 0；1280 以斷言量 TabBar、StickyFooter、氣泡、選單、彈窗置中、無水平捲動；480／600／700／768 量 `#root` 寬度。LINE 內不得退步（尤其底部導覽列與固定按鈕）：待部署後真機驗證。
 
 **風險**：全站是 inline style，改動面廣；建議以外殼＋少量 class 為主，不一次改寫所有頁面。
 
