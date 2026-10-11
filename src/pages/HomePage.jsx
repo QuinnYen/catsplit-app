@@ -1,12 +1,11 @@
 // / — 首頁：未登入顯示登入畫面；已登入顯示使用者資訊、消費總覽與我的群組列表，頭像可開啟選單（設定、收款方式、條款、登出）。
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, query, where, orderBy, onSnapshot, getDoc, doc } from 'firebase/firestore'
 import { Settings, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, FileText, ShieldCheck, LogOut, QrCode, MessageCircle } from 'lucide-react'
-import { db } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
+import useMyGroups from '../hooks/useMyGroups'
 import { describeActivity } from '../i18n/codes'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
@@ -43,58 +42,15 @@ const HomePage = () => {
   // 英文版條款與隱私權政策是另一份靜態頁；中文版維持原網址
   const legalHref = (page) => lang === 'en' ? `/${page}.en.html` : `/${page}.html`
   const [{ Icon: GreetingIcon, key: greetingKey }] = useState(getGreeting)
-  const [groups, setGroups] = useState([])
-  const [groupsLoaded, setGroupsLoaded] = useState(false)
+  const { groups, groupsLoaded } = useMyGroups()
   const loading = authLoading || (!!user && !groupsLoaded)
   const [showArchived, setShowArchived] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [openedAt] = useState(Date.now)
 
-  // 訪客：首頁列出這個瀏覽器選過名字的群組（每個群組的「我」是各自的訪客名字 id）
-  const guestKey = user?.guest ? guestNames.map(g => `${g.groupId}:${g.memberId}`).join(',') : ''
   const myIdIn = (group) => user?.guest
     ? guestNames.find(g => g.groupId === group.id)?.memberId
     : user?.uid
-
-  useEffect(() => {
-    if (authLoading || !guestKey) return
-    let cancelled = false
-    const entries = guestKey.split(',').map(e => e.split(':'))
-    Promise.all(entries.map(([gid]) => getDoc(doc(db, 'groups', gid)).catch(() => null)))
-      .then(snaps => {
-        if (cancelled) return
-        // 名字已被認領或移除的群組不顯示
-        const data = snaps
-          .map((snap, i) => snap?.exists() && snap.data().members?.includes(entries[i][1]) ? { id: snap.id, ...snap.data() } : null)
-          .filter(Boolean)
-          .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
-        setGroups(data)
-        setGroupsLoaded(true)
-      })
-    return () => { cancelled = true }
-  }, [guestKey, authLoading])
-
-  useEffect(() => {
-    if (authLoading) return
-    if (!user || user.guest) return
-    const q = query(
-      collection(db, 'groups'),
-      where('members', 'array-contains', user.uid),
-      orderBy('createdAt', 'desc')
-    )
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      setGroups(data)
-      setGroupsLoaded(true)
-    }, (error) => {
-      console.error('Failed to load groups:', error)
-      setGroupsLoaded(true)
-    })
-    return () => unsubscribe()
-  }, [user, authLoading])
 
   const handleLogout = () => {
     if (confirm(user?.guest ? t('home.logoutConfirmGuest') : t('home.logoutConfirm'))) logout()
@@ -163,10 +119,10 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#fff8f4' }}>
+    <div className="min-h-screen flex flex-col cs-wide" style={{ background: '#fff8f4' }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '20px 16px 28px', position: 'relative', overflow: 'hidden' }}>
+      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '20px 16px 28px', position: 'relative', overflow: 'hidden' }}>
 
         {/* 裝飾爪印 */}
         <PawDecor style={{ right: 14, bottom: -8 }} />
@@ -212,7 +168,7 @@ const HomePage = () => {
       </div>
 
       {/* 內容 */}
-      <div style={{ padding: '16px', flex: 1, paddingBottom: 24, display: 'flex', flexDirection: 'column' }}>
+      <div className="cs-body" style={{ padding: '16px', flex: 1, paddingBottom: 24, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>{t('home.myGroups')}</div>
           {!user?.guest && (
@@ -319,7 +275,7 @@ const HomePage = () => {
             <>
               {/* 一般群組 */}
               {activeGroups.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div className="cs-cards" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {activeGroups.map(renderCard)}
                 </div>
               )}
@@ -335,7 +291,7 @@ const HomePage = () => {
                     <span style={{ fontSize: 11, color: '#c4a882', transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s' }}>›</span>
                   </button>
                   {showArchived && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.65 }}>
+                    <div className="cs-cards" style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.65 }}>
                       {archivedGroups.map(renderCard)}
                     </div>
                   )}
@@ -351,7 +307,7 @@ const HomePage = () => {
       {showSettings && (
         <>
           <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
-          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 480px) / 2 + 16px))', zIndex: 101, width: 220, background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
+          <div className="cs-bubble" style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 480px) / 2 + 16px))', zIndex: 101, width: 220, background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
             <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: '#fff', borderTop: '0.5px solid #f0d5c0', borderLeft: '0.5px solid #f0d5c0', transform: 'rotate(45deg)' }} />
             {[
               { Icon: Settings, label: t('group.settings'), onClick: () => navigate('/settings') },

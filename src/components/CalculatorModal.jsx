@@ -67,7 +67,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(61,43,31,0.4)', zIndex: 100 }} />
-      <div style={{
+      <div className="cs-calc" style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 101, maxWidth: 480, margin: '0 auto',
         background: '#fff', borderRadius: '20px 20px 0 0', padding: 16, boxShadow: '0 -4px 20px rgba(255,140,66,0.2)',
       }}>

@@ -92,7 +92,7 @@ const StatsPage = () => {
   const count = expenses.length
   const incomeTotal = incomes.reduce((s, i) => s + i.amount, 0)
   const incomeCard = incomes.length > 0 && (
-    <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+    <div className="cs-span" style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
       {[
         { label: t('stats.totalIncome'), value: fmt(incomeTotal) },
         { label: t('stats.netExpense'), value: fmt(stats.total - incomeTotal) },
@@ -117,10 +117,10 @@ const StatsPage = () => {
   }))
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
+    <div className="cs-wide" style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
+      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
@@ -131,11 +131,11 @@ const StatsPage = () => {
         </div>
       </div>
 
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="cs-body cs-cols" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {count === 0 ? (
           <>
-            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <div className="cs-span" style={{ textAlign: 'center', padding: '48px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><BarChart3 size={48} color="#e0c4b0" /></div>
               <div style={{ color: '#b08060', fontSize: 14 }}>{t('stats.empty')}</div>
             </div>
@@ -144,7 +144,7 @@ const StatsPage = () => {
         ) : (
           <>
             {/* 總覽 */}
-            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+            <div className="cs-span" style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
               {[
                 { label: t('group.totalExpense'), value: fmt(stats.total) },
                 { label: t('stats.count'), value: count },

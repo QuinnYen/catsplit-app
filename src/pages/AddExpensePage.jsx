@@ -292,7 +292,7 @@ const AddExpensePage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
-      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
+      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
@@ -316,7 +316,7 @@ const AddExpensePage = () => {
         </div>
       </div>
 
-      <div
+      <div className="cs-body"
         onFocus={scrollFocusedIntoView}
         style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}
       >

@@ -55,7 +55,7 @@ const TabBar = ({ context = 'home', groupId }) => {
   })()
 
   return (
-    <div style={{
+    <div className="cs-tabbar" style={{
       background: '#fff',
       borderTop: '0.5px solid #f0d5c0',
       display: 'flex',

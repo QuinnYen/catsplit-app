@@ -109,10 +109,10 @@ const SettlePage = () => {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
+    <div className="cs-wide" style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
+      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
@@ -125,10 +125,10 @@ const SettlePage = () => {
         </div>
       </div>
 
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="cs-body cs-cols" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 總覽卡片 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }}>
+        <div className="cs-span" style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <GroupIcon icon={group.icon} color={group.iconColor} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -245,7 +245,7 @@ const SettlePage = () => {
 
         {/* 已結清紀錄 */}
         {settledRecords.length > 0 && (
-          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+          <div className="cs-span" style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>{t('settle.history')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {settledRecords.map(s => {

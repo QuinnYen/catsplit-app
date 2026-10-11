@@ -62,7 +62,7 @@ const SettingsPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
-      <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
+      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => navigate('/')} aria-label={t('pay.back')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}>‹</button>
@@ -70,7 +70,7 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* 頭像與名稱 */}
         <div style={{ ...card, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '24px 14px' }}>
           <Avatar src={user?.avatar} name={user?.name} size={88} style={{ background: '#ffe0c8', border: '3px solid #f0d5c0' }} />

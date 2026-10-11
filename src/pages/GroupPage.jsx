@@ -274,7 +274,7 @@ const GroupPage = () => {
     const placeholders = (group.members || []).filter(m => group.memberProfiles?.[m]?.placeholder)
     return (
       <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 32px', position: 'relative', overflow: 'hidden' }}>
+        <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 32px', position: 'relative', overflow: 'hidden' }}>
           <PawDecor />
           <div style={{ textAlign: 'center', paddingTop: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
@@ -284,7 +284,7 @@ const GroupPage = () => {
             <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>{t('group.invitedBanner')}</div>
           </div>
         </div>
-        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+        <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
           <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('group.currentMembers')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -370,7 +370,7 @@ const GroupPage = () => {
   const detailSettlement = settlements.find(s => s.id === detailSettlementId)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
+    <div className="cs-gp" style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
 
       {/* 設定選單（fixed 避免被 header 的 overflow 裁掉） */}
       {settingsPos && (
@@ -408,7 +408,7 @@ const GroupPage = () => {
       )}
 
       {/* Header */}
-      <div style={{
+      <div className="cs-header cs-gp-side1" style={{
         background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)',
         padding: '16px 16px 24px', position: 'relative', overflow: 'hidden', fontWeight: 700, isolation: 'isolate',
       }}>
@@ -504,7 +504,7 @@ const GroupPage = () => {
       </div>
 
       {/* 操作按鈕 */}
-      <div style={{ padding: '16px 16px 0' }}>
+      <div className="cs-body cs-gp-side2" style={{ padding: '16px 16px 0' }}>
         {searchOpen ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '0.5px solid #f0d5c0', borderRadius: 20, padding: '6px 12px', marginBottom: 8 }}>
             <Search size={14} color="#b08060" style={{ flexShrink: 0 }} />
@@ -572,7 +572,7 @@ const GroupPage = () => {
       </div>
 
       {/* 支出列表 */}
-      <div style={{ padding: '0 16px 80px', flex: 1 }}>
+      <div className="cs-body cs-gp-main" style={{ padding: '0 16px 80px', flex: 1 }}>
         {loading && (
           <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>{t('common.loading')}</div>
         )}
