@@ -1,194 +1,23 @@
-# TODO：下一階段功能路線圖
+# TODO
 
-> 建立日期：2026-10-10。檔案與行號是撰寫當下的位置，動工前請先重新確認。
-> 狀態：`[ ]` 未開始　`[~]` 進行中　`[x]` 完成
+> 更新日期：2026-10-14。只列尚未完成的項目；已完成的功能（P0 共用基礎、P1 多國語言、P2 網頁版置中、P3 收入、P4 預算第一版）見 `README.md` 與 `docs/`。
+> 狀態：`[ ]` 未開始　`[~]` 進行中
 
-## 0. 總覽
+**每項完成時都要做**：`npm run lint`、`npm test`、`npm run build`；更新 `README.md` 功能清單與相關 `docs/`；涉及 rules 或 functions 的，**rules 與前端放在同一個 PR**（CI 推 `main` 就部署，新欄位沒有 rules 會在正式環境被拒絕）；rules 改動要有測試（`npm run test:rules`）並用兩個帳號實測（見 `docs/operations.md`）。
 
-| # | 項目 | 狀態 | 說明 |
-|---|---|---|---|
-| P0 | 共用基礎（前置） | [x] | 收斂餘額重算、修已知落差，其他項目的地基（程式已完成，待提交與合併後冒煙測試） |
-| P1 | 多國語言（繁中＋英文） | [x] | 繁中＋英文已上線，`EN_READY` 已開；資料與顯示拆開、舊資料已遷移完成 |
-| P2 | 網頁版版型 | [~] | 階段 1（手機寬度置中）已上線；**P2-B 置中版型**（>480：header 與背景撐滿、內容 720 置中、單欄，已取代側欄版）已完成並通過量測，只剩部署後的 LINE 真機驗證。計畫 `.omc/plans/p2b-desktop-shell.md`（已簡化） |
-| P3 | 收入（群組收入） | [x] | 退款、預收款、補貼；獨立子集合（程式已提交並部署，待畫面實測） |
-| P4 | 預算（第一版：群組總預算） | [~] | 建立者設定總預算，群組頁進度條、記帳提示、首頁超支徽章；程式已完成，待部署與 LINE 實測。分類、每月、推播列為後續 |
-| P5 | 更多收款碼 | [ ] | 去耦合、QR 圖片、更多 provider、排序與上限 |
-| P6 | 訂閱方式評估 | [ ] | 只評估不實作，輸出決策建議 |
-
-**已確認的決策**
-- 收入 = 群組收入（退款、預收款、補貼），**不做**個人記帳。
-- 預算 = 群組總預算＋分類預算，不做每人預算。
-- 語言 = 繁體中文＋英文，之後再擴充。
-
-**建議順序：P0 → P1 → P2 → P3 → P4 → P5；P6 可隨時平行進行（純文件）。**
-- P0 先收斂三份複製貼上的餘額重算，P3 的收入才不會在編輯／刪除時被漏算。
-- P1 先做，P3、P4 的新畫面一開始就用 `t()` 寫，不必事後再抽字串；分類要先改成代碼，P4 才能穩定比對。
-- P2 放在 P3 之前，新頁面直接長在新外殼裡。
-
-**每項完成時都要做**：`npm run lint`、`npm test`、`npm run build`；更新 `README.md` 功能清單與相關 `docs/`；涉及 rules 或 functions 的，**rules 與前端放在同一個 PR**（CI 推 `main` 就部署，新子集合沒有 rules 會在正式環境被拒絕）；rules 改動要用兩個帳號實測（見 `docs/operations.md`）。
-
----
-
-## P0 共用基礎（前置）
-
-目的：現在餘額維護有兩套做法，新增用 `increment()`，編輯／刪除用完整重算，而且重算寫了三份，`SettlePage` 還自己再寫一份。不先收斂，收入與預算會到處漏算。
-
-- [x] 新增 `src/utils/groupAggregates.js`：`recomputeGroupAggregates(groupId, members, { activity })`（計算拆成純函式 `computeGroupAggregates`，放在 `expenseHelpers.js` 以便測試），讀全部子集合後重算 `totalAmount`、`totalExpenses`、`memberBalances`、`memberExpenseCounts`。取代下列三處：
-  - `src/pages/EditExpensePage.jsx:171`（`recomputeAndSaveBalances`）
-  - `src/pages/GroupPage.jsx:105-115`（刪除支出）
-  - `src/pages/GroupPage.jsx:126-135`（刪除轉帳，目前只重算 `memberBalances`）
-- [x] `src/pages/SettlePage.jsx` 約 44-61 行自己算餘額，改用 `computeMemberBalances`（`src/utils/expenseHelpers.js`）。另外順手修了每人明細（`diff`）轉帳正負號相反的 bug。
-- [x] 修 rules 與客戶端的長度落差：`firestore.rules` 的 `value.size()` 上限由 100 改為 200（App 類儲存前會 parse 成短值，實際落差只有自訂欄位的 101-200 字；`size()` 與 `maxLength` 同以 UTF-16 code unit 計數，已在模擬器實測）。
-- [x] 清理過期文件：`docs/operations.md:71` 的首頁回填敘述、`:54` 的端點清單、`docs/architecture.md:10、13`。
-- [x] 補測試（沿用 `src/utils/expenseHelpers.test.js` 的風格，純函式、不引入 React／Firebase）。
-
-**驗證**：新增、編輯、刪除支出與轉帳後，各人餘額與總額與重構前一致；餘額總和為 0。
-
-**風險**：重算是多筆非交易式寫入，現在就是這樣；本項不改這個行為，只收斂成一處。
-
----
-
-## P1 多國語言（繁中＋英文）
-
-現況：約 700 行含中文、分布在約 40 個檔案，全部寫死在 JSX；沒有 i18n 套件、沒有 `Intl`、沒有呼叫 `liff.getLanguage()`。字串最多的檔案：`GroupPage`（93）、`HomePage`（72）、`EditGroupPage`（56）、`ExpenseForm`（46）、`AppContext`（40）、`PaymentMethodsPage`（37）、`TransferPage`（34）。
-
-### 架構
-- [x] 自建輕量 `I18nProvider` 與 `t(key, params)`，字典放 `src/i18n/zh-TW.js`、`src/i18n/en.js`。**不加套件**，避免多一個依賴；目前不需要複數規則。
-- [x] 語言判定順序：使用者手動選擇（localStorage）→ LINE 內 `liff.getLanguage()` → `navigator.language` → 預設 `zh-TW`。設定頁（頭像選單第一項）提供語言切換。
-- [x] `index.html` 的 `lang`、`<title>` 隨語言更新。
-
-### 資料與顯示拆開（必須向下相容，舊資料不能壞）
-- [x] **分類**：`src/config/expenseForm.js:1` 的 `DEFAULT_CATEGORIES` 改成代碼（`food`、`transport`…）。讀取時把既有中文標籤對應到代碼；自訂分類維持原字串。`GroupPage`、`StatsPage` 的篩選與統計用代碼比對。
-- [x] **付款方式**：`settlements.paymentMethod` 現在存中文名稱（`TransferPage.jsx:18`）。改存 `providerId`，舊中文名稱讀取時對應（與 P5 一起做最省事）。
-- [x] **最新動態**：`lastActivity.text` 現在存整句中文。改存結構化 `{type, title}`，畫面依檢視者語言組句；舊資料以原文顯示。寫入點：`AddExpensePage`、`EditExpensePage`、`GroupPage`、`TransferPage`。
-- [x] CSV 標題、檔名後綴（`GroupPage`）依語言輸出。
-- [x] `bankCodes.json` 銀行名稱是台灣銀行，英文版維持原名即可。
-
-### 格式與其他固定字串
-- [x] 日期、時間、金額改用 `Intl`（目前寫死 `toLocaleDateString('zh-TW')`、`toLocaleString()` 沒帶 locale）：`GroupPage`、`expenseHelpers.js`、`AddExpensePage`、`StatsPage` 等。
-- [x] 幣別名稱（`src/config/currencies.js`）加英文名。
-- [x] LINE Flex 訊息：`src/utils/shareContent.js`、`AddExpensePage`、`TransferPage` 依**發送者**語言輸出（收到的人可能語言不同，先接受）。
-- [x] `functions/index.js`：`sharePage` 的 OG 文字（已完成，依 `?hl=en`）；`前成員` 預設名稱會存進資料庫，維持中文。HTTP 錯誤碼本來就是英文，由客戶端對應顯示。`sharePage` 先預設 zh-TW，必要時以 `Accept-Language` 判斷。
-- [x] `public/terms.html`、`public/privacy.html` 補英文版（或單頁雙語）。
-
-### 抽字串順序
-`GroupPage` → `HomePage` → `EditGroupPage` → `ExpenseForm` → `AppContext` → 其餘頁面與元件。
-
-**驗證**：寫一個 grep 腳本確認 `src/**/*.jsx` 沒有殘留中文；兩種語言逐頁手動走一遍；LINE 內與外部瀏覽器各測一次；用舊資料（中文分類、中文付款方式、舊 `lastActivity`）確認顯示正常。
-
-**風險**：資料拆開要做成「讀取時對應」，不要一次性遷移資料；英文字串較長，注意按鈕與窄欄位溢出（改名那列才剛修過）。
-
-### 上線前人工驗證（已完成）
-- [x] 英文介面逐頁走一遍，320／360px 寬度檢查版面溢出（檢查位置見 `docs/i18n.md`）。
-- [x] 中文介面確認與改動前相同。
-- [x] LINE 內與外部瀏覽器各測一次 `?lang=en`、語言切換、分享卡片（`?hl=en`）。
-- [x] `EN_READY` 已改成 `true`（出問題時改回 `false`，見 `docs/i18n.md`）。
-
-### 收尾：移除舊資料相容層（已完成）
-- [x] 已用一次性腳本把舊資料全部轉成代碼（再次 dry-run 為 0），並刪除 `legacy.js` 的舊對照、`WRITE_CODES` 開關與遷移腳本；代碼與顯示現在集中在 `src/i18n/codes.js`。
-
----
-
-## P2 網頁版版型
-
-現況：全站 inline style、沒有 media query、沒有 `max-width`；`TabBar` 是 `fixed; left:0; right:0` 全寬；`StickyFooter` 寫死 50px 的 TabBar 高度；`InviteModal` 與 `GroupPage` 的轉帳詳情面板其實已經水平置中（外層 flex、內層 `maxWidth:480`）；`src/App.css` 是沒在用的 Vite 範本殘留。桌機打開時內容會撐滿整個視窗。
-
-### 階段 1（必做、成本低）
-- [x] 外殼：寬度超過 480px 時內容置中、限寬 480，背景補色。以 `src/index.css` 的 `#root` 規則實作（不新增元件），規則全在 `@media (min-width: 481px)` 內，手機不命中。
-- [x] media query：直接寫在 `src/index.css`。
-- [x] `TabBar` 整條限寬 480（與 `CalculatorModal` 一致；原文寫「內層」，改整條是刻意的）；`StickyFooter` 改讀 `--tabbar-h`（值仍固定 50px，AddExpense 頁既有約 6.5px 的重疊不在本次處理）。
-- [x] `InviteModal`、`GroupPage` 詳情面板：檢查後本來就置中，不需修改。另修：首頁頭像氣泡的 `left`、`GroupPage` 設定選單的 `innerWidth` 在桌機會錯位，已改。
-- [x] 統計頁圖表、首頁、各頁在 1280 目視與量測（無水平捲動）。
-- [x] 刪除未使用的 `src/App.css`。
-- [ ] **部署後 30 分鐘內**在 iOS、Android 的 LINE 內走一遍（首頁開頭像選單、群組開齒輪選單與邀請、新增支出、結算、轉帳），對照改動前的畫面；任何底部導覽列、固定按鈕或選單位置異常就 revert。
-
-### P2-B：簡化為置中版型（2026-10-14 改；取代側欄版）
-側欄版（`86c2e08`、`9e84301`）過於複雜，已移除側欄、群組頁雙欄、首頁／統計／結算多欄。改為單純置中：寬度 >480 時橘色 header 與背景撐滿視窗、內容（`cs-body`）限寬 720 置中、單欄；TabBar 白底撐滿、按鈕群組置中 480；≤480 完全不變。規則只在 `src/index.css` 的 `@media (min-width: 481px)`。逐頁調整。
-- [x] 移除側欄（`Sidebar.jsx`、`useIsDesktop`）、`cs-gp*`、`cs-cards`／`cs-cols`／`cs-span`、`cs-wide`（`useMyGroups` 保留）。
-- [x] 首頁：頭像、問候、最新動態、群組卡片、封存區、建立群組按鈕都在 720 內容欄置中。
-- [x] 其餘頁共用 `cs-header`／`cs-body` 規則（群組、新增／編輯支出、結算、統計、轉帳、設定、收款方式、編輯群組、明細）；使用者看過整體畫面確認，不單獨調整。
-- [ ] 提交、合併後在 iOS、Android 的 LINE 直式走一遍，並在一台 >480 的 LINE 環境確認。
-
-### 階段 2（選做，P2-B 之後再評估）
-- [x] ~~桌機雙欄：左側群組列表、右側群組內容；統計頁改寬版版面。~~ 取消：側欄版已撤回，只做置中。
-- [ ] 鍵盤操作與滑鼠 hover 狀態。
-
-**驗證**：360、430（手機）以全 DOM 版面座標對 `1e966df` 比對差異為 0；600／768／1024／1280／1920 以 `.omc/tools/p2/assert-c.mjs` 斷言 header 全寬、內容 720 置中、TabBar、StickyFooter、浮層位置、無水平捲動。LINE 內不得退步（尤其底部導覽列與固定按鈕）：待部署後真機驗證。
-
-**風險**：全站是 inline style，改動面廣；建議以外殼＋少量 class 為主，不一次改寫所有頁面。
-
----
-
-## P3 收入（群組收入）
-
-目的：退款、預收款、補貼這類「進到群組的錢」。**不可放進 `expenses`**，否則 `totalAmount`、`StatsPage`、`SettlePage`、`GroupPage` 的總額都會重複計算。
-
-### 資料模型
-`groups/{gid}/incomes/{iid}`：
-```
-title, category, currency, originalAmount, exchangeRate,
-amount          // 基準幣
-received: {uid: amt}   // 誰收到錢（類似 payments）
-splits:   {uid: amt}   // 誰受益（類似 splits）
-createdBy, createdAt, hasTime, addedAt, note?
-```
-群組新增欄位：`totalIncome`、`incomeCount`；`totalAmount` 維持純支出，畫面可另外顯示淨支出。
-
-### 記帳語意
-收入是「反向的支出」：`balance[uid] += splits[uid] - received[uid]`，總和仍為 0。
-範例：飯店退款 1000 由 A 收到、A 與 B 均分 → A −500（A 要把錢交出來）、B +500。
-可重用 `computeSplits`、`applyExchangeRate`、`buildPayments`（`src/utils/expenseHelpers.js`）。
-
-### 要動的地方
-- [x] `expenseHelpers.js`：`computeMemberBalances` 加收入參數；補純函式與測試。
-- [x] P0 的 `recomputeGroupAggregates` 納入 `incomes`。
-- [x] 新增收入頁與編輯頁、路由（`src/App.jsx` 約 100-107 行）；可共用 `ExpenseForm`，加 `kind` 旗標。
-- [x] `GroupPage`：第三個 `onSnapshot`、時間軸加 `_type:'income'`（顏色與支出、轉帳區分）、詳情面板與刪除。
-- [x] `AddExpensePage` 的新增入口：加「支出／收入」選擇。
-- [x] `StatsPage`：收入與支出對照。
-- [x] CSV 匯出加類型欄。
-- [x] `firestore.rules`：新增 `incomes/{id}` 的 `match`（比照 `expenses`，`isMemberOf`）。
-- [x] `functions/index.js` 的 `migrateMember`（約 181 行）加 `incomes`：`received`、`splits`、`shares`、`createdBy`（`detachFromGroup`、`claimMember` 都靠它）。
-- [x] `src/utils/deleteMyData.js` 約 25-26 行與 `src/pages/EditGroupPage.jsx` 約 181-182 行的手動刪除清單加 `incomes`（`deleteGroupCompletely` 用 `recursiveDelete`，不用改）。
-- [x] 文件：`docs/operations.md` 的「分帳計算」補收入規則。
-
-### 測試
-- 收入後餘額總和為 0、退款範例、多幣別換算。
-- `migrateMember` 轉移後帳目一致，可沿用先前的 Firestore 模擬器測法。
-
-**風險**：新增走 `increment()`、編輯與刪除走完整重算，兩條路徑都要處理收入，且結果必須一致；舊群組沒有 `incomes` 要能正常運作。
-
----
-
-## P4 預算（第一版：群組總預算）
-
-計畫：`.omc/plans/p4-budget.md`。第一版只做整個群組的總預算，分類預算、每月、推播移到「後續」。
-
-### 資料模型
-`groups/{gid}.budget = { amount, period: { type: 'trip' } }`，單位為群組 `baseCurrency`；沒有 `budget` 即無預算（不需遷移）。一律以淨額（支出 − 收入）計算，80% 黃、100% 紅，固定不可設定。
-
-### 要動的地方
-- [x] `firestore.rules`：`budget` 只有建立者能改，並驗證結構；新增 `firestore-tests/` 與 `npm run test:rules`。
-- [x] 新增 `src/utils/budget.js`：純函式 `computeBudgetStatus(budget, totals, { delta, replace })`，含單元測試。
-- [x] `EditGroupPage`：預算設定區塊（限建立者）。
-- [x] `GroupPage` 標頭：總預算進度條（用已訂閱的清單加總）。
-- [x] `ExpenseForm` / `AddExpensePage` / `EditExpensePage`：金額下方提示使用率或超支（**不阻擋**儲存；用群組彙總欄位）。
-- [x] `HomePage` 群組卡片：超支徽章。
-- [ ] 部署後在 iOS 與 Android 的 LINE 內實測（先部署 rules，再部署 hosting）。
-
-### 後續（不在第一版）
-- 分類預算：`budget.byCategory`，需要依分類的淨額；rules 的 `hasOnly` 要放寬；自訂分類只能比對文字。
-- 每月：`period.type = 'monthly'`＋月初日；需要本月帳目加總；`StatsPage` 加期間選擇器與預算標記。
-- 跨過 80%／100% 時用 `liff.sendMessages` 提醒（需避免重複提醒）。
-- 開放修改基準幣時，要同步換算或清除 `budget`。
+| # | 項目 | 狀態 |
+|---|---|---|
+| P5 | 更多收款碼 | [ ] |
+| P6 | 訂閱方式評估（只評估不實作） | [ ] |
+| — | 後續與已知小問題 | [ ] |
 
 ---
 
 ## P5 更多收款碼
 
-現況：`PROVIDERS` 只有 4 種（`richart`、`jkopay`、`bank`、`custom`，`src/config/paymentProviders.js`）；每人沒有數量上限、沒有排序、沒有 QR 圖片欄位；`TransferPage.jsx:18` 的 `PAYMENT_METHODS` 寫死，且以顯示名稱比對收款人的方式，`providerId` 其實沒被用到。
+現況：`PROVIDERS` 只有 4 種（`richart`、`jkopay`、`bank`、`custom`，`src/config/paymentProviders.js`）；每人沒有數量上限、沒有排序、沒有 QR 圖片欄位。
 
-- [ ] **去耦合**：`TransferPage` 的選單改由收款人實際擁有的方式產生；比對改用 `providerId`；`settlements` 一併存 `providerId`（舊資料以名稱相容，與 P1 一起做）。
+- [ ] **去耦合**：確認 `TransferPage` 的選單由收款人實際擁有的方式產生、比對用 `providerId`（P1 已改存 `providerId`，動工前先看現況還剩什麼）。
 - [ ] **新增 provider**：
   - [ ] QR 圖片（通用，涵蓋沒有穩定連結的錢包）。
   - [ ] PayPal.me 等連結型。
@@ -245,8 +74,18 @@ createdBy, createdAt, hasTime, addedAt, note?
 
 ---
 
-## 已知小問題（不在上述項目內，順手記錄）
+## 後續與已知小問題
 
+**預算（第一版之後）**
+- 分類預算：`budget.byCategory`，需要依分類的淨額；rules 的 `hasOnly` 要放寬；自訂分類只能比對文字。
+- 每月：`period.type = 'monthly'`＋月初日；需要本月帳目加總；`StatsPage` 加期間選擇器與預算標記。
+- 跨過 80%／100% 時用 `liff.sendMessages` 提醒（需避免重複提醒）。
+- 開放修改基準幣時，要同步換算或清除 `budget`。
+
+**網頁版**
+- [ ] 鍵盤操作與滑鼠 hover 狀態。
+
+**已知小問題**
 - `memberExpenseCounts` 有寫入但 `src/` 找不到讀取者。
 - 建立者「移除成員」是直接移除，被移除者的名字會顯示為「未知」，與「退出」保留訪客名字的行為不一致。
 - 移除成員後 `memberBalances` 仍殘留其 key。

@@ -24,3 +24,14 @@ storage-cors.json            # bucket CORS（需手動套用）
 - **Auth** — LINE LIFF SDK / LINE Login，由 Cloud Functions 換發 Firebase custom token（見[身分與訪客](identity-and-guests.md)）
 - **Backend** — Firebase Cloud Functions（`asia-east1`）
 - **Hosting** — Firebase Hosting
+
+## 網頁版版型
+
+全站是 inline style，桌機置中的規則集中在 `src/index.css` 的單一 `@media (min-width: 481px)`，手機（≤480）不命中，版面完全不變。
+
+- 頁面頂部與主體分別加 `cs-header`、`cs-body`、`cs-tabbar` class；規則用 `!important` 蓋過 inline style。
+- header 與背景撐滿視窗；內容（`cs-body`）最寬 720 置中、單欄；TabBar 白底撐滿，按鈕群組置中 480。
+- 數字要同步的地方：720（`.cs-header`、`.cs-body`、首頁頭像氣泡的 `left`）、480（`.cs-tabbar`、`CalculatorModal`、`InviteModal`、`GroupPage` 詳情面板）。
+- 不要在 `#root` 或 `.cs-body` 加 `overflow`、`transform`、`contain`、`filter`，會破壞 `fixed` 的底部導覽列與浮層。
+- 新頁面照既有頁面加上 `cs-header`／`cs-body` 即可。
+
