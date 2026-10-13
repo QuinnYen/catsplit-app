@@ -1,9 +1,10 @@
 // /group/:id/edit — 群組設定：改名稱、圖示與封面、管理成員，以及退出、封存或刪除群組。
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, getDoc, updateDoc, arrayRemove, arrayUnion, collection, getDocs, writeBatch } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, arrayRemove, arrayUnion, collection, getDocs, writeBatch, deleteField } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage } from '../config/firebase'
+import { getCurrency } from '../config/currencies'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import Avatar from '../components/Avatar'
@@ -35,6 +36,8 @@ const EditGroupPage = () => {
   const [leaving, setLeaving] = useState(false)
   const [placeholderName, setPlaceholderName] = useState('')
   const [addingPlaceholder, setAddingPlaceholder] = useState(false)
+  const [budgetInput, setBudgetInput] = useState('')
+  const [budgetSaving, setBudgetSaving] = useState(false)
 
   useEffect(() => {
     const fetch = async () => {
@@ -43,6 +46,7 @@ const EditGroupPage = () => {
         const data = { id: snap.id, ...snap.data() }
         setGroup(data)
         setName(data.name)
+        setBudgetInput(data.budget?.amount ? String(data.budget.amount) : '')
       }
     }
     fetch()
@@ -55,6 +59,37 @@ const EditGroupPage = () => {
     await updateDoc(doc(db, 'groups', id), { name: trimmed })
     setGroup(prev => ({ ...prev, name: trimmed }))
     setSaving(false)
+  }
+
+  // 群組預算（只有建立者能改，rules 也會擋）；單位為群組基準幣，第一版只有整個群組（trip）
+  const handleSaveBudget = async () => {
+    const amount = parseFloat(budgetInput)
+    if (!(amount > 0) || budgetSaving) return
+    setBudgetSaving(true)
+    try {
+      const budget = { amount, period: { type: 'trip' } }
+      await updateDoc(doc(db, 'groups', id), { budget })
+      setGroup(prev => ({ ...prev, budget }))
+      setBudgetInput(String(amount))
+    } catch (error) {
+      console.error('Failed to save budget', error)
+      alert(t('eg.budgetFailed'))
+    }
+    setBudgetSaving(false)
+  }
+
+  const handleClearBudget = async () => {
+    if (budgetSaving) return
+    setBudgetSaving(true)
+    try {
+      await updateDoc(doc(db, 'groups', id), { budget: deleteField() })
+      setGroup(prev => ({ ...prev, budget: undefined }))
+      setBudgetInput('')
+    } catch (error) {
+      console.error('Failed to clear budget', error)
+      alert(t('eg.budgetFailed'))
+    }
+    setBudgetSaving(false)
   }
 
   const handleChangeIcon = async (patch) => {
@@ -299,6 +334,52 @@ const EditGroupPage = () => {
             </button>
           </div>
         </div>
+
+        {/* 預算（建立者） */}
+        {isCreator && (() => {
+          const budgetNum = parseFloat(budgetInput)
+          const canSaveBudget = !budgetSaving && budgetNum > 0 && budgetNum !== group.budget?.amount
+          return (
+            <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>{t('eg.budget')}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '0 12px', background: '#fff8f4' }}>
+                  <span style={{ fontSize: 14, color: '#b08060', flexShrink: 0 }}>{getCurrency(group.baseCurrency).symbol}</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={budgetInput}
+                    onChange={e => /^\d{0,12}(\.\d{0,2})?$/.test(e.target.value) && setBudgetInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && canSaveBudget && handleSaveBudget()}
+                    placeholder={t('eg.budgetPlaceholder')}
+                    style={{ flex: 1, minWidth: 0, border: 'none', padding: '10px 0', fontSize: 14, color: '#3d2b1f', outline: 'none', background: 'transparent' }}
+                  />
+                </div>
+                <button
+                  onClick={handleSaveBudget}
+                  disabled={!canSaveBudget}
+                  style={{
+                    padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
+                    cursor: canSaveBudget ? 'pointer' : 'not-allowed',
+                    background: canSaveBudget ? '#FF8C42' : '#e0c4b0', color: '#fff',
+                  }}
+                >
+                  {budgetSaving ? t('eg.saving') : t('common.save')}
+                </button>
+                {group.budget && (
+                  <button
+                    onClick={handleClearBudget}
+                    disabled={budgetSaving}
+                    style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #f0d5c0', background: '#fff', color: '#e57373', fontSize: 13, flexShrink: 0, cursor: budgetSaving ? 'not-allowed' : 'pointer' }}
+                  >
+                    {t('eg.budgetClear')}
+                  </button>
+                )}
+              </div>
+              <div style={{ fontSize: 11, color: '#c4a882', marginTop: 8 }}>{t('eg.budgetHint')}</div>
+            </div>
+          )
+        })()}
 
         {/* 群組圖示 */}
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
