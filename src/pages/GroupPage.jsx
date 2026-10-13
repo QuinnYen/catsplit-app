@@ -20,6 +20,7 @@ import { getCurrency } from '../config/currencies'
 import { matchExpense, payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
+import { computeBudgetStatus } from '../utils/budget'
 
 const EXPORT_CSV_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/exportCsv')
 
@@ -140,6 +141,8 @@ const GroupPage = () => {
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
   const incomeTotal = incomes.reduce((sum, i) => sum + i.amount, 0)
+  // 預算用已訂閱的清單加總（與總額卡的淨支出一致），不讀群組彙總欄位
+  const budget = computeBudgetStatus(group?.budget, { totalAmount: total, totalIncome: incomeTotal })
 
   const handleExportCSV = async () => {
     if (exporting) return
@@ -496,6 +499,22 @@ const GroupPage = () => {
             {incomes.length > 0 && (
               <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 }}>
                 {t('group.incomeNet', { income: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(incomeTotal)}`, net: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(total - incomeTotal)}` })}
+              </div>
+            )}
+            {/* 預算進度條：<80% 白、80–99% 黃、≥100% 紅；淨額為負時寬度為 0 */}
+            {budget && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.3)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', borderRadius: 3, width: `${Math.max(0, Math.min(budget.ratio, 1)) * 100}%`, background: { ok: '#fff', warn: '#FFD54F', over: '#FF5252' }[budget.level] }} />
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 4 }}>
+                  {/* 幣別符號與金額之間用不換行空白，避免金額被拆到下一行 */}
+                  {t('group.budgetUsed', { spent: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.spent)}`, budget: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.amount)}` })}
+                  {' · '}
+                  {budget.remaining >= 0
+                    ? t('group.budgetLeft', { amount: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.remaining)}` })
+                    : t('group.budgetOver', { amount: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(-budget.remaining)}` })}
+                </div>
               </div>
             )}
           </div>
