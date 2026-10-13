@@ -184,6 +184,7 @@ export default {
   'home.emptyTitle': '還沒有任何群組',
   'home.emptyHint': '點右上角建立第一個吧！',
   'home.settled': '結清',
+  'home.overBudget': '超支',
   'home.toReceive': '待收款',
   'home.toPay': '待付款',
   'home.archived': '已封存群組（{n}）',

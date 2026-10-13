@@ -11,7 +11,7 @@
 | P1 | 多國語言（繁中＋英文） | [x] | 繁中＋英文已上線，`EN_READY` 已開；資料與顯示拆開、舊資料已遷移完成 |
 | P2 | 網頁版版型 | [~] | 階段 1（手機寬度置中）已上線；**P2-B 置中版型**（>480：header 與背景撐滿、內容 720 置中、單欄，已取代側欄版）已完成並通過量測，只剩部署後的 LINE 真機驗證。計畫 `.omc/plans/p2b-desktop-shell.md`（已簡化） |
 | P3 | 收入（群組收入） | [x] | 退款、預收款、補貼；獨立子集合（程式已提交並部署，待畫面實測） |
-| P4 | 預算（總預算＋分類預算） | [ ] | 建立者設定，記帳時顯示剩餘與超支 |
+| P4 | 預算（第一版：群組總預算） | [~] | 建立者設定總預算，群組頁進度條、記帳提示、首頁超支徽章；程式已完成，待部署與 LINE 實測。分類、每月、推播列為後續 |
 | P5 | 更多收款碼 | [ ] | 去耦合、QR 圖片、更多 provider、排序與上限 |
 | P6 | 訂閱方式評估 | [ ] | 只評估不實作，輸出決策建議 |
 
@@ -160,28 +160,27 @@ createdBy, createdAt, hasTime, addedAt, note?
 
 ---
 
-## P4 預算（總預算＋分類預算）
+## P4 預算（第一版：群組總預算）
+
+計畫：`.omc/plans/p4-budget.md`。第一版只做整個群組的總預算，分類預算、每月、推播移到「後續」。
 
 ### 資料模型
-`groups/{gid}.budget`：
-```
-{ amount, period: { type: 'trip' | 'monthly', start?, end? },
-  byCategory: { [分類代碼]: amount }, warnAt: 0.8, net: true }
-```
-`net` 表示以「支出扣除收入」計算。金額單位為群組 `baseCurrency`；支出的 `amount` 已是基準幣，不需再換算。
+`groups/{gid}.budget = { amount, period: { type: 'trip' } }`，單位為群組 `baseCurrency`；沒有 `budget` 即無預算（不需遷移）。一律以淨額（支出 − 收入）計算，80% 黃、100% 紅，固定不可設定。
 
 ### 要動的地方
-- [ ] `firestore.rules`：群組 update 第一分支（約 70-100 行）目前任何成員都能改任何欄位（除 `createdBy`），預算要限建立者，需補檢查。
-- [ ] 新增 `src/utils/budget.js`：純函式 `computeBudgetStatus(budget, expenses, incomes, now)`，含期間過濾與分類比對；補測試（期間邊界、分類沒設預算、扣除收入、自訂分類）。
-- [ ] `EditGroupPage`：預算設定區塊（限建立者）。
-- [ ] `GroupPage` 標頭：總預算進度條。
-- [ ] `ExpenseForm` / `AddExpensePage`：選分類時顯示剩餘額度，超支給提示（**不阻擋**儲存）。
-- [ ] `StatsPage`：加期間選擇器（目前沒有期間概念），分類長條加預算標記。
-- [ ] `HomePage` 群組卡片：超支徽章。
-- [ ] 之後再考慮：跨過 80%／100% 時用 `liff.sendMessages` 提醒（先不做）。
+- [x] `firestore.rules`：`budget` 只有建立者能改，並驗證結構；新增 `firestore-tests/` 與 `npm run test:rules`。
+- [x] 新增 `src/utils/budget.js`：純函式 `computeBudgetStatus(budget, totals, { delta, replace })`，含單元測試。
+- [x] `EditGroupPage`：預算設定區塊（限建立者）。
+- [x] `GroupPage` 標頭：總預算進度條（用已訂閱的清單加總）。
+- [x] `ExpenseForm` / `AddExpensePage` / `EditExpensePage`：金額下方提示使用率或超支（**不阻擋**儲存；用群組彙總欄位）。
+- [x] `HomePage` 群組卡片：超支徽章。
+- [ ] 部署後在 iOS 與 Android 的 LINE 內實測（先部署 rules，再部署 hosting）。
 
-**依賴**：P1（分類代碼）、P3（淨額）。
-**風險**：自訂分類是自由文字，預算只對預設分類穩定；期間為「整趟旅行」時需決定起訖日的來源。
+### 後續（不在第一版）
+- 分類預算：`budget.byCategory`，需要依分類的淨額；rules 的 `hasOnly` 要放寬；自訂分類只能比對文字。
+- 每月：`period.type = 'monthly'`＋月初日；需要本月帳目加總；`StatsPage` 加期間選擇器與預算標記。
+- 跨過 80%／100% 時用 `liff.sendMessages` 提醒（需避免重複提醒）。
+- 開放修改基準幣時，要同步換算或清除 `budget`。
 
 ---
 

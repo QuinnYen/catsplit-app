@@ -184,6 +184,7 @@ export default {
   'home.emptyTitle': 'No groups yet',
   'home.emptyHint': 'Tap the button at the top right to create your first one!',
   'home.settled': 'Settled',
+  'home.overBudget': 'Over budget',
   'home.toReceive': 'To receive',
   'home.toPay': 'To pay',
   'home.archived': 'Archived groups ({n})',

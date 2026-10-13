@@ -11,6 +11,7 @@ import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
+import { computeBudgetStatus } from '../utils/budget'
 import catLogo from '../assets/cat-logo.webp'
 
 const GREETINGS = [
@@ -216,6 +217,9 @@ const HomePage = () => {
             const bal = group.memberBalances?.[myIdIn(group)] ?? null
             const isSettled = bal !== null && Math.abs(bal) < 0.01
             const isPositive = bal !== null && bal > 0.01
+            // 只顯示超支徽章（用群組彙總欄位，不讀帳目）；沒有超支時名稱列與原本相同
+            const isOverBudget = computeBudgetStatus(group.budget, group)?.level === 'over'
+            const nameStyle = { fontSize: 14, fontWeight: 500, color: '#3d2b1f', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
             return (
               <div
                 key={group.id}
@@ -226,9 +230,18 @@ const HomePage = () => {
               >
                 <GroupIcon icon={group.icon} color={group.iconColor} size={48} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {group.name}
-                  </div>
+                  {isOverBudget ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <div style={{ ...nameStyle, marginBottom: 0, minWidth: 0 }}>{group.name}</div>
+                      <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 500, color: '#e57373', background: '#ffebee', borderRadius: 8, padding: '1px 6px' }}>
+                        {t('home.overBudget')}
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={nameStyle}>
+                      {group.name}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#b08060' }}>
                     <div style={{ display: 'flex' }}>
                       {profiles.map((member, i) => (
