@@ -64,8 +64,6 @@ const TabBar = ({ context = 'home', groupId }) => {
       bottom: 0,
       left: 0,
       right: 0,
-      maxWidth: 480,
-      margin: '0 auto',
       zIndex: 10,
     }}>
       {tabs.map((tab, i) => {

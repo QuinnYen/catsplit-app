@@ -119,7 +119,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col cs-wide" style={{ background: '#fff8f4' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#fff8f4' }}>
 
       {/* Header */}
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '20px 16px 28px', position: 'relative', overflow: 'hidden' }}>
@@ -275,7 +275,7 @@ const HomePage = () => {
             <>
               {/* 一般群組 */}
               {activeGroups.length > 0 && (
-                <div className="cs-cards" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {activeGroups.map(renderCard)}
                 </div>
               )}
@@ -291,7 +291,7 @@ const HomePage = () => {
                     <span style={{ fontSize: 11, color: '#c4a882', transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s' }}>›</span>
                   </button>
                   {showArchived && (
-                    <div className="cs-cards" style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.65 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.65 }}>
                       {archivedGroups.map(renderCard)}
                     </div>
                   )}
@@ -307,7 +307,7 @@ const HomePage = () => {
       {showSettings && (
         <>
           <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
-          <div className="cs-bubble" style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 480px) / 2 + 16px))', zIndex: 101, width: 220, background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
+          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 720px) / 2 + 16px))', zIndex: 101, width: 220, background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
             <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: '#fff', borderTop: '0.5px solid #f0d5c0', borderLeft: '0.5px solid #f0d5c0', transform: 'rotate(45deg)' }} />
             {[
               { Icon: Settings, label: t('group.settings'), onClick: () => navigate('/settings') },

@@ -2,8 +2,6 @@ import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useApp } from './context/AppContext'
 import GuestJoin from './components/GuestJoin'
-import Sidebar from './components/Sidebar'
-import useIsDesktop from './hooks/useIsDesktop'
 import { useI18n } from './i18n/I18nProvider'
 import catLogo from './assets/cat-logo.webp'
 import { MessageCircle, PawPrint, Wallet } from 'lucide-react'
@@ -88,7 +86,6 @@ const LoginScreen = ({ onLogin, guestGroupId }) => {
 const ProtectedRoutes = () => {
   const { user, loading, loginWithLine, switchGuestGroup, guestNames } = useApp()
   const location = useLocation()
-  const isDesktop = useIsDesktop()
   // 訪客進入另一個選過名字的群組時，先自動切換成該群組的名字再顯示頁面
   const pathGroupId = location.pathname.match(/^\/group\/([^/]+)/)?.[1]
   const needGuestSwitch = !!user?.guest && !!pathGroupId && pathGroupId !== user.groupId
@@ -103,7 +100,7 @@ const ProtectedRoutes = () => {
   const inviteGroupId = location.pathname.match(/^\/group\/([^/]+)(?:\/add)?\/?$/)?.[1]
   if (!user) return <LoginScreen onLogin={() => loginWithLine(location.pathname + location.search)} guestGroupId={inviteGroupId} />
 
-  const routes = (
+  return (
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />
@@ -122,8 +119,6 @@ const ProtectedRoutes = () => {
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   )
-  // 桌機（≥1024）在頁面旁加上固定側欄；routes 的位置固定，跨斷點縮放視窗不會重新掛載頁面
-  return <>{routes}{isDesktop && <Sidebar />}</>
 }
 
 const AppRoutes = () => {

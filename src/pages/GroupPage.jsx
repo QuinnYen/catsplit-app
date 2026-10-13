@@ -370,7 +370,7 @@ const GroupPage = () => {
   const detailSettlement = settlements.find(s => s.id === detailSettlementId)
 
   return (
-    <div className="cs-gp" style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
 
       {/* 設定選單（fixed 避免被 header 的 overflow 裁掉） */}
       {settingsPos && (
@@ -408,7 +408,7 @@ const GroupPage = () => {
       )}
 
       {/* Header */}
-      <div className="cs-header cs-gp-side1" style={{
+      <div className="cs-header" style={{
         background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)',
         padding: '16px 16px 24px', position: 'relative', overflow: 'hidden', fontWeight: 700, isolation: 'isolate',
       }}>
@@ -504,7 +504,7 @@ const GroupPage = () => {
       </div>
 
       {/* 操作按鈕 */}
-      <div className="cs-body cs-gp-side2" style={{ padding: '16px 16px 0' }}>
+      <div className="cs-body" style={{ padding: '16px 16px 0' }}>
         {searchOpen ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '0.5px solid #f0d5c0', borderRadius: 20, padding: '6px 12px', marginBottom: 8 }}>
             <Search size={14} color="#b08060" style={{ flexShrink: 0 }} />
@@ -572,7 +572,7 @@ const GroupPage = () => {
       </div>
 
       {/* 支出列表 */}
-      <div className="cs-body cs-gp-main" style={{ padding: '0 16px 80px', flex: 1 }}>
+      <div className="cs-body" style={{ padding: '0 16px 80px', flex: 1 }}>
         {loading && (
           <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>{t('common.loading')}</div>
         )}
