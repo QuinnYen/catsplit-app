@@ -32,6 +32,19 @@ service cloud.firestore {
         && after.memberProfiles[newId].name.size() <= 20;
     }
 
+    // 群組預算：沒有 budget，或 { amount: 正數, period: { type: 字串 } }（之後加 byCategory 時 hasOnly 要放寬）
+    function validBudget() {
+      let d = request.resource.data;
+      return !('budget' in d)
+        || (d.budget is map
+            && d.budget.keys().hasOnly(['amount', 'period'])
+            && d.budget.amount is number
+            && d.budget.amount > 0
+            && d.budget.amount < 1000000000000
+            && d.budget.period is map
+            && d.budget.period.type is string);
+    }
+
     // 個人收款方式：本人可讀寫；其他登入者只能讀「公開顯示」的（列表查詢需帶 isPublic == true）
     match /users/{userId}/paymentMethods/{methodId} {
       allow read: if request.auth != null
@@ -64,7 +77,7 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 50;
 
       // 更新：
-      //  - 成員可更新，但不能改 createdBy，也不能新增成員（新增只能由本人加入）
+      //  - 成員可更新，但不能改 createdBy，也不能新增成員（新增只能由本人加入）；budget 只有建立者能改
       //  - 成員名單只能減少一人：本人退出，或建立者移除他人（訪客不能退出，否則等於刪掉這個名字）
       //  - 非成員只能把自己加入 members（上限 50 人），並且只新增自己的 memberProfiles；訪客不能加入其他群組
       //  - 成員可新增虛擬成員（訪客名字）
@@ -72,6 +85,8 @@ service cloud.firestore {
         (
           request.auth.uid in resource.data.members
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdBy'])
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['budget'])
+              || (request.auth.uid == resource.data.createdBy && validBudget()))
           && (
             !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members'])
             || (

@@ -9,6 +9,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "node --test",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-catsplit \"node --test \\\"firestore-tests/*.mjs\\\"\"",
     "check:cjk": "node scripts/check-cjk.mjs",
     "preview": "vite preview"
   },
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/vite": "^4.3.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
