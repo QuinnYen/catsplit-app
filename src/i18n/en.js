@@ -241,6 +241,8 @@ export default {
   'form.rateManual': 'Rate edited manually',
   'form.rateAuto': 'A reference rate was filled in automatically. You can edit it',
   'form.paidSum': 'Entered {symbol} {paid} / {total}',
+  'form.budgetUse': 'Budget used after saving: {percent}%',
+  'form.budgetOver': 'Over budget by {amount} after saving',
   'form.splitMethod': 'Split method',
   'form.sharesHint': 'Enter shares per person (e.g. 2 for a double portion)',
   'form.shareUnit': 'sh.',

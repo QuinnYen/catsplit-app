@@ -16,6 +16,7 @@ import { getCurrency } from '../config/currencies'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
 import { useI18n } from '../i18n/I18nProvider'
 import { activityForWrite } from '../i18n/codes'
+import { computeBudgetStatus } from '../utils/budget'
 
 const AddExpensePage = () => {
   const { id } = useParams()
@@ -85,6 +86,13 @@ const AddExpensePage = () => {
   const percentageTotal = Object.values(percentages).reduce((s, v) => s + (parseFloat(v) || 0), 0)
   const customTotal = Object.values(customAmounts).reduce((s, v) => s + (parseFloat(v) || 0), 0)
   const payerTotal = Object.values(payerAmounts).reduce((s, v) => s + (parseFloat(v) || 0), 0)
+
+  // 預算提示：用群組彙總欄位（頁面讀一次）；外幣在匯率就緒前不顯示；收入讓淨額減少
+  const amountNum = parseFloat(amount) || 0
+  const baseAmountNum = currency === baseCurrency ? amountNum : (!rateLoading && exchangeRate > 0 ? amountNum * exchangeRate : 0)
+  const budgetPreview = baseAmountNum > 0
+    ? computeBudgetStatus(group?.budget, { totalAmount: group?.totalAmount, totalIncome: group?.totalIncome }, { delta: kind === 'income' ? -baseAmountNum : baseAmountNum }) ?? undefined
+    : undefined
 
   const effectiveUids = (() => {
     let uids = members.map(([uid]) => uid)
@@ -351,6 +359,7 @@ const AddExpensePage = () => {
           receiptPreview={receiptPreview} setReceiptPreview={setReceiptPreview}
           shareToLine={shareToLine} setShareToLine={setShareToLine}
           showShareOption={kind === 'expense' && safeIsInClient()}
+          budgetPreview={budgetPreview}
         />
 
         {/* 固定在底部導覽列上方，捲動時一直可見 */}

@@ -137,8 +137,10 @@ const ExpenseForm = ({
   // LINE 分享（僅 AddExpensePage 傳入）
   shareToLine, setShareToLine,
   showShareOption,
+  // 預算提示（computeBudgetStatus 的結果；undefined 時不顯示）
+  budgetPreview,
 }) => {
-  const { t } = useI18n()
+  const { t, fmt } = useI18n()
   const [showCalc, setShowCalc] = useState(false)
   const L = LABELS[kind]
   const categories = kind === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
@@ -236,6 +238,13 @@ const ExpenseForm = ({
           {currency !== baseCurrency && amount && exchangeRate && (
             <div style={{ textAlign: 'right', fontSize: 12, color: '#b08060', marginTop: 6 }}>
               ≈ {getCurrency(baseCurrency).symbol} {(amountNum * exchangeRate).toFixed(0)} {baseCurrency}
+            </div>
+          )}
+          {budgetPreview && (
+            <div style={{ textAlign: 'right', fontSize: 12, marginTop: 6, color: { ok: '#b08060', warn: '#e08a00', over: '#e57373' }[budgetPreview.level] }}>
+              {budgetPreview.remaining < 0
+                ? t('form.budgetOver', { amount: `${getCurrency(baseCurrency).symbol} ${fmt.num(-budgetPreview.remaining)}` })
+                : t('form.budgetUse', { percent: Math.max(0, Math.floor(budgetPreview.ratio * 100)) })}
             </div>
           )}
         </div>

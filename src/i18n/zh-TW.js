@@ -241,6 +241,8 @@ export default {
   'form.rateManual': '已手動修改匯率',
   'form.rateAuto': '自動帶入參考匯率，可直接修改',
   'form.paidSum': '已填 {symbol} {paid} / {total}',
+  'form.budgetUse': '記帳後預算將使用 {percent}%',
+  'form.budgetOver': '記帳後會超支 {amount}',
   'form.splitMethod': '分帳方式',
   'form.sharesHint': '輸入每人份數（例：吃兩份填 2）',
   'form.shareUnit': '份',

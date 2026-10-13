@@ -17,6 +17,7 @@ import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory, activityForWrite } from '../i18n/codes'
+import { computeBudgetStatus } from '../utils/budget'
 
 const EditExpensePage = ({ kind = 'expense' }) => {
   const { user } = useApp()
@@ -153,6 +154,14 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const percentageTotal = Object.values(percentages).reduce((s, v) => s + (parseFloat(v) || 0), 0)
   const customTotal = Object.values(customAmounts).reduce((s, v) => s + (parseFloat(v) || 0), 0)
   const payerTotal = Object.values(payerAmounts).reduce((s, v) => s + (parseFloat(v) || 0), 0)
+
+  // 預算提示：用群組彙總欄位（頁面讀一次），以新金額替換原帳目；外幣在匯率就緒前不顯示；收入讓淨額減少
+  const sign = isIncome ? -1 : 1
+  const amountNum = parseFloat(amount) || 0
+  const baseAmountNum = currency === baseCurrency ? amountNum : (!rateLoading && exchangeRate > 0 ? amountNum * exchangeRate : 0)
+  const budgetPreview = baseAmountNum > 0
+    ? computeBudgetStatus(group?.budget, { totalAmount: group?.totalAmount, totalIncome: group?.totalIncome }, { delta: sign * baseAmountNum, replace: sign * (originalExpense?.amount ?? 0) }) ?? undefined
+    : undefined
 
   const effectiveUids = (() => {
     let uids = members.map(([uid]) => uid)
@@ -299,6 +308,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
           receiptPreview={receiptPreview} setReceiptPreview={setReceiptPreview}
           existingReceiptPath={existingReceiptPath}
           removeExistingReceipt={removeExistingReceipt} setRemoveExistingReceipt={setRemoveExistingReceipt}
+          budgetPreview={budgetPreview}
         />
 
         {/* 固定在底部導覽列上方，捲動時一直可見；捲到底時回到原位，刪除按鈕在它下方 */}
