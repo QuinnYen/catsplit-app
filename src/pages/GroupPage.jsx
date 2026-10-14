@@ -424,7 +424,7 @@ const GroupPage = () => {
               alt=""
               style={{
                 display: 'none', position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -3,
-                filter: 'blur(28px)', transform: 'scale(1.15)',
+                filter: 'blur(40px)', transform: 'scale(1.15)',
                 opacity: loadedCover === group.coverUrl ? 1 : 0, transition: 'opacity 0.25s',
               }}
             />
