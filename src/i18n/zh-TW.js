@@ -61,7 +61,7 @@ export default {
   'group.totalExpense': '總支出',
   'group.expenseCount': '共 {n} 筆消費',
   'group.incomeNet': '收入 {income} · 淨支出 {net}',
-  'group.budgetUsed': '已用 {spent} ／ 預算 {budget}',
+  'group.budgetUsed': '{spent} ／ {budget}',
   'group.budgetLeft': '剩餘 {amount}',
   'group.budgetOver': '超支 {amount}',
   'group.listTitle': '消費明細',

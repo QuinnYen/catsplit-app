@@ -61,7 +61,7 @@ export default {
   'group.totalExpense': 'Total expenses',
   'group.expenseCount': '{n} expenses',
   'group.incomeNet': 'Income {income} · Net expenses {net}',
-  'group.budgetUsed': 'Used {spent} / Budget {budget}',
+  'group.budgetUsed': '{spent} / {budget}',
   'group.budgetLeft': '{amount} left',
   'group.budgetOver': 'Over by {amount}',
   'group.listTitle': 'Expenses',

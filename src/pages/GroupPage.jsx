@@ -502,14 +502,14 @@ const GroupPage = () => {
           onTouchEnd={e => e.currentTarget.style.opacity = '1'}
         >
           <div style={{ flex: 1 }}>
-            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>{t('group.totalExpense')}</div>
+            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>
+              {t('group.totalExpense')} · {t('group.expenseCount', { n: expenses.length })}
+            </div>
             <div style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>
               {getCurrency(group.baseCurrency).symbol} {fmt.num(total)}
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4 }}>
-              {t('group.expenseCount', { n: expenses.length })}
-            </div>
-            {incomes.length > 0 && (
+            {/* 有設預算時，已用就是淨額，收入與淨支出那行省略 */}
+            {incomes.length > 0 && !budget && (
               <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 }}>
                 {t('group.incomeNet', { income: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(incomeTotal)}`, net: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(total - incomeTotal)}` })}
               </div>
@@ -520,13 +520,16 @@ const GroupPage = () => {
                 <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.3)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', borderRadius: 3, width: `${Math.max(0, Math.min(budget.ratio, 1)) * 100}%`, background: { ok: '#fff', warn: '#FFD54F', over: '#FF5252' }[budget.level] }} />
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 4 }}>
+                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 4, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                   {/* 幣別符號與金額之間用不換行空白，避免金額被拆到下一行 */}
+                  <span>
                   {t('group.budgetUsed', { spent: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.spent)}`, budget: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.amount)}` })}
-                  {' · '}
+                  </span>
+                  <span style={{ whiteSpace: 'nowrap' }}>
                   {budget.remaining >= 0
                     ? t('group.budgetLeft', { amount: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.remaining)}` })
                     : t('group.budgetOver', { amount: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(-budget.remaining)}` })}
+                  </span>
                 </div>
               </div>
             )}
