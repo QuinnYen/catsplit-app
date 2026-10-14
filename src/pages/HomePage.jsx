@@ -219,15 +219,24 @@ const HomePage = () => {
             const isPositive = bal !== null && bal > 0.01
             // 只顯示超支徽章（用群組彙總欄位，不讀帳目）；沒有超支時名稱列與原本相同
             const isOverBudget = computeBudgetStatus(group.budget, group)?.level === 'over'
-            const nameStyle = { fontSize: 14, fontWeight: 500, color: '#3d2b1f', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+            // 有封面時卡片高度不變，封面當背景（lazy 載入）加暗色漸層，文字改淺色
+            const hasCover = !!group.coverUrl
+            const subColor = hasCover ? 'rgba(255,255,255,0.85)' : '#b08060'
+            const nameStyle = { fontSize: 14, fontWeight: 500, color: hasCover ? '#fff' : '#3d2b1f', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
             return (
               <div
                 key={group.id}
                 onClick={() => navigate(`/group/${group.id}`)}
-                style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
+                style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none', ...(hasCover && { position: 'relative', overflow: 'hidden', isolation: 'isolate' }) }}
                 onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
                 onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
               >
+                {hasCover && (
+                  <>
+                    <img src={group.coverUrl} alt="" loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -2 }} />
+                    <div style={{ position: 'absolute', inset: 0, zIndex: -1, background: 'linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.3))' }} />
+                  </>
+                )}
                 <GroupIcon icon={group.icon} color={group.iconColor} size={48} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {isOverBudget ? (
@@ -242,7 +251,7 @@ const HomePage = () => {
                       {group.name}
                     </div>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#b08060' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: subColor }}>
                     <div style={{ display: 'flex' }}>
                       {profiles.map((member, i) => (
                         <Avatar key={i} src={member.avatar} name={member.name} size={18} style={{ border: '1.5px solid #fff', marginLeft: i === 0 ? 0 : -5 }} />
@@ -258,14 +267,14 @@ const HomePage = () => {
                 </div>
                 {bal === null ? (
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: '#FF6B1A' }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: hasCover ? '#ffb88a' : '#FF6B1A' }}>
                       {getCurrency(group.baseCurrency).symbol} {fmt.num(group.totalAmount || 0)}
                     </div>
-                    <div style={{ fontSize: 11, color: '#b08060' }}>{t('group.totalExpense')}</div>
+                    <div style={{ fontSize: 11, color: subColor }}>{t('group.totalExpense')}</div>
                   </div>
                 ) : (
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: isSettled ? '#b08060' : isPositive ? '#4caf50' : '#FF6B1A' }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: isSettled ? subColor : isPositive ? (hasCover ? '#8fe08f' : '#4caf50') : (hasCover ? '#ffb88a' : '#FF6B1A') }}>
                       {isSettled ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                           <Check size={13} strokeWidth={3} /> {t('home.settled')}
@@ -274,12 +283,12 @@ const HomePage = () => {
                         ? `+${getCurrency(group.baseCurrency).symbol} ${fmt.num(Math.round(bal))}`
                         : `${getCurrency(group.baseCurrency).symbol} ${fmt.num(Math.round(bal))}`}
                     </div>
-                    <div style={{ fontSize: 11, color: '#b08060' }}>
+                    <div style={{ fontSize: 11, color: subColor }}>
                       {isSettled ? '' : isPositive ? t('home.toReceive') : t('home.toPay')}
                     </div>
                   </div>
                 )}
-                <div style={{ color: '#e0b898', fontSize: 18 }}>›</div>
+                <div style={{ color: hasCover ? 'rgba(255,255,255,0.8)' : '#e0b898', fontSize: 18 }}>›</div>
               </div>
             )
           }
