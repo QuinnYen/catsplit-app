@@ -31,18 +31,18 @@ const setCors = (req, res) => {
   res.set('Access-Control-Max-Age', '3600')
 }
 
-// 把 LINE 名稱與頭像寫進 Auth 紀錄，方便在 Console 辨識是誰；失敗不影響登入
-const syncAuthProfile = async (uid, displayName, photoURL) => {
-  const profile = {
-    ...(typeof displayName === 'string' && displayName && { displayName }),
-    ...(typeof photoURL === 'string' && photoURL.startsWith('https://') && { photoURL }),
-  }
-  if (Object.keys(profile).length === 0) return
+// 把 LINE 名稱與頭像寫進 users/{uid}，方便在 Console 用 UID 反查是誰；失敗不影響登入。
+// rules 沒有開放 users/{uid} 本身（只開 paymentMethods 子集合），客戶端讀寫都會被拒，只有 Admin SDK 寫得進去。
+// 刪除我的資料時由 detachMember 一併刪除。
+const syncUserProfile = async (uid, name, avatar) => {
   try {
-    await getAuth().updateUser(uid, profile)
+    await getFirestore().doc(`users/${uid}`).set({
+      name: typeof name === 'string' ? name : null,
+      avatar: typeof avatar === 'string' && avatar.startsWith('https://') ? avatar : null,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
   } catch (e) {
-    if (e.code !== 'auth/user-not-found') return console.error('syncAuthProfile error', e)
-    await getAuth().createUser({ uid, ...profile }).catch((err) => console.error('syncAuthProfile create error', err))
+    console.error('syncUserProfile error', e)
   }
 }
 
@@ -101,7 +101,7 @@ export const lineLogin = onRequest(
       }
 
       const profile = await profileRes.json()
-      await syncAuthProfile(profile.userId, profile.displayName, profile.pictureUrl)
+      await syncUserProfile(profile.userId, profile.displayName, profile.pictureUrl)
       const firebaseToken = await getAuth().createCustomToken(profile.userId)
       res.json({
         userId: profile.userId,
@@ -154,7 +154,7 @@ export const verifyLiffToken = onRequest(
       }
 
       const claims = await verifyRes.json()
-      await syncAuthProfile(claims.sub, claims.name, claims.picture)
+      await syncUserProfile(claims.sub, claims.name, claims.picture)
       const firebaseToken = await getAuth().createCustomToken(claims.sub)
       res.json({
         userId: claims.sub,
@@ -487,6 +487,14 @@ export const detachMember = onRequest(
         else {
           console.error('detachMember deleteUser error', e)
           failed.push('account')
+        }
+      }
+      if (accountDeleted) {
+        try {
+          await getFirestore().doc(`users/${caller.uid}`).delete()
+        } catch (e) {
+          console.error('detachMember delete users doc error', e)
+          failed.push('profile')
         }
       }
     }
