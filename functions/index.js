@@ -1,4 +1,5 @@
 import { onRequest } from 'firebase-functions/v2/https'
+import { onDocumentDeleted, onDocumentUpdated } from 'firebase-functions/v2/firestore'
 import { defineSecret } from 'firebase-functions/params'
 import { initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
@@ -355,6 +356,29 @@ export const claimMember = onRequest(
       console.error('claimMember error', e)
       res.status(500).json({ error: 'internal_error' })
     }
+  }
+)
+
+// ---------- 訪客 Auth 紀錄清理：訪客 uid（p_）離開 members 或群組被刪除後，刪掉它的 Auth 紀錄 ----------
+
+const deleteGuestAuth = (ids) => Promise.all(
+  ids.filter(isGuestId).map((id) => getAuth().deleteUser(id).catch((e) => {
+    if (e.code !== 'auth/user-not-found') console.error('deleteGuestAuth error', id, e)
+  }))
+)
+
+// Firestore 觸發器的 region 必須與資料庫位置相同
+export const cleanupGuestsOnGroupDelete = onDocumentDeleted(
+  { document: 'groups/{groupId}', region: 'asia-east1' },
+  (event) => deleteGuestAuth(event.data?.data()?.members || [])
+)
+
+export const cleanupGuestsOnMemberRemoved = onDocumentUpdated(
+  { document: 'groups/{groupId}', region: 'asia-east1' },
+  (event) => {
+    const before = event.data?.before.data()?.members || []
+    const after = new Set(event.data?.after.data()?.members || [])
+    return deleteGuestAuth(before.filter((m) => !after.has(m)))
   }
 )
 
