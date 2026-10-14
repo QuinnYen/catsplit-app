@@ -416,19 +416,32 @@ const GroupPage = () => {
         padding: '16px 16px 24px', position: 'relative', overflow: 'hidden', fontWeight: 700, isolation: 'isolate',
       }}>
         {group.coverUrl ? (
-          <div className="cs-cover" style={{ position: 'absolute', inset: 0, zIndex: -1 }}>
+          <>
+            {/* 網頁版：同一張圖放大、模糊鋪滿兩側（手機版隱藏） */}
             <img
-              ref={el => { if (el?.complete && el.naturalWidth) setLoadedCover(group.coverUrl) }}
+              className="cs-cover-bg"
               src={group.coverUrl}
               alt=""
-              onLoad={() => setLoadedCover(group.coverUrl)}
               style={{
-                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                display: 'none', position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -3,
+                filter: 'blur(28px)', transform: 'scale(1.15)',
                 opacity: loadedCover === group.coverUrl ? 1 : 0, transition: 'opacity 0.25s',
               }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.5))' }} />
-          </div>
+            <div className="cs-cover" style={{ position: 'absolute', inset: 0, zIndex: -2 }}>
+              <img
+                ref={el => { if (el?.complete && el.naturalWidth) setLoadedCover(group.coverUrl) }}
+                src={group.coverUrl}
+                alt=""
+                onLoad={() => setLoadedCover(group.coverUrl)}
+                style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                  opacity: loadedCover === group.coverUrl ? 1 : 0, transition: 'opacity 0.25s',
+                }}
+              />
+            </div>
+            <div style={{ position: 'absolute', inset: 0, zIndex: -1, background: 'linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.5))' }} />
+          </>
         ) : (
           <PawDecor />
         )}

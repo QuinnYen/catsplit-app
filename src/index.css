@@ -33,7 +33,10 @@
     padding-left: max(16px, calc((100% - 720px) / 2 + 16px)) !important;
     padding-right: max(16px, calc((100% - 720px) / 2 + 16px)) !important;
   }
-  /* 封面圖只鋪在內容寬度（720）內，左右 80px 淡出到橘色漸層 */
+  /* 封面圖：清晰版只鋪在內容寬度（720）內，左右 80px 淡出到下層的模糊放大版（.cs-cover-bg） */
+  .cs-cover-bg {
+    display: block !important;
+  }
   .cs-cover {
     left: max(0px, calc((100% - 720px) / 2)) !important;
     right: max(0px, calc((100% - 720px) / 2)) !important;
