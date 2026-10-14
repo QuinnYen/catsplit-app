@@ -90,6 +90,12 @@ const SettingsPage = () => {
             </select>
         </div>
 
+        {/* 條款與隱私權：英文版是另一份靜態頁；中文版維持原網址 */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12 }}>
+          <a href={lang === 'en' ? '/terms.en.html' : '/terms.html'} style={{ color: '#b08060' }}>{t('home.menu.terms')}</a>
+          <a href={lang === 'en' ? '/privacy.en.html' : '/privacy.html'} style={{ color: '#b08060' }}>{t('home.menu.privacy')}</a>
+        </div>
+
         {/* 危險區：訪客名字屬於群組，不能自行刪除；由群組建立者移除 */}
         {canDelete && (
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px dashed #f0b8b0' }}>

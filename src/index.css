@@ -33,6 +33,13 @@
     padding-left: max(16px, calc((100% - 720px) / 2 + 16px)) !important;
     padding-right: max(16px, calc((100% - 720px) / 2 + 16px)) !important;
   }
+  /* 封面圖只鋪在內容寬度（720）內，左右 80px 淡出到橘色漸層 */
+  .cs-cover {
+    left: max(0px, calc((100% - 720px) / 2)) !important;
+    right: max(0px, calc((100% - 720px) / 2)) !important;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 80px, #000 calc(100% - 80px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 80px, #000 calc(100% - 80px), transparent);
+  }
   .cs-body {
     width: 100%;
     max-width: 720px;
