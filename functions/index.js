@@ -31,6 +31,21 @@ const setCors = (req, res) => {
   res.set('Access-Control-Max-Age', '3600')
 }
 
+// 把 LINE 名稱與頭像寫進 Auth 紀錄，方便在 Console 辨識是誰；失敗不影響登入
+const syncAuthProfile = async (uid, displayName, photoURL) => {
+  const profile = {
+    ...(typeof displayName === 'string' && displayName && { displayName }),
+    ...(typeof photoURL === 'string' && photoURL.startsWith('https://') && { photoURL }),
+  }
+  if (Object.keys(profile).length === 0) return
+  try {
+    await getAuth().updateUser(uid, profile)
+  } catch (e) {
+    if (e.code !== 'auth/user-not-found') return console.error('syncAuthProfile error', e)
+    await getAuth().createUser({ uid, ...profile }).catch((err) => console.error('syncAuthProfile create error', err))
+  }
+}
+
 export const lineLogin = onRequest(
   { secrets: [LINE_CHANNEL_SECRET], cors: false, region: 'asia-east1', maxInstances: 5 },
   async (req, res) => {
@@ -86,6 +101,7 @@ export const lineLogin = onRequest(
       }
 
       const profile = await profileRes.json()
+      await syncAuthProfile(profile.userId, profile.displayName, profile.pictureUrl)
       const firebaseToken = await getAuth().createCustomToken(profile.userId)
       res.json({
         userId: profile.userId,
@@ -138,6 +154,7 @@ export const verifyLiffToken = onRequest(
       }
 
       const claims = await verifyRes.json()
+      await syncAuthProfile(claims.sub, claims.name, claims.picture)
       const firebaseToken = await getAuth().createCustomToken(claims.sub)
       res.json({
         userId: claims.sub,
