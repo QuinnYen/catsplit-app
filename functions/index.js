@@ -385,9 +385,14 @@ const deleteGuestAuth = (ids) => Promise.all(
 )
 
 // Firestore 觸發器的 region 必須與資料庫位置相同
+// 群組文件被刪（App、雲端函式或 Console 手動刪除）後：清訪客 Auth，並補刪留下的子集合與 Storage 檔案（收據、封面）。
+// Console 刪文件不會連子集合與 Storage 一起刪；deleteGroupCompletely 可重複執行，App 已清乾淨時是空操作。
 export const cleanupGuestsOnGroupDelete = onDocumentDeleted(
-  { document: 'groups/{groupId}', region: 'asia-east1' },
-  (event) => deleteGuestAuth(event.data?.data()?.members || [])
+  { document: 'groups/{groupId}', region: 'asia-east1', timeoutSeconds: 300 },
+  async (event) => {
+    await deleteGuestAuth(event.data?.data()?.members || [])
+    await deleteGroupCompletely(event.params.groupId)
+  }
 )
 
 export const cleanupGuestsOnMemberRemoved = onDocumentUpdated(
