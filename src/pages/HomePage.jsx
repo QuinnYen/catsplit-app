@@ -234,7 +234,7 @@ const HomePage = () => {
                 {hasCover && (
                   <>
                     <img src={group.coverUrl} alt="" loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -2 }} />
-                    <div style={{ position: 'absolute', inset: 0, zIndex: -1, background: 'linear-gradient(90deg, rgba(0,0,0,0.4), rgba(0,0,0,0.9))' }} />
+                    <div style={{ position: 'absolute', inset: 0, zIndex: -1, background: 'linear-gradient(90deg, rgba(0,0,0,0.4), rgb(53 19 0) 100%)' }} />
                   </>
                 )}
                 <GroupIcon icon={group.icon} color={group.iconColor} size={48} />
