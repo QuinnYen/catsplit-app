@@ -452,7 +452,7 @@ export default {
   'stats.count': 'Count',
   'stats.avg': 'Average per expense',
   'stats.byCategory': 'By category',
-  'stats.trend': 'Last {n} months',
+  'stats.trend': 'Monthly trend',
   'stats.byPayer': 'Paid per person',
   'stats.month.1': 'Jan',
   'stats.month.2': 'Feb',

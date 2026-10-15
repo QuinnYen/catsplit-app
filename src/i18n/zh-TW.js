@@ -452,7 +452,7 @@ export default {
   'stats.count': '筆數',
   'stats.avg': '平均每筆',
   'stats.byCategory': '類別佔比',
-  'stats.trend': '近 {n} 個月趨勢',
+  'stats.trend': '每月趨勢',
   'stats.byPayer': '每人付款總額',
   'stats.month.1': '1月',
   'stats.month.2': '2月',

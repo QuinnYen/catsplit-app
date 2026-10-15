@@ -12,7 +12,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory, categoryLabel } from '../i18n/codes'
 
 const CATEGORY_COLORS = ['#FF8C42', '#FFB37A', '#E8703A', '#F5C26B', '#C4A882', '#D98C5F', '#8FBF9F', '#7FA6C9']
-const TREND_MONTHS = 6
+const TREND_MONTHS = 12
 
 const cardStyle = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }
 const titleStyle = { fontSize: 13, fontWeight: 500, color: '#b08060', marginBottom: 12 }
@@ -69,9 +69,15 @@ const StatsPage = () => {
       .map(([uid, amount]) => ({ uid, amount }))
       .sort((a, b) => b.amount - a.amount)
 
+    // 範圍：最早到最晚有帳目的月份（無帳目時只顯示本月），超過上限時取最近的 TREND_MONTHS 個月
+    const toIndex = (key) => { const [y, m] = key.split('-').map(Number); return y * 12 + m - 1 }
+    const keys = Object.keys(byMonth).map(toIndex)
     const now = new Date()
-    const months = Array.from({ length: TREND_MONTHS }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - (TREND_MONTHS - 1 - i), 1)
+    const last = keys.length ? Math.max(...keys) : now.getFullYear() * 12 + now.getMonth()
+    const first = keys.length ? Math.max(Math.min(...keys), last - TREND_MONTHS + 1) : last
+    const months = Array.from({ length: last - first + 1 }, (_, i) => {
+      const idx = first + i
+      const d = new Date(Math.floor(idx / 12), idx % 12, 1)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       return { key, label: MONTH_KEYS[d.getMonth()], amount: byMonth[key] || 0 }
     })
@@ -190,7 +196,7 @@ const StatsPage = () => {
 
             {/* 每月趨勢 */}
             <div style={cardStyle}>
-              <div style={titleStyle}>{t('stats.trend', { n: TREND_MONTHS })}</div>
+              <div style={titleStyle}>{t('stats.trend')}</div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
                 {stats.months.map(m => (
                   <div key={m.key} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', minWidth: 0 }}>
