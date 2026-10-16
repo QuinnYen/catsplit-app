@@ -1,6 +1,7 @@
 // 邀請成員彈窗：QR Code ＋ 各種分享方式。要新增方式（Email、其他平台…）就在 actions 加一筆。
 import { useEffect, useState } from 'react'
-import { X, Copy, Check, MessageCircle, Pin } from 'lucide-react'
+import { X, Copy, Check, Pin } from 'lucide-react'
+import LineIcon from './LineIcon'
 import { useI18n } from '../i18n/I18nProvider'
 import { buildLineMessages } from '../utils/shareContent'
 
@@ -57,7 +58,7 @@ const InviteModal = ({ content, text, liff, onClose }) => {
   }
 
   const actions = [
-    canLineShare && { key: 'line', label: t('invite.shareLine'), Icon: MessageCircle, onClick: lineShare },
+    canLineShare && { key: 'line', label: t('invite.shareLine'), Icon: LineIcon, onClick: lineShare },
     canLineShare && { key: 'entry', label: t('invite.shareEntry'), Icon: Pin, onClick: entryShare },
     { key: 'external', label: copied ? t('invite.copied') : t('invite.copyLink'), Icon: copied ? Check : Copy, onClick: externalShare },
   ].filter(Boolean)

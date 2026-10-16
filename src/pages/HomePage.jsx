@@ -1,13 +1,14 @@
 // / — 首頁：未登入顯示登入畫面；已登入顯示使用者資訊、消費總覽與我的群組列表，頭像可開啟選單（設定、收款方式、條款、登出）。
 import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, LogOut, QrCode, MessageCircle } from 'lucide-react'
+import { Settings, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, LogOut, QrCode } from 'lucide-react'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import useMyGroups from '../hooks/useMyGroups'
 import { describeActivity } from '../i18n/codes'
 import Avatar from '../components/Avatar'
+import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
@@ -361,7 +362,7 @@ const HomePage = () => {
               { Icon: Settings, label: t('group.settings'), onClick: () => navigate('/settings') },
               // 訪客沒有穩定身分，不提供收款方式
               ...(!user?.guest ? [{ Icon: QrCode, label: t('home.menu.payment'), onClick: () => navigate('/payment-methods') }] : []),
-              { Icon: MessageCircle, label: t('group.menu.official'), href: OFFICIAL_ACCOUNT_URL },
+              { Icon: LineIcon, label: t('group.menu.official'), href: OFFICIAL_ACCOUNT_URL },
               { Icon: LogOut, label: t('home.menu.logout'), onClick: handleLogout },
             ].map(({ Icon, label, href, onClick }, i) => {
               const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid #f0d5c0', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: '#3d2b1f', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }

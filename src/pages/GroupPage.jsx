@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 
-import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download, MessageCircle } from 'lucide-react'
+import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download } from 'lucide-react'
 import { db, auth } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
@@ -14,6 +14,7 @@ import InviteModal from '../components/InviteModal'
 import { buildShareContent } from '../utils/shareContent'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
+import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
@@ -468,9 +469,9 @@ const GroupPage = () => {
           <button
             onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
             aria-label={t('group.menu.official')}
-            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+            style={{ background: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
           >
-            <MessageCircle size={20} />
+            <LineIcon size={22} />
           </button>
 
           <button
@@ -555,7 +556,7 @@ const GroupPage = () => {
       <div className="cs-body" style={{ padding: '16px 16px 0' }}>
         {showOaBanner && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '0.5px solid #f0d5c0', borderRadius: 12, padding: '8px 8px 8px 12px', marginBottom: 12 }}>
-            <MessageCircle size={16} color="#FF8C42" style={{ flexShrink: 0 }} />
+            <LineIcon size={18} />
             <span style={{ flex: 1, fontSize: 12, color: '#3d2b1f' }}>{t('group.oaBanner')}</span>
             <button
               onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}

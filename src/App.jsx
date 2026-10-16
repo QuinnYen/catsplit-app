@@ -4,7 +4,8 @@ import { useApp } from './context/AppContext'
 import GuestJoin from './components/GuestJoin'
 import { useI18n } from './i18n/I18nProvider'
 import catLogo from './assets/cat-logo.webp'
-import { MessageCircle, PawPrint, Wallet } from 'lucide-react'
+import { PawPrint, Wallet } from 'lucide-react'
+import LineIcon from './components/LineIcon'
 
 // 首頁與群組頁是主要落地頁（含邀請連結），直接載入；其餘頁面用到才下載
 import HomePage from './pages/HomePage'
@@ -47,7 +48,7 @@ const LoginScreen = ({ onLogin, guestGroupId }) => {
     {!guestGroupId && <div style={{ background: '#fff', borderRadius: 20, border: '0.5px solid #f0d5c0', padding: '24px 20px', width: '100%', maxWidth: 320, marginBottom: 32 }}>
       <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060', marginBottom: 16, textAlign: 'center' }}>{t('login.howTo')}</div>
       {[
-        { Icon: MessageCircle, text: t('login.step1') },
+        { Icon: LineIcon, text: t('login.step1') },
         { Icon: PawPrint, text: t('login.step2') },
         { Icon: Wallet, text: t('login.step3') },
       ].map(({ Icon, text }, i) => (
