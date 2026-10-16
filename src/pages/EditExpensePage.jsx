@@ -209,8 +209,8 @@ const EditExpensePage = ({ kind = 'expense' }) => {
     setLoading(true)
     try {
       const totalAmount = parseFloat(amount)
+      const splits = computeSplits({ splitType, totalAmount, effectiveUids, allMemberEntries: members, shares, percentages, customAmounts })
       const payments = buildPayments({ multiPayer, paidBy, payerAmounts, totalAmount })
-      const splits = computeSplits({ splitType, totalAmount, effectiveUids, allMemberEntries: members, shares, percentages, customAmounts, payments })
       const { rate, baseAmount, baseSplits, basePayments } = applyExchangeRate({ totalAmount, splits, payments, currency, baseCurrency, exchangeRate })
 
       const receiptUpdate = await handleReceiptUpdate()

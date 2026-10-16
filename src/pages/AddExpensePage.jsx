@@ -131,7 +131,6 @@ const AddExpensePage = () => {
   const switchKind = (next) => {
     if (next === kind) return
     setKind(next)
-    if (splitType === 'none') setSplitType('equal')
     setCategory((next === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES)[0])
     setIsEditingCategory(false)
     setCustomCategory('')
@@ -142,8 +141,8 @@ const AddExpensePage = () => {
     setLoading(true)
     try {
       const totalAmount = parseFloat(amount)
+      const splits = computeSplits({ splitType, totalAmount, effectiveUids, allMemberEntries: members, shares, percentages, customAmounts })
       const payments = buildPayments({ multiPayer, paidBy, payerAmounts, totalAmount })
-      const splits = computeSplits({ splitType, totalAmount, effectiveUids, allMemberEntries: members, shares, percentages, customAmounts, payments })
       const { rate, baseAmount, baseSplits, basePayments } = applyExchangeRate({ totalAmount, splits, payments, currency, baseCurrency, exchangeRate })
 
       if (kind === 'income') {

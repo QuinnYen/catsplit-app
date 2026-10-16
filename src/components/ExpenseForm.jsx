@@ -345,7 +345,7 @@ const ExpenseForm = ({
       <div style={cardStyle}>
         <div style={labelStyle}>{t('form.splitMethod')}</div>
         <select value={splitType} onChange={e => setSplitType(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }}>
-          {SPLIT_TYPES.filter(type => !type.incomeOnly || kind === 'income').map(type => <option key={type.key} value={type.key}>{t(type.labelKey)}</option>)}
+          {SPLIT_TYPES.map(type => <option key={type.key} value={type.key}>{t(type.labelKey)}</option>)}
         </select>
 
         {/* 均分預覽 */}

@@ -84,17 +84,13 @@ export const matchExpense = (expense, searchText, memberProfiles, categoryText) 
  * @param {object} params.shares
  * @param {object} params.percentages
  * @param {object} params.customAmounts
- * @param {object} [params.payments] - 出資／收款 map，splitType 為 'none' 時使用
  * @returns {object} splits map { uid: number }
  */
-export const computeSplits = ({ splitType, totalAmount, effectiveUids, allMemberEntries, shares, percentages, customAmounts, payments }) => {
+export const computeSplits = ({ splitType, totalAmount, effectiveUids, allMemberEntries, shares, percentages, customAmounts }) => {
   const sharesTotal = Object.values(shares).reduce((s, v) => s + (parseFloat(v) || 0), 0)
   const splits = {}
 
-  if (splitType === 'none') {
-    // 不分攤（僅收入）：分給收款人自己，與收入互相抵銷，不影響結算
-    Object.assign(splits, payments)
-  } else if (splitType === 'equal' || splitType === 'subset') {
+  if (splitType === 'equal' || splitType === 'subset') {
     const each = parseFloat((totalAmount / effectiveUids.length).toFixed(2))
     effectiveUids.forEach(uid => { splits[uid] = each })
   } else if (splitType === 'shares') {
