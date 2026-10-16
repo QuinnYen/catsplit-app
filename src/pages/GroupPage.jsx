@@ -516,15 +516,18 @@ const GroupPage = () => {
           onTouchEnd={e => e.currentTarget.style.opacity = '1'}
         >
           <div style={{ flex: 1 }}>
-            {/* 有收入時：第一行「共 N 筆消費 · 收入 · 支出」，第二行「餘額 金額」同字級，透支時轉紅 */}
             <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>
-              {incomes.length > 0
-                ? `${t('group.expenseCount', { n: expenses.length })} · ${t('group.incomeExpense', { income: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(incomeTotal)}`, expense: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(total)}` })}`
-                : `${t('group.totalExpense')} · ${t('group.expenseCount', { n: expenses.length })}`}
+              {t('group.totalExpense')} · {t('group.expenseCount', { n: expenses.length })}
             </div>
-            <div style={{ color: incomes.length > 0 && incomeTotal - total < 0 ? '#FF5252' : '#fff', fontSize: 24, fontWeight: 700 }}>
-              {incomes.length > 0 && `${t('group.balance')} `}{getCurrency(group.baseCurrency).symbol} {fmt.num(incomes.length > 0 ? incomeTotal - total : total)}
+            <div style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>
+              {getCurrency(group.baseCurrency).symbol} {fmt.num(total)}
             </div>
+            {/* 收入只列出金額，不下結論（可能是起始金，也可能是退款）；差額看統計頁的結餘 */}
+            {incomes.length > 0 && (
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 }}>
+                {t('stats.totalIncome')} {getCurrency(group.baseCurrency).symbol} {fmt.num(incomeTotal)}
+              </div>
+            )}
             {/* 預算進度條：<80% 白、80–99% 黃、≥100% 紅；淨額為負時寬度為 0 */}
             {budget && (
               <div style={{ marginTop: 8 }}>

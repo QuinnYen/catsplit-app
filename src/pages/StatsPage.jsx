@@ -110,7 +110,7 @@ const StatsPage = () => {
   )
   const incomeItem = { label: t('stats.totalIncome'), value: fmt(incomeTotal), color: '#1976d2' }
   // 有收入時餘額為主；透支（負數）轉紅
-  const balanceItem = { label: t('group.balance'), value: fmt(balance), color: balance < 0 ? '#e53935' : '#1976d2' }
+  const balanceItem = { label: t('stats.balance'), value: fmt(balance), color: balance < 0 ? '#e53935' : '#1976d2' }
   const maxMonth = Math.max(...stats.months.map(m => m.amount), 1)
   const maxPayer = stats.payers[0]?.amount || 1
 
