@@ -519,15 +519,15 @@ const GroupPage = () => {
             <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>
               {t('group.totalExpense')} · {t('group.expenseCount', { n: expenses.length })}
             </div>
-            <div style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>
-              {getCurrency(group.baseCurrency).symbol} {fmt.num(total)}
-            </div>
             {/* 收入只列出金額，不下結論（可能是起始金，也可能是退款）；差額看統計頁的結餘 */}
             {incomes.length > 0 && (
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 }}>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginBottom: 4 }}>
                 {t('stats.totalIncome')} {getCurrency(group.baseCurrency).symbol} {fmt.num(incomeTotal)}
               </div>
             )}
+            <div style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>
+              {getCurrency(group.baseCurrency).symbol} {fmt.num(total)}
+            </div>
             {/* 預算進度條：<80% 白、80–99% 黃、≥100% 紅；淨額為負時寬度為 0 */}
             {budget && (
               <div style={{ marginTop: 8 }}>
