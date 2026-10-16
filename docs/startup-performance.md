@@ -6,5 +6,6 @@
 - **不要拿掉 `auth.authStateReady()`**：Firestore 查詢必須等 Firebase Auth 恢復，否則 `request.auth` 是 null，`onSnapshot` 會被 rules 拒絕且不會重試。
 - **有待認領的訪客名字時一定要走完整流程**，認領是在 `signInWithLineToken` 裡做的。
 - 完整流程中 `getProfile` 與 `verifyLiffToken` 是平行發出的，因為 `liff.getIDToken()` 是同步的。
+- **預熱**：沒有快取使用者（第一次使用、換裝置）一定會走完整流程，`verifyLiffToken` 冷啟動實測約 3.8 秒、熱的約 0.2 秒。`AppContext.jsx` 在 `liff.init` 之前先對它發一個 `no-cors` 的 GET（回 405，只為了喚醒 Function），讓冷啟動和 `liff.init` 同時進行。有快取使用者時不發。
 - 首頁與群組頁（邀請連結落地頁）直接載入，其餘頁面用 `React.lazy`；圖片壓縮與裁切套件用到才載入。`vite.config.js` 把 react、firebase、liff 拆成獨立檔案，改版後使用者只需重下 app 本體。
 - 評估後**沒有**設 `minInstances`：`verifyLiffToken` 常駐約每月 $2.88，而快速路徑下重複開啟不會呼叫它。若之後發現完整流程常發生，再回頭設。

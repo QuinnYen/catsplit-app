@@ -130,6 +130,12 @@ export const AppProvider = ({ children }) => {
           return  // finally 仍會執行，setLoading(false) 正常運作
         }
 
+        // 沒有快取使用者代表會走完整流程：先對 verifyLiffToken 發一個 GET 把 Function 喚醒，
+        // 冷啟動（約 3 秒）就和 liff.init 同時進行。no-cors：只要請求送達，不需要讀回應（回 405 即可）
+        if (VERIFY_LIFF_TOKEN_URL && !readCachedUser()) {
+          fetch(VERIFY_LIFF_TOKEN_URL, { mode: 'no-cors' }).catch(() => {})
+        }
+
         // 1) 先嘗試 LIFF SDK（一定要等 init 完，避免後續頁面呼叫 liff.isInClient() 等 API 時 SDK 還沒準備好）
         try {
           const liff = await initLiff()
