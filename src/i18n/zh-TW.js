@@ -454,7 +454,6 @@ export default {
   'stats.title': '圖表與統計',
   'stats.empty': '還沒有支出可以統計',
   'stats.count': '筆數',
-  'stats.avg': '平均每筆',
   'stats.byCategory': '類別佔比',
   'stats.trend': '每月趨勢',
   'stats.byPayer': '每人付款總額',

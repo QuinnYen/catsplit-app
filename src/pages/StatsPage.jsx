@@ -109,8 +109,13 @@ const StatsPage = () => {
     </div>
   )
   const incomeItem = { label: t('stats.totalIncome'), value: fmt(incomeTotal), color: '#1976d2' }
-  // 有收入時餘額為主；透支（負數）轉紅
-  const balanceItem = { label: t('stats.balance'), value: fmt(balance), color: balance < 0 ? '#e53935' : '#1976d2' }
+  // 結餘（收入 − 支出）：標籤與金額同一行置中，負數轉紅
+  const balanceCard = (
+    <div style={{ ...cardStyle, display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 10 }}>
+      <span style={{ fontSize: 14, color: '#b08060' }}>{t('stats.balance')}</span>
+      <span style={{ fontSize: 24, fontWeight: 700, color: balance < 0 ? '#e53935' : '#1976d2' }}>{fmt(balance)}</span>
+    </div>
+  )
   const maxMonth = Math.max(...stats.months.map(m => m.amount), 1)
   const maxPayer = stats.payers[0]?.amount || 1
 
@@ -146,20 +151,19 @@ const StatsPage = () => {
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><BarChart3 size={48} color="#e0c4b0" /></div>
               <div style={{ color: '#b08060', fontSize: 14 }}>{t('stats.empty')}</div>
             </div>
-            {incomes.length > 0 && statCard([incomeItem, balanceItem])}
+            {incomes.length > 0 && balanceCard}
           </>
         ) : (
           <>
-            {/* 總覽：有收入時第一排改為 總收入／筆數／總支出，平均每筆與餘額放第二排 */}
+            {/* 總覽：有收入時第一排為 總收入／筆數／總支出，下面另起一張結餘 */}
             {incomes.length > 0 ? (
               <>
                 {statCard([incomeItem, { label: t('stats.count'), value: count }, { label: t('group.totalExpense'), value: fmt(stats.total) }])}
-                {statCard([{ label: t('stats.avg'), value: fmt(stats.total / count) }, balanceItem])}
+                {balanceCard}
               </>
             ) : statCard([
               { label: t('group.totalExpense'), value: fmt(stats.total) },
               { label: t('stats.count'), value: count },
-              { label: t('stats.avg'), value: fmt(stats.total / count) },
             ])}
 
             {/* 類別佔比 */}

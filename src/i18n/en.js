@@ -454,7 +454,6 @@ export default {
   'stats.title': 'Charts & stats',
   'stats.empty': 'No expenses to analyze yet',
   'stats.count': 'Count',
-  'stats.avg': 'Average per expense',
   'stats.byCategory': 'By category',
   'stats.trend': 'Monthly trend',
   'stats.byPayer': 'Paid per person',
