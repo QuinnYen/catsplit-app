@@ -1,5 +1,5 @@
 // / — 首頁：未登入顯示登入畫面；已登入顯示使用者資訊、消費總覽與我的群組列表，頭像可開啟選單（設定、收款方式、條款、登出）。
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Settings, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, LogOut, QrCode, MessageCircle } from 'lucide-react'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
@@ -36,6 +36,8 @@ const getGreeting = () => {
   return options[Math.floor(Math.random() * options.length)]
 }
 
+const GROUPS_PER_PAGE = 10
+
 const HomePage = () => {
   const { user, loading: authLoading, loginWithLine, logout, guestNames } = useApp()
   const { t, fmt, lang } = useI18n()
@@ -46,6 +48,7 @@ const HomePage = () => {
   const { groups, groupsLoaded } = useMyGroups()
   const loading = authLoading || (!!user && !groupsLoaded)
   const [showArchived, setShowArchived] = useState(false)
+  const [page, setPage] = useState(1)
   const [showSettings, setShowSettings] = useState(false)
   const [openedAt] = useState(Date.now)
 
@@ -59,6 +62,10 @@ const HomePage = () => {
 
   const activeGroups = groups.filter(g => !g.archived)
   const archivedGroups = groups.filter(g => g.archived)
+  // 一般群組每頁 10 個；群組減少（封存、退出）後頁碼超出範圍時退回最後一頁
+  const pageCount = Math.max(1, Math.ceil(activeGroups.length / GROUPS_PER_PAGE))
+  const currentPage = Math.min(page, pageCount)
+  const pagedGroups = activeGroups.slice((currentPage - 1) * GROUPS_PER_PAGE, currentPage * GROUPS_PER_PAGE)
 
   // 最新動態：所有群組中最近一次的新增支出／轉帳（群組文件上的 lastActivity），只取最新一筆
   const latest = activeGroups
@@ -298,7 +305,26 @@ const HomePage = () => {
               {/* 一般群組 */}
               {activeGroups.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {activeGroups.map(renderCard)}
+                  {pagedGroups.map(renderCard)}
+                </div>
+              )}
+              {pageCount > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 14 }}>
+                  {[
+                    { label: t('home.pagePrev'), to: currentPage - 1, disabled: currentPage === 1 },
+                    { label: t('home.pageNext'), to: currentPage + 1, disabled: currentPage === pageCount },
+                  ].map(({ label, to, disabled }, i) => (
+                    <Fragment key={label}>
+                      {i === 1 && <span style={{ fontSize: 13, color: '#b08060' }}>{currentPage} / {pageCount}</span>}
+                      <button
+                        onClick={() => { setPage(to); window.scrollTo({ top: 0 }) }}
+                        disabled={disabled}
+                        style={{ border: '0.5px solid #f0d5c0', background: '#fff', color: '#b08060', borderRadius: 10, padding: '7px 14px', fontSize: 13, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
+                      >
+                        {label}
+                      </button>
+                    </Fragment>
+                  ))}
                 </div>
               )}
 

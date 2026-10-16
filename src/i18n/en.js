@@ -192,6 +192,8 @@ export default {
   'home.toReceive': 'To receive',
   'home.toPay': 'To pay',
   'home.archived': 'Archived groups ({n})',
+  'home.pagePrev': 'Previous',
+  'home.pageNext': 'Next',
   'home.menu.payment': 'Payment methods',
   'home.menu.terms': 'Terms of Use',
   'home.menu.privacy': 'Privacy Policy',

@@ -192,6 +192,8 @@ export default {
   'home.toReceive': '待收款',
   'home.toPay': '待付款',
   'home.archived': '已封存群組（{n}）',
+  'home.pagePrev': '上一頁',
+  'home.pageNext': '下一頁',
   'home.menu.payment': '收款方式',
   'home.menu.terms': '使用條款',
   'home.menu.privacy': '隱私權政策',
