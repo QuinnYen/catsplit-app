@@ -50,6 +50,8 @@ const GroupPage = () => {
   const [loadedCover, setLoadedCover] = useState(null)
 
   const [isMember, setIsMember] = useState(false)
+  // 群組有預先建好的名字時，先讓人選「我是誰」；選了「不在名單內」才以新成員加入
+  const [joinAsNew, setJoinAsNew] = useState(false)
   // 訪客沒經過 LINE 授權，看不到加好友提示；在 LINE 內用提示條補上，關掉後不再顯示
   const [oaBannerHidden, setOaBannerHidden] = useState(() => {
     try { return localStorage.getItem('catsplit_oa_banner_hidden') === '1' } catch { return false }
@@ -285,6 +287,7 @@ const GroupPage = () => {
   if (!isMember) {
     const profiles = Object.values(group.memberProfiles || {})
     const placeholders = (group.members || []).filter(m => group.memberProfiles?.[m]?.placeholder)
+    const choosingIdentity = !user.guest && placeholders.length > 0 && !joinAsNew
     return (
       <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
         <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 32px', position: 'relative', overflow: 'hidden' }}>
@@ -317,7 +320,7 @@ const GroupPage = () => {
               )}
             </div>
           </div>
-          {!user.guest && <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+          {!user.guest && !choosingIdentity && <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('group.joinAs')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff3ec', borderRadius: 12, padding: '10px 12px' }}>
               <Avatar src={user?.avatar} name={user?.name} size={40} />
@@ -332,7 +335,7 @@ const GroupPage = () => {
           {user.guest && (
             <GuestJoin groupId={id} guests={placeholders.map(pid => ({ id: pid, name: group.memberProfiles[pid].name }))} />
           )}
-          {!user.guest && placeholders.length > 0 && (
+          {choosingIdentity && (
             <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
               <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 4 }}>{t('group.claimTitle')}</div>
               <div style={{ fontSize: 11, color: '#c4a882', marginBottom: 10 }}>{t('group.claimHint')}</div>
@@ -356,7 +359,23 @@ const GroupPage = () => {
           {joinError && (
             <div style={{ fontSize: 13, color: '#c0392b', textAlign: 'center' }}>{joinError}</div>
           )}
-          {!user.guest && <button
+          {choosingIdentity && (
+            <button
+              onClick={() => setJoinAsNew(true)}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', color: '#b08060', fontSize: 14, cursor: 'pointer' }}
+            >
+              {t('group.notInList')}
+            </button>
+          )}
+          {joinAsNew && placeholders.length > 0 && !user.guest && (
+            <button
+              onClick={() => setJoinAsNew(false)}
+              style={{ background: 'none', border: 'none', color: '#b08060', fontSize: 13, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+            >
+              {t('group.backToClaim')}
+            </button>
+          )}
+          {!user.guest && !choosingIdentity && <button
             onClick={handleJoin}
             disabled={joining}
             style={{
