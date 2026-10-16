@@ -97,19 +97,20 @@ const StatsPage = () => {
   const fmt = (n) => `${symbol} ${i18nFmt.num(Math.round(n))}`
   const count = expenses.length
   const incomeTotal = incomes.reduce((s, i) => s + i.amount, 0)
-  const incomeCard = incomes.length > 0 && (
+  const balance = incomeTotal - stats.total
+  const statCard = (items) => (
     <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-      {[
-        { label: t('stats.totalIncome'), value: fmt(incomeTotal) },
-        { label: t('stats.netExpense'), value: fmt(stats.total - incomeTotal) },
-      ].map(item => (
+      {items.map(item => (
         <div key={item.label}>
           <div style={{ fontSize: 11, color: '#b08060', marginBottom: 4 }}>{item.label}</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#1976d2' }}>{item.value}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: item.color || '#FF6B1A' }}>{item.value}</div>
         </div>
       ))}
     </div>
   )
+  const incomeItem = { label: t('stats.totalIncome'), value: fmt(incomeTotal), color: '#1976d2' }
+  // 有收入時餘額為主；透支（負數）轉紅
+  const balanceItem = { label: t('group.balance'), value: fmt(balance), color: balance < 0 ? '#e53935' : '#1976d2' }
   const maxMonth = Math.max(...stats.months.map(m => m.amount), 1)
   const maxPayer = stats.payers[0]?.amount || 1
 
@@ -145,25 +146,21 @@ const StatsPage = () => {
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><BarChart3 size={48} color="#e0c4b0" /></div>
               <div style={{ color: '#b08060', fontSize: 14 }}>{t('stats.empty')}</div>
             </div>
-            {incomeCard}
+            {incomes.length > 0 && statCard([incomeItem, balanceItem])}
           </>
         ) : (
           <>
-            {/* 總覽 */}
-            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-              {[
-                { label: t('group.totalExpense'), value: fmt(stats.total) },
-                { label: t('stats.count'), value: count },
-                { label: t('stats.avg'), value: fmt(stats.total / count) },
-              ].map(item => (
-                <div key={item.label}>
-                  <div style={{ fontSize: 11, color: '#b08060', marginBottom: 4 }}>{item.label}</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: '#FF6B1A' }}>{item.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {incomeCard}
+            {/* 總覽：有收入時第一排改為 總收入／筆數／總支出，平均每筆與餘額放第二排 */}
+            {incomes.length > 0 ? (
+              <>
+                {statCard([incomeItem, { label: t('stats.count'), value: count }, { label: t('group.totalExpense'), value: fmt(stats.total) }])}
+                {statCard([{ label: t('stats.avg'), value: fmt(stats.total / count) }, balanceItem])}
+              </>
+            ) : statCard([
+              { label: t('group.totalExpense'), value: fmt(stats.total) },
+              { label: t('stats.count'), value: count },
+              { label: t('stats.avg'), value: fmt(stats.total / count) },
+            ])}
 
             {/* 類別佔比 */}
             <div style={cardStyle}>

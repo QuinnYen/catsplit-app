@@ -452,7 +452,6 @@ export default {
   'settle.goTransfer': 'Transfer →',
   'settle.history': 'Settled records',
   'stats.totalIncome': 'Total income',
-  'stats.netExpense': 'Net expenses',
   'stats.title': 'Charts & stats',
   'stats.empty': 'No expenses to analyze yet',
   'stats.count': 'Count',

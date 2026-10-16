@@ -452,7 +452,6 @@ export default {
   'settle.goTransfer': '去轉帳 →',
   'settle.history': '已結清紀錄',
   'stats.totalIncome': '總收入',
-  'stats.netExpense': '淨支出',
   'stats.title': '圖表與統計',
   'stats.empty': '還沒有支出可以統計',
   'stats.count': '筆數',
