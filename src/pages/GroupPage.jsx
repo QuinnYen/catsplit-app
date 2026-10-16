@@ -503,15 +503,15 @@ const GroupPage = () => {
         >
           <div style={{ flex: 1 }}>
             <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>
-              {t('group.totalExpense')} · {t('group.expenseCount', { n: expenses.length })}
+              {incomes.length > 0 ? t('group.balance') : t('group.totalExpense')} · {t('group.expenseCount', { n: expenses.length })}
             </div>
-            <div style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>
-              {getCurrency(group.baseCurrency).symbol} {fmt.num(total)}
+            {/* 有收入時主數字改顯示餘額（收入 − 支出），透支時轉紅 */}
+            <div style={{ color: incomes.length > 0 && incomeTotal - total < 0 ? '#FF5252' : '#fff', fontSize: 24, fontWeight: 700 }}>
+              {getCurrency(group.baseCurrency).symbol} {fmt.num(incomes.length > 0 ? incomeTotal - total : total)}
             </div>
-            {/* 有設預算時，已用就是淨額，收入與淨支出那行省略 */}
-            {incomes.length > 0 && !budget && (
+            {incomes.length > 0 && (
               <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 }}>
-                {t('group.incomeNet', { income: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(incomeTotal)}`, net: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(total - incomeTotal)}` })}
+                {t('group.incomeExpense', { income: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(incomeTotal)}`, expense: `${getCurrency(group.baseCurrency).symbol} ${fmt.num(total)}` })}
               </div>
             )}
             {/* 預算進度條：<80% 白、80–99% 黃、≥100% 紅；淨額為負時寬度為 0 */}
