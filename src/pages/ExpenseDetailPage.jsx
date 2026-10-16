@@ -19,6 +19,7 @@ const SPLIT_LABEL = {
   shares: 'detail.split.shares',
   percentage: 'detail.split.percentage',
   custom: 'detail.split.custom',
+  none: 'detail.split.none',
 }
 
 const ExpenseDetailPage = ({ kind = 'expense' }) => {

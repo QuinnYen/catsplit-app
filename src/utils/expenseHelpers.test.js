@@ -36,6 +36,13 @@ test('custom：使用自訂金額，未填者為 0', () => {
   assert.deepEqual(splits, { a: 70, b: 30, c: 0 })
 })
 
+test('none：分給收款人自己，與收入抵銷、不影響任何人結算', () => {
+  const payments = { a: 12480 }
+  const splits = computeSplits({ ...base, splitType: 'none', totalAmount: 12480, payments })
+  assert.deepEqual(splits, { a: 12480 })
+  assert.deepEqual(computeMemberBalances([], [], [], [{ received: payments, splits }]), { a: 0 })
+})
+
 test('applyExchangeRate：同幣別不換算', () => {
   const r = applyExchangeRate({ totalAmount: 100, splits: { a: 60, b: 40 }, payments: { a: 100 }, currency: 'TWD', baseCurrency: 'TWD', exchangeRate: 5 })
   assert.deepEqual(r, { rate: 1, baseAmount: 100, baseSplits: { a: 60, b: 40 }, basePayments: { a: 100 } })

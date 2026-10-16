@@ -6,4 +6,5 @@ export const SPLIT_TYPES = [
   { key: 'shares',     labelKey: 'split.shares' },
   { key: 'percentage', labelKey: 'split.percentage' },
   { key: 'custom',     labelKey: 'split.custom' },
+  { key: 'none',       labelKey: 'split.none', incomeOnly: true },
 ]
