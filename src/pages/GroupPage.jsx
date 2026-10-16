@@ -393,16 +393,11 @@ const GroupPage = () => {
             background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
           }}>
             {[
+              { label: t('group.menu.edit'), Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
               { label: t('group.menu.invite'), Icon: UserPlus, onClick: () => { setSettingsPos(null); setInviteOpen(true) } },
               {
                 label: exporting ? t('group.menu.exporting') : t('group.menu.export'), Icon: Download, disabled: expenses.length + incomes.length === 0 || exporting,
                 onClick: async () => { await handleExportCSV(); setSettingsPos(null) },
-              },
-              { label: t('group.menu.edit'), Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
-              {
-                label: t('group.menu.official'), Icon: MessageCircle,
-                // 直接導向（同首頁的 <a href>）；liff.openWindow 在三星雙開 LINE 的副本會被導回主 LINE
-                onClick: () => { window.location.href = OFFICIAL_ACCOUNT_URL },
               },
             ].map(({ label, Icon, onClick, disabled }) => (
               <button
@@ -468,6 +463,15 @@ const GroupPage = () => {
             <GroupIcon icon={group.icon} color={group.iconColor} size={28} onDark />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</span>
           </div>
+
+          {/* 直接導向（同首頁的 <a href>）；liff.openWindow 在三星雙開 LINE 的副本會被導回主 LINE */}
+          <button
+            onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
+            aria-label={t('group.menu.official')}
+            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+          >
+            <MessageCircle size={20} />
+          </button>
 
           <button
             onClick={e => {
