@@ -49,6 +49,15 @@ const GroupPage = () => {
   const [loadedCover, setLoadedCover] = useState(null)
 
   const [isMember, setIsMember] = useState(false)
+  // 訪客沒經過 LINE 授權，看不到加好友提示；在 LINE 內用提示條補上，關掉後不再顯示
+  const [oaBannerHidden, setOaBannerHidden] = useState(() => {
+    try { return localStorage.getItem('catsplit_oa_banner_hidden') === '1' } catch { return false }
+  })
+  const hideOaBanner = () => {
+    setOaBannerHidden(true)
+    try { localStorage.setItem('catsplit_oa_banner_hidden', '1') } catch { /* 無法儲存就只在這次隱藏 */ }
+  }
+  const showOaBanner = !!user?.guest && !oaBannerHidden && (() => { try { return liffInstance?.isInClient() ?? false } catch { return false } })()
 
   useEffect(() => {
     // includeMetadataChanges：伺服器確認寫入時資料沒變，預設不會再觸發，isMember 就卡在 false
@@ -540,6 +549,21 @@ const GroupPage = () => {
 
       {/* 操作按鈕 */}
       <div className="cs-body" style={{ padding: '16px 16px 0' }}>
+        {showOaBanner && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '0.5px solid #f0d5c0', borderRadius: 12, padding: '8px 8px 8px 12px', marginBottom: 12 }}>
+            <MessageCircle size={16} color="#FF8C42" style={{ flexShrink: 0 }} />
+            <span style={{ flex: 1, fontSize: 12, color: '#3d2b1f' }}>{t('group.oaBanner')}</span>
+            <button
+              onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
+              style={{ border: 'none', background: '#FF8C42', color: '#fff', borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
+            >
+              {t('group.oaBannerAdd')}
+            </button>
+            <button onClick={hideOaBanner} aria-label={t('group.oaBannerClose')} style={{ border: 'none', background: 'none', padding: 4, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
+              <X size={14} color="#b08060" />
+            </button>
+          </div>
+        )}
         {searchOpen ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '0.5px solid #f0d5c0', borderRadius: 20, padding: '6px 12px', marginBottom: 8 }}>
             <Search size={14} color="#b08060" style={{ flexShrink: 0 }} />
