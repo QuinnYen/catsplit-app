@@ -28,7 +28,6 @@ const accountingUpdate = (uid) => ({
   totalAmount: increment(300),
   totalExpenses: increment(1),
   [`memberBalances.${uid}`]: increment(200),
-  lastActivity: { at: new Date(), by: uid, name: 'x', type: 'expense_add', title: 'Lunch' },
 })
 
 const tripBudget = (amount) => ({ amount, period: { type: 'trip' } })

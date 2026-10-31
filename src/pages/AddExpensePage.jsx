@@ -15,7 +15,6 @@ import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildP
 import { getCurrency } from '../config/currencies'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
 import { useI18n } from '../i18n/I18nProvider'
-import { activityForWrite } from '../i18n/codes'
 import { computeBudgetStatus } from '../utils/budget'
 
 const AddExpensePage = () => {
@@ -173,7 +172,6 @@ const AddExpensePage = () => {
         incomeBatch.update(doc(db, 'groups', id), {
           totalIncome: increment(baseAmount),
           incomeCount: increment(1),
-          lastActivity: { at: serverTimestamp(), by: user.uid, ...activityForWrite({ type: 'income_added', title: title.trim(), name: user.name }) },
           ...incomeBalanceDelta,
         })
         await incomeBatch.commit()
@@ -217,7 +215,6 @@ const AddExpensePage = () => {
       batch.update(doc(db, 'groups', id), {
         totalAmount: increment(baseAmount),
         totalExpenses: increment(1),
-        lastActivity: { at: serverTimestamp(), by: user.uid, ...activityForWrite({ type: 'expense_added', title: title.trim(), name: user.name }) },
         ...balanceDelta,
         ...countDelta,
       })

@@ -14,13 +14,11 @@ import useExchangeRate from '../hooks/useExchangeRate'
 import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, primaryPayer } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
-import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import { normalizeCategory, activityForWrite } from '../i18n/codes'
+import { normalizeCategory } from '../i18n/codes'
 import { computeBudgetStatus } from '../utils/budget'
 
 const EditExpensePage = ({ kind = 'expense' }) => {
-  const { user } = useApp()
   const { t } = useI18n()
   const { id, expenseId } = useParams()
   const navigate = useNavigate()
@@ -233,7 +231,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         ...receiptUpdate,
       })
 
-      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: isIncome ? 'income_updated' : 'expense_updated', title: title.trim(), name: user.name }) } })
+      await recomputeGroupAggregates(id, group.members)
       navigate(`/group/${id}`)
     } catch (error) {
       console.error('Failed to save', error)
@@ -247,7 +245,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
     try {
       await deleteDoc(doc(db, 'groups', id, col, expenseId))
       await deleteFileByPath(existingReceiptPath)
-      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: isIncome ? 'income_deleted' : 'expense_deleted', title: originalExpense.title, name: user.name }) } })
+      await recomputeGroupAggregates(id, group.members)
       navigate(`/group/${id}`)
     } catch (error) {
       console.error('Failed to delete', error)

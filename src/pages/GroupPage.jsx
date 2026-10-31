@@ -8,7 +8,7 @@ import { db, auth } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import { normalizeCategory, categoryLabel, paymentMethodLabel, activityForWrite } from '../i18n/codes'
+import { normalizeCategory, categoryLabel, paymentMethodLabel } from '../i18n/codes'
 import GuestJoin from '../components/GuestJoin'
 import InviteModal from '../components/InviteModal'
 import { buildShareContent } from '../utils/shareContent'
@@ -132,10 +132,10 @@ const GroupPage = () => {
     if (!window.confirm(t('group.confirmDeleteExpense'))) return
     setOpenMenuId(null)
     try {
-      const { receiptPath, title } = expenses.find(e => e.id === expenseId) ?? {}
+      const { receiptPath } = expenses.find(e => e.id === expenseId) ?? {}
       await deleteDoc(doc(db, 'groups', id, 'expenses', expenseId))
       await deleteFileByPath(receiptPath)
-      await recomputeGroupAggregates(id, group.members, { activity: { by: user.uid, ...activityForWrite({ type: 'expense_deleted', title, name: user.name }) } })
+      await recomputeGroupAggregates(id, group.members)
     } catch (error) {
       console.error('Failed to delete expense', error)
     }
@@ -145,7 +145,7 @@ const GroupPage = () => {
     if (!window.confirm(t('group.confirmDeleteSettlement'))) return
     try {
       await deleteDoc(doc(db, 'groups', id, 'settlements', settlementId))
-      await recomputeGroupAggregates(id, groupSnapshot.members, { activity: { by: user.uid, ...activityForWrite({ type: 'settlement_deleted', name: user.name }) } })
+      await recomputeGroupAggregates(id, groupSnapshot.members)
     } catch (error) {
       console.error('Failed to delete settlement', error)
     }

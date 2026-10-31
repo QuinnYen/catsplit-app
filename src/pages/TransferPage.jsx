@@ -13,7 +13,7 @@ import PawDecor from '../components/PawDecor'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
 import { useI18n } from '../i18n/I18nProvider'
-import { PAYMENT_METHOD_CODES, paymentMethodLabel, activityForWrite } from '../i18n/codes'
+import { PAYMENT_METHOD_CODES, paymentMethodLabel } from '../i18n/codes'
 
 // 代碼與 paymentProviders 的 id 一致的項目，會自動帶出收款人對應的收款方式
 const PAYMENT_METHODS = PAYMENT_METHOD_CODES
@@ -80,11 +80,6 @@ const TransferPage = () => {
       batch.update(doc(db, 'groups', id), {
         [`memberBalances.${fromUid}`]: increment(actualAmount),
         [`memberBalances.${toUid}`]: increment(-actualAmount),
-        lastActivity: {
-          at: serverTimestamp(),
-          by: user.uid,
-          ...activityForWrite({ type: 'settlement_added', name: group?.memberProfiles?.[fromUid]?.name ?? null, toName: group?.memberProfiles?.[toUid]?.name ?? null }),
-        },
       })
       await batch.commit()
 
