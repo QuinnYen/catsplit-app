@@ -1,5 +1,5 @@
 // 群組頁的搜尋條件選單（底部彈出）：日期、類型、類別、貨幣、搜尋文字、範圍。按「搜尋」後把條件交回群組頁，直接篩選原列表。
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel } from '../i18n/codes'
@@ -52,9 +52,16 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
   const [f, setF] = useState(initial)
   const patch = (p) => setF(prev => ({ ...prev, ...p }))
 
+  // 選單開著時鎖住背景（頁面本身）的捲動，關閉後還原
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.35)' }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.35)', touchAction: 'none' }} />
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 61, maxHeight: '88vh', display: 'flex', flexDirection: 'column',
         background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 720, margin: '0 auto',
@@ -66,7 +73,7 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
           </button>
         </div>
 
-        <div style={{ overflowY: 'auto', padding: '0 18px 12px' }}>
+        <div style={{ overflowY: 'auto', overscrollBehavior: 'contain', padding: '0 18px 12px' }}>
           <div style={sectionTitle}>{t('search.date')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {RANGES.map(([key, label]) => <Chip key={key} active={f.range === key} onClick={() => patch({ range: key })}>{t(label)}</Chip>)}
