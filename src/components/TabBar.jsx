@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, Users, CirclePlus, Calculator } from 'lucide-react'
+import { House, Users, CirclePlus } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
 
 // 導覽類（首頁、群組）用灰褐色；動作類（新增、結算）用主色，讓主要操作更醒目
@@ -7,7 +7,6 @@ const TAB_ICONS = {
   home: { Icon: House, label: 'tab.home' },
   group: { Icon: Users, label: 'tab.group' },
   add: { Icon: CirclePlus, label: 'tab.add', action: true },
-  settle: { Icon: Calculator, label: 'tab.settle', action: true },
 }
 
 /**
@@ -31,7 +30,6 @@ const TabBar = ({ context = 'home', groupId }) => {
         return [
           { id: 'home', path: '/' },
           { id: 'add', path: `/group/${groupId}/add` },
-          { id: 'settle', path: `/group/${groupId}/settle` },
         ]
       case 'expense':
         return [
@@ -88,9 +86,7 @@ const TabBar = ({ context = 'home', groupId }) => {
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            {Icon
-              ? <Icon size={context === 'group' ? 30 : 26} color={color} strokeWidth={isActive ? 2.4 : 1.8} />
-              : <span style={{ fontSize: 20, fontWeight: 600, color }}>{t(label)}</span>}
+            <Icon size={context === 'group' ? 30 : 26} color={color} strokeWidth={isActive ? 2.4 : 1.8} />
             {isActive && (
               <span style={{
                 width: 4,

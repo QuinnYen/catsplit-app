@@ -8,17 +8,18 @@ import { db, auth } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import { normalizeCategory, categoryLabel, paymentMethodLabel } from '../i18n/codes'
+import { categoryLabel, paymentMethodLabel } from '../i18n/codes'
 import GuestJoin from '../components/GuestJoin'
 import InviteModal from '../components/InviteModal'
 import { buildShareContent } from '../utils/shareContent'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
+import SearchOverlay from '../components/SearchOverlay'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
-import { matchExpense, payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
+import { payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { computeBudgetStatus } from '../utils/budget'
@@ -35,9 +36,7 @@ const GroupPage = () => {
   const [settlements, setSettlements] = useState([])
   const [incomes, setIncomes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeCategory, setActiveCategory] = useState(null)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [searchText, setSearchText] = useState('')
   const [openMenuId, setOpenMenuId] = useState(null)
   const [menuUp, setMenuUp] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -589,70 +588,24 @@ const GroupPage = () => {
             </button>
           </div>
         )}
-        {searchOpen ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '0.5px solid #f0d5c0', borderRadius: 20, padding: '6px 12px', marginBottom: 8 }}>
-            <Search size={14} color="#b08060" style={{ flexShrink: 0 }} />
-            <input
-              autoFocus
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)}
-              placeholder={t('group.searchPlaceholder')}
-              style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'none', fontSize: 14, color: '#3d2b1f' }}
-            />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060' }}>{t('group.listTitle')}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
-              onClick={() => { setSearchOpen(false); setSearchText('') }}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#b08060', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+              onClick={() => navigate(`/group/${id}/settle`)}
+              style={{ background: '#FF8C42', color: '#fff', border: 'none', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
             >
-              <X size={16} />
+              {t('tab.settle')}
+            </button>
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label={t('group.search')}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#b08060', display: 'flex', alignItems: 'center' }}
+            >
+              <Search size={16} />
             </button>
           </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060' }}>{t('group.listTitle')}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {activeCategory && (
-                <button
-                  onClick={() => setActiveCategory(null)}
-                  style={{ fontSize: 11, color: '#FF8C42', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
-                >
-                  {t('group.clearFilter')} <X size={11} strokeWidth={3} />
-                </button>
-              )}
-              <button
-                onClick={() => setSearchOpen(true)}
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#b08060', display: 'flex', alignItems: 'center' }}
-              >
-                <Search size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 類別篩選 chips */}
-        {!loading && expenses.length > 0 && (() => {
-          const cats = [null, ...Array.from(new Set(expenses.map(e => normalizeCategory(e.category))))]
-          return (
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
-              {cats.map(cat => {
-                const isActive = activeCategory === cat
-                return (
-                  <button
-                    key={cat ?? 'all'}
-                    onClick={() => setActiveCategory(cat)}
-                    style={{
-                      flexShrink: 0, padding: '5px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
-                      background: isActive ? '#FF8C42' : '#fff3ec',
-                      color: isActive ? '#fff' : '#b08060',
-                      fontWeight: isActive ? 500 : 400,
-                    }}
-                  >
-                    {cat === null ? t('group.filterAll') : categoryLabel(cat, t)}
-                  </button>
-                )
-              })}
-            </div>
-          )
-        })()}
+        </div>
       </div>
 
       {/* 支出列表 */}
@@ -670,19 +623,6 @@ const GroupPage = () => {
         )}
 
         {!loading && (() => {
-          const isSearching = searchText.trim() !== ''
-          const filteredExpenses = expenses.filter(e =>
-            (!activeCategory || normalizeCategory(e.category) === activeCategory) &&
-            matchExpense(e, searchText, group.memberProfiles, categoryLabel(e.category, t))
-          )
-
-          if ((activeCategory || isSearching) && filteredExpenses.length === 0) return (
-            <div style={{ textAlign: 'center', padding: '48px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Search size={40} color="#e0c4b0" /></div>
-              <div style={{ color: '#b08060', fontSize: 14 }}>{isSearching ? t('group.noMatch') : t('group.noCategoryMatch')}</div>
-            </div>
-          )
-
           // Merge expenses and settlements into unified timeline: by date (createdAt) desc,
           // then within the same day by time desc: 有 hasTime 的支出用消費時間（createdAt），
           // 其餘（舊支出、轉帳）用實際記帳時間（addedAt，退回 createdAt）
@@ -697,9 +637,9 @@ const GroupPage = () => {
               ? Infinity
               : (item.addedAt?.toMillis?.() ?? item.createdAt?.toMillis?.() ?? 0)
           const allItems = [
-            ...filteredExpenses.map(e => ({ ...e, _type: 'expense' })),
-            ...(activeCategory || isSearching ? [] : settlements.map(s => ({ ...s, _type: 'settlement' }))),
-            ...(activeCategory || isSearching ? [] : incomes.map(i => ({ ...i, _type: 'income' }))),
+            ...expenses.map(e => ({ ...e, _type: 'expense' })),
+            ...settlements.map(s => ({ ...s, _type: 'settlement' })),
+            ...incomes.map(i => ({ ...i, _type: 'income' })),
           ].sort((a, b) => dayKey(b) - dayKey(a) || sortTime(b) - sortTime(a))
 
           if (allItems.length === 0) return null
@@ -884,6 +824,15 @@ const GroupPage = () => {
           )
         })()}
       </div>
+
+      {searchOpen && (
+        <SearchOverlay
+          group={group}
+          expenses={expenses}
+          onClose={() => setSearchOpen(false)}
+          onOpenExpense={(expenseId) => navigate(`/group/${id}/expense/${expenseId}`)}
+        />
+      )}
 
       {inviteOpen && (
         <InviteModal
