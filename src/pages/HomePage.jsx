@@ -6,7 +6,6 @@ import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import useMyGroups from '../hooks/useMyGroups'
-import { describeActivity } from '../i18n/codes'
 import Avatar from '../components/Avatar'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
@@ -51,7 +50,6 @@ const HomePage = () => {
   const [showArchived, setShowArchived] = useState(false)
   const [page, setPage] = useState(1)
   const [showSettings, setShowSettings] = useState(false)
-  const [openedAt] = useState(Date.now)
 
   const myIdIn = (group) => user?.guest
     ? guestNames.find(g => g.groupId === group.id)?.memberId
@@ -67,14 +65,6 @@ const HomePage = () => {
   const pageCount = Math.max(1, Math.ceil(activeGroups.length / GROUPS_PER_PAGE))
   const currentPage = Math.min(page, pageCount)
   const pagedGroups = activeGroups.slice((currentPage - 1) * GROUPS_PER_PAGE, currentPage * GROUPS_PER_PAGE)
-
-  // 最新動態：所有群組中最近一次的新增支出／轉帳（群組文件上的 lastActivity），只取最新一筆
-  const latest = activeGroups
-    .filter(g => g.lastActivity)
-    .map(g => ({ group: g, at: g.lastActivity.at?.toDate?.() ?? new Date(), name: g.lastActivity.name, activity: g.lastActivity }))
-    .sort((a, b) => b.at - a.at)[0]
-  // 一天內有動靜才顯示訊息，超過只留時間
-  const latestIsRecent = latest && openedAt - latest.at.getTime() < 24 * 60 * 60 * 1000
 
   if (!authLoading && !user) {
     return (
@@ -137,7 +127,7 @@ const HomePage = () => {
         <PawDecor style={{ right: 14, bottom: -8 }} />
 
         {/* 使用者資訊 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button
               onClick={() => setShowSettings(true)}
@@ -158,21 +148,6 @@ const HomePage = () => {
               <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
             </div>
           </div>
-        </div>
-
-        {/* 最新動態卡片 */}
-        <div
-          onClick={latestIsRecent ? () => navigate(`/group/${latest.group.id}`) : undefined}
-          style={{ cursor: latestIsRecent ? 'pointer' : 'default', background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)' }}
-        >
-          {latestIsRecent ? (
-            <>
-              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>{latest.group.name}・{latest.name ?? t('common.someone')}</div>
-              <div style={{ color: '#fff', fontSize: 18, fontWeight: 500, marginTop: 4 }}>{describeActivity(latest.activity, t)}</div>
-            </>
-          ) : (
-            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16 }}>{t('home.noActivity')}</div>
-          )}
         </div>
       </div>
 
