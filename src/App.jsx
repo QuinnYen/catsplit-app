@@ -6,6 +6,8 @@ import { useI18n } from './i18n/I18nProvider'
 import catLogo from './assets/cat-logo.webp'
 import { PawPrint, Wallet } from 'lucide-react'
 import LineIcon from './components/LineIcon'
+import useMyGroups from './hooks/useMyGroups'
+import useSyncMemberProfile from './hooks/useSyncMemberProfile'
 
 // 首頁與群組頁是主要落地頁（含邀請連結），直接載入；其餘頁面用到才下載
 import HomePage from './pages/HomePage'
@@ -84,6 +86,13 @@ const LoginScreen = ({ onLogin, guestGroupId }) => {
   )
 }
 
+// 不論從哪個網址進來（首頁、LINE 公告的群組連結…），登入後都把 LINE 頭像與名字同步到自己的群組
+const ProfileSync = () => {
+  const { groups, groupsLoaded } = useMyGroups()
+  useSyncMemberProfile(groups, groupsLoaded)
+  return null
+}
+
 const ProtectedRoutes = () => {
   const { user, loading, loginWithLine, switchGuestGroup, guestNames } = useApp()
   const location = useLocation()
@@ -102,6 +111,8 @@ const ProtectedRoutes = () => {
   if (!user) return <LoginScreen onLogin={() => loginWithLine(location.pathname + location.search)} guestGroupId={inviteGroupId} />
 
   return (
+    <>
+    {!user.guest && <ProfileSync />}
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />
@@ -119,6 +130,7 @@ const ProtectedRoutes = () => {
       <Route path="/group/:id/edit" element={<EditGroupPage />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
+    </>
   )
 }
 
