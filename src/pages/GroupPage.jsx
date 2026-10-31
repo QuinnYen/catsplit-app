@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 
-import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download } from 'lucide-react'
+import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download, Users } from 'lucide-react'
 import { db, auth } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
@@ -414,6 +414,7 @@ const GroupPage = () => {
           }}>
             {[
               { label: t('group.menu.edit'), Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
+              { label: t('eg.members'), Icon: Users, onClick: () => navigate(`/group/${id}/members`) },
               { label: t('group.menu.invite'), Icon: UserPlus, onClick: () => { setSettingsPos(null); setInviteOpen(true) } },
               {
                 label: exporting ? t('group.menu.exporting') : t('group.menu.export'), Icon: Download, disabled: expenses.length + incomes.length === 0 || exporting,
