@@ -60,6 +60,18 @@ service cloud.firestore {
       allow delete: if isLineUser() && request.auth.uid == userId;
     }
 
+    // 個人設定（全域暱稱）：只有本人能讀寫，暱稱 1~20 字
+    match /users/{userId}/settings/profile {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if isLineUser()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['nickname'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20;
+      allow delete: if isLineUser() && request.auth.uid == userId;
+    }
+
     match /groups/{groupId} {
       // 單筆讀取：登入者持有群組 ID（邀請連結）即可讀，加入前需要先看到群組
       allow get: if request.auth != null;

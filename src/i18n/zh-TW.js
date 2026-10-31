@@ -467,4 +467,10 @@ export default {
   'common.saving': '儲存中...',
   'settings.dangerZone': '危險區域',
   'settings.deleteHint': '刪除你的資料並退出所有群組，此操作無法復原。',
+  'settings.nickname': '顯示名稱',
+  'settings.nicknameHint': '會套用到你所在的所有群組。留空則使用 LINE 名字（{name}）。',
+  'settings.nicknamePlaceholder': '輸入想顯示的名稱',
+  'settings.nicknameSave': '儲存',
+  'settings.nicknameSaving': '儲存中...',
+  'settings.nicknameFailed': '儲存失敗，請稍後再試',
 }

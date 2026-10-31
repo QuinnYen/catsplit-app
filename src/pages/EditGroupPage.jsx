@@ -460,14 +460,17 @@ const EditGroupPage = () => {
                         </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => { setRenamingUid(isRenaming ? null : uid); setRenameInput(profile?.name || '') }}
-                      style={{
-                        padding: '6px 12px', borderRadius: 8, border: '1px solid #f0d5c0', background: isRenaming ? '#fff3ec' : '#fff', color: isRenaming ? '#FF8C42' : '#b08060', fontSize: 12, cursor: 'pointer', flexShrink: 0,
-                      }}
-                    >
-                      {isRenaming ? t('common.cancel') : t('eg.rename')}
-                    </button>
+                    {/* LINE 成員的名字由本人在設定頁統一設定；只有訪客名字能在群組內改 */}
+                    {profile?.placeholder && (
+                      <button
+                        onClick={() => { setRenamingUid(isRenaming ? null : uid); setRenameInput(profile?.name || '') }}
+                        style={{
+                          padding: '6px 12px', borderRadius: 8, border: '1px solid #f0d5c0', background: isRenaming ? '#fff3ec' : '#fff', color: isRenaming ? '#FF8C42' : '#b08060', fontSize: 12, cursor: 'pointer', flexShrink: 0,
+                        }}
+                      >
+                        {isRenaming ? t('common.cancel') : t('eg.rename')}
+                      </button>
+                    )}
                     {isCreator && !isCreatorMember && (
                       <button
                         onClick={() => handleRemoveMember(uid)}

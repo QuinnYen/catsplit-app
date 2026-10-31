@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../config/firebase'
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore'
+import { auth, db } from '../config/firebase'
 import { initLiff } from '../config/liff'
 import { useI18n } from '../i18n/I18nProvider'
 
@@ -11,6 +12,10 @@ const STORAGE_KEY = 'catsplit_user'
 // 訪客選過的名字 [{ groupId, memberId, name }]，最新的在前；進入群組時自動切換成該群組的名字
 const GUEST_NAMES_KEY = 'catsplit_guest_names'
 export const MAX_GUEST_NAMES = 3
+export const NICKNAME_MAX_LENGTH = 20
+// 全域暱稱（LINE 使用者自訂的顯示名稱）存在 users/{uid}/settings/profile，localStorage 只當快取，讓啟動時不用等網路
+const nicknameCacheKey = (uid) => `catsplit_nickname_${uid}`
+const nicknameRef = (uid) => doc(db, 'users', uid, 'settings', 'profile')
 const readGuestNames = () => {
   try {
     const list = JSON.parse(localStorage.getItem(GUEST_NAMES_KEY))
@@ -102,10 +107,57 @@ const readCachedUser = () => {
 }
 
 export const AppProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
+  const [baseUser, setUser] = useState(null)
+  // 雲端讀到的暱稱 { uid, value }；讀到之前先用 localStorage 快取
+  const [fetchedNickname, setFetchedNickname] = useState(null)
   const [loading, setLoading] = useState(true)
   const [liffInstance, setLiffInstance] = useState(null)
   const { applyAutoLanguage } = useI18n()
+
+  const baseUid = baseUser?.uid
+  const baseIsGuest = !!baseUser?.guest
+  const cachedNickname = useMemo(() => {
+    if (!baseUid || baseIsGuest) return null
+    try { return localStorage.getItem(nicknameCacheKey(baseUid)) || null } catch { return null }
+  }, [baseUid, baseIsGuest])
+  const fetchedForMe = !!baseUid && !baseIsGuest && fetchedNickname?.uid === baseUid
+  const nickname = !baseUid || baseIsGuest ? null : (fetchedForMe ? fetchedNickname.value : cachedNickname)
+  // 暱稱已從雲端確認過（成功讀到）才為 true；同步名字到群組前要等它，否則會先用 LINE 名字蓋掉暱稱
+  const nicknameReady = fetchedForMe
+
+  // 對外的 user：有暱稱就以暱稱當 name（LINE 原名在 lineName）
+  const user = useMemo(
+    () => (baseUser && nickname ? { ...baseUser, name: nickname, lineName: baseUser.name } : baseUser),
+    [baseUser, nickname]
+  )
+
+  const writeNicknameCache = (uid, value) => {
+    try { value ? localStorage.setItem(nicknameCacheKey(uid), value) : localStorage.removeItem(nicknameCacheKey(uid)) } catch { /* 存不了就不快取 */ }
+  }
+
+  useEffect(() => {
+    if (!baseUid || baseIsGuest) return
+    let cancelled = false
+    auth.authStateReady()
+      .then(() => getDoc(nicknameRef(baseUid)))
+      .then((snap) => {
+        if (cancelled) return
+        const value = snap.data()?.nickname || null
+        writeNicknameCache(baseUid, value)
+        setFetchedNickname({ uid: baseUid, value })
+      })
+      .catch((e) => console.warn('load nickname failed', e?.code || e))
+    return () => { cancelled = true }
+  }, [baseUid, baseIsGuest])
+
+  // 空字串代表清除暱稱、回到 LINE 名字
+  const saveNickname = async (value) => {
+    const trimmed = value.trim().slice(0, NICKNAME_MAX_LENGTH)
+    if (trimmed) await setDoc(nicknameRef(baseUid), { nickname: trimmed })
+    else await deleteDoc(nicknameRef(baseUid))
+    writeNicknameCache(baseUid, trimmed || null)
+    setFetchedNickname({ uid: baseUid, value: trimmed || null })
+  }
 
   useEffect(() => {
     const init = async () => {
@@ -332,7 +384,7 @@ export const AppProvider = ({ children }) => {
   }
 
   return (
-    <AppContext.Provider value={{ user, setUser, loading, loginWithLine, loginAsGuest, joinAsGuest, forgetGuestName, switchGuestGroup, guestNames: user?.guest ? readGuestNames() : [], claimMember, logout, completeOAuthCallback, liffInstance }}>
+    <AppContext.Provider value={{ user, setUser, nicknameReady, saveNickname, loading, loginWithLine, loginAsGuest, joinAsGuest, forgetGuestName, switchGuestGroup, guestNames: user?.guest ? readGuestNames() : [], claimMember, logout, completeOAuthCallback, liffInstance }}>
       {children}
     </AppContext.Provider>
   )

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore'
 import { Trash2 } from 'lucide-react'
 import { db } from '../config/firebase'
-import { useApp } from '../context/AppContext'
+import { useApp, NICKNAME_MAX_LENGTH } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import Avatar from '../components/Avatar'
 import PawDecor from '../components/PawDecor'
@@ -14,12 +14,30 @@ import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }
 
 const SettingsPage = () => {
-  const { user, logout } = useApp()
+  const { user, logout, saveNickname } = useApp()
   const { t, lang, setLang } = useI18n()
   const navigate = useNavigate()
   const [groups, setGroups] = useState(null)
   const [deletingData, setDeletingData] = useState(false)
   const canDelete = !!user && !user.guest
+  // 有暱稱時 user.lineName 才有值；輸入框沒動過就顯示目前暱稱
+  const currentNickname = user?.lineName ? user.name : ''
+  const [nicknameInput, setNicknameInput] = useState(null)
+  const [nicknameSaving, setNicknameSaving] = useState(false)
+  const nicknameDirty = nicknameInput !== null && nicknameInput.trim() !== currentNickname
+
+  const handleSaveNickname = async () => {
+    setNicknameSaving(true)
+    try {
+      await saveNickname(nicknameInput)
+      setNicknameInput(null)
+    } catch (error) {
+      console.error('Failed to save nickname', error)
+      alert(t('settings.nicknameFailed'))
+    } finally {
+      setNicknameSaving(false)
+    }
+  }
 
   // 刪除資料要知道自己在哪些群組；訪客不能刪除，不需要讀取
   useEffect(() => {
@@ -76,6 +94,33 @@ const SettingsPage = () => {
           <Avatar src={user?.avatar} name={user?.name} size={88} style={{ background: '#ffe0c8', border: '3px solid #f0d5c0' }} />
           <div style={{ fontSize: 18, fontWeight: 500, color: '#3d2b1f', textAlign: 'center', wordBreak: 'break-word' }}>{user?.name}</div>
         </div>
+
+        {/* 顯示名稱（全域暱稱）：訪客的名字屬於群組，不能在這裡改 */}
+        {canDelete && (
+          <div style={card}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>{t('settings.nickname')}</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={nicknameInput ?? currentNickname}
+                onChange={e => setNicknameInput(e.target.value)}
+                maxLength={NICKNAME_MAX_LENGTH}
+                placeholder={t('settings.nicknamePlaceholder')}
+                style={{ flex: 1, minWidth: 0, border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+              />
+              <button
+                onClick={handleSaveNickname}
+                disabled={!nicknameDirty || nicknameSaving}
+                style={{ padding: '10px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: '#fff', cursor: nicknameDirty && !nicknameSaving ? 'pointer' : 'not-allowed', background: nicknameDirty && !nicknameSaving ? '#FF8C42' : '#e0c4b0' }}
+              >
+                {nicknameSaving ? t('settings.nicknameSaving') : t('settings.nicknameSave')}
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: '#b08060', lineHeight: 1.6, marginTop: 8 }}>
+              {t('settings.nicknameHint', { name: user?.lineName ?? user?.name })}
+            </div>
+          </div>
+        )}
 
         {/* 語言：所有人都能手動切換；EN_READY 只影響「沒選過語言時」是否依瀏覽器語言自動判定 */}
         <div style={card}>

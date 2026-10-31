@@ -467,4 +467,10 @@ export default {
   'common.saving': 'Saving...',
   'settings.dangerZone': 'Danger zone',
   'settings.deleteHint': 'Delete your data and leave all groups. This cannot be undone.',
+  'settings.nickname': 'Display name',
+  'settings.nicknameHint': 'Applies to all your groups. Leave blank to use your LINE name ({name}).',
+  'settings.nicknamePlaceholder': 'Enter a display name',
+  'settings.nicknameSave': 'Save',
+  'settings.nicknameSaving': 'Saving...',
+  'settings.nicknameFailed': 'Could not save. Please try again later.',
 }
