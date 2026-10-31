@@ -92,7 +92,9 @@ const SettingsPage = () => {
         {/* 頭像與名稱 */}
         <div style={{ ...card, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '24px 14px' }}>
           <Avatar src={user?.avatar} name={user?.name} size={88} style={{ background: '#ffe0c8', border: '3px solid #f0d5c0' }} />
-          <div style={{ fontSize: 18, fontWeight: 500, color: '#3d2b1f', textAlign: 'center', wordBreak: 'break-word' }}>{user?.name}</div>
+          <div style={{ fontSize: 18, fontWeight: 500, color: '#3d2b1f', textAlign: 'center', wordBreak: 'break-word' }}>
+            {user?.lineName ?? user?.name}{user?.lineName && ` / ${user.name}`}
+          </div>
         </div>
 
         {/* 顯示名稱（全域暱稱）：訪客的名字屬於群組，不能在這裡改 */}
