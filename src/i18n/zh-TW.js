@@ -257,6 +257,8 @@ export default {
   'form.allocatedPercent': '已分配 {p}% / 100%',
   'form.allocatedSum': '已分配 {symbol} {a} / {b}',
   'form.shareToLine': '儲存後分享到 LINE 群組',
+  'form.noteLabel': '備註（選填）',
+  'form.notePlaceholder': '例如：和誰一起、用途說明...',
   'form.receiptLabel': '收據照片（選填）',
   'form.receiptAlt': '收據',
   'form.receiptUpload': '點擊上傳收據照片',

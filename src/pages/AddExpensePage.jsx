@@ -44,6 +44,7 @@ const AddExpensePage = () => {
   const [baseCurrency, setBaseCurrency] = useState('TWD')
   const [expenseDate, setExpenseDate] = useState(nowStr)
   const [shareToLine, setShareToLine] = useState(false)
+  const [note, setNote] = useState('')
   const [receiptFile, setReceiptFile] = useState(null)
   const [receiptPreview, setReceiptPreview] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -158,6 +159,7 @@ const AddExpensePage = () => {
           splitType,
           splits: baseSplits,
           ...(splitType === 'shares' && { shares }),
+          ...(note.trim() && { note: note.trim() }),
           createdBy: user.uid,
           createdAt: Timestamp.fromDate(new Date(expenseDate)),
           hasTime: true,
@@ -192,6 +194,7 @@ const AddExpensePage = () => {
         splitType,
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
+        ...(note.trim() && { note: note.trim() }),
         createdBy: user.uid,
         createdAt: Timestamp.fromDate(new Date(expenseDate)),
         hasTime: true,
@@ -355,6 +358,7 @@ const AddExpensePage = () => {
           percentageTotal={percentageTotal}
           customTotal={customTotal}
           effectiveUids={effectiveUids}
+          note={note} setNote={setNote}
           receiptFile={receiptFile} setReceiptFile={kind === 'expense' ? setReceiptFile : undefined}
           receiptPreview={receiptPreview} setReceiptPreview={setReceiptPreview}
           shareToLine={shareToLine} setShareToLine={setShareToLine}

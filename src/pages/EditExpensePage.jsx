@@ -49,6 +49,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const [currency, setCurrency] = useState('TWD')
   const [baseCurrency, setBaseCurrency] = useState('TWD')
   const [expenseDate, setExpenseDate] = useState('')
+  const [note, setNote] = useState('')
   const [receiptFile, setReceiptFile] = useState(null)
   const [receiptPreview, setReceiptPreview] = useState(null)
   const [existingReceiptPath, setExistingReceiptPath] = useState(null)
@@ -76,6 +77,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       setBaseCurrency(base)
       if (expense.receiptPath) setExistingReceiptPath(expense.receiptPath)
       setTitle(expense.title)
+      setNote(expense.note || '')
       setAmount(String(expense.originalAmount ?? expense.amount))
       setCurrency(expense.currency || base)
       setSavedRate({ currency: expense.currency || base, rate: expense.exchangeRate ?? 1 })
@@ -225,6 +227,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         splitType,
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
+        note: note.trim(),
         createdAt: Timestamp.fromDate(new Date(expenseDate)),
         hasTime: true,
         ...receiptUpdate,
@@ -304,6 +307,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
           percentageTotal={percentageTotal}
           customTotal={customTotal}
           effectiveUids={effectiveUids}
+          note={note} setNote={setNote}
           receiptFile={receiptFile} setReceiptFile={isIncome ? undefined : setReceiptFile}
           receiptPreview={receiptPreview} setReceiptPreview={setReceiptPreview}
           existingReceiptPath={existingReceiptPath}

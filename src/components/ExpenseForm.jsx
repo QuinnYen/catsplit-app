@@ -4,11 +4,12 @@ import ShareToLineToggle from './ShareToLineToggle'
 import Avatar from './Avatar'
 import DateTimeField from './DateTimeField'
 import CalculatorModal from './CalculatorModal'
+import CollapsibleCard from './CollapsibleCard'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel, normalizeCategory } from '../i18n/codes'
-import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, SPLIT_TYPES } from '../config/expenseForm'
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, SPLIT_TYPES, NOTE_MAX_LENGTH } from '../config/expenseForm'
 
 const inputStyle = {
   width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10,
@@ -129,6 +130,8 @@ const ExpenseForm = ({
   percentageTotal,
   customTotal,
   effectiveUids,
+  // 備註
+  note, setNote,
   // 收據圖片
   setReceiptFile,
   receiptPreview, setReceiptPreview,
@@ -497,10 +500,22 @@ const ExpenseForm = ({
       {/* LINE 分享 — 僅在 LINE app 內顯示 */}
       {showShareOption && <ShareToLineToggle checked={shareToLine} onChange={setShareToLine} />}
 
+      {/* 備註 */}
+      <CollapsibleCard label={t('form.noteLabel')} hasContent={!!note.trim()}>
+        <input
+          type="text"
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder={t('form.notePlaceholder')}
+          maxLength={NOTE_MAX_LENGTH}
+          style={inputStyle}
+        />
+        <div style={{ textAlign: 'right', fontSize: 11, color: '#c4a882', marginTop: 4 }}>{note.length}/{NOTE_MAX_LENGTH}</div>
+      </CollapsibleCard>
+
       {/* 收據上傳 */}
       {setReceiptFile && (
-        <div style={cardStyle}>
-          <div style={labelStyle}>{t('form.receiptLabel')}</div>
+        <CollapsibleCard label={t('form.receiptLabel')} hasContent={!!(receiptPreview || (existingReceiptPath && !removeExistingReceipt))}>
 
           {/* 已有圖片（既有 URL 或本次選擇的預覽） */}
           {(receiptPreview || (existingReceiptPath && !removeExistingReceipt)) ? (
@@ -548,7 +563,7 @@ const ExpenseForm = ({
               />
             </label>
           )}
-        </div>
+        </CollapsibleCard>
       )}
     </>
   )

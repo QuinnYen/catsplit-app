@@ -1,4 +1,5 @@
 export const DEFAULT_CATEGORIES = ['food', 'transport', 'lodging', 'shopping', 'entertainment', 'daily', 'other']
+export const NOTE_MAX_LENGTH = 50
 export const DEFAULT_INCOME_CATEGORIES = ['refund', 'advance', 'subsidy', 'other']
 export const SPLIT_TYPES = [
   { key: 'equal',      labelKey: 'split.equal' },

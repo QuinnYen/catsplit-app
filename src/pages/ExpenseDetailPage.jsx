@@ -7,6 +7,7 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
 import PawDecor from '../components/PawDecor'
+import CollapsibleCard from '../components/CollapsibleCard'
 import { getCurrency } from '../config/currencies'
 import { toLocalDateStr, expenseTimeStr, payerLabel } from '../utils/expenseHelpers'
 import { useStorageImage } from '../hooks/useStorageImage'
@@ -202,10 +203,16 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           </div>
         </div>
 
+        {/* 備註 */}
+        {expense.note && (
+          <CollapsibleCard label={t('group.detail.note')} hasContent>
+            <div style={{ fontSize: 14, color: '#3d2b1f', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{expense.note}</div>
+          </CollapsibleCard>
+        )}
+
         {/* 收據圖片 */}
         {expense.receiptPath && (
-          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('detail.receipt')}</div>
+          <CollapsibleCard label={t('detail.receipt')} hasContent>
             {receiptUrl && (
               <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
                 <img
@@ -215,7 +222,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 />
               </a>
             )}
-          </div>
+          </CollapsibleCard>
         )}
 
         {/* 我的份額卡 */}

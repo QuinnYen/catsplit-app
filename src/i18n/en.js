@@ -257,6 +257,8 @@ export default {
   'form.allocatedPercent': 'Allocated {p}% / 100%',
   'form.allocatedSum': 'Allocated {symbol} {a} / {b}',
   'form.shareToLine': 'Share to a LINE chat after saving',
+  'form.noteLabel': 'Note (optional)',
+  'form.notePlaceholder': 'e.g. who joined, what it was for...',
   'form.receiptLabel': 'Receipt photo (optional)',
   'form.receiptAlt': 'Receipt',
   'form.receiptUpload': 'Tap to upload a receipt photo',
