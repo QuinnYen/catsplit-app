@@ -21,6 +21,7 @@ import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
 import { payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
+import { buildCsv, csvFileName } from '../utils/csvExport'
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { computeBudgetStatus } from '../utils/budget'
@@ -159,45 +160,8 @@ const GroupPage = () => {
 
   const handleExportCSV = async () => {
     if (exporting) return
-    // 沒有收入時 CSV 與原本完全相同；有收入時加「類型」欄，支出與收入依日期由舊到新合併
-    const hasIncome = incomes.length > 0
-    const header = [...(hasIncome ? [t('csv.type')] : []), t('csv.date'), t('csv.title'), t('csv.category'), hasIncome ? t('csv.payerOrReceiver') : t('csv.payer'), t('csv.originalAmount'), t('csv.currency'), t('csv.converted', { currency: group.baseCurrency }), t('csv.splitType'), t('csv.note')]
-    const csvItems = hasIncome
-      ? [
-          ...[...expenses].reverse().map(e => ({ e, type: 'expense' })),
-          ...[...incomes].reverse().map(e => ({ e, type: 'income' })),
-        ].sort((a, b) => (a.e.createdAt?.toMillis?.() ?? 0) - (b.e.createdAt?.toMillis?.() ?? 0))
-      : [...expenses].reverse().map(e => ({ e, type: 'expense' }))
-    const rows = csvItems.map(({ e, type }) => {
-      const date = e.createdAt?.toDate
-        ? fmt.shortDate(e.createdAt.toDate())
-        : ''
-      const payer = Object.entries((type === 'income' ? e.received : e.payments) || {})
-        .map(([uid, amt]) => `${group.memberProfiles?.[uid]?.name || uid}(${amt})`)
-        .join('; ')
-      const splitTypes = { equal: t('csv.split.equal'), subset: t('csv.split.subset'), shares: t('csv.split.shares'), percentage: t('csv.split.percentage'), custom: t('csv.split.custom') }
-      const splitType = splitTypes[e.splitType] || e.splitType || ''
-      return [
-        ...(hasIncome ? [type === 'income' ? t('csv.typeIncome') : t('csv.typeExpense')] : []),
-        date,
-        e.title || '',
-        e.category ? categoryLabel(e.category, t) : '',
-        payer,
-        e.originalAmount ?? e.amount,
-        e.currency || group.baseCurrency,
-        e.amount,
-        splitType,
-        e.note || '',
-      ]
-    })
-    const bom = '﻿'
-    // 文字欄位以 = + - @ 開頭時，Excel 會當公式執行；前面補 ' 使其視為純文字（數字不處理）
-    const escapeCell = v => {
-      const s = String(v)
-      return `"${(typeof v === 'string' && /^[=+\-@\t\r]/.test(s) ? "'" + s : s).replace(/"/g, '""')}"`
-    }
-    const csv = bom + [header, ...rows].map(r => r.map(escapeCell).join(',')).join('\n')
-    const filename = `${group.name}_${hasIncome ? t('csv.fileBoth') : t('csv.fileExpense')}.csv`
+    const csv = buildCsv({ expenses, incomes, settlements, group, uid: user?.uid, t })
+    const filename = csvFileName({ group, incomes, settlements, t })
 
     // LINE 內建瀏覽器無法下載 blob：請雲端函式存檔並回傳短效網址，在外部瀏覽器開啟下載
     if (liffInstance?.isInClient?.() && EXPORT_CSV_URL) {
