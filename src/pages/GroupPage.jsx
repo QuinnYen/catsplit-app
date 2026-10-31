@@ -8,13 +8,14 @@ import { db, auth } from '../config/firebase'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import { categoryLabel, paymentMethodLabel } from '../i18n/codes'
+import { normalizeCategory, categoryLabel, paymentMethodLabel } from '../i18n/codes'
+import { EMPTY_FILTERS, isFiltering, applyFilters } from '../utils/searchFilter'
 import GuestJoin from '../components/GuestJoin'
 import InviteModal from '../components/InviteModal'
 import { buildShareContent } from '../utils/shareContent'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
-import SearchOverlay from '../components/SearchOverlay'
+import SearchSheet from '../components/SearchSheet'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
 import PawDecor from '../components/PawDecor'
@@ -37,6 +38,7 @@ const GroupPage = () => {
   const [incomes, setIncomes] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [openMenuId, setOpenMenuId] = useState(null)
   const [menuUp, setMenuUp] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -603,6 +605,7 @@ const GroupPage = () => {
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#b08060', display: 'flex', alignItems: 'center' }}
             >
               <Search size={16} />
+              {isFiltering(filters) && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF6B1A', marginLeft: 2, alignSelf: 'flex-start' }} />}
             </button>
           </div>
         </div>
@@ -644,13 +647,39 @@ const GroupPage = () => {
 
           if (allItems.length === 0) return null
 
+          const filtering = isFiltering(filters)
+          const shownItems = applyFilters(allItems, filters, {
+            uid: user?.uid, memberProfiles: group.memberProfiles, baseCurrency: group.baseCurrency || 'TWD',
+            categoryLabelOf: (raw) => categoryLabel(raw, t),
+          })
+          const filterBanner = filtering && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0 0', fontSize: 12, color: '#b08060' }}>
+              <span>{t('search.resultCount', { n: shownItems.length })}</span>
+              <button
+                onClick={() => setFilters(EMPTY_FILTERS)}
+                style={{ fontSize: 12, color: '#FF8C42', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+              >
+                {t('search.clear')} <X size={11} strokeWidth={3} />
+              </button>
+            </div>
+          )
+          if (filtering && shownItems.length === 0) return (
+            <>
+              {filterBanner}
+              <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Search size={40} color="#e0c4b0" /></div>
+                <div style={{ color: '#b08060', fontSize: 14 }}>{t('group.noMatch')}</div>
+              </div>
+            </>
+          )
+
           const toDateLabel = (item) => item.createdAt?.toDate
             ? fmt.date(item.createdAt.toDate())
             : t('group.unknownDate')
 
           const groups = []
           let currentDate = null
-          allItems.forEach(item => {
+          shownItems.forEach(item => {
             const dateLabel = toDateLabel(item)
             if (dateLabel !== currentDate) {
               currentDate = dateLabel
@@ -661,6 +690,7 @@ const GroupPage = () => {
 
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {filterBanner}
               {groups.map(({ date, items }) => (
                 <div key={date}>
                   <div style={{ fontSize: 11, color: '#c4a882', fontWeight: 500, padding: '12px 0 6px', letterSpacing: '0.03em' }}>
@@ -826,11 +856,12 @@ const GroupPage = () => {
       </div>
 
       {searchOpen && (
-        <SearchOverlay
-          group={group}
-          expenses={expenses}
+        <SearchSheet
+          initial={filters}
+          categories={Array.from(new Set([...expenses, ...incomes].map(e => normalizeCategory(e.category))))}
+          currencies={Array.from(new Set([...expenses, ...incomes, ...settlements].map(e => e.currency || group.baseCurrency || 'TWD')))}
+          onApply={(f) => { setFilters(f); setSearchOpen(false) }}
           onClose={() => setSearchOpen(false)}
-          onOpenExpense={(expenseId) => navigate(`/group/${id}/expense/${expenseId}`)}
         />
       )}
 
