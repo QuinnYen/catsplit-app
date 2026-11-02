@@ -22,9 +22,13 @@ const useOfficialAccountPrompt = () => {
       await setDoc(ref, { promptedAt: serverTimestamp() })
       if (cancelled) return
       const { friendFlag } = await liffInstance.getFriendship()
+      alert(`[TEMP DEBUG] friendFlag=${friendFlag} (type ${typeof friendFlag})`) // TEMP DEBUG：測完要移除
       if (!friendFlag && !cancelled) await liffInstance.requestFriendship()
     }
-    run().catch((e) => console.warn('official account prompt failed', e?.code || e?.message || e))
+    run().catch((e) => {
+      console.warn('official account prompt failed', e?.code || e?.message || e)
+      alert(`[TEMP DEBUG] error: ${e?.code || ''} ${e?.message || e}`) // TEMP DEBUG：測完要移除
+    })
     return () => { cancelled = true }
   }, [uid, isGuest, liffInstance])
 }
