@@ -41,7 +41,7 @@
 
 - 圓角一律 6px（進度條 3–4px、開關的膠囊型除外）；邊框 `1px solid`，分隔線 `1.5px dashed`。
 - 橘色只當印章（主按鈕、選中、連結、圖示），不要用在大面積背景，也不用漸層。
-- 頁首的鋸齒由 `.cs-header::after` 提供，**`.cs-header` 不可設 `overflow: hidden`**（會把鋸齒裁掉；有封面圖的群組頁用 `clip-path: inset(0 0 -8px 0)`）。
+- 頁首的鋸齒是 `.cs-header` 的 `mask`（底緣直接切成鋸齒），封面圖也一起被切，所以兩種 header 都接得起來。mask 會裁掉 header 範圍外的內容，header 裡不要放要長出去的元素。
 
 ## 不在範圍內
 

@@ -132,22 +132,19 @@
   --cs-gi-purple-bg: #33223a; --cs-gi-purple-fg: #ce93d8;
 }
 
-/* 收據撕邊：每個 .cs-header 底緣的鋸齒（16px 一格，露出上半 8px）；header 不可設 overflow:hidden */
+/* 收據撕邊：用 mask 把 .cs-header 底緣直接切成鋸齒（16px 一格、深 8px），
+   所以不管 header 底下是墨藍還是封面圖都接得起來。
+   注意：mask 會裁掉 header 範圍外的內容，header 裡不要放要「長出去」的元素（彈出選單用 fixed 放在 header 外） */
 .cs-header {
   position: relative;
-}
-.cs-header::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: 8px;
-  pointer-events: none;
-  background-image:
-    linear-gradient(135deg, var(--cs-rc-head) 25%, transparent 25%),
-    linear-gradient(225deg, var(--cs-rc-head) 25%, transparent 25%);
-  background-size: 16px 16px;
+  -webkit-mask-image: linear-gradient(#000, #000), conic-gradient(from -45deg at 50% 100%, #000 90deg, #0000 0);
+  mask-image: linear-gradient(#000, #000), conic-gradient(from -45deg at 50% 100%, #000 90deg, #0000 0);
+  -webkit-mask-size: 100% calc(100% - 7px), 16px 8px;
+  mask-size: 100% calc(100% - 7px), 16px 8px;
+  -webkit-mask-position: top, bottom;
+  mask-position: top, bottom;
+  -webkit-mask-repeat: no-repeat, repeat-x;
+  mask-repeat: no-repeat, repeat-x;
 }
 
 /* 只有深色才動 body 底色（過度捲動時露出的區域）；淺色維持原狀 */

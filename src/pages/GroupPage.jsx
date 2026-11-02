@@ -402,7 +402,6 @@ const GroupPage = () => {
       <div className="cs-header" style={{
         background: 'var(--cs-rc-head)',
         padding: '16px 16px 24px', position: 'relative', fontWeight: 700, isolation: 'isolate',
-        clipPath: 'inset(0 0 -8px 0)', // 封面圖會超出 header，用 clip-path 裁掉但保留底下 8px 給撕邊鋸齒
       }}>
         {group.coverUrl ? (
           <>
