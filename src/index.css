@@ -85,7 +85,7 @@
   --cs-rc-stamp-text: #ffffff;
   --cs-rc-owe: #c2410c;
   --cs-rc-get: #15803d;
-  --cs-rc-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --cs-rc-mono: inherit;
 }
 
 :root[data-theme="dark"] {
