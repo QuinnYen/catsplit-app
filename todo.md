@@ -232,4 +232,4 @@
 - 移除成員後 `memberBalances` 仍殘留其 key。
 - `guestLogin` 沒有頻率限制。
 - `GroupPage` 的 `expenses`、`settlements` 查詢沒有上限，帳目多時讀取量會成長。
-- 官方帳號加好友：授權畫面的選項只在第一次授權出現。已改為在 LINE 內進首頁時，對非好友呼叫一次 `liff.requestFriendship()`（`useOfficialAccountPrompt`），旗標存 `users/{uid}/settings/oaPrompt`，只問一次；首頁與群組設定的「官方帳號」入口保留。**尚未在 LINE 實測**：LIFF 視窗大小要是 Full、`getFriendship` 要有 profile scope。
+- 官方帳號加好友：授權畫面的選項只在第一次授權出現。已改為在 LINE 內進 App 時（任何頁面），對非好友呼叫 `liff.requestFriendship()`，每 30 天最多一次（`useOfficialAccountPrompt`，掛在 `App.jsx` 的 `ProtectedRoutes`），上次檢查時間存 `users/{uid}/settings/oaPrompt`；首頁與群組設定的「官方帳號」入口保留。已在 LINE 實測：封鎖或刪除過官方帳號的人，LINE 會改問「解除封鎖」（`getFriendship` 分不出兩者，LINE 行為，非 bug）。

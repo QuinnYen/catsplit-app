@@ -6,7 +6,6 @@ import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import useMyGroups from '../hooks/useMyGroups'
-import useOfficialAccountPrompt from '../hooks/useOfficialAccountPrompt'
 import Avatar from '../components/Avatar'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
@@ -47,7 +46,6 @@ const HomePage = () => {
   const legalHref = (page) => lang === 'en' ? `/${page}.en.html` : `/${page}.html`
   const [{ Icon: GreetingIcon, key: greetingKey }] = useState(getGreeting)
   const { groups, groupsLoaded } = useMyGroups()
-  useOfficialAccountPrompt()
   const loading = authLoading || (!!user && !groupsLoaded)
   const [showArchived, setShowArchived] = useState(false)
   const [page, setPage] = useState(1)

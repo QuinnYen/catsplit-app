@@ -8,6 +8,7 @@ import { PawPrint, Wallet } from 'lucide-react'
 import LineIcon from './components/LineIcon'
 import useMyGroups from './hooks/useMyGroups'
 import useSyncMemberProfile from './hooks/useSyncMemberProfile'
+import useOfficialAccountPrompt from './hooks/useOfficialAccountPrompt'
 
 // 首頁與群組頁是主要落地頁（含邀請連結），直接載入；其餘頁面用到才下載
 import HomePage from './pages/HomePage'
@@ -94,6 +95,12 @@ const ProfileSync = () => {
   return null
 }
 
+// 登入後在任何頁面都檢查一次是否要請使用者加官方帳號好友
+const OfficialAccountPrompt = () => {
+  useOfficialAccountPrompt()
+  return null
+}
+
 const ProtectedRoutes = () => {
   const { user, loading, loginWithLine, switchGuestGroup, guestNames } = useApp()
   const location = useLocation()
@@ -114,6 +121,7 @@ const ProtectedRoutes = () => {
   return (
     <>
     {!user.guest && <ProfileSync />}
+    {!user.guest && <OfficialAccountPrompt />}
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />
