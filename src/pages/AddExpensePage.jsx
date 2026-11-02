@@ -16,7 +16,7 @@ import { getCurrency } from '../config/currencies'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
 import { useI18n } from '../i18n/I18nProvider'
 import { computeBudgetStatus } from '../utils/budget'
-import { buildLedgerFlex, groupLiffUrl } from '../utils/flexMessages'
+import { buildLedgerFlex, groupLiffUrl, sendLedgerFlex } from '../utils/flexMessages'
 
 const AddExpensePage = () => {
   const { id } = useParams()
@@ -235,7 +235,7 @@ const AddExpensePage = () => {
         const splitCount = effectiveUids.length
         const perPerson = splitCount > 0 ? Math.round(parseFloat(amount) / splitCount) : 0
         try {
-          await liffInstance.sendMessages([buildLedgerFlex({
+          await sendLedgerFlex(liffInstance, buildLedgerFlex({
             altText: t('flex.alt', { payer: payerName, title: title.trim(), amount: `${currencyObj.symbol}${fmt.num(parseFloat(amount))}` }),
             headerText: t('flex.title'),
             title: title.trim(),
@@ -247,7 +247,7 @@ const AddExpensePage = () => {
             ],
             openLabel: t('flex.openGroup'),
             groupUrl: groupLiffUrl(id),
-          })])
+          }))
         } catch (e) {
           console.warn('liff.sendMessages failed', e)
         }

@@ -38,5 +38,17 @@ export const buildLedgerFlex = ({ altText, headerText, title, amount, rows, open
   },
 })
 
+// 從群組／多人聊天室的連結進來才自動發回該聊天室；從官方帳號圖文選單（utou）、服務頁（none）進來
+// sendMessages 會發到官方帳號底下或失敗，改跳出內建的分享選單讓使用者自己選要傳給誰
+const AUTO_SEND_CONTEXTS = ['group', 'room', 'square_chat']
+
+export const sendLedgerFlex = async (liff, message) => {
+  if (AUTO_SEND_CONTEXTS.includes(liff.getContext?.()?.type)) {
+    await liff.sendMessages([message])
+  } else if (liff.isApiAvailable?.('shareTargetPicker')) {
+    await liff.shareTargetPicker([message])
+  }
+}
+
 // 直接指到群組頁（與 shareContent 的 addUrl 同樣不經過 /s/ 與雲端函式）
 export const groupLiffUrl = (groupId) => `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/group/${groupId}`

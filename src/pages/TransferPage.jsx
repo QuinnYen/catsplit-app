@@ -12,7 +12,7 @@ import ShareToLineToggle from '../components/ShareToLineToggle'
 import PawDecor from '../components/PawDecor'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
-import { buildLedgerFlex, groupLiffUrl } from '../utils/flexMessages'
+import { buildLedgerFlex, groupLiffUrl, sendLedgerFlex } from '../utils/flexMessages'
 import { useI18n } from '../i18n/I18nProvider'
 import { PAYMENT_METHOD_CODES, paymentMethodLabel } from '../i18n/codes'
 
@@ -89,7 +89,7 @@ const TransferPage = () => {
         const to = group.memberProfiles?.[toUid]?.name ?? t('common.someone')
         const symbol = getCurrency(currency).symbol
         try {
-          await liffInstance.sendMessages([buildLedgerFlex({
+          await sendLedgerFlex(liffInstance, buildLedgerFlex({
             altText: t('flex.transferAlt', { from, to, amount: `${symbol}${fmt.num(actualAmount)}` }),
             headerText: t('flex.transferTitle'),
             title: `${from} → ${to}`,
@@ -101,7 +101,7 @@ const TransferPage = () => {
             ],
             openLabel: t('flex.openGroup'),
             groupUrl: groupLiffUrl(id),
-          })])
+          }))
         } catch (e) {
           console.warn('liff.sendMessages failed', e)
         }
