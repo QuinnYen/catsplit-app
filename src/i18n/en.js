@@ -271,6 +271,7 @@ export default {
   'form.paidSum': 'Entered {symbol} {paid} / {total}',
   'form.budgetUse': 'Budget used after saving: {percent}%',
   'form.budgetOver': 'Over budget by {amount} after saving',
+  'form.budgetRefund': 'Budget will be restored by {amount} after saving',
   'form.splitMethod': 'Split method',
   'form.sharesHint': 'Enter shares per person (e.g. 2 for a double portion)',
   'form.shareUnit': 'sh.',

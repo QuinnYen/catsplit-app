@@ -247,7 +247,9 @@ const ExpenseForm = ({
             <div style={{ textAlign: 'right', fontSize: 12, marginTop: 6, color: { ok: '#b08060', warn: '#e08a00', over: '#e57373' }[budgetPreview.level] }}>
               {budgetPreview.remaining < 0
                 ? t('form.budgetOver', { amount: `${getCurrency(baseCurrency).symbol} ${fmt.num(-budgetPreview.remaining)}` })
-                : t('form.budgetUse', { percent: Math.max(0, Math.floor(budgetPreview.ratio * 100)) })}
+                : kind === 'income'
+                  ? t('form.budgetRefund', { amount: `${getCurrency(baseCurrency).symbol} ${fmt.num(currency === baseCurrency ? amountNum : amountNum * exchangeRate)}` })
+                  : t('form.budgetUse', { percent: Math.max(0, Math.floor(budgetPreview.ratio * 100)) })}
             </div>
           )}
         </div>
