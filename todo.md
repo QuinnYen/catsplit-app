@@ -232,4 +232,4 @@
 - 移除成員後 `memberBalances` 仍殘留其 key。
 - `guestLogin` 沒有頻率限制。
 - `GroupPage` 的 `expenses`、`settlements` 查詢沒有上限，帳目多時讀取量會成長。
-- 官方帳號加好友：只有授權畫面才會出現，已授權的使用者不會再看到（目前以首頁與群組設定的「官方帳號」入口補足）。
+- 官方帳號加好友：授權畫面的選項只在第一次授權出現。已改為在 LINE 內進首頁時，對非好友呼叫一次 `liff.requestFriendship()`（`useOfficialAccountPrompt`），旗標存 `users/{uid}/settings/oaPrompt`，只問一次；首頁與群組設定的「官方帳號」入口保留。**尚未在 LINE 實測**：LIFF 視窗大小要是 Full、`getFriendship` 要有 profile scope。

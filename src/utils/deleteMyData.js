@@ -59,6 +59,7 @@ const deleteMyPaymentMethods = async (uid) => {
 }
 
 const deleteMyNickname = (uid) => deleteDoc(doc(db, 'users', uid, 'settings', 'profile'))
+const deleteMyOaPrompt = (uid) => deleteDoc(doc(db, 'users', uid, 'settings', 'oaPrompt'))
 
 // 依序處理；中途失敗會丟出錯誤，已處理的群組不會回復，重按一次即可繼續。
 // 登入紀錄必須最後刪（收款方式要用登入身分才刪得掉），前面失敗就不會刪，重試時仍能登入
@@ -67,5 +68,6 @@ export const deleteMyData = async (groups, uid) => {
   for (const g of toDelete) await deleteWholeGroup(g.id)
   await deleteMyPaymentMethods(uid)
   await deleteMyNickname(uid)
+  await deleteMyOaPrompt(uid)
   await detachFromGroups(toLeave.map(g => g.id), { deleteAccount: true })
 }

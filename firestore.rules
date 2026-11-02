@@ -72,6 +72,16 @@ service cloud.firestore {
       allow delete: if isLineUser() && request.auth.uid == userId;
     }
 
+    // 官方帳號加好友提示旗標：只記「已提示過」的時間，換裝置或清掉瀏覽器資料後也不會再跳
+    match /users/{userId}/settings/oaPrompt {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if isLineUser()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['promptedAt'])
+        && request.resource.data.promptedAt is timestamp;
+      allow delete: if isLineUser() && request.auth.uid == userId;
+    }
+
     match /groups/{groupId} {
       // 單筆讀取：登入者持有群組 ID（邀請連結）即可讀，加入前需要先看到群組
       allow get: if request.auth != null;
