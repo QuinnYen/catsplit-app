@@ -41,6 +41,8 @@ const Avatar = ({ src, name, size = 38, style, ...rest }) => {
       src={src}
       alt={name || 'avatar'}
       referrerPolicy="no-referrer"
+      loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
       style={baseStyle}
       {...rest}
