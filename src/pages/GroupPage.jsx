@@ -487,6 +487,12 @@ const GroupPage = () => {
           <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginLeft: 8 }}>
             {t('group.memberCount', { n: group.members?.length })}
           </span>
+          <button
+            onClick={() => navigate(`/group/${id}/settle`)}
+            style={{ marginLeft: 'auto', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
+          >
+            {t('tab.settle')}
+          </button>
         </div>
 
         {/* 總金額卡片 */}
@@ -553,12 +559,6 @@ const GroupPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t('group.listTitle')}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button
-              onClick={() => navigate(`/group/${id}/settle`)}
-              style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
-            >
-              {t('tab.settle')}
-            </button>
             <button
               onClick={() => setSearchOpen(true)}
               aria-label={t('group.search')}
