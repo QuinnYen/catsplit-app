@@ -73,7 +73,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
       }}>
         <div style={{ background: 'var(--cs-bg)', border: '0.5px solid var(--cs-border)', borderRadius: 12, padding: '10px 14px', marginBottom: 12, textAlign: 'right' }}>
           <div style={{ minHeight: 22, fontSize: 15, color: 'var(--cs-text-sub)', wordBreak: 'break-all' }}>{expr || '0'}</div>
-          <div style={{ minHeight: 30, fontSize: 24, fontWeight: 500, color: '#FF6B1A' }}>{result !== null ? `= ${result}` : ''}</div>
+          <div style={{ minHeight: 30, fontSize: 24, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{result !== null ? `= ${result}` : ''}</div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
@@ -86,7 +86,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
                 style={{
                   height: 48, borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 18, fontWeight: 500,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isOp ? '#FF8C42' : 'var(--cs-soft)', color: isOp ? '#fff' : 'var(--cs-text)',
+                  background: isOp ? 'var(--cs-rc-stamp)' : 'var(--cs-soft)', color: isOp ? '#fff' : 'var(--cs-text)',
                 }}
               >
                 {k === '⌫' ? <Delete size={20} /> : k}
@@ -98,7 +98,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
             disabled={result === null || result <= 0}
             style={{
               height: 48, borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 500, color: '#fff',
-              background: result !== null && result > 0 ? '#FF6B1A' : 'var(--cs-line-soft)',
+              background: result !== null && result > 0 ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)',
               cursor: result !== null && result > 0 ? 'pointer' : 'not-allowed',
             }}
           >

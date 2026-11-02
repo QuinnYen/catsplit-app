@@ -8,7 +8,6 @@ import { useApp, NICKNAME_MAX_LENGTH } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import { useTheme } from '../theme/ThemeProvider'
 import Avatar from '../components/Avatar'
-import PawDecor from '../components/PawDecor'
 import TabBar from '../components/TabBar'
 import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 
@@ -82,8 +81,7 @@ const SettingsPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => navigate('/')} aria-label={t('pay.back')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}>‹</button>
           <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{t('group.settings')}</div>
@@ -115,7 +113,7 @@ const SettingsPage = () => {
               <button
                 onClick={handleSaveNickname}
                 disabled={!nicknameDirty || nicknameSaving}
-                style={{ padding: '10px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: '#fff', cursor: nicknameDirty && !nicknameSaving ? 'pointer' : 'not-allowed', background: nicknameDirty && !nicknameSaving ? '#FF8C42' : 'var(--cs-line-soft)' }}
+                style={{ padding: '10px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: 'var(--cs-rc-stamp-text)', cursor: nicknameDirty && !nicknameSaving ? 'pointer' : 'not-allowed', background: nicknameDirty && !nicknameSaving ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)' }}
               >
                 {nicknameSaving ? t('settings.nicknameSaving') : t('settings.nicknameSave')}
               </button>

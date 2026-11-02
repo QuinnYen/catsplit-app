@@ -14,8 +14,8 @@ const segmentStyle = (active) => ({
 const navBtnStyle = { border: 'none', background: 'none', padding: 6, cursor: 'pointer', display: 'flex' }
 const titleBtnStyle = { border: 'none', background: 'none', padding: '4px 8px', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', borderRadius: 8 }
 const cellStyle = (selected, outlined) => ({
-  border: outlined && !selected ? '1px solid #FF8C42' : 'none', borderRadius: 8, padding: '8px 0', cursor: 'pointer', fontSize: 14,
-  background: selected ? '#FF8C42' : 'transparent', color: selected ? '#fff' : 'var(--cs-text)', fontWeight: selected ? 500 : 400,
+  border: outlined && !selected ? '1px solid var(--cs-rc-stamp)' : 'none', borderRadius: 8, padding: '8px 0', cursor: 'pointer', fontSize: 14,
+  background: selected ? 'var(--cs-rc-stamp)' : 'transparent', color: selected ? '#fff' : 'var(--cs-text)', fontWeight: selected ? 500 : 400,
 })
 
 // 日曆：日 → 點標題進月份 → 再點標題進年份，選完逐層返回
@@ -122,8 +122,8 @@ const ClockPopup = ({ hour, minute, onChange, onDone }) => {
   const hy = CLOCK_SIZE / 2 - CLOCK_R * Math.cos(rad)
   const labels = mode === 'hour' ? Array.from({ length: 12 }, (_, i) => i || 12) : Array.from({ length: 12 }, (_, i) => i * 5)
 
-  const bigBtn = (active) => ({ border: 'none', background: active ? 'var(--cs-soft)' : 'transparent', borderRadius: 10, padding: '4px 10px', fontSize: 32, fontWeight: 500, cursor: 'pointer', color: active ? '#FF6B1A' : 'var(--cs-text)' })
-  const periodBtn = (active) => ({ border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 13, cursor: 'pointer', background: active ? '#FF8C42' : 'var(--cs-soft)', color: active ? '#fff' : 'var(--cs-text-sub)' })
+  const bigBtn = (active) => ({ border: 'none', background: active ? 'var(--cs-soft)' : 'transparent', borderRadius: 10, padding: '4px 10px', fontSize: 32, fontWeight: 500, cursor: 'pointer', color: active ? 'var(--cs-rc-owe)' : 'var(--cs-text)' })
+  const periodBtn = (active) => ({ border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 13, cursor: 'pointer', background: active ? 'var(--cs-rc-stamp)' : 'var(--cs-soft)', color: active ? '#fff' : 'var(--cs-text-sub)' })
 
   return (
     <>
@@ -148,9 +148,9 @@ const ClockPopup = ({ hour, minute, onChange, onDone }) => {
         }}
       >
         <circle cx={CLOCK_SIZE / 2} cy={CLOCK_SIZE / 2} r={CLOCK_SIZE / 2 - 4} fill="var(--cs-soft)" />
-        <line x1={CLOCK_SIZE / 2} y1={CLOCK_SIZE / 2} x2={hx} y2={hy} stroke="#FF8C42" strokeWidth={2} />
-        <circle cx={CLOCK_SIZE / 2} cy={CLOCK_SIZE / 2} r={3} fill="#FF8C42" />
-        <circle cx={hx} cy={hy} r={18} fill="#FF8C42" />
+        <line x1={CLOCK_SIZE / 2} y1={CLOCK_SIZE / 2} x2={hx} y2={hy} stroke="var(--cs-rc-stamp)" strokeWidth={2} />
+        <circle cx={CLOCK_SIZE / 2} cy={CLOCK_SIZE / 2} r={3} fill="var(--cs-rc-stamp)" />
+        <circle cx={hx} cy={hy} r={18} fill="var(--cs-rc-stamp)" />
         {labels.map((label, i) => {
           const a = (i * 30 * Math.PI) / 180
           const x = CLOCK_SIZE / 2 + CLOCK_R * Math.sin(a)
@@ -179,11 +179,11 @@ const DateTimeField = ({ value, onChange }) => {
     <div>
       <div style={{ display: 'flex', border: '0.5px solid var(--cs-border)', borderRadius: 10, background: 'var(--cs-bg)', overflow: 'hidden' }}>
         <button type="button" onClick={() => setPopup('date')} style={segmentStyle(popup === 'date')}>
-          <CalendarDays size={16} color="#FF8C42" />{datePart.replaceAll('-', '/')}
+          <CalendarDays size={16} color="var(--cs-rc-stamp)" />{datePart.replaceAll('-', '/')}
         </button>
         <div style={{ width: 0.5, background: 'var(--cs-border)' }} />
         <button type="button" onClick={() => setPopup('time')} style={segmentStyle(popup === 'time')}>
-          <Clock size={16} color="#FF8C42" />{pad(hh)}:{pad(mm)}
+          <Clock size={16} color="var(--cs-rc-stamp)" />{pad(hh)}:{pad(mm)}
         </button>
       </div>
 

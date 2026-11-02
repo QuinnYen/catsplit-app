@@ -30,17 +30,17 @@
   /* 主題色（淺色）。顏色一律用 var(--cs-…)，不要寫死色碼（npm run check:colors 會檢查）；
      深色值在下方 :root[data-theme="dark"]，說明見 docs/theme.md */
   color-scheme: light;
-  --cs-bg: #fff8f4;
-  --cs-card: #ffffff;
-  --cs-soft: #fff3ec;
-  --cs-soft-2: #ffe8d6;
-  --cs-border: #f0d5c0;
-  --cs-line-soft: #e0c4b0;
-  --cs-track: #f5e8dc;
-  --cs-text: #3d2b1f;
-  --cs-text-2: #8a6a52;
-  --cs-text-sub: #b08060;
-  --cs-text-mute: #c4a882;
+  --cs-bg: var(--cs-rc-bg);
+  --cs-card: var(--cs-rc-card);
+  --cs-soft: #eef1f5;
+  --cs-soft-2: #e1e6ee;
+  --cs-border: var(--cs-rc-rule);
+  --cs-line-soft: #b4bdca;
+  --cs-track: #dde2ea;
+  --cs-text: var(--cs-rc-ink);
+  --cs-text-2: #44516a;
+  --cs-text-sub: var(--cs-rc-sub);
+  --cs-text-mute: #7a8699;
   --cs-overlay: rgba(61, 43, 31, 0.4);
   --cs-accent-border: #ffb88a;
   --cs-danger: #e53935;
@@ -101,17 +101,12 @@
   --cs-rc-owe: #ffa46b;
   --cs-rc-get: #7ee0a8;
   color-scheme: dark;
-  --cs-bg: #1f1713;
-  --cs-card: #2a201a;
-  --cs-soft: #3a2a20;
-  --cs-soft-2: #4a3222;
-  --cs-border: #4a382c;
-  --cs-line-soft: #5a4638;
-  --cs-track: #3a2d24;
-  --cs-text: #f3e6dc;
-  --cs-text-2: #b8967a;
-  --cs-text-sub: #c9a487;
-  --cs-text-mute: #b39a80;
+  --cs-soft: #2f3d54;
+  --cs-soft-2: #3a4a66;
+  --cs-line-soft: #566683;
+  --cs-track: #354359;
+  --cs-text-2: #c0cadb;
+  --cs-text-mute: #93a0b5;
   --cs-overlay: rgba(0, 0, 0, 0.6);
   --cs-accent-border: #7a4a2c;
   --cs-danger: #ef7373;
@@ -135,6 +130,24 @@
   --cs-gi-blue-bg: #1d2f40;   --cs-gi-blue-fg: #64b5f6;
   --cs-gi-indigo-bg: #232844; --cs-gi-indigo-fg: #9fa8da;
   --cs-gi-purple-bg: #33223a; --cs-gi-purple-fg: #ce93d8;
+}
+
+/* 收據撕邊：每個 .cs-header 底緣的鋸齒（16px 一格，露出上半 8px）；header 不可設 overflow:hidden */
+.cs-header {
+  position: relative;
+}
+.cs-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(135deg, var(--cs-rc-head) 25%, transparent 25%),
+    linear-gradient(225deg, var(--cs-rc-head) 25%, transparent 25%);
+  background-size: 16px 16px;
 }
 
 /* 只有深色才動 body 底色（過度捲動時露出的區域）；淺色維持原狀 */

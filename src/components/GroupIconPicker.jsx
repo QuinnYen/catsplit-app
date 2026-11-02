@@ -21,11 +21,11 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
       disabled={disabled}
       style={{
         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 10,
-        cursor: disabled ? 'not-allowed' : 'pointer', border: open === name ? '1px solid #FF8C42' : '0.5px solid var(--cs-border)', background: 'var(--cs-bg)',
+        cursor: disabled ? 'not-allowed' : 'pointer', border: open === name ? '1px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)', background: 'var(--cs-bg)',
       }}
     >
       {children}
-      <ChevronDown size={16} color="#FF8C42" style={{ transform: open === name ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+      <ChevronDown size={16} color="var(--cs-rc-stamp)" style={{ transform: open === name ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
     </button>
   )
 

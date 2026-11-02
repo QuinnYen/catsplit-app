@@ -9,7 +9,6 @@ import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
-import PawDecor from '../components/PawDecor'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, payerLabel, computeMemberBalances } from '../utils/expenseHelpers'
 import { getCurrency } from '../config/currencies'
@@ -270,8 +269,7 @@ const AddExpensePage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/group/${id}`)}
@@ -287,7 +285,7 @@ const AddExpensePage = () => {
               style={{
                 padding: '5px 18px', borderRadius: 20, fontSize: 13, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.4)',
                 background: kind === k ? 'var(--cs-on-brand)' : 'rgba(255,255,255,0.25)',
-                color: kind === k ? '#FF6B1A' : '#fff', fontWeight: kind === k ? 500 : 400,
+                color: kind === k ? 'var(--cs-rc-owe)' : '#fff', fontWeight: kind === k ? 500 : 400,
               }}
             >{label}</button>
           ))}
@@ -341,7 +339,7 @@ const AddExpensePage = () => {
             style={{
               width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
               cursor: isValid() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
-              background: isValid() && !loading ? '#FF8C42' : 'var(--cs-line-soft)', color: '#fff',
+              background: isValid() && !loading ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', color: 'var(--cs-rc-stamp-text)',
             }}
           >
             {loading ? t('add.submitting') : (

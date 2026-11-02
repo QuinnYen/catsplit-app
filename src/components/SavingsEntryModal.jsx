@@ -45,7 +45,7 @@ const SavingsEntryModal = ({ entry, onClose, onSubmit, onDelete }) => {
   }
 
   const typeBtn = (value, text) => (
-    <button type="button" onClick={() => setType(value)} style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, background: type === value ? '#FF8C42' : 'transparent', color: type === value ? '#fff' : 'var(--cs-text)' }}>{text}</button>
+    <button type="button" onClick={() => setType(value)} style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, background: type === value ? 'var(--cs-rc-stamp)' : 'transparent', color: type === value ? '#fff' : 'var(--cs-text)' }}>{text}</button>
   )
 
   return (
@@ -74,7 +74,7 @@ const SavingsEntryModal = ({ entry, onClose, onSubmit, onDelete }) => {
         {error && <div style={{ fontSize: 13, color: 'var(--cs-danger)' }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={onClose} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
-          <button onClick={handleSubmit} disabled={saving || !date} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving || !date ? 0.6 : 1 }}>{t('common.save')}</button>
+          <button onClick={handleSubmit} disabled={saving || !date} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving || !date ? 0.6 : 1 }}>{t('common.save')}</button>
         </div>
         {entry && onDelete && (
           <button onClick={handleDelete} disabled={saving} style={{ background: 'none', border: 'none', color: 'var(--cs-danger)', fontSize: 14, cursor: 'pointer', padding: 4, opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>

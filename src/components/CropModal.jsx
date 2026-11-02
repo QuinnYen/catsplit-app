@@ -52,7 +52,7 @@ const CropModal = ({ imageSrc, aspect = COVER_ASPECT, onCancel, onConfirm }) => 
           value={zoom}
           onChange={e => setZoom(parseFloat(e.target.value))}
           aria-label={t('crop.zoom')}
-          style={{ width: '100%', accentColor: '#FF8C42', marginBottom: 14 }}
+          style={{ width: '100%', accentColor: 'var(--cs-rc-stamp)', marginBottom: 14 }}
         />
         <div style={{ display: 'flex', gap: 10 }}>
           <button
@@ -65,7 +65,7 @@ const CropModal = ({ imageSrc, aspect = COVER_ASPECT, onCancel, onConfirm }) => 
           <button
             onClick={handleConfirm}
             disabled={!pixelCrop || working}
-            style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: !pixelCrop || working ? '#8a6a55' : '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: !pixelCrop || working ? '#8a6a55' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
           >
             {working ? t('common.processing') : t('eg.confirm')}
           </button>

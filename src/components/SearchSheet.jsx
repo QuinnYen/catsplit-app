@@ -21,8 +21,8 @@ const Chip = ({ active, onClick, children }) => (
     onClick={onClick}
     style={{
       flexShrink: 0, padding: '6px 13px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-      border: active ? '1px solid #FF8C42' : '1px solid var(--cs-border)',
-      background: active ? 'var(--cs-soft)' : 'var(--cs-card)', color: active ? '#FF6B1A' : 'var(--cs-text-2)', fontWeight: active ? 600 : 400,
+      border: active ? '1px solid var(--cs-rc-stamp)' : '1px solid var(--cs-border)',
+      background: active ? 'var(--cs-soft)' : 'var(--cs-card)', color: active ? 'var(--cs-rc-owe)' : 'var(--cs-text-2)', fontWeight: active ? 600 : 400,
     }}
   >
     {children}
@@ -38,7 +38,7 @@ const Segmented = ({ options, value, onChange }) => (
         style={{
           flex: 1, padding: '10px 0', fontSize: 13, border: 'none', cursor: 'pointer',
           borderLeft: i === 0 ? 'none' : '1px solid var(--cs-border)',
-          background: value === key ? 'var(--cs-soft)' : 'var(--cs-card)', color: value === key ? '#FF6B1A' : 'var(--cs-text-2)', fontWeight: value === key ? 600 : 400,
+          background: value === key ? 'var(--cs-soft)' : 'var(--cs-card)', color: value === key ? 'var(--cs-rc-owe)' : 'var(--cs-text-2)', fontWeight: value === key ? 600 : 400,
         }}
       >
         {label}
@@ -129,13 +129,13 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
         <div style={{ display: 'flex', gap: 10, padding: '12px 18px calc(14px + env(safe-area-inset-bottom, 0px))', borderTop: '0.5px solid var(--cs-track)' }}>
           <button
             onClick={() => setF(EMPTY_FILTERS)}
-            style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: '#FF8C42', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-rc-stamp)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
           >
             {t('search.reset')}
           </button>
           <button
             onClick={() => onApply(f)}
-            style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
           >
             {t('group.search')}
           </button>

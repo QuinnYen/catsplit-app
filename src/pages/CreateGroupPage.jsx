@@ -11,7 +11,6 @@ import Avatar from '../components/Avatar'
 import { CURRENCIES } from '../config/currencies'
 import GroupIcon from '../components/GroupIcon'
 import GroupIconPicker from '../components/GroupIconPicker'
-import PawDecor from '../components/PawDecor'
 import { DEFAULT_GROUP_ICON, DEFAULT_GROUP_COLOR } from '../config/groupIcons'
 
 const CreateGroupPage = () => {
@@ -57,8 +56,7 @@ const CreateGroupPage = () => {
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
 
       {/* Header */}
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate('/')}
@@ -137,8 +135,8 @@ const CreateGroupPage = () => {
             disabled={!name.trim() || loading}
             style={{
               width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500, cursor: name.trim() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
-              background: name.trim() && !loading ? '#FF8C42' : 'var(--cs-line-soft)',
-              color: '#fff',
+              background: name.trim() && !loading ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)',
+              color: 'var(--cs-rc-stamp-text)',
             }}
           >
             {loading ? t('cg.creating') : t('cg.create')}

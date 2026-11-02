@@ -57,7 +57,7 @@ const GuestJoin = ({ groupId, guests: guestsProp }) => {
                 key={g.id}
                 onClick={() => window.confirm(t('guest.confirmContinue', { name: g.name })) && run(g.id, () => loginAsGuest(groupId, g.id))}
                 disabled={!!busy}
-                style={{ padding: '7px 14px', borderRadius: 20, border: '0.5px solid var(--cs-border)', background: busy === g.id ? '#FF8C42' : 'var(--cs-soft)', color: busy === g.id ? '#fff' : 'var(--cs-text)', fontSize: 14, cursor: busy ? 'not-allowed' : 'pointer' }}
+                style={{ padding: '7px 14px', borderRadius: 20, border: '0.5px solid var(--cs-border)', background: busy === g.id ? 'var(--cs-rc-stamp)' : 'var(--cs-soft)', color: busy === g.id ? '#fff' : 'var(--cs-text)', fontSize: 14, cursor: busy ? 'not-allowed' : 'pointer' }}
               >
                 {g.name}
               </button>
@@ -78,7 +78,7 @@ const GuestJoin = ({ groupId, guests: guestsProp }) => {
         <button
           onClick={submitName}
           disabled={!!busy || !name.trim()}
-          style={{ padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 500, flexShrink: 0, color: '#fff', background: busy || !name.trim() ? 'var(--cs-line-soft)' : '#FF8C42', cursor: busy || !name.trim() ? 'not-allowed' : 'pointer' }}
+          style={{ padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 500, flexShrink: 0, color: 'var(--cs-rc-stamp-text)', background: busy || !name.trim() ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)', cursor: busy || !name.trim() ? 'not-allowed' : 'pointer' }}
         >
           {busy === 'new' ? t('guest.joining') : t('guest.join')}
         </button>

@@ -6,7 +6,6 @@ import { Pencil, Trash2, Eye } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import PawDecor from '../components/PawDecor'
 import BankPicker from '../components/BankPicker'
 import PaymentMethodModal from '../components/PaymentMethodModal'
 import { REGIONS, PROVIDERS, getProvider, providerName, methodName, normalizeValue, describeMethod, validatePayment } from '../config/paymentProviders'
@@ -21,7 +20,7 @@ const Switch = ({ checked, onChange }) => (
     role="switch"
     aria-checked={checked}
     onClick={() => onChange(!checked)}
-    style={{ width: 40, height: 24, borderRadius: 12, border: 'none', padding: 2, cursor: 'pointer', flexShrink: 0, background: checked ? '#FF8C42' : 'var(--cs-line-soft)', display: 'flex', justifyContent: checked ? 'flex-end' : 'flex-start' }}
+    style={{ width: 40, height: 24, borderRadius: 12, border: 'none', padding: 2, cursor: 'pointer', flexShrink: 0, background: checked ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', display: 'flex', justifyContent: checked ? 'flex-end' : 'flex-start' }}
   >
     <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--cs-card)' }} />
   </button>
@@ -103,8 +102,7 @@ const PaymentMethodsPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => navigate('/')} aria-label={t('pay.back')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}>‹</button>
           <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{t('pay.title')}</div>
@@ -114,7 +112,7 @@ const PaymentMethodsPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('pay.mine')}</div>
-          <button onClick={startAdd} style={{ background: '#FF8C42', color: '#fff', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('pay.add')}</button>
+          <button onClick={startAdd} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('pay.add')}</button>
         </div>
 
         {methods === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
@@ -153,7 +151,7 @@ const PaymentMethodsPage = () => {
               <div style={{ display: 'flex', gap: 8 }}>
                 {REGIONS.map(r => (
                   <button key={r.id} disabled={!!editingId} onClick={() => patch({ regionId: r.id, providerId: '' })}
-                    style={{ flex: 1, padding: '9px 0', borderRadius: 10, fontSize: 14, cursor: editingId ? 'default' : 'pointer', border: form.regionId === r.id ? '1.5px solid #FF8C42' : '0.5px solid var(--cs-border)', background: form.regionId === r.id ? 'var(--cs-soft)' : 'var(--cs-card)', color: form.regionId === r.id ? '#FF6B1A' : 'var(--cs-text-sub)' }}>
+                    style={{ flex: 1, padding: '9px 0', borderRadius: 10, fontSize: 14, cursor: editingId ? 'default' : 'pointer', border: form.regionId === r.id ? '1.5px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)', background: form.regionId === r.id ? 'var(--cs-soft)' : 'var(--cs-card)', color: form.regionId === r.id ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)' }}>
                     {t(r.labelKey)}
                   </button>
                 ))}
@@ -206,7 +204,7 @@ const PaymentMethodsPage = () => {
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setForm(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
-              <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? t('common.saving') : t('common.save')}</button>
+              <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? t('common.saving') : t('common.save')}</button>
             </div>
           </div>
           </div>

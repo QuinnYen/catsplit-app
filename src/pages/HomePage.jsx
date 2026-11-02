@@ -143,8 +143,6 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-      {/* 收據撕邊：16px 一格的鋸齒，只露出上半 8px */}
-      <div aria-hidden="true" style={{ height: 8, flexShrink: 0, backgroundImage: 'linear-gradient(135deg, var(--cs-rc-head) 25%, transparent 25%), linear-gradient(225deg, var(--cs-rc-head) 25%, transparent 25%)', backgroundSize: '16px 16px' }} />
 
       {/* 內容 */}
       <div className="cs-body" style={{ padding: '16px', flex: 1, paddingBottom: 24, display: 'flex', flexDirection: 'column' }}>

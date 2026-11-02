@@ -67,7 +67,7 @@ const TabBar = ({ context = 'home', groupId }) => {
       {tabs.map((tab, i) => {
         const isActive = location.pathname === tab.path
         const { Icon, action, label } = TAB_ICONS[tab.id]
-        const color = isActive || action ? '#FF6B1A' : 'var(--cs-text-sub)'
+        const color = isActive || action ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)'
         return (
           <button
             key={i}
@@ -92,7 +92,7 @@ const TabBar = ({ context = 'home', groupId }) => {
                 width: 4,
                 height: 4,
                 borderRadius: '50%',
-                background: '#FF6B1A',
+                background: 'var(--cs-rc-stamp)',
                 display: 'block',
                 marginTop: -1,
               }} />

@@ -6,7 +6,6 @@ import { HandCoins, Banknote } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
-import PawDecor from '../components/PawDecor'
 import CollapsibleCard from '../components/CollapsibleCard'
 import { getCurrency } from '../config/currencies'
 import { toLocalDateStr, expenseTimeStr, payerLabel } from '../utils/expenseHelpers'
@@ -75,8 +74,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
 
       {/* Header */}
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/group/${id}`)}
@@ -97,7 +95,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         {/* 主卡片 */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)', flexShrink: 0, whiteSpace: 'nowrap' }}>
               {categoryLabel(expense.category, t)}
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -110,7 +108,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           <div style={{ background: 'var(--cs-soft)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.amountIncome') : t('detail.amountExpense')}</div>
-              <div style={{ fontSize: 24, fontWeight: 600, color: '#FF6B1A' }}>
+              <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--cs-rc-owe)' }}>
                 {expCurr.symbol} {fmt.num(expense.originalAmount ?? expense.amount)}
               </div>
             </div>
@@ -129,7 +127,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar src={group.memberProfiles?.[uid]?.avatar} name={group.memberProfiles?.[uid]?.name} size={28} />
                   <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{group.memberProfiles?.[uid]?.name}</span>
-                  <span style={{ fontSize: 14, color: '#FF6B1A', fontWeight: 500 }}>
+                  <span style={{ fontSize: 14, color: 'var(--cs-rc-owe)', fontWeight: 500 }}>
                     {expCurr.symbol} {fmt.num(parseFloat((hasFx && expense.exchangeRate ? amt / expense.exchangeRate : amt).toFixed(2)))}
                   </span>
                 </div>
@@ -157,7 +155,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.splitIncome') : t('detail.splitExpense')}</div>
-            <div style={{ fontSize: 12, color: '#FF8C42', fontWeight: 500 }}>
+            <div style={{ fontSize: 12, color: 'var(--cs-rc-stamp)', fontWeight: 500 }}>
               {SPLIT_LABEL[expense.splitType] ? t(SPLIT_LABEL[expense.splitType]) : expense.splitType}
             </div>
           </div>
@@ -188,7 +186,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                     {hint && <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{hint}</div>}
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: '#FF6B1A' }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>
                       {expCurr.symbol} {fmt.num(parseFloat(originalSplitAmt.toFixed(2)))}
                     </div>
                     {hasFx && (
@@ -229,10 +227,10 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         {expense.splits?.[user?.uid] != null && (
           <div style={{ background: isPayer ? 'var(--cs-success-bg)' : 'var(--cs-soft)', borderRadius: 16, border: `0.5px solid ${isPayer ? 'var(--cs-success-border)' : 'var(--cs-border)'}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 12, color: isPayer ? '#4caf50' : 'var(--cs-text-sub)', marginBottom: 2 }}>
+              <div style={{ fontSize: 12, color: isPayer ? 'var(--cs-rc-get)' : 'var(--cs-text-sub)', marginBottom: 2 }}>
                 {isIncome ? (isPayer ? t('detail.myShare.incomePayer') : t('detail.myShare.incomeOther')) : (isPayer ? t('detail.myShare.expensePayer') : t('detail.myShare.expenseOther'))}
               </div>
-              <div style={{ fontSize: 20, fontWeight: 600, color: isPayer ? 'var(--cs-success)' : '#FF6B1A' }}>
+              <div style={{ fontSize: 20, fontWeight: 600, color: isPayer ? 'var(--cs-success)' : 'var(--cs-rc-owe)' }}>
                 {expCurr.symbol} {fmt.num(parseFloat(
                   hasFx && expense.exchangeRate
                     ? (expense.splits[user.uid] / expense.exchangeRate).toFixed(2)
@@ -240,7 +238,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 ))}
               </div>
             </div>
-            <div>{isPayer ? <HandCoins size={32} color="#4caf50" /> : <Banknote size={32} color="#FF6B1A" />}</div>
+            <div>{isPayer ? <HandCoins size={32} color="var(--cs-rc-get)" /> : <Banknote size={32} color="var(--cs-rc-owe)" />}</div>
           </div>
         )}
 

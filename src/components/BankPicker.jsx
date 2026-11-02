@@ -13,7 +13,7 @@ const BankPicker = ({ value, onChange }) => {
     return (
       <div style={{ ...box, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <span>{value} {getBankName(value)}</span>
-        <button onClick={() => { onChange(''); setKeyword('') }} style={{ background: 'none', border: 'none', color: '#FF6B1A', fontSize: 13, cursor: 'pointer', padding: 0, flexShrink: 0 }}>{t('bank.change')}</button>
+        <button onClick={() => { onChange(''); setKeyword('') }} style={{ background: 'none', border: 'none', color: 'var(--cs-rc-owe)', fontSize: 13, cursor: 'pointer', padding: 0, flexShrink: 0 }}>{t('bank.change')}</button>
       </div>
     )
   }

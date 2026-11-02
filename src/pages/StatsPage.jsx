@@ -5,7 +5,6 @@ import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
 import { BarChart3 } from 'lucide-react'
 import { db } from '../config/firebase'
 import Avatar from '../components/Avatar'
-import PawDecor from '../components/PawDecor'
 import TabBar from '../components/TabBar'
 import { getCurrency } from '../config/currencies'
 import { useI18n } from '../i18n/I18nProvider'
@@ -104,7 +103,7 @@ const StatsPage = () => {
       {items.map(item => (
         <div key={item.label}>
           <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 4 }}>{item.label}</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: item.color || '#FF6B1A' }}>{item.value}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: item.color || 'var(--cs-rc-owe)' }}>{item.value}</div>
         </div>
       ))}
     </div>
@@ -133,8 +132,7 @@ const StatsPage = () => {
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
 
       {/* Header */}
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/group/${id}`)}
@@ -205,7 +203,7 @@ const StatsPage = () => {
                     <div style={{ fontSize: 10, color: 'var(--cs-text-sub)', marginBottom: 4, whiteSpace: 'nowrap' }}>
                       {m.amount > 0 ? i18nFmt.num(Math.round(m.amount)) : ''}
                     </div>
-                    <div style={{ width: '100%', maxWidth: 32, height: `${(m.amount / maxMonth) * 100}%`, minHeight: m.amount > 0 ? 3 : 0, background: '#FF8C42', borderRadius: '6px 6px 0 0' }} />
+                    <div style={{ width: '100%', maxWidth: 32, height: `${(m.amount / maxMonth) * 100}%`, minHeight: m.amount > 0 ? 3 : 0, background: 'var(--cs-rc-stamp)', borderRadius: '6px 6px 0 0' }} />
                   </div>
                 ))}
               </div>
@@ -231,7 +229,7 @@ const StatsPage = () => {
                           <span style={{ color: 'var(--cs-text)', fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>{fmt(p.amount)}</span>
                         </div>
                         <div style={{ height: 6, background: 'var(--cs-soft)', borderRadius: 3 }}>
-                          <div style={{ width: `${(p.amount / maxPayer) * 100}%`, height: '100%', background: '#FF8C42', borderRadius: 3 }} />
+                          <div style={{ width: `${(p.amount / maxPayer) * 100}%`, height: '100%', background: 'var(--cs-rc-stamp)', borderRadius: 3 }} />
                         </div>
                       </div>
                     </div>

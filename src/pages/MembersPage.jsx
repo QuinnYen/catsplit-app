@@ -6,7 +6,6 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import Avatar from '../components/Avatar'
-import PawDecor from '../components/PawDecor'
 
 const MembersPage = () => {
   const { id } = useParams()
@@ -107,8 +106,7 @@ const MembersPage = () => {
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
 
       {/* Header */}
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/group/${id}`)}
@@ -139,7 +137,7 @@ const MembersPage = () => {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, color: 'var(--cs-text)', fontWeight: 500 }}>{profile?.name}</div>
                       {isCreatorMember && (
-                        <div style={{ fontSize: 11, color: '#FF8C42' }}>{t('eg.creator')}</div>
+                        <div style={{ fontSize: 11, color: 'var(--cs-rc-stamp)' }}>{t('eg.creator')}</div>
                       )}
                       {profile?.placeholder && (
                         <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('eg.guestName')}</div>
@@ -153,7 +151,7 @@ const MembersPage = () => {
                               navigate(`/group/${id}`, { replace: true })
                               forgetGuestName(id)
                             }}
-                            style={{ background: 'none', border: 'none', padding: 0, fontSize: 11, color: '#FF6B1A', textDecoration: 'underline', cursor: 'pointer' }}
+                            style={{ background: 'none', border: 'none', padding: 0, fontSize: 11, color: 'var(--cs-rc-owe)', textDecoration: 'underline', cursor: 'pointer' }}
                           >
                             {t('eg.notYou')}
                           </button>
@@ -165,7 +163,7 @@ const MembersPage = () => {
                       <button
                         onClick={() => { setRenamingUid(isRenaming ? null : uid); setRenameInput(profile?.name || '') }}
                         style={{
-                          padding: '6px 12px', borderRadius: 8, border: '1px solid var(--cs-border)', background: isRenaming ? 'var(--cs-soft)' : 'var(--cs-card)', color: isRenaming ? '#FF8C42' : 'var(--cs-text-sub)', fontSize: 12, cursor: 'pointer', flexShrink: 0,
+                          padding: '6px 12px', borderRadius: 8, border: '1px solid var(--cs-border)', background: isRenaming ? 'var(--cs-soft)' : 'var(--cs-card)', color: isRenaming ? 'var(--cs-rc-stamp)' : 'var(--cs-text-sub)', fontSize: 12, cursor: 'pointer', flexShrink: 0,
                         }}
                       >
                         {isRenaming ? t('common.cancel') : t('eg.rename')}
@@ -195,15 +193,15 @@ const MembersPage = () => {
                         autoFocus
                         maxLength={20}
                         placeholder={t('eg.renamePlaceholder')}
-                        style={{ flex: 1, minWidth: 0, border: '0.5px solid #FF8C42', borderRadius: 10, padding: '9px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+                        style={{ flex: 1, minWidth: 0, border: '0.5px solid var(--cs-rc-stamp)', borderRadius: 10, padding: '9px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
                       />
                       <button
                         onClick={() => handleRenameMember(uid)}
                         disabled={renameSaving || !renameInput.trim()}
                         style={{
                           padding: '9px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
-                          background: renameSaving || !renameInput.trim() ? 'var(--cs-line-soft)' : '#FF8C42',
-                          color: '#fff',
+                          background: renameSaving || !renameInput.trim() ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)',
+                          color: 'var(--cs-rc-stamp-text)',
                         }}
                       >
                         {renameSaving ? t('eg.saving') : t('eg.confirm')}
@@ -231,7 +229,7 @@ const MembersPage = () => {
               style={{
                 padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
                 cursor: addingPlaceholder || !placeholderName.trim() ? 'not-allowed' : 'pointer',
-                background: addingPlaceholder || !placeholderName.trim() ? 'var(--cs-line-soft)' : '#FF8C42', color: '#fff',
+                background: addingPlaceholder || !placeholderName.trim() ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)',
               }}
             >
               {addingPlaceholder ? t('eg.adding') : t('eg.add')}

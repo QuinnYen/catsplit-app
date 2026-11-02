@@ -95,7 +95,7 @@ const InviteModal = ({ content, text, liff, onClose }) => {
               onClick={onClick}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-soft)', fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', textAlign: 'left' }}
             >
-              <Icon size={18} color="#FF8C42" />{label}
+              <Icon size={18} color="var(--cs-rc-stamp)" />{label}
             </button>
           ))}
         </div>

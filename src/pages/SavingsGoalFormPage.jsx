@@ -6,7 +6,6 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import { CURRENCIES } from '../config/currencies'
-import PawDecor from '../components/PawDecor'
 import { deleteSavingsGoal } from '../utils/savingsData'
 import { isValidAmount } from '../utils/savings'
 
@@ -77,8 +76,7 @@ const SavingsGoalFormPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => navigate(-1)} aria-label={t('savings.back')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}>‹</button>
           <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{editing ? t('savings.form.editTitle') : t('savings.form.newTitle')}</div>
@@ -111,7 +109,7 @@ const SavingsGoalFormPage = () => {
               </div>
             </div>
             {error && <div style={{ fontSize: 13, color: 'var(--cs-danger)' }}>{error}</div>}
-            <button onClick={handleSave} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 15, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.save')}</button>
+            <button onClick={handleSave} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 15, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.save')}</button>
             {editing && <button onClick={handleDelete} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 15, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>}
           </>
         )}

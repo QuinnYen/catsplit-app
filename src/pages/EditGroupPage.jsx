@@ -8,7 +8,6 @@ import { getCurrency } from '../config/currencies'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import GroupIconPicker from '../components/GroupIconPicker'
-import PawDecor from '../components/PawDecor'
 import { deleteGroupFiles } from '../utils/storageCleanup'
 import { detachFromGroups } from '../utils/deleteMyData'
 
@@ -221,8 +220,7 @@ const EditGroupPage = () => {
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
 
       {/* Header */}
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/group/${id}`)}
@@ -255,8 +253,8 @@ const EditGroupPage = () => {
               disabled={saving || !name.trim() || name.trim() === group.name}
               style={{
                 padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
-                background: saving || !name.trim() || name.trim() === group.name ? 'var(--cs-line-soft)' : '#FF8C42',
-                color: '#fff',
+                background: saving || !name.trim() || name.trim() === group.name ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)',
+                color: 'var(--cs-rc-stamp-text)',
               }}
             >
               {saving ? t('eg.saving') : t('common.save')}
@@ -290,7 +288,7 @@ const EditGroupPage = () => {
                   style={{
                     padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
                     cursor: canSaveBudget ? 'pointer' : 'not-allowed',
-                    background: canSaveBudget ? '#FF8C42' : 'var(--cs-line-soft)', color: '#fff',
+                    background: canSaveBudget ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', color: 'var(--cs-rc-stamp-text)',
                   }}
                 >
                   {budgetSaving ? t('eg.saving') : t('common.save')}
@@ -330,7 +328,7 @@ const EditGroupPage = () => {
           <div style={{ display: 'flex', gap: 8 }}>
             <label style={{
               flex: 1, textAlign: 'center', padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 500,
-              background: coverSaving ? 'var(--cs-line-soft)' : '#FF8C42', color: '#fff', cursor: coverSaving ? 'not-allowed' : 'pointer',
+              background: coverSaving ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', cursor: coverSaving ? 'not-allowed' : 'pointer',
             }}>
               {group.coverUrl ? t('eg.coverChange') : t('eg.coverChoose')}
               <input type="file" accept="image/*" onChange={handleCoverFile} disabled={coverSaving} style={{ display: 'none' }} />
@@ -370,7 +368,7 @@ const EditGroupPage = () => {
               disabled={archiving}
               style={{
                 flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid var(--cs-border)', background: 'var(--cs-card)',
-                color: archiving ? 'var(--cs-text-sub)' : '#FF8C42', fontSize: 14, fontWeight: 500, cursor: archiving ? 'not-allowed' : 'pointer',
+                color: archiving ? 'var(--cs-text-sub)' : 'var(--cs-rc-stamp)', fontSize: 14, fontWeight: 500, cursor: archiving ? 'not-allowed' : 'pointer',
               }}
             >
               {archiving ? t('common.processing') : group.archived ? t('eg.unarchive') : t('eg.archive')}

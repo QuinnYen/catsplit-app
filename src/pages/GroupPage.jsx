@@ -18,7 +18,6 @@ import Avatar from '../components/Avatar'
 import SearchSheet from '../components/SearchSheet'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
-import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
 import { payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
 import { buildCsv, csvFileName } from '../utils/csvExport'
@@ -255,8 +254,7 @@ const GroupPage = () => {
     const choosingIdentity = !user.guest && placeholders.length > 0 && !joinAsNew
     return (
       <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column' }}>
-        <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 32px', position: 'relative', overflow: 'hidden' }}>
-          <PawDecor />
+        <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 32px', position: 'relative' }}>
           <div style={{ textAlign: 'center', paddingTop: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
               <GroupIcon icon={group.icon} color={group.iconColor} size={72} onDark />
@@ -293,7 +291,7 @@ const GroupPage = () => {
                 <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{user?.name}</div>
                 <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>{t('group.lineAccount')}</div>
               </div>
-              <Check size={18} color="#FF8C42" strokeWidth={3} style={{ marginLeft: 'auto', flexShrink: 0 }} />
+              <Check size={18} color="var(--cs-rc-stamp)" strokeWidth={3} style={{ marginLeft: 'auto', flexShrink: 0 }} />
             </div>
           </div>}
           {/* 訪客（已在其他群組用訪客名字）：輸入新名字或選既有名字 */}
@@ -314,7 +312,7 @@ const GroupPage = () => {
                   >
                     <Avatar src={null} name={group.memberProfiles[pid].name} size={36} />
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{group.memberProfiles[pid].name}</span>
-                    <span style={{ fontSize: 12, color: '#FF8C42' }}>{t('group.claimButton')}</span>
+                    <span style={{ fontSize: 12, color: 'var(--cs-rc-stamp)' }}>{t('group.claimButton')}</span>
                   </button>
                 ))}
               </div>
@@ -346,7 +344,7 @@ const GroupPage = () => {
             style={{
               width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
               cursor: joining ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
-              background: joining ? 'var(--cs-line-soft)' : '#FF8C42', color: '#fff',
+              background: joining ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)',
             }}
           >
             {joining ? t('common.processing') : placeholders.length > 0 ? t('group.joinAsNew', { group: group.name }) : t('group.join', { group: group.name })}
@@ -393,7 +391,7 @@ const GroupPage = () => {
                   background: 'transparent', fontSize: 14, color: 'var(--cs-text)', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, textAlign: 'left',
                 }}
               >
-                <Icon size={16} color="#FF8C42" />{label}
+                <Icon size={16} color="var(--cs-rc-stamp)" />{label}
               </button>
             ))}
           </div>
@@ -402,8 +400,9 @@ const GroupPage = () => {
 
       {/* Header */}
       <div className="cs-header" style={{
-        background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)',
-        padding: '16px 16px 24px', position: 'relative', overflow: 'hidden', fontWeight: 700, isolation: 'isolate',
+        background: 'var(--cs-rc-head)',
+        padding: '16px 16px 24px', position: 'relative', fontWeight: 700, isolation: 'isolate',
+        clipPath: 'inset(0 0 -8px 0)', // 封面圖會超出 header，用 clip-path 裁掉但保留底下 8px 給撕邊鋸齒
       }}>
         {group.coverUrl ? (
           <>
@@ -432,9 +431,7 @@ const GroupPage = () => {
             </div>
             <div style={{ position: 'absolute', inset: 0, zIndex: -1, background: 'linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.5))' }} />
           </>
-        ) : (
-          <PawDecor />
-        )}
+        ) : null}
 
         {/* 返回列 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -545,7 +542,7 @@ const GroupPage = () => {
             <span style={{ flex: 1, fontSize: 12, color: 'var(--cs-text)' }}>{t('group.oaBanner')}</span>
             <button
               onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
-              style={{ border: 'none', background: '#FF8C42', color: '#fff', borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
+              style={{ border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
             >
               {t('group.oaBannerAdd')}
             </button>
@@ -559,7 +556,7 @@ const GroupPage = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               onClick={() => navigate(`/group/${id}/settle`)}
-              style={{ background: '#FF8C42', color: '#fff', border: 'none', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
+              style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
             >
               {t('tab.settle')}
             </button>
@@ -569,7 +566,7 @@ const GroupPage = () => {
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--cs-text-sub)', display: 'flex', alignItems: 'center' }}
             >
               <Search size={16} />
-              {isFiltering(filters) && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF6B1A', marginLeft: 2, alignSelf: 'flex-start' }} />}
+              {isFiltering(filters) && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cs-rc-stamp)', marginLeft: 2, alignSelf: 'flex-start' }} />}
             </button>
           </div>
         </div>
@@ -621,7 +618,7 @@ const GroupPage = () => {
               <span>{t('search.resultCount', { n: shownItems.length })}</span>
               <button
                 onClick={() => setFilters(EMPTY_FILTERS)}
-                style={{ fontSize: 12, color: '#FF8C42', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                style={{ fontSize: 12, color: 'var(--cs-rc-stamp)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
               >
                 {t('search.clear')} <X size={11} strokeWidth={3} />
               </button>
@@ -746,7 +743,7 @@ const GroupPage = () => {
                           >
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3 }}>
-                                <span style={{ fontSize: 12, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-rc-owe)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                                   {categoryLabel(item.category, t)}
                                 </span>
                                 <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -761,7 +758,7 @@ const GroupPage = () => {
                               </div>
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                              <div style={{ fontSize: 15, fontWeight: 500, color: '#FF6B1A' }}>
+                              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>
                                 {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
                               </div>
                               {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (

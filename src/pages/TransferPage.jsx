@@ -9,7 +9,6 @@ import Avatar from '../components/Avatar'
 import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import ShareToLineToggle from '../components/ShareToLineToggle'
-import PawDecor from '../components/PawDecor'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
 import { buildLedgerFlex, groupLiffUrl, sendLedgerFlex } from '../utils/flexMessages'
@@ -130,8 +129,7 @@ const TransferPage = () => {
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
 
       {/* Header */}
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/group/${id}/settle`)}
@@ -154,7 +152,7 @@ const TransferPage = () => {
               <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('group.detail.from')}</div>
             </div>
 
-            <div style={{ fontSize: 22, color: '#FF8C42', flexShrink: 0 }}>→</div>
+            <div style={{ fontSize: 22, color: 'var(--cs-rc-stamp)', flexShrink: 0 }}>→</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
               <Avatar src={toProfile?.avatar} name={toProfile?.name} size={48} />
@@ -163,14 +161,14 @@ const TransferPage = () => {
             </div>
           </div>
 
-          <div style={{ position: 'relative', background: 'var(--cs-soft)', borderRadius: 10, border: '1px solid #FF8C42', padding: '10px 12px', marginTop: 16 }}>
-            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, fontWeight: 500, color: '#FF6B1A' }}>{currencyObj.symbol}</span>
+          <div style={{ position: 'relative', background: 'var(--cs-soft)', borderRadius: 10, border: '1px solid var(--cs-rc-stamp)', padding: '10px 12px', marginTop: 16 }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{currencyObj.symbol}</span>
             <input
               type="number"
               inputMode="decimal"
               value={customAmount}
               onChange={e => setCustomAmount(e.target.value)}
-              style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 22, fontWeight: 700, color: '#FF6B1A', textAlign: 'center' }}
+              style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 22, fontWeight: 700, color: 'var(--cs-rc-owe)', textAlign: 'center' }}
             />
           </div>
           {actualAmount !== suggestedAmount && suggestedAmount > 0 && (
@@ -236,8 +234,8 @@ const TransferPage = () => {
           style={{
             width: '100%', padding: '15px 0', borderRadius: 16, border: 'none',
             fontSize: 15, fontWeight: 500, cursor: loading || !isValid ? 'not-allowed' : 'pointer',
-            background: loading || !isValid ? 'var(--cs-line-soft)' : '#FF8C42',
-            color: '#fff', transition: 'all 0.15s',
+            background: loading || !isValid ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)',
+            color: 'var(--cs-rc-stamp-text)', transition: 'all 0.15s',
           }}
         >
           {loading ? t('transfer.submitting') : (

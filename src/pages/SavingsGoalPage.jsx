@@ -7,7 +7,6 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import { getCurrency } from '../config/currencies'
-import PawDecor from '../components/PawDecor'
 import SavingsEntryModal from '../components/SavingsEntryModal'
 import CollapsibleCard from '../components/CollapsibleCard'
 import useSavingsEntries from '../hooks/useSavingsEntries'
@@ -53,8 +52,7 @@ const SavingsGoalPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => navigate('/savings')} aria-label={t('savings.back')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}>‹</button>
           <div style={{ flex: 1, minWidth: 0, color: '#fff', fontSize: 16, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal?.title ?? t('savings.title')}</div>
@@ -67,7 +65,7 @@ const SavingsGoalPage = () => {
           <>
             <div style={card}>
               <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginBottom: 4 }}>{t('savings.saved')}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#FF6B1A', marginBottom: 12 }}>{symbol} {fmt.num(saved)}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--cs-rc-owe)', marginBottom: 12 }}>{symbol} {fmt.num(saved)}</div>
               <ProgressBar ratio={ratio} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--cs-text-sub)', marginTop: 8 }}>
                 <span>{saved >= goal.targetAmount ? t('savings.achieved') : t('savings.progress', { pct: progressPercent(saved, goal.targetAmount) })}</span>
@@ -77,7 +75,7 @@ const SavingsGoalPage = () => {
                 {goal.targetDate ? `${fmt.date(`${goal.targetDate}T00:00`)}・` : ''}{dateText}
               </div>
             </div>
-            <button onClick={() => setShowModal(true)} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>{t('savings.addEntry')}</button>
+            <button onClick={() => setShowModal(true)} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>{t('savings.addEntry')}</button>
 
             <CollapsibleCard label={`${t('savings.entries')} (${sorted.length})`} hasContent={sorted.length > 0}>
               {sorted.length === 0 && <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('savings.entries.empty')}</div>}

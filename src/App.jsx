@@ -61,7 +61,7 @@ const LoginScreen = ({ onLogin, guestGroupId }) => {
       ].map(({ Icon, text }, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: i < 2 ? 14 : 0 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--cs-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Icon size={18} color="#FF8C42" strokeWidth={2} />
+            <Icon size={18} color="var(--cs-rc-stamp)" strokeWidth={2} />
           </div>
           <div style={{ fontSize: 14, color: 'var(--cs-text)' }}>{text}</div>
         </div>

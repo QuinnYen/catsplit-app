@@ -20,14 +20,14 @@ const CUSTOM_OPTION = '__custom'
 
 const cardStyle ={ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }
 const labelStyle = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }
-const chipActiveStyle = { background: '#FF8C42', color: '#fff', fontWeight: 500 }
+const chipActiveStyle = { background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontWeight: 500 }
 const chipIdleStyle = { background: 'var(--cs-soft)', color: 'var(--cs-text-sub)', fontWeight: 400 }
 
 const Checkbox = ({ checked }) => (
   <div style={{
     width: 18, height: 18, borderRadius: 4, flexShrink: 0,
     border: checked ? 'none' : '1.5px solid var(--cs-line-soft)',
-    background: checked ? '#FF8C42' : 'transparent',
+    background: checked ? 'var(--cs-rc-stamp)' : 'transparent',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   }}>
     {checked && <Check size={12} color="#fff" strokeWidth={3} />}
@@ -65,12 +65,12 @@ const PayerSelect = ({ members, value, onChange, placeholder }) => {
         onClick={() => setOpen(v => !v)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 12, cursor: 'pointer', border: 'none',
-          background: 'var(--cs-soft)', outline: '1.5px solid #FF8C42',
+          background: 'var(--cs-soft)', outline: '1.5px solid var(--cs-rc-stamp)',
         }}
       >
         <Avatar src={current?.avatar} name={current?.name} size={28} />
         <span style={{ fontSize: 14, color: 'var(--cs-text)', fontWeight: 500, flex: 1, textAlign: 'left' }}>{current?.name || placeholder}</span>
-        <ChevronDown size={16} color="#FF8C42" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+        <ChevronDown size={16} color="var(--cs-rc-stamp)" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
       </button>
       {open && (
         <>
@@ -90,7 +90,7 @@ const PayerSelect = ({ members, value, onChange, placeholder }) => {
               >
                 <Avatar src={profile.avatar} name={profile.name} size={28} />
                 <span style={{ fontSize: 14, color: 'var(--cs-text)', fontWeight: value === uid ? 500 : 400, flex: 1, textAlign: 'left' }}>{profile.name}</span>
-                {value === uid && <Check size={16} color="#FF8C42" strokeWidth={3} />}
+                {value === uid && <Check size={16} color="var(--cs-rc-stamp)" strokeWidth={3} />}
               </button>
             ))}
           </div>
@@ -198,7 +198,7 @@ const ExpenseForm = ({
             placeholder={t('form.customCategoryPlaceholder')}
             maxLength={10}
             autoFocus
-            style={{ ...inputStyle, border: '0.5px solid #FF8C42', marginTop: 10 }}
+            style={{ ...inputStyle, border: '0.5px solid var(--cs-rc-stamp)', marginTop: 10 }}
           />
         )}
 
@@ -219,7 +219,7 @@ const ExpenseForm = ({
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 placeholder="0"
-                style={{ ...inputStyle, padding: '10px 40px 10px 44px', fontSize: 20, fontWeight: 500, color: '#FF6B1A' }}
+                style={{ ...inputStyle, padding: '10px 40px 10px 44px', fontSize: 20, fontWeight: 500, color: 'var(--cs-rc-owe)' }}
               />
               <button
                 type="button"
@@ -227,7 +227,7 @@ const ExpenseForm = ({
                 aria-label={t('form.calculator')}
                 style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', padding: 4, cursor: 'pointer', display: 'flex' }}
               >
-                <Calculator size={20} color="#FF8C42" />
+                <Calculator size={20} color="var(--cs-rc-stamp)" />
               </button>
             </div>
           </div>
@@ -268,7 +268,7 @@ const ExpenseForm = ({
                   value={exchangeRate ?? ''}
                   onChange={e => setExchangeRate(parseFloat(e.target.value) || null)}
                   placeholder={t('form.rateEnter')}
-                  style={{ width: 100, border: `0.5px solid ${rateError ? 'var(--cs-danger)' : '#FF8C42'}`, borderRadius: 8, padding: '6px 8px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-card)' }}
+                  style={{ width: 100, border: `0.5px solid ${rateError ? 'var(--cs-danger)' : 'var(--cs-rc-stamp)'}`, borderRadius: 8, padding: '6px 8px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-card)' }}
                 />
               )}
               <span style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{baseCurrency}</span>
@@ -322,7 +322,7 @@ const ExpenseForm = ({
                 </div>
               </div>
             ))}
-            <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(payerTotal - amountNum) < 0.01 ? '#4caf50' : '#FF6B1A' }}>
+            <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(payerTotal - amountNum) < 0.01 ? 'var(--cs-rc-get)' : 'var(--cs-rc-owe)' }}>
               {t('form.paidSum', { symbol: getCurrency(currency).symbol, paid: payerTotal.toFixed(0), total: amount || 0 })}
             </div>
           </div>
@@ -334,11 +334,11 @@ const ExpenseForm = ({
               style={{
                 marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', width: '100%',
                 background: payerExcluded ? 'var(--cs-soft)' : 'var(--cs-bg)',
-                outline: payerExcluded ? '1.5px solid #FF8C42' : '0.5px solid var(--cs-border)',
+                outline: payerExcluded ? '1.5px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)',
               }}
             >
               <Checkbox checked={payerExcluded} />
-              <span style={{ fontSize: 13, color: payerExcluded ? '#FF6B1A' : 'var(--cs-text-sub)', fontWeight: payerExcluded ? 500 : 400 }}>
+              <span style={{ fontSize: 13, color: payerExcluded ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)', fontWeight: payerExcluded ? 500 : 400 }}>
                 {t(L.excludeLabel)}
               </span>
             </button>
@@ -362,7 +362,7 @@ const ExpenseForm = ({
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Avatar src={profile.avatar} name={profile.name} size={24} />
                   <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)' }}>{profile.name}</span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A' }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>
                     {getCurrency(currency).symbol} {effectiveUids.length > 0 ? (amountNum / effectiveUids.length).toFixed(0) : '0'}
                   </span>
                 </div>
@@ -386,7 +386,7 @@ const ExpenseForm = ({
                     display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 12, border: 'none',
                     cursor: excluded ? 'default' : 'pointer', transition: 'all 0.15s',
                     background: excluded ? 'var(--cs-track)' : checked ? 'var(--cs-soft)' : 'var(--cs-bg)',
-                    outline: checked ? '1.5px solid #FF8C42' : '0.5px solid var(--cs-border)',
+                    outline: checked ? '1.5px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)',
                     opacity: excluded ? 0.4 : 1,
                   }}
                 >
@@ -394,7 +394,7 @@ const ExpenseForm = ({
                   <Avatar src={profile.avatar} name={profile.name} size={24} />
                   <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)', textAlign: 'left' }}>{profile.name}</span>
                   {amount && checked && effectiveUids.length > 0 && (
-                    <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A' }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>
                       {getCurrency(currency).symbol} {(amountNum / effectiveUids.length).toFixed(0)}
                     </span>
                   )}
@@ -425,7 +425,7 @@ const ExpenseForm = ({
                       style={{ width: 70, border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 8px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', textAlign: 'center' }}
                     />
                     <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', width: 16 }}>{t('form.shareUnit')}</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A', width: 64, textAlign: 'right', visibility: amount ? 'visible' : 'hidden' }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)', width: 64, textAlign: 'right', visibility: amount ? 'visible' : 'hidden' }}>
                       {getCurrency(currency).symbol} {sharesTotal > 0 ? (s / sharesTotal * amountNum).toFixed(0) : '0'}
                     </span>
                   </div>
@@ -457,13 +457,13 @@ const ExpenseForm = ({
                     <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--cs-text-sub)', fontSize: 12 }}>%</span>
                   </div>
                   {amount && percentages[uid] && (
-                    <span style={{ fontSize: 12, color: '#FF6B1A', width: 60, textAlign: 'right' }}>
+                    <span style={{ fontSize: 12, color: 'var(--cs-rc-owe)', width: 60, textAlign: 'right' }}>
                       {getCurrency(currency).symbol} {((parseFloat(percentages[uid]) || 0) / 100 * amountNum).toFixed(0)}
                     </span>
                   )}
                 </div>
               ))}
-            <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(percentageTotal - 100) < 0.01 ? '#4caf50' : '#FF6B1A' }}>
+            <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(percentageTotal - 100) < 0.01 ? 'var(--cs-rc-get)' : 'var(--cs-rc-owe)' }}>
               {t('form.allocatedPercent', { p: percentageTotal.toFixed(0) })}
             </div>
           </div>
@@ -492,7 +492,7 @@ const ExpenseForm = ({
                   </div>
                 </div>
               ))}
-            <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(customTotal - amountNum) < 0.01 ? '#4caf50' : '#FF6B1A' }}>
+            <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(customTotal - amountNum) < 0.01 ? 'var(--cs-rc-get)' : 'var(--cs-rc-owe)' }}>
               {t('form.allocatedSum', { symbol: getCurrency(currency).symbol, a: customTotal.toFixed(0), b: amount || 0 })}
             </div>
           </div>

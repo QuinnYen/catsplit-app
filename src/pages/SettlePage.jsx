@@ -7,7 +7,6 @@ import { db } from '../config/firebase'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
-import PawDecor from '../components/PawDecor'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
@@ -112,8 +111,7 @@ const SettlePage = () => {
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
 
       {/* Header */}
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
-        <PawDecor />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/group/${id}`)}
@@ -155,7 +153,7 @@ const SettlePage = () => {
             </div>
             <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
               <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t('settle.total')}</div>
-              <div style={{ ...amountStyle(totalText), fontWeight: 500, color: '#FF6B1A' }}>{totalText}</div>
+              <div style={{ ...amountStyle(totalText), fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{totalText}</div>
             </div>
           </div>
         </div>
@@ -180,7 +178,7 @@ const SettlePage = () => {
                   </div>
                   <div style={{
                     fontSize: 13, fontWeight: 500, flexShrink: 0,
-                    color: diff > 0.01 ? '#4caf50' : diff < -0.01 ? '#FF6B1A' : 'var(--cs-text-sub)'
+                    color: diff > 0.01 ? 'var(--cs-rc-get)' : diff < -0.01 ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)'
                   }}>
                     {diff > 0.01 ? `+${fmt(diff)}` : diff < -0.01 ? fmt(diff) : (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -200,7 +198,7 @@ const SettlePage = () => {
 
           {settlements.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><PartyPopper size={48} color="#FF8C42" /></div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><PartyPopper size={48} color="var(--cs-rc-stamp)" /></div>
               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', marginBottom: 4 }}>{t('settle.allSettled')}</div>
               <div style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>{t('settle.noTransfers')}</div>
             </div>
@@ -223,7 +221,7 @@ const SettlePage = () => {
                           <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
                         </div>
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#FF6B1A', flexShrink: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--cs-rc-owe)', flexShrink: 0 }}>
                         {rateLoading ? '...' : fmt(s.amount)}
                       </div>
                       <Avatar src={to?.avatar} name={to?.name} size={32} />
@@ -232,7 +230,7 @@ const SettlePage = () => {
                       onClick={() => navigate(
                         `/group/${id}/transfer?from=${s.from}&to=${s.to}&amount=${s.amount}&currency=${baseCurrency}`
                       )}
-                      style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                      style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
                     >
                       {t('settle.goTransfer')}
                     </button>
@@ -253,7 +251,7 @@ const SettlePage = () => {
                 const to = group.memberProfiles?.[s.to]
                 return (
                   <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid var(--cs-track)' }}>
-                    <CheckCircle2 size={16} color="#4caf50" style={{ flexShrink: 0 }} />
+                    <CheckCircle2 size={16} color="var(--cs-rc-get)" style={{ flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: 'var(--cs-text-sub)' }}>
                       <div style={{ color: 'var(--cs-text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</div>
                       <div style={{ display: 'flex', marginTop: 2 }}>
@@ -262,7 +260,7 @@ const SettlePage = () => {
                         {s.paymentMethod && <span style={{ marginLeft: 4, flexShrink: 0, whiteSpace: 'nowrap' }}>· {paymentMethodLabel(s.paymentMethod, t)}</span>}
                       </div>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#4caf50', flexShrink: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-get)', flexShrink: 0 }}>
                       {getCurrency(s.currency || baseCurrency).symbol} {i18nFmt.num(s.amount)}
                     </div>
                   </div>

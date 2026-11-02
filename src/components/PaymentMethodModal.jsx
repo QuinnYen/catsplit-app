@@ -31,14 +31,14 @@ export const PaymentMethodBody = ({ method, heading }) => {
     <>
       {heading && <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginBottom: 4 }}>{heading}</div>}
       <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--cs-text)', marginBottom: 12 }}>{methodName(method, t)}{method.label ? `・${method.label}` : ''}</div>
-      <div style={{ fontSize: 18, fontWeight: 500, color: '#FF6B1A', wordBreak: 'break-all', marginBottom: 16 }}>{describeMethod(method, t)}</div>
+      <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--cs-rc-owe)', wordBreak: 'break-all', marginBottom: 16 }}>{describeMethod(method, t)}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button onClick={copy} style={{ padding: '11px 0', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           {copied ? <><Check size={16} />{t('pay.copied')}</> : <><Copy size={16} />{t('pay.copy')}</>}
         </button>
         {provider?.kind === 'app' && (
           <>
-            <button onClick={open} disabled={!url} style={{ padding: '11px 0', borderRadius: 12, border: 'none', background: url ? '#FF8C42' : 'var(--cs-line-soft)', color: '#fff', fontSize: 14, fontWeight: 500, cursor: url ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <button onClick={open} disabled={!url} style={{ padding: '11px 0', borderRadius: 12, border: 'none', background: url ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: url ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <ExternalLink size={16} />{t('pay.open', { name: providerName(provider, t) })}
             </button>
             {!url && <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', textAlign: 'center' }}>{t('pay.noOpenUrl')}</div>}
