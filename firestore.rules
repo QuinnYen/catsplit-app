@@ -60,6 +60,36 @@ service cloud.firestore {
       allow delete: if isLineUser() && request.auth.uid == userId;
     }
 
+    // 個人儲蓄目標與其存提款紀錄：只有本人能讀寫（訪客不能寫）
+    match /users/{userId}/savingsGoals/{goalId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if isLineUser()
+        && request.auth.uid == userId
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 1
+        && request.resource.data.title.size() <= 50
+        && request.resource.data.targetAmount is number
+        && request.resource.data.targetAmount > 0
+        && request.resource.data.targetAmount < 1000000000000
+        && request.resource.data.currency is string
+        && (request.resource.data.targetDate == null || request.resource.data.targetDate is string);
+      allow delete: if isLineUser() && request.auth.uid == userId;
+
+      match /entries/{entryId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if isLineUser()
+          && request.auth.uid == userId
+          && request.resource.data.type in ['save', 'withdraw']
+          && request.resource.data.amount is number
+          && request.resource.data.amount > 0
+          && request.resource.data.amount < 1000000000000
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 100
+          && request.resource.data.date is string;
+        allow delete: if isLineUser() && request.auth.uid == userId;
+      }
+    }
+
     // 個人設定（全域暱稱）：只有本人能讀寫，暱稱 1~20 字
     match /users/{userId}/settings/profile {
       allow read: if request.auth != null && request.auth.uid == userId;

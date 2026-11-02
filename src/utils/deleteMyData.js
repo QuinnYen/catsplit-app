@@ -1,6 +1,7 @@
 import { doc, collection, getDocs, writeBatch, deleteDoc } from 'firebase/firestore'
 import { db, auth } from '../config/firebase'
 import { deleteGroupFiles } from './storageCleanup'
+import { deleteAllSavings } from './savingsData'
 
 // 只有自己一人、且自己是建立者的群組會整個刪除（Firestore 規則只允許建立者刪群組）；其餘一律退出
 const isSoleOwnedGroup = (group, uid) =>
@@ -67,6 +68,7 @@ export const deleteMyData = async (groups, uid) => {
   const { toDelete, toLeave } = planDeleteMyData(groups, uid)
   for (const g of toDelete) await deleteWholeGroup(g.id)
   await deleteMyPaymentMethods(uid)
+  await deleteAllSavings(uid)
   await deleteMyNickname(uid)
   await deleteMyOaPrompt(uid)
   await detachFromGroups(toLeave.map(g => g.id), { deleteAccount: true })
