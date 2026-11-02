@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { CURRENCIES } from '../config/currencies'
 import PawDecor from '../components/PawDecor'
 import { deleteSavingsGoal } from '../utils/savingsData'
+import { isValidAmount } from '../utils/savings'
 
 const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff', boxSizing: 'border-box' }
 const label = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 6 }
@@ -43,7 +44,7 @@ const SavingsGoalFormPage = () => {
     const trimmed = title.trim()
     if (!trimmed) return setError(t('savings.err.title'))
     const n = Number(target)
-    if (!target.trim() || !Number.isFinite(n) || n <= 0 || n >= 1e12) return setError(t('savings.err.amount'))
+    if (!isValidAmount(n)) return setError(t('savings.err.amount'))
     const data = { title: trimmed, targetAmount: n, targetDate: targetDate || null }
     setSaving(true)
     try {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useI18n } from '../i18n/I18nProvider'
 import { todayStr } from '../utils/expenseHelpers'
+import { isValidAmount } from '../utils/savings'
 
 const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4', boxSizing: 'border-box' }
 const label = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 6 }
@@ -18,7 +19,7 @@ const SavingsEntryModal = ({ entry, onClose, onSubmit, onDelete }) => {
 
   const handleSubmit = async () => {
     const n = Number(amount)
-    if (!amount.trim() || !Number.isFinite(n) || n <= 0 || n >= 1e12) return setError(t('savings.err.amount'))
+    if (!isValidAmount(n)) return setError(t('savings.err.amount'))
     setSaving(true)
     try {
       await onSubmit({ type, amount: n, title: title.trim(), date })

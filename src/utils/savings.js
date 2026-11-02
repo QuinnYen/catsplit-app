@@ -6,6 +6,11 @@ export const sumSaved = (entries) => {
   return Math.round(total * 100) / 100 || 0 // || 0 避免 -0 顯示成「-0」
 }
 
+// 金額須為大於 0、小於 1e12、最多 2 位小數的有限數字（支援的貨幣最多用到小數 2 位）。
+// 用誤差容忍比較小數位數，避免 1.15 * 100 = 114.999… 被誤判
+export const isValidAmount = (n) =>
+  Number.isFinite(n) && n > 0 && n < 1e12 && Math.abs(n * 100 - Math.round(n * 100)) < 1e-6
+
 // 進度夾在 0～1；目標不是正數時回傳 0
 export const progressRatio = (saved, target) =>
   target > 0 ? Math.min(1, Math.max(0, saved / target)) : 0

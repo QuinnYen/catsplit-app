@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { sumSaved, progressRatio, progressPercent, daysLeft } from './savings.js'
+import { sumSaved, progressRatio, progressPercent, daysLeft, isValidAmount } from './savings.js'
 
 const save = (amount) => ({ type: 'save', amount })
 const withdraw = (amount) => ({ type: 'withdraw', amount })
@@ -35,6 +35,14 @@ test('progressPercent 無條件捨去且夾在 0～100', () => {
   assert.equal(progressPercent(1, 3), 33)
   assert.equal(progressPercent(250, 100), 100)
   assert.equal(progressPercent(-5, 100), 0)
+})
+
+test('isValidAmount 接受 0.01 以上、最多 2 位小數的金額', () => {
+  for (const n of [100, 0.5, 1.15, 19.99, 0.01, 999999999999.99 - 1]) assert.equal(isValidAmount(n), true, String(n))
+})
+
+test('isValidAmount 拒絕 0、負數、非數字、過大與超過 2 位小數', () => {
+  for (const n of [0, -1, NaN, Infinity, 1e12, 0.004, 0.001, 1.005, 2.345]) assert.equal(isValidAmount(n), false, String(n))
 })
 
 test('progressRatio 一半', () => {
