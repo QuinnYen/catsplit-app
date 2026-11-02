@@ -280,7 +280,7 @@ const HomePage = () => {
             <>
               {/* 一般群組 */}
               {activeGroups.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div className="cs-group-list" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {pagedGroups.map(renderCard)}
                 </div>
               )}
@@ -315,7 +315,7 @@ const HomePage = () => {
                     <span style={{ fontSize: 11, color: '#c4a882', transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s' }}>›</span>
                   </button>
                   {showArchived && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.65 }}>
+                    <div className="cs-group-list" style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.65 }}>
                       {archivedGroups.map(renderCard)}
                     </div>
                   )}

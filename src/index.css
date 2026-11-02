@@ -49,6 +49,11 @@
     margin-left: auto;
     margin-right: auto;
   }
+  /* 首頁群組卡片：網頁版兩欄並排（minmax(0,1fr) 讓長名稱能省略而不撐開欄寬） */
+  .cs-group-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .cs-tabbar {
     padding-left: max(0px, calc((100% - 480px) / 2)) !important;
     padding-right: max(0px, calc((100% - 480px) / 2)) !important;
