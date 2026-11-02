@@ -23,7 +23,11 @@ const useOfficialAccountPrompt = () => {
       if (cancelled) return
       const { friendFlag } = await liffInstance.getFriendship()
       alert(`[TEMP DEBUG] friendFlag=${friendFlag} (type ${typeof friendFlag})`) // TEMP DEBUG：測完要移除
-      if (!friendFlag && !cancelled) await liffInstance.requestFriendship()
+      if (!friendFlag && !cancelled) {
+        await liffInstance.requestFriendship()
+        const after = await liffInstance.getFriendship() // TEMP DEBUG：測完要移除
+        alert(`[TEMP DEBUG] requestFriendship 已結束，現在 friendFlag=${after.friendFlag}`) // TEMP DEBUG：測完要移除
+      }
     }
     run().catch((e) => {
       console.warn('official account prompt failed', e?.code || e?.message || e)
