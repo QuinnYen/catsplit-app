@@ -215,11 +215,13 @@ export const AppProvider = ({ children }) => {
             }
             // getIDToken 是同步的，getProfile 與 verifyLiffToken 兩個請求可同時發出
             const idToken = liff.getIDToken()
+            // 逾時（含冷啟動約 4 秒的餘裕）就丟錯，改走下方的備援流程，不會一直卡在載入畫面
             const verifying = idToken && VERIFY_LIFF_TOKEN_URL
               ? fetch(VERIFY_LIFF_TOKEN_URL, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ idToken }),
+                  signal: AbortSignal.timeout(15000),
                 })
               : null
             const [profile, res] = await Promise.all([liff.getProfile(), verifying])

@@ -38,15 +38,15 @@ const SettlePage = () => {
       const groupData = { id: groupSnap.id, ...groupSnap.data() }
       setGroup(groupData)
 
-      const expensesSnap = await getDocs(collection(db, 'groups', id, 'expenses'))
+      const [expensesSnap, settlementsSnap, incomesSnap] = await Promise.all([
+        getDocs(collection(db, 'groups', id, 'expenses')),
+        getDocs(collection(db, 'groups', id, 'settlements')),
+        getDocs(collection(db, 'groups', id, 'incomes')),
+      ])
       const expensesData = expensesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setExpenses(expensesData)
-
-      const settlementsSnap = await getDocs(collection(db, 'groups', id, 'settlements'))
       const settlementsData = settlementsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setSettledRecords(settlementsData)
-
-      const incomesSnap = await getDocs(collection(db, 'groups', id, 'incomes'))
       const incomesData = incomesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
 
       // 計算餘額：支出分帳 + 已結清紀錄 + 收入
