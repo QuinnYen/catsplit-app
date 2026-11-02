@@ -9,7 +9,6 @@ import useMyGroups from '../hooks/useMyGroups'
 import Avatar from '../components/Avatar'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
-import PawDecor from '../components/PawDecor'
 import { getCurrency } from '../config/currencies'
 import { computeBudgetStatus } from '../utils/budget'
 import catLogo from '../assets/cat-logo.webp'
@@ -68,30 +67,27 @@ const HomePage = () => {
 
   if (!authLoading && !user) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--cs-rc-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
         <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
-          {/* 裝飾 */}
-          <PawDecor size={72} color="#FF8C42" opacity={0.08} style={{ top: -24, right: -8, bottom: 'auto' }} />
-
           {/* Logo / Icon */}
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <img src={catLogo} alt={t('app.title')} style={{ width: 80, height: 80, marginBottom: 16 }} />
-            <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--cs-text)', marginBottom: 6 }}>{t('app.title')}</div>
-            <div style={{ fontSize: 14, color: 'var(--cs-text-sub)', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--cs-rc-ink)', marginBottom: 6 }}>{t('app.title')}</div>
+            <div style={{ fontSize: 14, color: 'var(--cs-rc-sub)', lineHeight: 1.6 }}>
               {t('home.tagline1')}<br />{t('home.tagline2')}
             </div>
           </div>
 
           {/* 特色說明 */}
-          <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: '16px 18px', marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ background: 'var(--cs-rc-card)', borderRadius: 6, border: '1px solid var(--cs-rc-rule)', padding: '4px 18px', marginBottom: 24 }}>
             {[
               { Icon: Users, text: t('home.feature1') },
               { Icon: Wallet, text: t('home.feature2') },
               { Icon: Calculator, text: t('home.feature3') },
-            ].map(({ Icon, text }) => (
-              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 32, display: 'flex', justifyContent: 'center', flexShrink: 0 }}><Icon size={20} color="#FF8C42" /></div>
-                <div style={{ fontSize: 13, color: 'var(--cs-text)' }}>{text}</div>
+            ].map(({ Icon, text }, i) => (
+              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderTop: i === 0 ? 'none' : '1.5px dashed var(--cs-rc-rule)' }}>
+                <div style={{ width: 32, display: 'flex', justifyContent: 'center', flexShrink: 0 }}><Icon size={20} color="var(--cs-rc-stamp)" /></div>
+                <div style={{ fontSize: 13, color: 'var(--cs-rc-ink)' }}>{text}</div>
               </div>
             ))}
           </div>
@@ -99,18 +95,18 @@ const HomePage = () => {
           {/* LINE 登入按鈕 */}
           <button
             onClick={() => loginWithLine()}
-            style={{ width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', background: '#06C755', color: '#fff', fontSize: 16, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 4px 16px rgba(6,199,85,0.35)' }}
+            style={{ width: '100%', padding: '15px 0', borderRadius: 6, border: 'none', background: '#06C755', color: '#fff', fontSize: 16, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
           >
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
               <path d="M11 2C6.03 2 2 5.58 2 10c0 3.54 2.56 6.57 6.24 7.73-.09.31-.56 1.97-.64 2.27 0 0-.04.14.07.19.11.06.24.01.24.01.32-.04 3.72-2.45 4.09-2.7.66.09 1.34.14 2.03.14 4.97 0 9-3.58 9-8s-4.03-8-9-8z" fill="var(--cs-on-brand)"/>
             </svg>
             {t('home.loginLine')}
           </button>
-          <p style={{ marginTop: 14, fontSize: 12, color: 'var(--cs-text-sub)', textAlign: 'center', lineHeight: 1.6 }}>
+          <p style={{ marginTop: 14, fontSize: 12, color: 'var(--cs-rc-sub)', textAlign: 'center', lineHeight: 1.6 }}>
             {t('home.agreePrefix')}
-            <a href={legalHref('terms')} style={{ color: '#FF6B1A' }}>{t('home.terms')}</a>
+            <a href={legalHref('terms')} style={{ color: 'var(--cs-rc-stamp)' }}>{t('home.terms')}</a>
             {t('home.and')}
-            <a href={legalHref('privacy')} style={{ color: '#FF6B1A' }}>{t('home.privacy')}</a>
+            <a href={legalHref('privacy')} style={{ color: 'var(--cs-rc-stamp)' }}>{t('home.privacy')}</a>
           </p>
         </div>
       </div>
@@ -118,13 +114,10 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--cs-bg)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--cs-rc-bg)' }}>
 
       {/* Header */}
-      <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '20px 16px 28px', position: 'relative', overflow: 'hidden' }}>
-
-        {/* 裝飾爪印 */}
-        <PawDecor style={{ right: 14, bottom: -8 }} />
+      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '20px 16px 22px', position: 'relative' }}>
 
         {/* 使用者資訊 */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -138,27 +131,29 @@ const HomePage = () => {
                 src={user?.avatar}
                 name={user?.name}
                 size={38}
-                style={{ background: 'var(--cs-soft-2)', border: '2px solid rgba(255,255,255,0.6)' }}
+                style={{ background: 'var(--cs-soft-2)', border: '2px solid var(--cs-rc-head-text)' }}
               />
             </button>
             <div>
-              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ color: 'var(--cs-rc-head-text)', opacity: 0.75, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <GreetingIcon size={12} />{t(greetingKey)}
               </div>
-              <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
+              <div style={{ color: 'var(--cs-rc-head-text)', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
             </div>
           </div>
         </div>
       </div>
+      {/* 收據撕邊：16px 一格的鋸齒，只露出上半 8px */}
+      <div aria-hidden="true" style={{ height: 8, flexShrink: 0, backgroundImage: 'linear-gradient(135deg, var(--cs-rc-head) 25%, transparent 25%), linear-gradient(225deg, var(--cs-rc-head) 25%, transparent 25%)', backgroundSize: '16px 16px' }} />
 
       {/* 內容 */}
       <div className="cs-body" style={{ padding: '16px', flex: 1, paddingBottom: 24, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('home.myGroups')}</div>
+          <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-rc-ink)' }}>{t('home.myGroups')}</div>
           {!user?.guest && (
             <button
               onClick={() => navigate('/create')}
-              style={{ background: '#FF8C42', color: '#fff', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
+              style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
             >
               {t('home.create')}
             </button>
@@ -166,7 +161,7 @@ const HomePage = () => {
         </div>
 
         {user?.guest && (
-          <div style={{ background: 'var(--cs-soft)', border: '0.5px solid var(--cs-border)', borderRadius: 14, padding: 12, marginBottom: 12, fontSize: 12, color: 'var(--cs-text-sub)', lineHeight: 1.6 }}>
+          <div style={{ background: 'var(--cs-rc-card)', border: '1px dashed var(--cs-rc-rule)', borderRadius: 6, padding: 12, marginBottom: 12, fontSize: 12, color: 'var(--cs-rc-sub)', lineHeight: 1.6 }}>
             {t('home.guestNotice', { max: MAX_GUEST_NAMES })}
             <button
               onClick={() => loginWithLine('/')}
@@ -179,7 +174,7 @@ const HomePage = () => {
 
         {/* 載入中 */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--cs-rc-sub)' }}>{t('common.loading')}</div>
         )}
 
         {/* 空狀態 */}
@@ -188,7 +183,7 @@ const HomePage = () => {
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
               <GroupIcon icon="paw" color="orange" size={72} />
             </div>
-            <div style={{ color: 'var(--cs-text-sub)', fontSize: 14, marginBottom: 4 }}>{t('home.emptyTitle')}</div>
+            <div style={{ color: 'var(--cs-rc-sub)', fontSize: 14, marginBottom: 4 }}>{t('home.emptyTitle')}</div>
             <div style={{ color: 'var(--cs-text-mute)', fontSize: 13 }}>{t('home.emptyHint')}</div>
           </div>
         )}
@@ -204,13 +199,14 @@ const HomePage = () => {
             const isOverBudget = computeBudgetStatus(group.budget, group)?.level === 'over'
             // 有封面時卡片高度不變，封面當背景（lazy 載入）加暗色漸層，文字改淺色
             const hasCover = !!group.coverUrl
-            const subColor = hasCover ? 'rgba(255,255,255,0.85)' : 'var(--cs-text-sub)'
-            const nameStyle = { fontSize: 14, fontWeight: 500, color: hasCover ? '#fff' : 'var(--cs-text)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+            const subColor = hasCover ? 'rgba(255,255,255,0.85)' : 'var(--cs-rc-sub)'
+            const amountStyle = { fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap' }
+            const nameStyle = { fontSize: 15, fontWeight: 600, color: hasCover ? '#fff' : 'var(--cs-rc-ink)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
             return (
               <div
                 key={group.id}
                 onClick={() => navigate(`/group/${group.id}`)}
-                style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none', ...(hasCover && { position: 'relative', overflow: 'hidden', isolation: 'isolate' }) }}
+                style={{ background: 'var(--cs-rc-card)', borderRadius: 6, border: '1px solid var(--cs-rc-rule)', padding: '14px 0 14px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none', position: 'relative', overflow: 'hidden', isolation: 'isolate' }}
                 onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
                 onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
               >
@@ -237,10 +233,10 @@ const HomePage = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: subColor }}>
                     <div style={{ display: 'flex' }}>
                       {profiles.map((member, i) => (
-                        <Avatar key={i} src={member.avatar} name={member.name} size={18} style={{ border: `1.5px solid ${hasCover ? 'var(--cs-on-brand)' : 'var(--cs-card)'}`, marginLeft: i === 0 ? 0 : -5 }} />
+                        <Avatar key={i} src={member.avatar} name={member.name} size={18} style={{ border: `1.5px solid ${hasCover ? 'var(--cs-on-brand)' : 'var(--cs-rc-card)'}`, marginLeft: i === 0 ? 0 : -5 }} />
                       ))}
                       {(group.members?.length || 0) > profiles.length && (
-                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: `1.5px solid ${hasCover ? 'var(--cs-on-brand)' : 'var(--cs-card)'}`, marginLeft: -5, background: 'var(--cs-border)', color: 'var(--cs-text-sub)', fontSize: 9, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: `1.5px solid ${hasCover ? 'var(--cs-on-brand)' : 'var(--cs-rc-card)'}`, marginLeft: -5, background: 'var(--cs-rc-rule)', color: 'var(--cs-rc-sub)', fontSize: 9, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
                           +{group.members.length - profiles.length}
                         </div>
                       )}
@@ -248,16 +244,21 @@ const HomePage = () => {
                     {t('group.memberCount', { n: group.members?.length })}
                   </div>
                 </div>
+                {/* 票根切口：虛線加上下缺口，右側固定寬度放餘額 */}
+                <div aria-hidden="true" style={{ position: 'absolute', top: 0, bottom: 0, right: 108, borderLeft: `1.5px dashed ${hasCover ? 'rgba(255,255,255,0.4)' : 'var(--cs-rc-rule)'}` }} />
+                <div aria-hidden="true" style={{ position: 'absolute', top: -6, right: 102, width: 12, height: 12, borderRadius: '50%', background: 'var(--cs-rc-bg)', border: '1px solid var(--cs-rc-rule)', boxSizing: 'border-box' }} />
+                <div aria-hidden="true" style={{ position: 'absolute', bottom: -6, right: 102, width: 12, height: 12, borderRadius: '50%', background: 'var(--cs-rc-bg)', border: '1px solid var(--cs-rc-rule)', boxSizing: 'border-box' }} />
+                <div style={{ width: 108, boxSizing: 'border-box', padding: '0 12px', flexShrink: 0 }}>
                 {bal === null ? (
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: hasCover ? 'var(--cs-on-cover-accent)' : '#FF6B1A' }}>
+                    <div style={{ ...amountStyle, color: hasCover ? 'var(--cs-on-cover-accent)' : 'var(--cs-rc-ink)' }}>
                       {getCurrency(group.baseCurrency).symbol} {fmt.num(group.totalAmount || 0)}
                     </div>
                     <div style={{ fontSize: 11, color: subColor }}>{t('group.totalExpense')}</div>
                   </div>
                 ) : (
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: isSettled ? subColor : isPositive ? (hasCover ? 'var(--cs-on-cover-success)' : '#4caf50') : (hasCover ? 'var(--cs-on-cover-accent)' : '#FF6B1A') }}>
+                    <div style={{ ...amountStyle, color: isSettled ? subColor : isPositive ? (hasCover ? 'var(--cs-on-cover-success)' : 'var(--cs-rc-get)') : (hasCover ? 'var(--cs-on-cover-accent)' : 'var(--cs-rc-owe)') }}>
                       {isSettled ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                           <Check size={13} strokeWidth={3} /> {t('home.settled')}
@@ -271,7 +272,7 @@ const HomePage = () => {
                     </div>
                   </div>
                 )}
-                <div style={{ color: hasCover ? 'rgba(255,255,255,0.8)' : 'var(--cs-line-soft)', fontSize: 18 }}>›</div>
+                </div>
               </div>
             )
           }
@@ -291,11 +292,11 @@ const HomePage = () => {
                     { label: t('home.pageNext'), to: currentPage + 1, disabled: currentPage === pageCount },
                   ].map(({ label, to, disabled }, i) => (
                     <Fragment key={label}>
-                      {i === 1 && <span style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>{currentPage} / {pageCount}</span>}
+                      {i === 1 && <span style={{ fontSize: 13, color: 'var(--cs-rc-sub)' }}>{currentPage} / {pageCount}</span>}
                       <button
                         onClick={() => { setPage(to); window.scrollTo({ top: 0 }) }}
                         disabled={disabled}
-                        style={{ border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', borderRadius: 10, padding: '7px 14px', fontSize: 13, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
+                        style={{ border: '1px solid var(--cs-rc-rule)', background: 'var(--cs-rc-card)', color: 'var(--cs-rc-sub)', borderRadius: 6, padding: '7px 14px', fontSize: 13, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
                       >
                         {label}
                       </button>
@@ -311,7 +312,7 @@ const HomePage = () => {
                     onClick={() => setShowArchived(v => !v)}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: 10 }}
                   >
-                    <span style={{ fontSize: 12, color: 'var(--cs-text-sub)', fontWeight: 500 }}>{t('home.archived', { n: archivedGroups.length })}</span>
+                    <span style={{ fontSize: 12, color: 'var(--cs-rc-sub)', fontWeight: 500 }}>{t('home.archived', { n: archivedGroups.length })}</span>
                     <span style={{ fontSize: 11, color: 'var(--cs-text-mute)', transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s' }}>›</span>
                   </button>
                   {showArchived && (
@@ -331,8 +332,8 @@ const HomePage = () => {
       {showSettings && (
         <>
           <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
-          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 720px) / 2 + 16px))', zIndex: 101, width: 220, background: 'var(--cs-card)', borderRadius: 14, border: '0.5px solid var(--cs-border)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
-            <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: 'var(--cs-card)', borderTop: '0.5px solid var(--cs-border)', borderLeft: '0.5px solid var(--cs-border)', transform: 'rotate(45deg)' }} />
+          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 720px) / 2 + 16px))', zIndex: 101, width: 220, background: 'var(--cs-rc-card)', borderRadius: 14, border: '0.5px solid var(--cs-rc-rule)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
+            <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: 'var(--cs-rc-card)', borderTop: '0.5px solid var(--cs-rc-rule)', borderLeft: '0.5px solid var(--cs-rc-rule)', transform: 'rotate(45deg)' }} />
             {[
               { Icon: Settings, label: t('group.settings'), onClick: () => navigate('/settings') },
               // 訪客沒有穩定身分，不提供收款方式
@@ -341,8 +342,8 @@ const HomePage = () => {
               { Icon: LineIcon, label: t('group.menu.official'), href: OFFICIAL_ACCOUNT_URL },
               { Icon: LogOut, label: t('home.menu.logout'), onClick: handleLogout },
             ].map(({ Icon, label, href, onClick }, i) => {
-              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid var(--cs-border)', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
-              const content = <><Icon size={18} color="var(--cs-text-sub)" />{label}</>
+              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid var(--cs-rc-rule)', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: 'var(--cs-rc-ink)', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
+              const content = <><Icon size={18} color="var(--cs-rc-sub)" />{label}</>
               return href
                 ? <a key={label} href={href} style={style}>{content}</a>
                 : <button key={label} onClick={onClick} style={style}>{content}</button>

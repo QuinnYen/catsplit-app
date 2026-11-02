@@ -73,9 +73,33 @@
   --cs-gi-blue-bg: #e3f2fd;   --cs-gi-blue-fg: #1e88e5;
   --cs-gi-indigo-bg: #e8eaf6; --cs-gi-indigo-fg: #3949ab;
   --cs-gi-purple-bg: #f3e5f5; --cs-gi-purple-fg: #8e44ad;
+  /* 收據帳本風格（首頁試做，之後逐頁套用）：紙、收據、墨、副字、虛線、頁首、印章橘、應付、應收 */
+  --cs-rc-bg: #e9ecef;
+  --cs-rc-card: #fbfbf9;
+  --cs-rc-ink: #1b2a41;
+  --cs-rc-sub: #5a667a;
+  --cs-rc-rule: #c5ccd6;
+  --cs-rc-head: #1b2a41;
+  --cs-rc-head-text: #f4f6f9;
+  --cs-rc-stamp: #d9540a;
+  --cs-rc-stamp-text: #ffffff;
+  --cs-rc-owe: #c2410c;
+  --cs-rc-get: #15803d;
+  --cs-rc-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 }
 
 :root[data-theme="dark"] {
+  --cs-rc-bg: #11161d;
+  --cs-rc-card: #1a212b;
+  --cs-rc-ink: #e6eaf0;
+  --cs-rc-sub: #98a3b5;
+  --cs-rc-rule: #323c4b;
+  --cs-rc-head: #0a0e14;
+  --cs-rc-head-text: #e6eaf0;
+  --cs-rc-stamp: #ff8c42;
+  --cs-rc-stamp-text: #1b1007;
+  --cs-rc-owe: #ff9a5c;
+  --cs-rc-get: #6fd39a;
   color-scheme: dark;
   --cs-bg: #1f1713;
   --cs-card: #2a201a;
