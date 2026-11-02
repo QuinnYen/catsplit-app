@@ -83,7 +83,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500 }}>{isIncome ? t('detail.incomeTitle') : t('detail.expenseTitle')}</div>
           <button
             onClick={() => navigate(`/group/${id}/${routeSeg}/${expenseId}/edit`)}
-            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 20, padding: '5px 14px', fontSize: 13, cursor: 'pointer' }}
+            style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 6, padding: '5px 14px', fontSize: 13, cursor: 'pointer' }}
           >
             {t('common.edit')}
           </button>
@@ -93,7 +93,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 主卡片 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)', flexShrink: 0, whiteSpace: 'nowrap' }}>
               {categoryLabel(expense.category, t)}
@@ -105,10 +105,10 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           </div>
 
           {/* 金額 */}
-          <div style={{ background: 'var(--cs-soft)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+          <div style={{ background: 'var(--cs-soft)', borderRadius: 6, padding: '12px 14px', marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.amountIncome') : t('detail.amountExpense')}</div>
-              <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--cs-rc-owe)' }}>
+              <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 24, fontWeight: 600, color: 'var(--cs-rc-owe)' }}>
                 {expCurr.symbol} {fmt.num(expense.originalAmount ?? expense.amount)}
               </div>
             </div>
@@ -152,7 +152,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         </div>
 
         {/* 分攤明細 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.splitIncome') : t('detail.splitExpense')}</div>
             <div style={{ fontSize: 12, color: 'var(--cs-rc-stamp)', fontWeight: 500 }}>
@@ -216,7 +216,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 <img
                   src={receiptUrl}
                   alt={t('form.receiptAlt')}
-                  style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 10, background: 'var(--cs-track)', display: 'block' }}
+                  style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 6, background: 'var(--cs-track)', display: 'block' }}
                 />
               </a>
             )}
@@ -225,7 +225,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
 
         {/* 我的份額卡 */}
         {expense.splits?.[user?.uid] != null && (
-          <div style={{ background: isPayer ? 'var(--cs-success-bg)' : 'var(--cs-soft)', borderRadius: 16, border: `0.5px solid ${isPayer ? 'var(--cs-success-border)' : 'var(--cs-border)'}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ background: isPayer ? 'var(--cs-success-bg)' : 'var(--cs-soft)', borderRadius: 6, border: `0.5px solid ${isPayer ? 'var(--cs-success-border)' : 'var(--cs-border)'}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 12, color: isPayer ? 'var(--cs-rc-get)' : 'var(--cs-text-sub)', marginBottom: 2 }}>
                 {isIncome ? (isPayer ? t('detail.myShare.incomePayer') : t('detail.myShare.incomeOther')) : (isPayer ? t('detail.myShare.expensePayer') : t('detail.myShare.expenseOther'))}

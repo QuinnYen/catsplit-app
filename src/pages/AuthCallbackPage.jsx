@@ -48,7 +48,7 @@ const AuthCallbackPage = () => {
           <div style={{ fontSize: 16, color: 'var(--cs-danger)', marginBottom: 24, textAlign: 'center' }}>{error}</div>
           <button
             onClick={() => navigate('/', { replace: true })}
-            style={{ background: 'var(--cs-card)', color: 'var(--cs-text)', border: '0.5px solid var(--cs-border)', borderRadius: 12, padding: '10px 24px', fontSize: 14, cursor: 'pointer' }}
+            style={{ background: 'var(--cs-card)', color: 'var(--cs-text)', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 24px', fontSize: 14, cursor: 'pointer' }}
           >
             {t('group.backHome')}
           </button>

@@ -9,7 +9,7 @@ import { CURRENCIES } from '../config/currencies'
 import { deleteSavingsGoal } from '../utils/savingsData'
 import { isValidAmount } from '../utils/savings'
 
-const input = { width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-card)', boxSizing: 'border-box' }
+const input = { width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-card)', boxSizing: 'border-box' }
 const label = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 6 }
 
 const SavingsGoalFormPage = () => {
@@ -109,8 +109,8 @@ const SavingsGoalFormPage = () => {
               </div>
             </div>
             {error && <div style={{ fontSize: 13, color: 'var(--cs-danger)' }}>{error}</div>}
-            <button onClick={handleSave} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 15, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.save')}</button>
-            {editing && <button onClick={handleDelete} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 15, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>}
+            <button onClick={handleSave} disabled={saving} style={{ padding: '13px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 15, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.save')}</button>
+            {editing && <button onClick={handleDelete} disabled={saving} style={{ padding: '13px 0', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 15, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>}
           </>
         )}
       </div>

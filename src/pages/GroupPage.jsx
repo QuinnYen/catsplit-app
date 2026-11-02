@@ -231,7 +231,7 @@ const GroupPage = () => {
         <div>{t('group.notFound')}</div>
         <button
           onClick={() => navigate('/')}
-          style={{ padding: '10px 24px', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer' }}
+          style={{ padding: '10px 24px', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer' }}
         >
           {t('group.backHome')}
         </button>
@@ -264,7 +264,7 @@ const GroupPage = () => {
           </div>
         </div>
         <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-          <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('group.currentMembers')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {profiles.slice(0, 3).map((member, i) => (
@@ -283,9 +283,9 @@ const GroupPage = () => {
               )}
             </div>
           </div>
-          {!user.guest && !choosingIdentity && <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          {!user.guest && !choosingIdentity && <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('group.joinAs')}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--cs-soft)', borderRadius: 12, padding: '10px 12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--cs-soft)', borderRadius: 6, padding: '10px 12px' }}>
               <Avatar src={user?.avatar} name={user?.name} size={40} />
               <div>
                 <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{user?.name}</div>
@@ -299,7 +299,7 @@ const GroupPage = () => {
             <GuestJoin groupId={id} guests={placeholders.map(pid => ({ id: pid, name: group.memberProfiles[pid].name }))} />
           )}
           {choosingIdentity && (
-            <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+            <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
               <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 4 }}>{t('group.claimTitle')}</div>
               <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginBottom: 10 }}>{t('group.claimHint')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -308,7 +308,7 @@ const GroupPage = () => {
                     key={pid}
                     onClick={() => handleClaim(pid)}
                     disabled={joining}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--cs-soft)', border: 'none', borderRadius: 12, padding: '10px 12px', cursor: joining ? 'not-allowed' : 'pointer', textAlign: 'left' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--cs-soft)', border: 'none', borderRadius: 6, padding: '10px 12px', cursor: joining ? 'not-allowed' : 'pointer', textAlign: 'left' }}
                   >
                     <Avatar src={null} name={group.memberProfiles[pid].name} size={36} />
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{group.memberProfiles[pid].name}</span>
@@ -325,7 +325,7 @@ const GroupPage = () => {
           {choosingIdentity && (
             <button
               onClick={() => setJoinAsNew(true)}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}
             >
               {t('group.notInList')}
             </button>
@@ -342,7 +342,7 @@ const GroupPage = () => {
             onClick={handleJoin}
             disabled={joining}
             style={{
-              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
+              width: '100%', padding: '15px 0', borderRadius: 6, border: 'none', fontSize: 15, fontWeight: 500,
               cursor: joining ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
               background: joining ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)',
             }}
@@ -351,7 +351,7 @@ const GroupPage = () => {
           </button>}
           <button
             onClick={() => navigate('/')}
-            style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}
+            style={{ width: '100%', padding: '12px 0', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}
           >
             {t('common.cancel')}
           </button>
@@ -373,7 +373,7 @@ const GroupPage = () => {
           <div onClick={() => setSettingsPos(null)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
           <div style={{
             position: 'fixed', top: settingsPos.top, right: settingsPos.right, zIndex: 41, minWidth: 140, padding: 4,
-            background: 'var(--cs-card)', borderRadius: 12, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
+            background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
           }}>
             {[
               { label: t('group.menu.edit'), Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
@@ -387,7 +387,7 @@ const GroupPage = () => {
               <button
                 key={label} onClick={onClick} disabled={disabled}
                 style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none',
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 6, border: 'none',
                   background: 'transparent', fontSize: 14, color: 'var(--cs-text)', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, textAlign: 'left',
                 }}
               >
@@ -493,7 +493,7 @@ const GroupPage = () => {
         {/* 總金額卡片 */}
         <div
           onClick={() => navigate(`/group/${id}/stats`)}
-          style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 16, padding: 14, border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+          style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 6, padding: 14, border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
           onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
           onTouchEnd={e => e.currentTarget.style.opacity = '1'}
         >
@@ -537,12 +537,12 @@ const GroupPage = () => {
       {/* 操作按鈕 */}
       <div className="cs-body" style={{ padding: '16px 16px 0' }}>
         {showOaBanner && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 12, padding: '8px 8px 8px 12px', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '8px 8px 8px 12px', marginBottom: 12 }}>
             <LineIcon size={18} />
             <span style={{ flex: 1, fontSize: 12, color: 'var(--cs-text)' }}>{t('group.oaBanner')}</span>
             <button
               onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
-              style={{ border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
+              style={{ border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', borderRadius: 6, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
             >
               {t('group.oaBannerAdd')}
             </button>
@@ -556,7 +556,7 @@ const GroupPage = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               onClick={() => navigate(`/group/${id}/settle`)}
-              style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
+              style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
             >
               {t('tab.settle')}
             </button>
@@ -666,7 +666,7 @@ const GroupPage = () => {
                           <div
                             key={item.id}
                             onClick={() => setDetailSettlementId(item.id)}
-                            style={{ background: 'var(--cs-success-bg)', borderRadius: 14, border: '0.5px solid var(--cs-success-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: 'var(--cs-success-bg)', borderRadius: 6, border: '0.5px solid var(--cs-success-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                           >
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', fontSize: 13, fontWeight: 500, color: 'var(--cs-success)', marginBottom: 2 }}>
@@ -697,7 +697,7 @@ const GroupPage = () => {
                           <div
                             key={item.id}
                             onClick={() => navigate(`/group/${id}/income/${item.id}`)}
-                            style={{ background: 'var(--cs-info-bg)', borderRadius: 14, border: '0.5px solid var(--cs-info-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: 'var(--cs-info-bg)', borderRadius: 6, border: '0.5px solid var(--cs-info-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
                           >
@@ -737,7 +737,7 @@ const GroupPage = () => {
                         <div key={item.id} style={{ position: 'relative' }}>
                           <div
                             onClick={() => navigate(`/group/${id}/expense/${item.id}`)}
-                            style={{ background: 'var(--cs-card)', borderRadius: 14, border: '0.5px solid var(--cs-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
                           >
@@ -758,7 +758,7 @@ const GroupPage = () => {
                               </div>
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>
+                              <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 15, fontWeight: 600, color: 'var(--cs-rc-owe)' }}>
                                 {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
                               </div>
                               {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
@@ -788,7 +788,7 @@ const GroupPage = () => {
                                 onClick={() => setOpenMenuId(null)}
                                 style={{ position: 'fixed', inset: 0, zIndex: 10 }}
                               />
-                              <div style={{ position: 'absolute', ...(menuUp ? { bottom: 'calc(100% + 4px)' } : { top: 'calc(100% + 4px)' }), right: 0, zIndex: 11, background: 'var(--cs-card)', borderRadius: 12, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 120 }}>
+                              <div style={{ position: 'absolute', ...(menuUp ? { bottom: 'calc(100% + 4px)' } : { top: 'calc(100% + 4px)' }), right: 0, zIndex: 11, background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 120 }}>
                                 <button
                                   onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/group/${id}/expense/${item.id}/edit`) }}
                                   style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
@@ -876,7 +876,7 @@ const GroupPage = () => {
 
             <button
               onClick={() => handleDeleteSettlement(detailSettlement.id, group)}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 12, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 6, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
               <Trash2 size={14} /> {t('group.deleteSettlement')}
             </button>

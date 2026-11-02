@@ -71,7 +71,7 @@ const CreateGroupPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 群組名稱 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t('eg.name')}</div>
             <div style={{ fontSize: 11, color: 'var(--cs-text-mute)' }}>{name.length} / 20</div>
@@ -82,17 +82,17 @@ const CreateGroupPage = () => {
             onChange={e => setName(e.target.value)}
             placeholder={t('cg.namePlaceholder')}
             maxLength={20}
-            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
           />
         </div>
 
         {/* 基準貨幣 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('cg.baseCurrency')}</div>
           <select
             value={baseCurrency}
             onChange={e => setBaseCurrency(e.target.value)}
-            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
           >
             {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
           </select>
@@ -102,7 +102,7 @@ const CreateGroupPage = () => {
         </div>
 
         {/* 群組圖示 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('eg.icon')}</div>
           <GroupIconPicker
             icon={icon}
@@ -112,7 +112,7 @@ const CreateGroupPage = () => {
         </div>
 
         {/* 預覽卡片 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('cg.preview')}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <GroupIcon icon={icon} color={iconColor} size={48} />
@@ -134,7 +134,7 @@ const CreateGroupPage = () => {
             onClick={handleCreate}
             disabled={!name.trim() || loading}
             style={{
-              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500, cursor: name.trim() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
+              width: '100%', padding: '15px 0', borderRadius: 6, border: 'none', fontSize: 15, fontWeight: 500, cursor: name.trim() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
               background: name.trim() && !loading ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)',
               color: 'var(--cs-rc-stamp-text)',
             }}

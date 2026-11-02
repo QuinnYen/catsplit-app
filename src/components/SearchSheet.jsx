@@ -14,13 +14,13 @@ const TYPES = [
 ]
 
 const sectionTitle = { fontSize: 13, fontWeight: 600, color: 'var(--cs-text)', margin: '16px 0 8px' }
-const dateInput = { flex: 1, minWidth: 0, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '8px 10px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }
+const dateInput = { flex: 1, minWidth: 0, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '8px 10px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }
 
 const Chip = ({ active, onClick, children }) => (
   <button
     onClick={onClick}
     style={{
-      flexShrink: 0, padding: '6px 13px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
+      flexShrink: 0, padding: '6px 13px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
       border: active ? '1px solid var(--cs-rc-stamp)' : '1px solid var(--cs-border)',
       background: active ? 'var(--cs-soft)' : 'var(--cs-card)', color: active ? 'var(--cs-rc-owe)' : 'var(--cs-text-2)', fontWeight: active ? 600 : 400,
     }}
@@ -30,7 +30,7 @@ const Chip = ({ active, onClick, children }) => (
 )
 
 const Segmented = ({ options, value, onChange }) => (
-  <div style={{ display: 'flex', border: '1px solid var(--cs-border)', borderRadius: 10, overflow: 'hidden' }}>
+  <div style={{ display: 'flex', border: '1px solid var(--cs-border)', borderRadius: 6, overflow: 'hidden' }}>
     {options.map(([key, label], i) => (
       <button
         key={String(key)}
@@ -115,7 +115,7 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
             onChange={e => patch({ text: e.target.value })}
             onKeyDown={e => e.key === 'Enter' && onApply(f)}
             placeholder={t('group.searchPlaceholder')}
-            style={{ width: '100%', border: '1px solid var(--cs-border)', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+            style={{ width: '100%', border: '1px solid var(--cs-border)', borderRadius: 6, padding: '11px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
           />
 
           <div style={sectionTitle}>{t('search.scope')}</div>
@@ -129,13 +129,13 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
         <div style={{ display: 'flex', gap: 10, padding: '12px 18px calc(14px + env(safe-area-inset-bottom, 0px))', borderTop: '0.5px solid var(--cs-track)' }}>
           <button
             onClick={() => setF(EMPTY_FILTERS)}
-            style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-rc-stamp)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '13px 0', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-rc-stamp)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
           >
             {t('search.reset')}
           </button>
           <button
             onClick={() => onApply(f)}
-            style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '13px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
           >
             {t('group.search')}
           </button>

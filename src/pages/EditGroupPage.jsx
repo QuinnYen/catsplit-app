@@ -235,7 +235,7 @@ const EditGroupPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 群組名稱 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t('eg.name')}</div>
             <div style={{ fontSize: 11, color: 'var(--cs-text-mute)' }}>{name.length} / 20</div>
@@ -246,13 +246,13 @@ const EditGroupPage = () => {
               value={name}
               onChange={e => setName(e.target.value)}
               maxLength={20}
-              style={{ flex: 1, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+              style={{ flex: 1, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
             />
             <button
               onClick={handleSaveName}
               disabled={saving || !name.trim() || name.trim() === group.name}
               style={{
-                padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
+                padding: '10px 16px', borderRadius: 6, border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
                 background: saving || !name.trim() || name.trim() === group.name ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)',
                 color: 'var(--cs-rc-stamp-text)',
               }}
@@ -267,10 +267,10 @@ const EditGroupPage = () => {
           const budgetNum = parseFloat(budgetInput)
           const canSaveBudget = !budgetSaving && budgetNum > 0 && budgetNum !== group.budget?.amount
           return (
-            <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+            <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
               <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('eg.budget')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '0 12px', background: 'var(--cs-bg)' }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '0 12px', background: 'var(--cs-bg)' }}>
                   <span style={{ fontSize: 14, color: 'var(--cs-text-sub)', flexShrink: 0 }}>{getCurrency(group.baseCurrency).symbol}</span>
                   <input
                     type="text"
@@ -286,7 +286,7 @@ const EditGroupPage = () => {
                   onClick={handleSaveBudget}
                   disabled={!canSaveBudget}
                   style={{
-                    padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
+                    padding: '10px 16px', borderRadius: 6, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
                     cursor: canSaveBudget ? 'pointer' : 'not-allowed',
                     background: canSaveBudget ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', color: 'var(--cs-rc-stamp-text)',
                   }}
@@ -297,7 +297,7 @@ const EditGroupPage = () => {
                   <button
                     onClick={handleClearBudget}
                     disabled={budgetSaving}
-                    style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 13, flexShrink: 0, cursor: budgetSaving ? 'not-allowed' : 'pointer' }}
+                    style={{ padding: '10px 16px', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 13, flexShrink: 0, cursor: budgetSaving ? 'not-allowed' : 'pointer' }}
                   >
                     {t('eg.budgetClear')}
                   </button>
@@ -309,7 +309,7 @@ const EditGroupPage = () => {
         })()}
 
         {/* 群組圖示 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('eg.icon')}</div>
           <GroupIconPicker
             icon={group.icon}
@@ -320,14 +320,14 @@ const EditGroupPage = () => {
         </div>
 
         {/* 群組封面 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('eg.cover')}</div>
           <div style={{ fontSize: 13, color: 'var(--cs-text)', marginBottom: 10 }}>
             {coverSaving ? t('common.processing') : group.coverUrl ? t('eg.coverSet') : t('eg.coverNone')}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <label style={{
-              flex: 1, textAlign: 'center', padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 500,
+              flex: 1, textAlign: 'center', padding: '10px 0', borderRadius: 6, fontSize: 13, fontWeight: 500,
               background: coverSaving ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', cursor: coverSaving ? 'not-allowed' : 'pointer',
             }}>
               {group.coverUrl ? t('eg.coverChange') : t('eg.coverChoose')}
@@ -337,7 +337,7 @@ const EditGroupPage = () => {
               <button
                 onClick={handleRemoveCover}
                 disabled={coverSaving}
-                style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 13, cursor: coverSaving ? 'not-allowed' : 'pointer' }}
+                style={{ padding: '10px 16px', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 13, cursor: coverSaving ? 'not-allowed' : 'pointer' }}
               >
                 {t('eg.remove')}
               </button>
@@ -352,7 +352,7 @@ const EditGroupPage = () => {
             onClick={handleLeaveGroup}
             disabled={leaving}
             style={{
-              width: '100%', padding: '14px 0', borderRadius: 16, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)',
+              width: '100%', padding: '14px 0', borderRadius: 6, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)',
               color: leaving ? 'var(--cs-text-sub)' : 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: leaving ? 'not-allowed' : 'pointer',
             }}
           >
@@ -367,7 +367,7 @@ const EditGroupPage = () => {
               onClick={handleArchiveToggle}
               disabled={archiving}
               style={{
-                flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid var(--cs-border)', background: 'var(--cs-card)',
+                flex: 1, padding: '14px 0', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'var(--cs-card)',
                 color: archiving ? 'var(--cs-text-sub)' : 'var(--cs-rc-stamp)', fontSize: 14, fontWeight: 500, cursor: archiving ? 'not-allowed' : 'pointer',
               }}
             >
@@ -377,7 +377,7 @@ const EditGroupPage = () => {
               onClick={handleDeleteGroup}
               disabled={deleting}
               style={{
-                flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)',
+                flex: 1, padding: '14px 0', borderRadius: 6, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)',
                 color: deleting ? 'var(--cs-text-sub)' : 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: deleting ? 'not-allowed' : 'pointer',
               }}
             >

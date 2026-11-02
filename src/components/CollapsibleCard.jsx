@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react'
 const CollapsibleCard = ({ label, hasContent, children }) => {
   const [open, setOpen] = useState(false)
   return (
-    <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+    <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
       <button
         type="button"
         onClick={() => setOpen(v => !v)}

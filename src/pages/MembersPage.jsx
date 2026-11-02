@@ -119,7 +119,7 @@ const MembersPage = () => {
       </div>
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {group.members.map((uid, idx) => {
               const profile = group.memberProfiles?.[uid]
@@ -163,7 +163,7 @@ const MembersPage = () => {
                       <button
                         onClick={() => { setRenamingUid(isRenaming ? null : uid); setRenameInput(profile?.name || '') }}
                         style={{
-                          padding: '6px 12px', borderRadius: 8, border: '1px solid var(--cs-border)', background: isRenaming ? 'var(--cs-soft)' : 'var(--cs-card)', color: isRenaming ? 'var(--cs-rc-stamp)' : 'var(--cs-text-sub)', fontSize: 12, cursor: 'pointer', flexShrink: 0,
+                          padding: '6px 12px', borderRadius: 6, border: '1px solid var(--cs-border)', background: isRenaming ? 'var(--cs-soft)' : 'var(--cs-card)', color: isRenaming ? 'var(--cs-rc-stamp)' : 'var(--cs-text-sub)', fontSize: 12, cursor: 'pointer', flexShrink: 0,
                         }}
                       >
                         {isRenaming ? t('common.cancel') : t('eg.rename')}
@@ -174,7 +174,7 @@ const MembersPage = () => {
                         onClick={() => handleRemoveMember(uid)}
                         disabled={removingUid === uid}
                         style={{
-                          padding: '6px 12px', borderRadius: 8, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 12, cursor: 'pointer', flexShrink: 0,
+                          padding: '6px 12px', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 12, cursor: 'pointer', flexShrink: 0,
                         }}
                       >
                         {removingUid === uid ? t('eg.removing') : t('eg.remove')}
@@ -193,13 +193,13 @@ const MembersPage = () => {
                         autoFocus
                         maxLength={20}
                         placeholder={t('eg.renamePlaceholder')}
-                        style={{ flex: 1, minWidth: 0, border: '0.5px solid var(--cs-rc-stamp)', borderRadius: 10, padding: '9px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+                        style={{ flex: 1, minWidth: 0, border: '0.5px solid var(--cs-rc-stamp)', borderRadius: 6, padding: '9px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
                       />
                       <button
                         onClick={() => handleRenameMember(uid)}
                         disabled={renameSaving || !renameInput.trim()}
                         style={{
-                          padding: '9px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
+                          padding: '9px 14px', borderRadius: 6, border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
                           background: renameSaving || !renameInput.trim() ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)',
                           color: 'var(--cs-rc-stamp-text)',
                         }}
@@ -221,13 +221,13 @@ const MembersPage = () => {
               onKeyDown={e => e.key === 'Enter' && handleAddPlaceholder()}
               maxLength={20}
               placeholder={t('eg.addGuestPlaceholder')}
-              style={{ flex: 1, minWidth: 0, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+              style={{ flex: 1, minWidth: 0, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
             />
             <button
               onClick={handleAddPlaceholder}
               disabled={addingPlaceholder || !placeholderName.trim()}
               style={{
-                padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
+                padding: '10px 16px', borderRadius: 6, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
                 cursor: addingPlaceholder || !placeholderName.trim() ? 'not-allowed' : 'pointer',
                 background: addingPlaceholder || !placeholderName.trim() ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)',
               }}
@@ -237,7 +237,7 @@ const MembersPage = () => {
           </div>
 
           {!isCreator && (
-            <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--cs-bg)', borderRadius: 10, fontSize: 12, color: 'var(--cs-text-sub)' }}>
+            <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--cs-bg)', borderRadius: 6, fontSize: 12, color: 'var(--cs-text-sub)' }}>
               {t('eg.onlyCreatorRemove')}
             </div>
           )}

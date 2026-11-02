@@ -126,7 +126,7 @@ const SettlePage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 總覽卡片 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <GroupIcon icon={group.icon} color={group.iconColor} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -141,7 +141,7 @@ const SettlePage = () => {
               <select
                 value={displayCurrency}
                 onChange={e => setDisplayCurrency(e.target.value)}
-                style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '8px 10px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+                style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '8px 10px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
               >
                 {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
               </select>
@@ -159,7 +159,7 @@ const SettlePage = () => {
         </div>
 
         {/* 每人明細 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }}>{t('settle.perPerson')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {group.members.map(uid => {
@@ -193,7 +193,7 @@ const SettlePage = () => {
         </div>
 
         {/* 轉帳建議 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }}>{t('settle.suggestions')}</div>
 
           {settlements.length === 0 ? (
@@ -210,7 +210,7 @@ const SettlePage = () => {
                 return (
                   <div
                     key={i}
-                    style={{ background: 'var(--cs-soft)', borderRadius: 12, padding: '12px 14px', border: '0.5px solid var(--cs-border)' }}
+                    style={{ background: 'var(--cs-soft)', borderRadius: 6, padding: '12px 14px', border: '0.5px solid var(--cs-border)' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                       <Avatar src={from?.avatar} name={from?.name} size={32} />
@@ -221,7 +221,7 @@ const SettlePage = () => {
                           <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
                         </div>
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--cs-rc-owe)', flexShrink: 0 }}>
+                      <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 15, fontWeight: 700, color: 'var(--cs-rc-owe)', flexShrink: 0 }}>
                         {rateLoading ? '...' : fmt(s.amount)}
                       </div>
                       <Avatar src={to?.avatar} name={to?.name} size={32} />
@@ -230,7 +230,7 @@ const SettlePage = () => {
                       onClick={() => navigate(
                         `/group/${id}/transfer?from=${s.from}&to=${s.to}&amount=${s.amount}&currency=${baseCurrency}`
                       )}
-                      style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                      style={{ width: '100%', padding: '10px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
                     >
                       {t('settle.goTransfer')}
                     </button>
@@ -243,7 +243,7 @@ const SettlePage = () => {
 
         {/* 已結清紀錄 */}
         {settledRecords.length > 0 && (
-          <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }}>{t('settle.history')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {settledRecords.map(s => {

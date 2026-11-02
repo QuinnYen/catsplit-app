@@ -20,7 +20,7 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
       onClick={() => toggle(name)}
       disabled={disabled}
       style={{
-        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 10,
+        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 6,
         cursor: disabled ? 'not-allowed' : 'pointer', border: open === name ? '1px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)', background: 'var(--cs-bg)',
       }}
     >
@@ -48,7 +48,7 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
           <div style={{
             position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 11, padding: 10,
             display: 'flex', flexWrap: 'wrap', gap: 8,
-            background: 'var(--cs-card)', borderRadius: 12, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
+            background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
           }}>
             {open === 'color' && Object.entries(GROUP_COLORS).map(([key, c]) => (
               <button
@@ -70,7 +70,7 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
                   onClick={() => { onChange({ icon: key }); setOpen(null) }}
                   aria-label={key}
                   style={{
-                    width: 42, height: 42, borderRadius: 12, cursor: 'pointer',
+                    width: 42, height: 42, borderRadius: 6, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     border: active ? `1.5px solid ${palette.fg}` : '0.5px solid var(--cs-border)',
                     background: active ? palette.bg : 'var(--cs-bg)',

@@ -10,8 +10,8 @@ import BankPicker from '../components/BankPicker'
 import PaymentMethodModal from '../components/PaymentMethodModal'
 import { REGIONS, PROVIDERS, getProvider, providerName, methodName, normalizeValue, describeMethod, validatePayment } from '../config/paymentProviders'
 
-const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }
-const input = { width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', boxSizing: 'border-box' }
+const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
+const input = { width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', boxSizing: 'border-box' }
 const label = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }
 const iconBtn = { background: 'none', border: 'none', padding: 6, cursor: 'pointer', display: 'flex' }
 
@@ -112,7 +112,7 @@ const PaymentMethodsPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('pay.mine')}</div>
-          <button onClick={startAdd} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('pay.add')}</button>
+          <button onClick={startAdd} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('pay.add')}</button>
         </div>
 
         {methods === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
@@ -151,7 +151,7 @@ const PaymentMethodsPage = () => {
               <div style={{ display: 'flex', gap: 8 }}>
                 {REGIONS.map(r => (
                   <button key={r.id} disabled={!!editingId} onClick={() => patch({ regionId: r.id, providerId: '' })}
-                    style={{ flex: 1, padding: '9px 0', borderRadius: 10, fontSize: 14, cursor: editingId ? 'default' : 'pointer', border: form.regionId === r.id ? '1.5px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)', background: form.regionId === r.id ? 'var(--cs-soft)' : 'var(--cs-card)', color: form.regionId === r.id ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)' }}>
+                    style={{ flex: 1, padding: '9px 0', borderRadius: 6, fontSize: 14, cursor: editingId ? 'default' : 'pointer', border: form.regionId === r.id ? '1.5px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)', background: form.regionId === r.id ? 'var(--cs-soft)' : 'var(--cs-card)', color: form.regionId === r.id ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)' }}>
                     {t(r.labelKey)}
                   </button>
                 ))}
@@ -203,8 +203,8 @@ const PaymentMethodsPage = () => {
             {error && <div style={{ fontSize: 12, color: 'var(--cs-danger)' }}>{error}</div>}
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setForm(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
-              <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? t('common.saving') : t('common.save')}</button>
+              <button onClick={() => setForm(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
+              <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '11px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? t('common.saving') : t('common.save')}</button>
             </div>
           </div>
           </div>

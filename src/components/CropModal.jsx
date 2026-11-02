@@ -58,14 +58,14 @@ const CropModal = ({ imageSrc, aspect = COVER_ASPECT, onCancel, onConfirm }) => 
           <button
             onClick={onCancel}
             disabled={working}
-            style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1px solid #555', background: 'transparent', color: '#fff', fontSize: 14, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '12px 0', borderRadius: 6, border: '1px solid #555', background: 'transparent', color: '#fff', fontSize: 14, cursor: 'pointer' }}
           >
             {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={!pixelCrop || working}
-            style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: !pixelCrop || working ? '#8a6a55' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '12px 0', borderRadius: 6, border: 'none', background: !pixelCrop || working ? '#8a6a55' : 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
           >
             {working ? t('common.processing') : t('eg.confirm')}
           </button>

@@ -52,7 +52,7 @@ const LoginScreen = ({ onLogin, guestGroupId }) => {
     </div>
 
     {/* 邀請連結頁省略說明卡，讓訪客入口不用捲動就看得到 */}
-    {!guestGroupId && <div style={{ background: 'var(--cs-card)', borderRadius: 20, border: '0.5px solid var(--cs-border)', padding: '24px 20px', width: '100%', maxWidth: 320, marginBottom: 32 }}>
+    {!guestGroupId && <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: '24px 20px', width: '100%', maxWidth: 320, marginBottom: 32 }}>
       <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 16, textAlign: 'center' }}>{t('login.howTo')}</div>
       {[
         { Icon: LineIcon, text: t('login.step1') },
@@ -60,7 +60,7 @@ const LoginScreen = ({ onLogin, guestGroupId }) => {
         { Icon: Wallet, text: t('login.step3') },
       ].map(({ Icon, text }, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: i < 2 ? 14 : 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--cs-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 6, background: 'var(--cs-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Icon size={18} color="var(--cs-rc-stamp)" strokeWidth={2} />
           </div>
           <div style={{ fontSize: 14, color: 'var(--cs-text)' }}>{text}</div>
@@ -72,7 +72,7 @@ const LoginScreen = ({ onLogin, guestGroupId }) => {
       onClick={onLogin}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        background: '#06C755', color: '#fff', border: 'none', borderRadius: 14,
+        background: '#06C755', color: '#fff', border: 'none', borderRadius: 6,
         padding: '14px 32px', fontSize: 16, fontWeight: 700, cursor: 'pointer',
         width: '100%', maxWidth: 320, boxShadow: '0 4px 16px rgba(6,199,85,0.25)',
       }}

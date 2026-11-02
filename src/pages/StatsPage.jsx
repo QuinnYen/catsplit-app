@@ -11,10 +11,10 @@ import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory, categoryLabel } from '../i18n/codes'
 
 // 圖表色盤是資料色，兩種底色上都要分得清楚，所以固定不跟主題
-const CATEGORY_COLORS = ['#FF8C42', '#FFB37A', '#E8703A', '#F5C26B', '#C4A882', '#D98C5F', '#8FBF9F', '#7FA6C9'] // cs-color-ok
+const CATEGORY_COLORS = ['#E8651A', '#3B7DD8', '#2F9E7A', '#D4A017', '#8A63C9', '#D4577A', '#5B8A9A', '#8B95A5'] // cs-color-ok
 const TREND_MONTHS = 12
 
-const cardStyle = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }
+const cardStyle = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 16 }
 const titleStyle = { fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }
 
 const MONTH_KEYS = ['stats.month.1', 'stats.month.2', 'stats.month.3', 'stats.month.4', 'stats.month.5', 'stats.month.6', 'stats.month.7', 'stats.month.8', 'stats.month.9', 'stats.month.10', 'stats.month.11', 'stats.month.12']

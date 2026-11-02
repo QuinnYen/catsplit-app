@@ -317,7 +317,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
             onClick={handleSave}
             disabled={!isValid() || loading}
             style={{
-              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
+              width: '100%', padding: '15px 0', borderRadius: 6, border: 'none', fontSize: 15, fontWeight: 500,
               cursor: isValid() && !loading ? 'pointer' : 'not-allowed',
               background: isValid() && !loading ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', color: 'var(--cs-rc-stamp-text)',
             }}
@@ -334,7 +334,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
           onClick={handleDelete}
           disabled={loading}
           style={{
-            width: '100%', padding: '15px 0', borderRadius: 16, border: '0.5px solid var(--cs-danger-border)', fontSize: 15, fontWeight: 500,
+            width: '100%', padding: '15px 0', borderRadius: 6, border: '0.5px solid var(--cs-danger-border)', fontSize: 15, fontWeight: 500,
             cursor: loading ? 'not-allowed' : 'pointer',
             background: 'var(--cs-card)', color: 'var(--cs-danger)',
           }}

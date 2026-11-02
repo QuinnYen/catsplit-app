@@ -3,7 +3,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { todayStr } from '../utils/expenseHelpers'
 import { isValidAmount } from '../utils/savings'
 
-const input = { width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', boxSizing: 'border-box' }
+const input = { width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', boxSizing: 'border-box' }
 const label = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 6 }
 
 // 新增或編輯一筆存提款紀錄。entry 為既有紀錄（編輯）或 null（新增）；onSubmit、onDelete 由呼叫端寫入 Firestore，失敗時要 throw。
@@ -50,11 +50,11 @@ const SavingsEntryModal = ({ entry, onClose, onSubmit, onDelete }) => {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--cs-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--cs-card)', borderRadius: 16, padding: 16, width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--cs-card)', borderRadius: 6, padding: 16, width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--cs-text)' }}>{entry ? t('savings.editEntry') : t('savings.addEntry')}</div>
         <div>
           <div style={label}>{t('savings.entry.type')}</div>
-          <div style={{ display: 'flex', border: '0.5px solid var(--cs-border)', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', border: '0.5px solid var(--cs-border)', borderRadius: 6, overflow: 'hidden' }}>
             {typeBtn('save', t('savings.save'))}
             {typeBtn('withdraw', t('savings.withdraw'))}
           </div>
@@ -73,8 +73,8 @@ const SavingsEntryModal = ({ entry, onClose, onSubmit, onDelete }) => {
         </div>
         {error && <div style={{ fontSize: 13, color: 'var(--cs-danger)' }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
-          <button onClick={handleSubmit} disabled={saving || !date} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving || !date ? 0.6 : 1 }}>{t('common.save')}</button>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
+          <button onClick={handleSubmit} disabled={saving || !date} style={{ flex: 1, padding: '11px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving || !date ? 0.6 : 1 }}>{t('common.save')}</button>
         </div>
         {entry && onDelete && (
           <button onClick={handleDelete} disabled={saving} style={{ background: 'none', border: 'none', color: 'var(--cs-danger)', fontSize: 14, cursor: 'pointer', padding: 4, opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>

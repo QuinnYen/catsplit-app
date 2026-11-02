@@ -9,7 +9,7 @@ import { getCurrency } from '../config/currencies'
 import useSavingsEntries from '../hooks/useSavingsEntries'
 import { sumSaved, progressRatio } from '../utils/savings'
 
-const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14, cursor: 'pointer', textAlign: 'left', width: '100%' }
+const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14, cursor: 'pointer', textAlign: 'left', width: '100%' }
 
 export const ProgressBar = ({ ratio }) => (
   <div style={{ height: 8, borderRadius: 4, background: 'var(--cs-track)', overflow: 'hidden' }}>
@@ -63,7 +63,7 @@ const SavingsListPage = () => {
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={() => navigate('/savings/new')} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('savings.add')}</button>
+          <button onClick={() => navigate('/savings/new')} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('savings.add')}</button>
         </div>
         {goals === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
         {goals?.length === 0 && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('savings.empty')}</div>}

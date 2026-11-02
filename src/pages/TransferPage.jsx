@@ -144,7 +144,7 @@ const TransferPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 轉帳資訊卡 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 20 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
               <Avatar src={fromProfile?.avatar} name={fromProfile?.name} size={48} />
@@ -161,7 +161,7 @@ const TransferPage = () => {
             </div>
           </div>
 
-          <div style={{ position: 'relative', background: 'var(--cs-soft)', borderRadius: 10, border: '1px solid var(--cs-rc-stamp)', padding: '10px 12px', marginTop: 16 }}>
+          <div style={{ position: 'relative', background: 'var(--cs-soft)', borderRadius: 6, border: '1px solid var(--cs-rc-stamp)', padding: '10px 12px', marginTop: 16 }}>
             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{currencyObj.symbol}</span>
             <input
               type="number"
@@ -184,13 +184,13 @@ const TransferPage = () => {
         </div>
 
         {/* 付款方式 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('group.detail.method')}</div>
           <select
             value={paymentMethod}
             onChange={e => setPaymentMethod(e.target.value)}
             style={{
-              width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10,
+              width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6,
               padding: '11px 12px', fontSize: 14, color: 'var(--cs-text)',
               outline: 'none', background: 'var(--cs-bg)', appearance: 'none',
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b08060' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
@@ -205,7 +205,7 @@ const TransferPage = () => {
           </select>
 
           {matchedMethods.map(m => (
-            <div key={m.id} style={{ marginTop: 12, background: 'var(--cs-soft)', borderRadius: 12, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+            <div key={m.id} style={{ marginTop: 12, background: 'var(--cs-soft)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
               <PaymentMethodBody method={m} heading={t('transfer.payeeMethods', { name: toProfile?.name ?? t('transfer.counterparty') })} />
             </div>
           ))}
@@ -214,7 +214,7 @@ const TransferPage = () => {
         {liffInstance && safeIsInClient() && <ShareToLineToggle checked={shareToLine} onChange={setShareToLine} />}
 
         {/* 備註 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('pay.note')}</div>
           <input
             type="text"
@@ -222,7 +222,7 @@ const TransferPage = () => {
             onChange={e => setNote(e.target.value)}
             placeholder={t('transfer.notePlaceholder')}
             maxLength={30}
-            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
           />
         </div>
 
@@ -232,7 +232,7 @@ const TransferPage = () => {
           onClick={handleConfirm}
           disabled={loading || !isValid}
           style={{
-            width: '100%', padding: '15px 0', borderRadius: 16, border: 'none',
+            width: '100%', padding: '15px 0', borderRadius: 6, border: 'none',
             fontSize: 15, fontWeight: 500, cursor: loading || !isValid ? 'not-allowed' : 'pointer',
             background: loading || !isValid ? 'var(--cs-line-soft)' : 'var(--cs-rc-stamp)',
             color: 'var(--cs-rc-stamp-text)', transition: 'all 0.15s',

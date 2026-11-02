@@ -9,7 +9,7 @@ const ShareToLineToggle = ({ checked, onChange }) => {
     onClick={() => onChange(v => !v)}
     style={{
       display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px',
-      borderRadius: 16, border: 'none', cursor: 'pointer', width: '100%',
+      borderRadius: 6, border: 'none', cursor: 'pointer', width: '100%',
       background: checked ? 'var(--cs-success-bg)' : 'var(--cs-card)',
       outline: checked ? '1.5px solid #06C755' : '0.5px solid var(--cs-border)',
     }}

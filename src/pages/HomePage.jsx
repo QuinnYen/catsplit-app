@@ -163,7 +163,7 @@ const HomePage = () => {
             {t('home.guestNotice', { max: MAX_GUEST_NAMES })}
             <button
               onClick={() => loginWithLine('/')}
-              style={{ display: 'block', marginTop: 8, padding: '8px 14px', borderRadius: 10, border: 'none', background: '#06C755', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              style={{ display: 'block', marginTop: 8, padding: '8px 14px', borderRadius: 6, border: 'none', background: '#06C755', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >
               {t('home.bindLine')}
             </button>
@@ -219,7 +219,7 @@ const HomePage = () => {
                   {isOverBudget ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                       <div style={{ ...nameStyle, marginBottom: 0, minWidth: 0 }}>{group.name}</div>
-                      <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 500, color: 'var(--cs-danger)', background: 'var(--cs-danger-bg)', borderRadius: 8, padding: '1px 6px' }}>
+                      <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 500, color: 'var(--cs-danger)', background: 'var(--cs-danger-bg)', borderRadius: 6, padding: '1px 6px' }}>
                         {t('home.overBudget')}
                       </span>
                     </div>
@@ -330,7 +330,7 @@ const HomePage = () => {
       {showSettings && (
         <>
           <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
-          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 720px) / 2 + 16px))', zIndex: 101, width: 220, background: 'var(--cs-rc-card)', borderRadius: 14, border: '0.5px solid var(--cs-rc-rule)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
+          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 720px) / 2 + 16px))', zIndex: 101, width: 220, background: 'var(--cs-rc-card)', borderRadius: 6, border: '0.5px solid var(--cs-rc-rule)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
             <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: 'var(--cs-rc-card)', borderTop: '0.5px solid var(--cs-rc-rule)', borderLeft: '0.5px solid var(--cs-rc-rule)', transform: 'rotate(45deg)' }} />
             {[
               { Icon: Settings, label: t('group.settings'), onClick: () => navigate('/settings') },

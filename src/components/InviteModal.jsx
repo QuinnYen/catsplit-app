@@ -80,7 +80,7 @@ const InviteModal = ({ content, text, liff, onClose }) => {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 18 }}>
-          <div style={{ width: 200, height: 200, borderRadius: 16, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <div style={{ width: 200, height: 200, borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             {qr
               ? <img src={qr} alt={t('invite.qrAlt')} style={{ width: '100%', height: '100%' }} />
               : <span style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('invite.generating')}</span>}
@@ -93,7 +93,7 @@ const InviteModal = ({ content, text, liff, onClose }) => {
             <button
               key={key}
               onClick={onClick}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-soft)', fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', textAlign: 'left' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-soft)', fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', textAlign: 'left' }}
             >
               <Icon size={18} color="var(--cs-rc-stamp)" />{label}
             </button>

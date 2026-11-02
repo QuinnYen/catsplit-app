@@ -11,7 +11,7 @@ import Avatar from '../components/Avatar'
 import TabBar from '../components/TabBar'
 import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 
-const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }
+const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
 
 const SettingsPage = () => {
   const { user, logout, saveNickname } = useApp()
@@ -108,12 +108,12 @@ const SettingsPage = () => {
                 onChange={e => setNicknameInput(e.target.value)}
                 maxLength={NICKNAME_MAX_LENGTH}
                 placeholder={t('settings.nicknamePlaceholder')}
-                style={{ flex: 1, minWidth: 0, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+                style={{ flex: 1, minWidth: 0, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
               />
               <button
                 onClick={handleSaveNickname}
                 disabled={!nicknameDirty || nicknameSaving}
-                style={{ padding: '10px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: 'var(--cs-rc-stamp-text)', cursor: nicknameDirty && !nicknameSaving ? 'pointer' : 'not-allowed', background: nicknameDirty && !nicknameSaving ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)' }}
+                style={{ padding: '10px 14px', borderRadius: 6, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: 'var(--cs-rc-stamp-text)', cursor: nicknameDirty && !nicknameSaving ? 'pointer' : 'not-allowed', background: nicknameDirty && !nicknameSaving ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)' }}
               >
                 {nicknameSaving ? t('settings.nicknameSaving') : t('settings.nicknameSave')}
               </button>
@@ -130,7 +130,7 @@ const SettingsPage = () => {
             <select
               value={lang}
               onChange={e => setLang(e.target.value)}
-              style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+              style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
             >
               <option value="zh-TW">{t('lang.zh-TW')}</option>
               <option value="en">{t('lang.en')}</option>
@@ -143,7 +143,7 @@ const SettingsPage = () => {
             <select
               value={mode}
               onChange={e => setMode(e.target.value)}
-              style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+              style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
             >
               <option value="system">{t('settings.theme.system')}</option>
               <option value="light">{t('settings.theme.light')}</option>
@@ -166,7 +166,7 @@ const SettingsPage = () => {
               <button
                 onClick={handleDeleteMyData}
                 disabled={deletingData || groups === null}
-                style={{ width: '100%', padding: '12px 0', borderRadius: 12, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: deletingData || groups === null ? 'not-allowed' : 'pointer', opacity: groups === null ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                style={{ width: '100%', padding: '12px 0', borderRadius: 6, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: deletingData || groups === null ? 'not-allowed' : 'pointer', opacity: groups === null ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 <Trash2 size={16} /> {deletingData ? t('home.menu.deleting') : t('home.menu.deleteData')}
               </button>

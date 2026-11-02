@@ -283,7 +283,7 @@ const AddExpensePage = () => {
               key={k}
               onClick={() => switchKind(k)}
               style={{
-                padding: '5px 18px', borderRadius: 20, fontSize: 13, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.4)',
+                padding: '5px 18px', borderRadius: 6, fontSize: 13, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.4)',
                 background: kind === k ? 'var(--cs-on-brand)' : 'rgba(255,255,255,0.25)',
                 color: kind === k ? 'var(--cs-rc-owe)' : '#fff', fontWeight: kind === k ? 500 : 400,
               }}
@@ -337,7 +337,7 @@ const AddExpensePage = () => {
             onClick={handleSubmit}
             disabled={!isValid() || loading}
             style={{
-              width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
+              width: '100%', padding: '15px 0', borderRadius: 6, border: 'none', fontSize: 15, fontWeight: 500,
               cursor: isValid() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
               background: isValid() && !loading ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', color: 'var(--cs-rc-stamp-text)',
             }}

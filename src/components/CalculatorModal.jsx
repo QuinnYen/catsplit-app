@@ -71,7 +71,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 101, maxWidth: 480, margin: '0 auto',
         background: 'var(--cs-card)', borderRadius: '20px 20px 0 0', padding: 16, boxShadow: '0 -4px 20px rgba(255,140,66,0.2)',
       }}>
-        <div style={{ background: 'var(--cs-bg)', border: '0.5px solid var(--cs-border)', borderRadius: 12, padding: '10px 14px', marginBottom: 12, textAlign: 'right' }}>
+        <div style={{ background: 'var(--cs-bg)', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 14px', marginBottom: 12, textAlign: 'right' }}>
           <div style={{ minHeight: 22, fontSize: 15, color: 'var(--cs-text-sub)', wordBreak: 'break-all' }}>{expr || '0'}</div>
           <div style={{ minHeight: 30, fontSize: 24, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{result !== null ? `= ${result}` : ''}</div>
         </div>
@@ -84,7 +84,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
                 key={k}
                 onClick={() => press(k)}
                 style={{
-                  height: 48, borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 18, fontWeight: 500,
+                  height: 48, borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 18, fontWeight: 500,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: isOp ? 'var(--cs-rc-stamp)' : 'var(--cs-soft)', color: isOp ? '#fff' : 'var(--cs-text)',
                 }}
@@ -97,7 +97,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
             onClick={confirm}
             disabled={result === null || result <= 0}
             style={{
-              height: 48, borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 500, color: '#fff',
+              height: 48, borderRadius: 6, border: 'none', fontSize: 16, fontWeight: 500, color: '#fff',
               background: result !== null && result > 0 ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)',
               cursor: result !== null && result > 0 ? 'pointer' : 'not-allowed',
             }}

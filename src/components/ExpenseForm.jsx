@@ -12,13 +12,13 @@ import { categoryLabel, normalizeCategory } from '../i18n/codes'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, SPLIT_TYPES, NOTE_MAX_LENGTH } from '../config/expenseForm'
 
 const inputStyle = {
-  width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10,
+  width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6,
   padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)',
 }
 
 const CUSTOM_OPTION = '__custom'
 
-const cardStyle ={ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }
+const cardStyle ={ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
 const labelStyle = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }
 const chipActiveStyle = { background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontWeight: 500 }
 const chipIdleStyle = { background: 'var(--cs-soft)', color: 'var(--cs-text-sub)', fontWeight: 400 }
@@ -64,7 +64,7 @@ const PayerSelect = ({ members, value, onChange, placeholder }) => {
       <button
         onClick={() => setOpen(v => !v)}
         style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 12, cursor: 'pointer', border: 'none',
+          width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 6, cursor: 'pointer', border: 'none',
           background: 'var(--cs-soft)', outline: '1.5px solid var(--cs-rc-stamp)',
         }}
       >
@@ -77,14 +77,14 @@ const PayerSelect = ({ members, value, onChange, placeholder }) => {
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
           <div style={{
             position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 11, maxHeight: 240, overflowY: 'auto',
-            background: 'var(--cs-card)', borderRadius: 12, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)', padding: 4,
+            background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)', padding: 4,
           }}>
             {members.map(([uid, profile]) => (
               <button
                 key={uid}
                 onClick={() => { onChange(uid); setOpen(false) }}
                 style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', border: 'none',
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 6, cursor: 'pointer', border: 'none',
                   background: value === uid ? 'var(--cs-soft)' : 'transparent',
                 }}
               >
@@ -255,7 +255,7 @@ const ExpenseForm = ({
         </div>
 
         {currency !== baseCurrency && (
-          <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: 'var(--cs-bg)', border: '0.5px solid var(--cs-border)' }}>
+          <div style={{ marginTop: 10, padding: 10, borderRadius: 6, background: 'var(--cs-bg)', border: '0.5px solid var(--cs-border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('form.rate', { currency })}</span>
               {rateLoading ? (
@@ -268,7 +268,7 @@ const ExpenseForm = ({
                   value={exchangeRate ?? ''}
                   onChange={e => setExchangeRate(parseFloat(e.target.value) || null)}
                   placeholder={t('form.rateEnter')}
-                  style={{ width: 100, border: `0.5px solid ${rateError ? 'var(--cs-danger)' : 'var(--cs-rc-stamp)'}`, borderRadius: 8, padding: '6px 8px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-card)' }}
+                  style={{ width: 100, border: `0.5px solid ${rateError ? 'var(--cs-danger)' : 'var(--cs-rc-stamp)'}`, borderRadius: 6, padding: '6px 8px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-card)' }}
                 />
               )}
               <span style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{baseCurrency}</span>
@@ -293,7 +293,7 @@ const ExpenseForm = ({
           <button
             onClick={() => { setMultiPayer(v => !v); setPayerExcluded(false) }}
             style={{
-              padding: '3px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12,
+              padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
               ...(multiPayer ? chipActiveStyle : chipIdleStyle),
             }}
           >
@@ -317,7 +317,7 @@ const ExpenseForm = ({
                     value={payerAmounts[uid] ?? ''}
                     onChange={e => setPayerAmounts(prev => ({ ...prev, [uid]: e.target.value }))}
                     placeholder="0"
-                    style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 8px 7px 34px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+                    style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '7px 8px 7px 34px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
                   />
                 </div>
               </div>
@@ -332,7 +332,7 @@ const ExpenseForm = ({
             <button
               onClick={() => setPayerExcluded(v => !v)}
               style={{
-                marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', width: '100%',
+                marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', width: '100%',
                 background: payerExcluded ? 'var(--cs-soft)' : 'var(--cs-bg)',
                 outline: payerExcluded ? '1.5px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)',
               }}
@@ -383,7 +383,7 @@ const ExpenseForm = ({
                   onClick={() => !excluded && setSubsetMembers(prev => ({ ...prev, [uid]: !prev[uid] }))}
                   disabled={excluded}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 12, border: 'none',
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 6, border: 'none',
                     cursor: excluded ? 'default' : 'pointer', transition: 'all 0.15s',
                     background: excluded ? 'var(--cs-track)' : checked ? 'var(--cs-soft)' : 'var(--cs-bg)',
                     outline: checked ? '1.5px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)',
@@ -422,7 +422,7 @@ const ExpenseForm = ({
                       value={shares[uid]}
                       onChange={e => setShares(prev => ({ ...prev, [uid]: e.target.value }))}
                       placeholder="0"
-                      style={{ width: 70, border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 8px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', textAlign: 'center' }}
+                      style={{ width: 70, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '7px 8px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', textAlign: 'center' }}
                     />
                     <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', width: 16 }}>{t('form.shareUnit')}</span>
                     <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)', width: 64, textAlign: 'right', visibility: amount ? 'visible' : 'hidden' }}>
@@ -452,7 +452,7 @@ const ExpenseForm = ({
                       value={percentages[uid]}
                       onChange={e => setPercentages(prev => ({ ...prev, [uid]: e.target.value }))}
                       placeholder="0"
-                      style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 24px 7px 8px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+                      style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '7px 24px 7px 8px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
                     />
                     <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--cs-text-sub)', fontSize: 12 }}>%</span>
                   </div>
@@ -487,7 +487,7 @@ const ExpenseForm = ({
                       value={customAmounts[uid]}
                       onChange={e => setCustomAmounts(prev => ({ ...prev, [uid]: e.target.value }))}
                       placeholder="0"
-                      style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 8px 7px 34px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+                      style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '7px 8px 7px 34px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
                     />
                   </div>
                 </div>
@@ -525,7 +525,7 @@ const ExpenseForm = ({
               <img
                 src={receiptPreview || existingReceiptUrl}
                 alt={t('form.receiptAlt')}
-                style={{ width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 10, background: 'var(--cs-track)', display: 'block' }}
+                style={{ width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 6, background: 'var(--cs-track)', display: 'block' }}
               />
               <button
                 onClick={() => {
@@ -544,7 +544,7 @@ const ExpenseForm = ({
           ) : (
             <label style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 6, padding: '20px 0', borderRadius: 10, cursor: 'pointer',
+              gap: 6, padding: '20px 0', borderRadius: 6, cursor: 'pointer',
               border: '1.5px dashed var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)',
             }}>
               <Camera size={28} color="var(--cs-text-sub)" />

@@ -14,7 +14,7 @@ import { ProgressBar } from './SavingsListPage'
 import { sumSaved, progressRatio, progressPercent, daysLeft } from '../utils/savings'
 import { todayStr } from '../utils/expenseHelpers'
 
-const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }
+const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 16 }
 const iconBtn = { background: 'none', border: 'none', padding: 6, cursor: 'pointer', display: 'flex' }
 
 const SavingsGoalPage = () => {
@@ -65,7 +65,7 @@ const SavingsGoalPage = () => {
           <>
             <div style={card}>
               <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginBottom: 4 }}>{t('savings.saved')}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--cs-rc-owe)', marginBottom: 12 }}>{symbol} {fmt.num(saved)}</div>
+              <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 28, fontWeight: 700, color: 'var(--cs-rc-owe)', marginBottom: 12 }}>{symbol} {fmt.num(saved)}</div>
               <ProgressBar ratio={ratio} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--cs-text-sub)', marginTop: 8 }}>
                 <span>{saved >= goal.targetAmount ? t('savings.achieved') : t('savings.progress', { pct: progressPercent(saved, goal.targetAmount) })}</span>
@@ -75,7 +75,7 @@ const SavingsGoalPage = () => {
                 {goal.targetDate ? `${fmt.date(`${goal.targetDate}T00:00`)}・` : ''}{dateText}
               </div>
             </div>
-            <button onClick={() => setShowModal(true)} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>{t('savings.addEntry')}</button>
+            <button onClick={() => setShowModal(true)} style={{ padding: '13px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>{t('savings.addEntry')}</button>
 
             <CollapsibleCard label={`${t('savings.entries')} (${sorted.length})`} hasContent={sorted.length > 0}>
               {sorted.length === 0 && <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('savings.entries.empty')}</div>}

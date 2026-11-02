@@ -12,9 +12,9 @@ const segmentStyle = (active) => ({
   fontSize: 14, color: 'var(--cs-text)', background: active ? 'var(--cs-soft)' : 'transparent', textAlign: 'left',
 })
 const navBtnStyle = { border: 'none', background: 'none', padding: 6, cursor: 'pointer', display: 'flex' }
-const titleBtnStyle = { border: 'none', background: 'none', padding: '4px 8px', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', borderRadius: 8 }
+const titleBtnStyle = { border: 'none', background: 'none', padding: '4px 8px', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', borderRadius: 6 }
 const cellStyle = (selected, outlined) => ({
-  border: outlined && !selected ? '1px solid var(--cs-rc-stamp)' : 'none', borderRadius: 8, padding: '8px 0', cursor: 'pointer', fontSize: 14,
+  border: outlined && !selected ? '1px solid var(--cs-rc-stamp)' : 'none', borderRadius: 6, padding: '8px 0', cursor: 'pointer', fontSize: 14,
   background: selected ? 'var(--cs-rc-stamp)' : 'transparent', color: selected ? '#fff' : 'var(--cs-text)', fontWeight: selected ? 500 : 400,
 })
 
@@ -122,8 +122,8 @@ const ClockPopup = ({ hour, minute, onChange, onDone }) => {
   const hy = CLOCK_SIZE / 2 - CLOCK_R * Math.cos(rad)
   const labels = mode === 'hour' ? Array.from({ length: 12 }, (_, i) => i || 12) : Array.from({ length: 12 }, (_, i) => i * 5)
 
-  const bigBtn = (active) => ({ border: 'none', background: active ? 'var(--cs-soft)' : 'transparent', borderRadius: 10, padding: '4px 10px', fontSize: 32, fontWeight: 500, cursor: 'pointer', color: active ? 'var(--cs-rc-owe)' : 'var(--cs-text)' })
-  const periodBtn = (active) => ({ border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 13, cursor: 'pointer', background: active ? 'var(--cs-rc-stamp)' : 'var(--cs-soft)', color: active ? '#fff' : 'var(--cs-text-sub)' })
+  const bigBtn = (active) => ({ border: 'none', background: active ? 'var(--cs-soft)' : 'transparent', borderRadius: 6, padding: '4px 10px', fontSize: 32, fontWeight: 500, cursor: 'pointer', color: active ? 'var(--cs-rc-owe)' : 'var(--cs-text)' })
+  const periodBtn = (active) => ({ border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 13, cursor: 'pointer', background: active ? 'var(--cs-rc-stamp)' : 'var(--cs-soft)', color: active ? '#fff' : 'var(--cs-text-sub)' })
 
   return (
     <>
@@ -177,7 +177,7 @@ const DateTimeField = ({ value, onChange }) => {
 
   return (
     <div>
-      <div style={{ display: 'flex', border: '0.5px solid var(--cs-border)', borderRadius: 10, background: 'var(--cs-bg)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', border: '0.5px solid var(--cs-border)', borderRadius: 6, background: 'var(--cs-bg)', overflow: 'hidden' }}>
         <button type="button" onClick={() => setPopup('date')} style={segmentStyle(popup === 'date')}>
           <CalendarDays size={16} color="var(--cs-rc-stamp)" />{datePart.replaceAll('-', '/')}
         </button>
@@ -192,7 +192,7 @@ const DateTimeField = ({ value, onChange }) => {
           onClick={close}
           style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'var(--cs-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
         >
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--cs-card)', borderRadius: 16, padding: 14, width: '100%', maxWidth: 320 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--cs-card)', borderRadius: 6, padding: 14, width: '100%', maxWidth: 320 }}>
             {popup === 'date' ? (
               <CalendarPopup datePart={datePart} onPick={d => { onChange(`${d}T${timePart}`); close() }} />
             ) : (

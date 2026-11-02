@@ -4,7 +4,7 @@ import liff from '../config/liff'
 import { getProvider, providerName, methodName, describeMethod } from '../config/paymentProviders'
 import { useI18n } from '../i18n/I18nProvider'
 
-const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }
+const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
 
 // 一筆收款方式的內容：名稱、帳號／收款碼，可複製、開啟已安裝的 App
 export const PaymentMethodBody = ({ method, heading }) => {
@@ -33,12 +33,12 @@ export const PaymentMethodBody = ({ method, heading }) => {
       <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--cs-text)', marginBottom: 12 }}>{methodName(method, t)}{method.label ? `・${method.label}` : ''}</div>
       <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--cs-rc-owe)', wordBreak: 'break-all', marginBottom: 16 }}>{describeMethod(method, t)}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <button onClick={copy} style={{ padding: '11px 0', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+        <button onClick={copy} style={{ padding: '11px 0', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           {copied ? <><Check size={16} />{t('pay.copied')}</> : <><Copy size={16} />{t('pay.copy')}</>}
         </button>
         {provider?.kind === 'app' && (
           <>
-            <button onClick={open} disabled={!url} style={{ padding: '11px 0', borderRadius: 12, border: 'none', background: url ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: url ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <button onClick={open} disabled={!url} style={{ padding: '11px 0', borderRadius: 6, border: 'none', background: url ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: url ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <ExternalLink size={16} />{t('pay.open', { name: providerName(provider, t) })}
             </button>
             {!url && <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', textAlign: 'center' }}>{t('pay.noOpenUrl')}</div>}
