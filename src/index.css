@@ -89,17 +89,17 @@
 }
 
 :root[data-theme="dark"] {
-  --cs-rc-bg: #11161d;
-  --cs-rc-card: #1a212b;
-  --cs-rc-ink: #e6eaf0;
-  --cs-rc-sub: #98a3b5;
-  --cs-rc-rule: #323c4b;
-  --cs-rc-head: #0a0e14;
-  --cs-rc-head-text: #e6eaf0;
-  --cs-rc-stamp: #ff8c42;
+  --cs-rc-bg: #1d2738;
+  --cs-rc-card: #28354b;
+  --cs-rc-ink: #f1f4f8;
+  --cs-rc-sub: #aab6c9;
+  --cs-rc-rule: #43526b;
+  --cs-rc-head: #2f4163;
+  --cs-rc-head-text: #f1f4f8;
+  --cs-rc-stamp: #ff9a52;
   --cs-rc-stamp-text: #1b1007;
-  --cs-rc-owe: #ff9a5c;
-  --cs-rc-get: #6fd39a;
+  --cs-rc-owe: #ffa46b;
+  --cs-rc-get: #7ee0a8;
   color-scheme: dark;
   --cs-bg: #1f1713;
   --cs-card: #2a201a;

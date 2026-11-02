@@ -131,12 +131,12 @@ const HomePage = () => {
                 src={user?.avatar}
                 name={user?.name}
                 size={38}
-                style={{ background: 'var(--cs-soft-2)', border: '2px solid var(--cs-rc-head-text)' }}
+                style={{ background: 'var(--cs-soft-2)', border: '2px solid var(--cs-rc-stamp)' }}
               />
             </button>
             <div>
               <div style={{ color: 'var(--cs-rc-head-text)', opacity: 0.75, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <GreetingIcon size={12} />{t(greetingKey)}
+                <GreetingIcon size={12} color="var(--cs-rc-stamp)" />{t(greetingKey)}
               </div>
               <div style={{ color: 'var(--cs-rc-head-text)', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
             </div>
