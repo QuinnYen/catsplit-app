@@ -26,7 +26,7 @@ const useOfficialAccountPrompt = () => {
       if (!friendFlag && !cancelled) {
         await liffInstance.requestFriendship()
         const after = await liffInstance.getFriendship() // TEMP DEBUG：測完要移除
-        alert(`[TEMP DEBUG] requestFriendship 已結束，現在 friendFlag=${after.friendFlag}`) // TEMP DEBUG：測完要移除
+        alert(`[TEMP DEBUG] requestFriendship resolved, friendFlag now=${after.friendFlag}`) // TEMP DEBUG: remove after testing
       }
     }
     run().catch((e) => {
