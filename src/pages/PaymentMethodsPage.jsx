@@ -11,9 +11,9 @@ import BankPicker from '../components/BankPicker'
 import PaymentMethodModal from '../components/PaymentMethodModal'
 import { REGIONS, PROVIDERS, getProvider, providerName, methodName, normalizeValue, describeMethod, validatePayment } from '../config/paymentProviders'
 
-const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }
-const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4', boxSizing: 'border-box' }
-const label = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }
+const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }
+const input = { width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', boxSizing: 'border-box' }
+const label = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }
 const iconBtn = { background: 'none', border: 'none', padding: 6, cursor: 'pointer', display: 'flex' }
 
 const Switch = ({ checked, onChange }) => (
@@ -21,9 +21,9 @@ const Switch = ({ checked, onChange }) => (
     role="switch"
     aria-checked={checked}
     onClick={() => onChange(!checked)}
-    style={{ width: 40, height: 24, borderRadius: 12, border: 'none', padding: 2, cursor: 'pointer', flexShrink: 0, background: checked ? '#FF8C42' : '#e0cfc0', display: 'flex', justifyContent: checked ? 'flex-end' : 'flex-start' }}
+    style={{ width: 40, height: 24, borderRadius: 12, border: 'none', padding: 2, cursor: 'pointer', flexShrink: 0, background: checked ? '#FF8C42' : 'var(--cs-line-soft)', display: 'flex', justifyContent: checked ? 'flex-end' : 'flex-start' }}
   >
-    <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff' }} />
+    <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--cs-card)' }} />
   </button>
 )
 
@@ -102,7 +102,7 @@ const PaymentMethodsPage = () => {
     })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -113,14 +113,14 @@ const PaymentMethodsPage = () => {
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>{t('pay.mine')}</div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('pay.mine')}</div>
           <button onClick={startAdd} style={{ background: '#FF8C42', color: '#fff', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('pay.add')}</button>
         </div>
 
-        {methods === null && <div style={{ textAlign: 'center', padding: '32px 0', color: '#b08060' }}>{t('common.loading')}</div>}
+        {methods === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
 
         {methods?.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '32px 0', color: '#b08060', fontSize: 14 }}>{t('pay.empty')}</div>
+          <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('pay.empty')}</div>
         )}
 
         {methods?.map(m => {
@@ -128,15 +128,15 @@ const PaymentMethodsPage = () => {
             <div key={m.id} style={card}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{methodName(m, t)}{m.label ? `・${m.label}` : ''}</div>
-                  <div style={{ fontSize: 13, color: '#b08060', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{describeMethod(m, t)}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{methodName(m, t)}{m.label ? `・${m.label}` : ''}</div>
+                  <div style={{ fontSize: 13, color: 'var(--cs-text-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{describeMethod(m, t)}</div>
                 </div>
-                <button onClick={() => setPreview(m)} aria-label={t('pay.preview')} style={iconBtn}><Eye size={18} color="#b08060" /></button>
-                <button onClick={() => startEdit(m)} aria-label={t('common.edit')} style={iconBtn}><Pencil size={18} color="#b08060" /></button>
-                <button onClick={() => handleDelete(m)} aria-label={t('common.delete')} style={iconBtn}><Trash2 size={18} color="#e53935" /></button>
+                <button onClick={() => setPreview(m)} aria-label={t('pay.preview')} style={iconBtn}><Eye size={18} color="var(--cs-text-sub)" /></button>
+                <button onClick={() => startEdit(m)} aria-label={t('common.edit')} style={iconBtn}><Pencil size={18} color="var(--cs-text-sub)" /></button>
+                <button onClick={() => handleDelete(m)} aria-label={t('common.delete')} style={iconBtn}><Trash2 size={18} color="var(--cs-danger)" /></button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTop: '0.5px solid #f0d5c0' }}>
-                <span style={{ fontSize: 12, color: '#b08060' }}>{m.isPublic ? t('pay.visible') : t('pay.private')}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTop: '0.5px solid var(--cs-border)' }}>
+                <span style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{m.isPublic ? t('pay.visible') : t('pay.private')}</span>
                 <Switch checked={m.isPublic} onChange={v => togglePublic(m, v)} />
               </div>
             </div>
@@ -146,14 +146,14 @@ const PaymentMethodsPage = () => {
         {form && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div style={{ ...card, width: '100%', maxWidth: 360, maxHeight: '90vh', overflowY: 'auto', padding: 20, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{editingId ? t('pay.editTitle') : t('pay.addTitle')}</div>
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{editingId ? t('pay.editTitle') : t('pay.addTitle')}</div>
 
             {REGIONS.length > 1 && <div>
               <div style={label}>{t('pay.region')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {REGIONS.map(r => (
                   <button key={r.id} disabled={!!editingId} onClick={() => patch({ regionId: r.id, providerId: '' })}
-                    style={{ flex: 1, padding: '9px 0', borderRadius: 10, fontSize: 14, cursor: editingId ? 'default' : 'pointer', border: form.regionId === r.id ? '1.5px solid #FF8C42' : '0.5px solid #f0d5c0', background: form.regionId === r.id ? '#fff3ec' : '#fff', color: form.regionId === r.id ? '#FF6B1A' : '#b08060' }}>
+                    style={{ flex: 1, padding: '9px 0', borderRadius: 10, fontSize: 14, cursor: editingId ? 'default' : 'pointer', border: form.regionId === r.id ? '1.5px solid #FF8C42' : '0.5px solid var(--cs-border)', background: form.regionId === r.id ? 'var(--cs-soft)' : 'var(--cs-card)', color: form.regionId === r.id ? '#FF6B1A' : 'var(--cs-text-sub)' }}>
                     {t(r.labelKey)}
                   </button>
                 ))}
@@ -163,7 +163,7 @@ const PaymentMethodsPage = () => {
             <div>
               <div style={label}>{t('pay.method')}</div>
               {providers.length === 0
-                ? <div style={{ fontSize: 13, color: '#c4a882' }}>{t('pay.noProviders')}</div>
+                ? <div style={{ fontSize: 13, color: 'var(--cs-text-mute)' }}>{t('pay.noProviders')}</div>
                 : <select value={form.providerId} disabled={!!editingId} onChange={e => patch({ providerId: e.target.value, value: '', bankCode: '', customName: '' })} style={input}>
                     <option value="">{t('pay.choose')}</option>
                     {providers.map(p => <option key={p.id} value={p.id}>{providerName(p, t)}</option>)}
@@ -187,7 +187,7 @@ const PaymentMethodsPage = () => {
                 <div style={label}>{provider.kind === 'bank' ? t('pay.accountLabel') : provider.kind === 'custom' ? t('pay.detailsLabel') : t(provider.valueLabelKey)}</div>
                 {/* App 類 maxLength=1000 是貼上整段分享文字的上限，儲存前會 parse 成短值；custom 的 200 與 firestore.rules 的 value 上限一致 */}
                 <input type="text" inputMode={provider.kind === 'bank' ? 'numeric' : 'text'} maxLength={provider.kind === 'bank' ? 20 : provider.kind === 'custom' ? 200 : 1000} value={form.value} onChange={e => patch({ value: e.target.value })} placeholder={provider.kind === 'custom' ? t('pay.detailsPlaceholder') : provider.placeholderKey ? t(provider.placeholderKey) : provider.placeholder} style={input} />
-                {provider.hintKey && <div style={{ fontSize: 11, color: '#c4a882', marginTop: 6 }}>{t(provider.hintKey)}</div>}
+                {provider.hintKey && <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 6 }}>{t(provider.hintKey)}</div>}
               </div>
             )}
             {provider && (
@@ -198,14 +198,14 @@ const PaymentMethodsPage = () => {
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: '#3d2b1f' }}>{t('pay.public')}</span>
+              <span style={{ fontSize: 13, color: 'var(--cs-text)' }}>{t('pay.public')}</span>
               <Switch checked={form.isPublic} onChange={v => patch({ isPublic: v })} />
             </div>
 
-            {error && <div style={{ fontSize: 12, color: '#e53935' }}>{error}</div>}
+            {error && <div style={{ fontSize: 12, color: 'var(--cs-danger)' }}>{error}</div>}
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setForm(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '0.5px solid #f0d5c0', background: '#fff', color: '#b08060', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
+              <button onClick={() => setForm(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
               <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? t('common.saving') : t('common.save')}</button>
             </div>
           </div>

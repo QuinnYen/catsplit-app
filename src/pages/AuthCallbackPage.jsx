@@ -39,22 +39,22 @@ const AuthCallbackPage = () => {
   }, [code, state, paramError, completeOAuthCallback, navigate, t])
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #fff8f4 0%, #ffe8d6 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, var(--cs-bg) 0%, var(--cs-soft-2) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ marginBottom: 16 }}>
         <GroupIcon icon="paw" color="orange" size={72} />
       </div>
       {error ? (
         <>
-          <div style={{ fontSize: 16, color: '#c0392b', marginBottom: 24, textAlign: 'center' }}>{error}</div>
+          <div style={{ fontSize: 16, color: 'var(--cs-danger)', marginBottom: 24, textAlign: 'center' }}>{error}</div>
           <button
             onClick={() => navigate('/', { replace: true })}
-            style={{ background: '#fff', color: '#3d2b1f', border: '0.5px solid #f0d5c0', borderRadius: 12, padding: '10px 24px', fontSize: 14, cursor: 'pointer' }}
+            style={{ background: 'var(--cs-card)', color: 'var(--cs-text)', border: '0.5px solid var(--cs-border)', borderRadius: 12, padding: '10px 24px', fontSize: 14, cursor: 'pointer' }}
           >
             {t('group.backHome')}
           </button>
         </>
       ) : (
-        <div style={{ fontSize: 14, color: '#b08060' }}>{t('auth.signingIn')}</div>
+        <div style={{ fontSize: 14, color: 'var(--cs-text-sub)' }}>{t('auth.signingIn')}</div>
       )}
     </div>
   )

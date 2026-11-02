@@ -6,16 +6,18 @@ import { Trash2 } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp, NICKNAME_MAX_LENGTH } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
+import { useTheme } from '../theme/ThemeProvider'
 import Avatar from '../components/Avatar'
 import PawDecor from '../components/PawDecor'
 import TabBar from '../components/TabBar'
 import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 
-const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }
+const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }
 
 const SettingsPage = () => {
   const { user, logout, saveNickname } = useApp()
   const { t, lang, setLang } = useI18n()
+  const { mode, setMode } = useTheme()
   const navigate = useNavigate()
   const [groups, setGroups] = useState(null)
   const [deletingData, setDeletingData] = useState(false)
@@ -79,7 +81,7 @@ const SettingsPage = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -91,8 +93,8 @@ const SettingsPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* 頭像與名稱 */}
         <div style={{ ...card, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '24px 14px' }}>
-          <Avatar src={user?.avatar} name={user?.name} size={88} style={{ background: '#ffe0c8', border: '3px solid #f0d5c0' }} />
-          <div style={{ fontSize: 18, fontWeight: 500, color: '#3d2b1f', textAlign: 'center', wordBreak: 'break-word' }}>
+          <Avatar src={user?.avatar} name={user?.name} size={88} style={{ background: 'var(--cs-soft-2)', border: '3px solid var(--cs-border)' }} />
+          <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--cs-text)', textAlign: 'center', wordBreak: 'break-word' }}>
             {user?.lineName ?? user?.name}{user?.lineName && ` / ${user.name}`}
           </div>
         </div>
@@ -100,7 +102,7 @@ const SettingsPage = () => {
         {/* 顯示名稱（全域暱稱）：訪客的名字屬於群組，不能在這裡改 */}
         {canDelete && (
           <div style={card}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>{t('settings.nickname')}</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('settings.nickname')}</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 type="text"
@@ -108,17 +110,17 @@ const SettingsPage = () => {
                 onChange={e => setNicknameInput(e.target.value)}
                 maxLength={NICKNAME_MAX_LENGTH}
                 placeholder={t('settings.nicknamePlaceholder')}
-                style={{ flex: 1, minWidth: 0, border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                style={{ flex: 1, minWidth: 0, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
               />
               <button
                 onClick={handleSaveNickname}
                 disabled={!nicknameDirty || nicknameSaving}
-                style={{ padding: '10px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: '#fff', cursor: nicknameDirty && !nicknameSaving ? 'pointer' : 'not-allowed', background: nicknameDirty && !nicknameSaving ? '#FF8C42' : '#e0c4b0' }}
+                style={{ padding: '10px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: '#fff', cursor: nicknameDirty && !nicknameSaving ? 'pointer' : 'not-allowed', background: nicknameDirty && !nicknameSaving ? '#FF8C42' : 'var(--cs-line-soft)' }}
               >
                 {nicknameSaving ? t('settings.nicknameSaving') : t('settings.nicknameSave')}
               </button>
             </div>
-            <div style={{ fontSize: 11, color: '#b08060', lineHeight: 1.6, marginTop: 8 }}>
+            <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', lineHeight: 1.6, marginTop: 8 }}>
               {t('settings.nicknameHint', { name: user?.lineName ?? user?.name })}
             </div>
           </div>
@@ -126,33 +128,47 @@ const SettingsPage = () => {
 
         {/* 語言：所有人都能手動切換；EN_READY 只影響「沒選過語言時」是否依瀏覽器語言自動判定 */}
         <div style={card}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>{t('settings.language')}</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('settings.language')}</div>
             <select
               value={lang}
               onChange={e => setLang(e.target.value)}
-              style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+              style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
             >
               <option value="zh-TW">{t('lang.zh-TW')}</option>
               <option value="en">{t('lang.en')}</option>
             </select>
         </div>
 
+        {/* 外觀：跟隨系統／淺色／深色，只存在這台裝置 */}
+        <div style={card}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('settings.theme')}</div>
+            <select
+              value={mode}
+              onChange={e => setMode(e.target.value)}
+              style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+            >
+              <option value="system">{t('settings.theme.system')}</option>
+              <option value="light">{t('settings.theme.light')}</option>
+              <option value="dark">{t('settings.theme.dark')}</option>
+            </select>
+        </div>
+
         {/* 條款與隱私權：英文版是另一份靜態頁；中文版維持原網址 */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12 }}>
-          <a href={lang === 'en' ? '/terms.en.html' : '/terms.html'} style={{ color: '#b08060' }}>{t('home.menu.terms')}</a>
-          <a href={lang === 'en' ? '/privacy.en.html' : '/privacy.html'} style={{ color: '#b08060' }}>{t('home.menu.privacy')}</a>
+          <a href={lang === 'en' ? '/terms.en.html' : '/terms.html'} style={{ color: 'var(--cs-text-sub)' }}>{t('home.menu.terms')}</a>
+          <a href={lang === 'en' ? '/privacy.en.html' : '/privacy.html'} style={{ color: 'var(--cs-text-sub)' }}>{t('home.menu.privacy')}</a>
         </div>
 
         {/* 危險區：訪客名字屬於群組，不能自行刪除；由群組建立者移除 */}
         {canDelete && (
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px dashed #f0b8b0' }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#e53935', marginBottom: 8 }}>{t('settings.dangerZone')}</div>
-            <div style={{ ...card, border: '0.5px solid #ffcdd2' }}>
-              <div style={{ fontSize: 12, color: '#b08060', lineHeight: 1.6, marginBottom: 12 }}>{t('settings.deleteHint')}</div>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px dashed var(--cs-danger-border)' }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-danger)', marginBottom: 8 }}>{t('settings.dangerZone')}</div>
+            <div style={{ ...card, border: '0.5px solid var(--cs-danger-border)' }}>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', lineHeight: 1.6, marginBottom: 12 }}>{t('settings.deleteHint')}</div>
               <button
                 onClick={handleDeleteMyData}
                 disabled={deletingData || groups === null}
-                style={{ width: '100%', padding: '12px 0', borderRadius: 12, border: '1px solid #ffcdd2', background: '#fff', color: '#e53935', fontSize: 14, fontWeight: 500, cursor: deletingData || groups === null ? 'not-allowed' : 'pointer', opacity: groups === null ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                style={{ width: '100%', padding: '12px 0', borderRadius: 12, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: deletingData || groups === null ? 'not-allowed' : 'pointer', opacity: groups === null ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 <Trash2 size={16} /> {deletingData ? t('home.menu.deleting') : t('home.menu.deleteData')}
               </button>

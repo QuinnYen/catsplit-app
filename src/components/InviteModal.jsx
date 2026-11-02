@@ -70,22 +70,22 @@ const InviteModal = ({ content, text, liff, onClose }) => {
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: '20px 20px 0 0', padding: 20, paddingBottom: 28 }}
+        style={{ width: '100%', maxWidth: 480, background: 'var(--cs-card)', borderRadius: '20px 20px 0 0', padding: 20, paddingBottom: 28 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>{t('invite.title')}</div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('invite.title')}</div>
           <button onClick={onClose} aria-label={t('invite.close')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
-            <X size={20} color="#b08060" />
+            <X size={20} color="var(--cs-text-sub)" />
           </button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 18 }}>
-          <div style={{ width: 200, height: 200, borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <div style={{ width: 200, height: 200, borderRadius: 16, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             {qr
               ? <img src={qr} alt={t('invite.qrAlt')} style={{ width: '100%', height: '100%' }} />
-              : <span style={{ fontSize: 12, color: '#b08060' }}>{t('invite.generating')}</span>}
+              : <span style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('invite.generating')}</span>}
           </div>
-          <div style={{ fontSize: 12, color: '#b08060', marginTop: 8 }}>{t('invite.scanHint')}</div>
+          <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 8 }}>{t('invite.scanHint')}</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -93,7 +93,7 @@ const InviteModal = ({ content, text, liff, onClose }) => {
             <button
               key={key}
               onClick={onClick}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, border: '0.5px solid #f0d5c0', background: '#fff3ec', fontSize: 14, color: '#3d2b1f', cursor: 'pointer', textAlign: 'left' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-soft)', fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', textAlign: 'left' }}
             >
               <Icon size={18} color="#FF8C42" />{label}
             </button>

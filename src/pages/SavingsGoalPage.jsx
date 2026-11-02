@@ -15,7 +15,7 @@ import { ProgressBar } from './SavingsListPage'
 import { sumSaved, progressRatio, progressPercent, daysLeft } from '../utils/savings'
 import { todayStr } from '../utils/expenseHelpers'
 
-const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }
+const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }
 const iconBtn = { background: 'none', border: 'none', padding: 6, cursor: 'pointer', display: 'flex' }
 
 const SavingsGoalPage = () => {
@@ -52,7 +52,7 @@ const SavingsGoalPage = () => {
   const dateText = left === null ? t('savings.noDate') : left > 0 ? t('savings.daysLeft', { n: left }) : left === 0 ? t('savings.dueToday') : t('savings.overdue')
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -63,33 +63,33 @@ const SavingsGoalPage = () => {
       </div>
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {(!goal || entries === null) ? <div style={{ textAlign: 'center', padding: '32px 0', color: '#b08060' }}>{t('common.loading')}</div> : (
+        {(!goal || entries === null) ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div> : (
           <>
             <div style={card}>
-              <div style={{ fontSize: 12, color: '#b08060', marginBottom: 4 }}>{t('savings.saved')}</div>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginBottom: 4 }}>{t('savings.saved')}</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: '#FF6B1A', marginBottom: 12 }}>{symbol} {fmt.num(saved)}</div>
               <ProgressBar ratio={ratio} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#b08060', marginTop: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--cs-text-sub)', marginTop: 8 }}>
                 <span>{saved >= goal.targetAmount ? t('savings.achieved') : t('savings.progress', { pct: progressPercent(saved, goal.targetAmount) })}</span>
                 <span>{symbol} {fmt.num(goal.targetAmount)}</span>
               </div>
-              <div style={{ fontSize: 13, color: '#3d2b1f', marginTop: 12 }}>
+              <div style={{ fontSize: 13, color: 'var(--cs-text)', marginTop: 12 }}>
                 {goal.targetDate ? `${fmt.date(`${goal.targetDate}T00:00`)}・` : ''}{dateText}
               </div>
             </div>
             <button onClick={() => setShowModal(true)} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>{t('savings.addEntry')}</button>
 
             <CollapsibleCard label={`${t('savings.entries')} (${sorted.length})`} hasContent={sorted.length > 0}>
-              {sorted.length === 0 && <div style={{ textAlign: 'center', padding: '12px 0', color: '#b08060', fontSize: 14 }}>{t('savings.entries.empty')}</div>}
+              {sorted.length === 0 && <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('savings.entries.empty')}</div>}
               {sorted.map((e, i) => {
                 const isSave = e.type === 'save'
                 return (
-                  <button key={e.id} onClick={() => setEditing(e)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid #f0d5c0', cursor: 'pointer', textAlign: 'left' }}>
+                  <button key={e.id} onClick={() => setEditing(e)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid var(--cs-border)', cursor: 'pointer', textAlign: 'left' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title || t(isSave ? 'savings.save' : 'savings.withdraw')}</div>
-                      <div style={{ fontSize: 12, color: '#b08060' }}>{fmt.shortDate(`${e.date}T00:00`)}</div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title || t(isSave ? 'savings.save' : 'savings.withdraw')}</div>
+                      <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{fmt.shortDate(`${e.date}T00:00`)}</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 500, color: isSave ? '#2e9e5b' : '#e53935', flexShrink: 0 }}>{isSave ? '+' : '−'}{symbol} {fmt.num(e.amount)}</div>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: isSave ? 'var(--cs-success)' : 'var(--cs-danger)', flexShrink: 0 }}>{isSave ? '+' : '−'}{symbol} {fmt.num(e.amount)}</div>
                   </button>
                 )
               })}

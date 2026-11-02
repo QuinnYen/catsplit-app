@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { GROUP_ICONS, GROUP_COLORS, DEFAULT_GROUP_ICON, DEFAULT_GROUP_COLOR } from '../config/groupIcons'
 import { useI18n } from '../i18n/I18nProvider'
 
-const labelStyle = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 6 }
+const labelStyle = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 6 }
 
 const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
   const { t } = useI18n()
@@ -21,7 +21,7 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
       disabled={disabled}
       style={{
         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 10,
-        cursor: disabled ? 'not-allowed' : 'pointer', border: open === name ? '1px solid #FF8C42' : '0.5px solid #f0d5c0', background: '#fff8f4',
+        cursor: disabled ? 'not-allowed' : 'pointer', border: open === name ? '1px solid #FF8C42' : '0.5px solid var(--cs-border)', background: 'var(--cs-bg)',
       }}
     >
       {children}
@@ -48,7 +48,7 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
           <div style={{
             position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 11, padding: 10,
             display: 'flex', flexWrap: 'wrap', gap: 8,
-            background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
+            background: 'var(--cs-card)', borderRadius: 12, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
           }}>
             {open === 'color' && Object.entries(GROUP_COLORS).map(([key, c]) => (
               <button
@@ -57,7 +57,7 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
                 aria-label={key}
                 style={{
                   width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', padding: 0,
-                  background: c.fg, border: '2px solid #fff',
+                  background: c.fg, border: '2px solid var(--cs-card)',
                   boxShadow: currentColor === key ? `0 0 0 2px ${c.fg}` : 'none',
                 }}
               />
@@ -72,11 +72,11 @@ const GroupIconPicker = ({ icon, color, onChange, disabled = false }) => {
                   style={{
                     width: 42, height: 42, borderRadius: 12, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: active ? `1.5px solid ${palette.fg}` : '0.5px solid #f0d5c0',
-                    background: active ? palette.bg : '#fff8f4',
+                    border: active ? `1.5px solid ${palette.fg}` : '0.5px solid var(--cs-border)',
+                    background: active ? palette.bg : 'var(--cs-bg)',
                   }}
                 >
-                  <Icon size={20} color={active ? palette.fg : '#b08060'} strokeWidth={2} />
+                  <Icon size={20} color={active ? palette.fg : 'var(--cs-text-sub)'} strokeWidth={2} />
                 </button>
               )
             })}

@@ -255,14 +255,14 @@ const EditExpensePage = ({ kind = 'expense' }) => {
 
   if (!group || !originalExpense) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)' }}>
         {t('common.loading')}
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -321,7 +321,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
             style={{
               width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
               cursor: isValid() && !loading ? 'pointer' : 'not-allowed',
-              background: isValid() && !loading ? '#FF8C42' : '#e0c4b0', color: '#fff',
+              background: isValid() && !loading ? '#FF8C42' : 'var(--cs-line-soft)', color: '#fff',
             }}
           >
             {loading ? t('edit.saving') : (
@@ -336,9 +336,9 @@ const EditExpensePage = ({ kind = 'expense' }) => {
           onClick={handleDelete}
           disabled={loading}
           style={{
-            width: '100%', padding: '15px 0', borderRadius: 16, border: '0.5px solid #ffb3a7', fontSize: 15, fontWeight: 500,
+            width: '100%', padding: '15px 0', borderRadius: 16, border: '0.5px solid var(--cs-danger-border)', fontSize: 15, fontWeight: 500,
             cursor: loading ? 'not-allowed' : 'pointer',
-            background: '#fff', color: '#e53935',
+            background: 'var(--cs-card)', color: 'var(--cs-danger)',
           }}
         >
           {loading ? t('common.processing') : (

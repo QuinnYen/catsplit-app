@@ -54,7 +54,7 @@ const CreateGroupPage = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
 
       {/* Header */}
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -73,10 +73,10 @@ const CreateGroupPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 群組名稱 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060' }}>{t('eg.name')}</div>
-            <div style={{ fontSize: 11, color: '#c4a882' }}>{name.length} / 20</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t('eg.name')}</div>
+            <div style={{ fontSize: 11, color: 'var(--cs-text-mute)' }}>{name.length} / 20</div>
           </div>
           <input
             type="text"
@@ -84,28 +84,28 @@ const CreateGroupPage = () => {
             onChange={e => setName(e.target.value)}
             placeholder={t('cg.namePlaceholder')}
             maxLength={20}
-            style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
           />
         </div>
 
         {/* 基準貨幣 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('cg.baseCurrency')}</div>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('cg.baseCurrency')}</div>
           <select
             value={baseCurrency}
             onChange={e => setBaseCurrency(e.target.value)}
-            style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
           >
             {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
           </select>
-          <div style={{ fontSize: 11, color: '#c4a882', marginTop: 8 }}>
+          <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>
             {t('cg.baseCurrencyHint')}
           </div>
         </div>
 
         {/* 群組圖示 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('eg.icon')}</div>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('eg.icon')}</div>
           <GroupIconPicker
             icon={icon}
             color={iconColor}
@@ -114,15 +114,15 @@ const CreateGroupPage = () => {
         </div>
 
         {/* 預覽卡片 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('cg.preview')}</div>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('cg.preview')}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <GroupIcon icon={icon} color={iconColor} size={48} />
             <div>
-              <div style={{ fontSize: 14, fontWeight: 500, color: name ? '#3d2b1f' : '#c4a882' }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: name ? 'var(--cs-text)' : 'var(--cs-text-mute)' }}>
                 {name || t('cg.previewName')}
               </div>
-              <div style={{ fontSize: 12, color: '#b08060', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Avatar src={user?.avatar} name={user?.name} size={18} />
                 {t('cg.previewMeta', { symbol: CURRENCIES.find(c => c.code === baseCurrency)?.symbol, code: baseCurrency })}
               </div>
@@ -137,7 +137,7 @@ const CreateGroupPage = () => {
             disabled={!name.trim() || loading}
             style={{
               width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500, cursor: name.trim() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
-              background: name.trim() && !loading ? '#FF8C42' : '#e0c4b0',
+              background: name.trim() && !loading ? '#FF8C42' : 'var(--cs-line-soft)',
               color: '#fff',
             }}
           >

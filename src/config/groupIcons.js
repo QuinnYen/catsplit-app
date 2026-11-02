@@ -19,13 +19,14 @@ export const GROUP_ICONS = {
 }
 
 export const GROUP_COLORS = {
-  red:    { bg: '#ffebee', fg: '#e53935' },
-  orange: { bg: '#fff3ec', fg: '#FF8C42' },
-  yellow: { bg: '#fff8e1', fg: '#e0a100' },
-  green:  { bg: '#e8f5e9', fg: '#43a047' },
-  blue:   { bg: '#e3f2fd', fg: '#1e88e5' },
-  indigo: { bg: '#e8eaf6', fg: '#3949ab' },
-  purple: { bg: '#f3e5f5', fg: '#8e44ad' },
+  // 色碼定義在 src/index.css 的 --cs-gi-*，深色模式有另一組
+  red:    { bg: 'var(--cs-gi-red-bg)', fg: 'var(--cs-gi-red-fg)' },
+  orange: { bg: 'var(--cs-gi-orange-bg)', fg: 'var(--cs-gi-orange-fg)' },
+  yellow: { bg: 'var(--cs-gi-yellow-bg)', fg: 'var(--cs-gi-yellow-fg)' },
+  green:  { bg: 'var(--cs-gi-green-bg)', fg: 'var(--cs-gi-green-fg)' },
+  blue:   { bg: 'var(--cs-gi-blue-bg)', fg: 'var(--cs-gi-blue-fg)' },
+  indigo: { bg: 'var(--cs-gi-indigo-bg)', fg: 'var(--cs-gi-indigo-fg)' },
+  purple: { bg: 'var(--cs-gi-purple-bg)', fg: 'var(--cs-gi-purple-fg)' },
 }
 
 export const DEFAULT_GROUP_ICON = 'paw'

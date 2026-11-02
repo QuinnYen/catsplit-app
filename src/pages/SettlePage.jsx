@@ -90,7 +90,7 @@ const SettlePage = () => {
 
   if (loading || !group) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)' }}>
         {t('settle.calculating')}
       </div>
     )
@@ -109,7 +109,7 @@ const SettlePage = () => {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
 
       {/* Header */}
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -128,12 +128,12 @@ const SettlePage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 總覽卡片 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <GroupIcon icon={group.icon} color={group.iconColor} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
-              <div style={{ fontSize: 12, color: '#b08060' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
             </div>
           </div>
 
@@ -143,26 +143,26 @@ const SettlePage = () => {
               <select
                 value={displayCurrency}
                 onChange={e => setDisplayCurrency(e.target.value)}
-                style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '8px 10px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '8px 10px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
               >
                 {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
               </select>
               {displayCurrency !== baseCurrency && (
-                <div style={{ fontSize: 11, color: '#c4a882', marginTop: 6, display: 'flex', alignItems: 'flex-start', gap: 4 }}>
+                <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 6, display: 'flex', alignItems: 'flex-start', gap: 4 }}>
                   <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} /> {t('settle.fxNote', { currency: `${getCurrency(baseCurrency).symbol} ${baseCurrency}` })}
                 </div>
               )}
             </div>
             <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{t('settle.total')}</div>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t('settle.total')}</div>
               <div style={{ ...amountStyle(totalText), fontWeight: 500, color: '#FF6B1A' }}>{totalText}</div>
             </div>
           </div>
         </div>
 
         {/* 每人明細 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>{t('settle.perPerson')}</div>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }}>{t('settle.perPerson')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {group.members.map(uid => {
               const profile = group.memberProfiles?.[uid]
@@ -174,13 +174,13 @@ const SettlePage = () => {
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar src={profile?.avatar} name={profile?.name} size={36} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', marginBottom: 2 }}>{profile?.name}</div>
-                    <div style={{ fontSize: 11, color: '#b08060' }}>{t('settle.paid', { amount: fmt(paid) })}</div>
-                    <div style={{ fontSize: 11, color: '#b08060' }}>{t('settle.owes', { amount: fmt(shouldPay) })}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text)', marginBottom: 2 }}>{profile?.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.paid', { amount: fmt(paid) })}</div>
+                    <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.owes', { amount: fmt(shouldPay) })}</div>
                   </div>
                   <div style={{
                     fontSize: 13, fontWeight: 500, flexShrink: 0,
-                    color: diff > 0.01 ? '#4caf50' : diff < -0.01 ? '#FF6B1A' : '#b08060'
+                    color: diff > 0.01 ? '#4caf50' : diff < -0.01 ? '#FF6B1A' : 'var(--cs-text-sub)'
                   }}>
                     {diff > 0.01 ? `+${fmt(diff)}` : diff < -0.01 ? fmt(diff) : (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -195,14 +195,14 @@ const SettlePage = () => {
         </div>
 
         {/* 轉帳建議 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>{t('settle.suggestions')}</div>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }}>{t('settle.suggestions')}</div>
 
           {settlements.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><PartyPopper size={48} color="#FF8C42" /></div>
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', marginBottom: 4 }}>{t('settle.allSettled')}</div>
-              <div style={{ fontSize: 13, color: '#b08060' }}>{t('settle.noTransfers')}</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', marginBottom: 4 }}>{t('settle.allSettled')}</div>
+              <div style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>{t('settle.noTransfers')}</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -212,14 +212,14 @@ const SettlePage = () => {
                 return (
                   <div
                     key={i}
-                    style={{ background: '#fff3ec', borderRadius: 12, padding: '12px 14px', border: '0.5px solid #f0d5c0' }}
+                    style={{ background: 'var(--cs-soft)', borderRadius: 12, padding: '12px 14px', border: '0.5px solid var(--cs-border)' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                       <Avatar src={from?.avatar} name={from?.name} size={32} />
-                      <div style={{ fontSize: 13, color: '#3d2b1f', flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, color: 'var(--cs-text)', flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</div>
                         <div style={{ display: 'flex', marginTop: 2 }}>
-                          <span style={{ color: '#b08060', flexShrink: 0, whiteSpace: 'nowrap' }}>{t('settle.to')}&nbsp;</span>
+                          <span style={{ color: 'var(--cs-text-sub)', flexShrink: 0, whiteSpace: 'nowrap' }}>{t('settle.to')}&nbsp;</span>
                           <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
                         </div>
                       </div>
@@ -245,20 +245,20 @@ const SettlePage = () => {
 
         {/* 已結清紀錄 */}
         {settledRecords.length > 0 && (
-          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 12 }}>{t('settle.history')}</div>
+          <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }}>{t('settle.history')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {settledRecords.map(s => {
                 const from = group.memberProfiles?.[s.from]
                 const to = group.memberProfiles?.[s.to]
                 return (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid #f5e8dc' }}>
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid var(--cs-track)' }}>
                     <CheckCircle2 size={16} color="#4caf50" style={{ flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: '#b08060' }}>
-                      <div style={{ color: '#3d2b1f', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</div>
+                    <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: 'var(--cs-text-sub)' }}>
+                      <div style={{ color: 'var(--cs-text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</div>
                       <div style={{ display: 'flex', marginTop: 2 }}>
                         <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{t('settle.to')}&nbsp;</span>
-                        <span style={{ color: '#3d2b1f', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
+                        <span style={{ color: 'var(--cs-text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
                         {s.paymentMethod && <span style={{ marginLeft: 4, flexShrink: 0, whiteSpace: 'nowrap' }}>· {paymentMethodLabel(s.paymentMethod, t)}</span>}
                       </div>
                     </div>

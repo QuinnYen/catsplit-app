@@ -116,7 +116,7 @@ const TransferPage = () => {
 
   if (!group) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)' }}>
         {t('common.loading')}
       </div>
     )
@@ -127,7 +127,7 @@ const TransferPage = () => {
   const currencyObj = getCurrency(currency)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
 
       {/* Header */}
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -146,24 +146,24 @@ const TransferPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 轉帳資訊卡 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 20 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
               <Avatar src={fromProfile?.avatar} name={fromProfile?.name} size={48} />
-              <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fromProfile?.name}</div>
-              <div style={{ fontSize: 11, color: '#b08060' }}>{t('group.detail.from')}</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fromProfile?.name}</div>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('group.detail.from')}</div>
             </div>
 
             <div style={{ fontSize: 22, color: '#FF8C42', flexShrink: 0 }}>→</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
               <Avatar src={toProfile?.avatar} name={toProfile?.name} size={48} />
-              <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{toProfile?.name}</div>
-              <div style={{ fontSize: 11, color: '#b08060' }}>{t('group.detail.to')}</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{toProfile?.name}</div>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('group.detail.to')}</div>
             </div>
           </div>
 
-          <div style={{ position: 'relative', background: '#fff3ec', borderRadius: 10, border: '1px solid #FF8C42', padding: '10px 12px', marginTop: 16 }}>
+          <div style={{ position: 'relative', background: 'var(--cs-soft)', borderRadius: 10, border: '1px solid #FF8C42', padding: '10px 12px', marginTop: 16 }}>
             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, fontWeight: 500, color: '#FF6B1A' }}>{currencyObj.symbol}</span>
             <input
               type="number"
@@ -177,7 +177,7 @@ const TransferPage = () => {
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <button
                 onClick={() => setCustomAmount(String(suggestedAmount))}
-                style={{ fontSize: 11, color: '#b08060', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                style={{ fontSize: 11, color: 'var(--cs-text-sub)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
               >
                 {t('transfer.suggested', { amount: `${currencyObj.symbol} ${fmt.num(suggestedAmount)}` })}
               </button>
@@ -186,15 +186,15 @@ const TransferPage = () => {
         </div>
 
         {/* 付款方式 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('group.detail.method')}</div>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('group.detail.method')}</div>
           <select
             value={paymentMethod}
             onChange={e => setPaymentMethod(e.target.value)}
             style={{
-              width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10,
-              padding: '11px 12px', fontSize: 14, color: '#3d2b1f',
-              outline: 'none', background: '#fff8f4', appearance: 'none',
+              width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10,
+              padding: '11px 12px', fontSize: 14, color: 'var(--cs-text)',
+              outline: 'none', background: 'var(--cs-bg)', appearance: 'none',
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b08060' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
               backgroundPosition: 'right 14px center',
@@ -207,7 +207,7 @@ const TransferPage = () => {
           </select>
 
           {matchedMethods.map(m => (
-            <div key={m.id} style={{ marginTop: 12, background: '#fff3ec', borderRadius: 12, border: '0.5px solid #f0d5c0', padding: 14 }}>
+            <div key={m.id} style={{ marginTop: 12, background: 'var(--cs-soft)', borderRadius: 12, border: '0.5px solid var(--cs-border)', padding: 14 }}>
               <PaymentMethodBody method={m} heading={t('transfer.payeeMethods', { name: toProfile?.name ?? t('transfer.counterparty') })} />
             </div>
           ))}
@@ -216,15 +216,15 @@ const TransferPage = () => {
         {liffInstance && safeIsInClient() && <ShareToLineToggle checked={shareToLine} onChange={setShareToLine} />}
 
         {/* 備註 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>{t('pay.note')}</div>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('pay.note')}</div>
           <input
             type="text"
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder={t('transfer.notePlaceholder')}
             maxLength={30}
-            style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
           />
         </div>
 
@@ -236,7 +236,7 @@ const TransferPage = () => {
           style={{
             width: '100%', padding: '15px 0', borderRadius: 16, border: 'none',
             fontSize: 15, fontWeight: 500, cursor: loading || !isValid ? 'not-allowed' : 'pointer',
-            background: loading || !isValid ? '#e0c4b0' : '#FF8C42',
+            background: loading || !isValid ? 'var(--cs-line-soft)' : '#FF8C42',
             color: '#fff', transition: 'all 0.15s',
           }}
         >

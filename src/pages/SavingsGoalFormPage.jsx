@@ -10,8 +10,8 @@ import PawDecor from '../components/PawDecor'
 import { deleteSavingsGoal } from '../utils/savingsData'
 import { isValidAmount } from '../utils/savings'
 
-const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff', boxSizing: 'border-box' }
-const label = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 6 }
+const input = { width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-card)', boxSizing: 'border-box' }
+const label = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 6 }
 
 const SavingsGoalFormPage = () => {
   const { user } = useApp()
@@ -76,7 +76,7 @@ const SavingsGoalFormPage = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -86,7 +86,7 @@ const SavingsGoalFormPage = () => {
       </div>
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {!loaded ? <div style={{ textAlign: 'center', padding: '32px 0', color: '#b08060' }}>{t('common.loading')}</div> : (
+        {!loaded ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div> : (
           <>
             <div>
               <div style={label}>{t('savings.form.title')}</div>
@@ -101,18 +101,18 @@ const SavingsGoalFormPage = () => {
               <select value={currency} onChange={e => setCurrency(e.target.value)} disabled={editing} style={input}>
                 {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
               </select>
-              {editing && <div style={{ fontSize: 12, color: '#b08060', marginTop: 4 }}>{t('savings.form.currencyLocked')}</div>}
+              {editing && <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 4 }}>{t('savings.form.currencyLocked')}</div>}
             </div>
             <div>
               <div style={label}>{t('savings.form.targetDate')}</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} style={input} />
-                {targetDate && <button type="button" onClick={() => setTargetDate('')} style={{ flexShrink: 0, background: 'none', border: 'none', color: '#b08060', fontSize: 13, cursor: 'pointer' }}>{t('savings.form.clearDate')}</button>}
+                {targetDate && <button type="button" onClick={() => setTargetDate('')} style={{ flexShrink: 0, background: 'none', border: 'none', color: 'var(--cs-text-sub)', fontSize: 13, cursor: 'pointer' }}>{t('savings.form.clearDate')}</button>}
               </div>
             </div>
-            {error && <div style={{ fontSize: 13, color: '#e53935' }}>{error}</div>}
+            {error && <div style={{ fontSize: 13, color: 'var(--cs-danger)' }}>{error}</div>}
             <button onClick={handleSave} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 15, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.save')}</button>
-            {editing && <button onClick={handleDelete} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: '0.5px solid #f0d5c0', background: '#fff', color: '#e53935', fontSize: 15, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>}
+            {editing && <button onClick={handleDelete} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 15, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>}
           </>
         )}
       </div>

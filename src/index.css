@@ -26,6 +26,96 @@
   /* TabBar 不含啟用圓點、不含 safe-area 的基準高度。實際高度依頁面為 50.5／54.5／56.5，
      StickyFooter 沿用 50 是既有行為 */
   --tabbar-h: 50px;
+
+  /* 主題色（淺色）。顏色一律用 var(--cs-…)，不要寫死色碼（npm run check:colors 會檢查）；
+     深色值在下方 :root[data-theme="dark"]，說明見 docs/theme.md */
+  color-scheme: light;
+  --cs-bg: #fff8f4;
+  --cs-card: #ffffff;
+  --cs-soft: #fff3ec;
+  --cs-soft-2: #ffe8d6;
+  --cs-border: #f0d5c0;
+  --cs-line-soft: #e0c4b0;
+  --cs-track: #f5e8dc;
+  --cs-text: #3d2b1f;
+  --cs-text-2: #8a6a52;
+  --cs-text-sub: #b08060;
+  --cs-text-mute: #c4a882;
+  --cs-overlay: rgba(61, 43, 31, 0.4);
+  --cs-accent-border: #ffb88a;
+  --cs-danger: #e53935;
+  --cs-danger-bg: #ffebee;
+  --cs-danger-border: #ffcdd2;
+  --cs-success: #2e7d32;
+  --cs-success-bg: #e8f5e9;
+  --cs-success-border: #c8e6c9;
+  --cs-info: #1976d2;
+  --cs-info-bg: #e3f2fd;
+  --cs-info-border: #c5dcf7;
+  --cs-warn: #e08a00;
+  --cs-warn-bg: #fff8e1;
+  --cs-warn-border: #ffd54f;
+  /* 橘色頁首上的填色（預算進度條），兩種模式都不變 */
+  --cs-on-brand: #fff;
+  --cs-on-brand-warn: #ffd54f;
+  --cs-on-brand-over: #ff5252;
+  /* 首頁群組卡片有封面圖時，圖上的金額色（封面遮罩兩種模式都是深色） */
+  --cs-on-cover-accent: #ffb88a;
+  --cs-on-cover-success: #8fe08f;
+  /* 沒有照片的頭像底色、收入列的箭頭 */
+  --cs-avatar-bg: #ffd4b3;
+  --cs-info-chevron: #c5dcf7;
+  /* 群組圖示配色 */
+  --cs-gi-red-bg: #ffebee;    --cs-gi-red-fg: #e53935;
+  --cs-gi-orange-bg: #fff3ec; --cs-gi-orange-fg: #FF8C42;
+  --cs-gi-yellow-bg: #fff8e1; --cs-gi-yellow-fg: #e0a100;
+  --cs-gi-green-bg: #e8f5e9;  --cs-gi-green-fg: #43a047;
+  --cs-gi-blue-bg: #e3f2fd;   --cs-gi-blue-fg: #1e88e5;
+  --cs-gi-indigo-bg: #e8eaf6; --cs-gi-indigo-fg: #3949ab;
+  --cs-gi-purple-bg: #f3e5f5; --cs-gi-purple-fg: #8e44ad;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cs-bg: #1f1713;
+  --cs-card: #2a201a;
+  --cs-soft: #3a2a20;
+  --cs-soft-2: #4a3222;
+  --cs-border: #4a382c;
+  --cs-line-soft: #5a4638;
+  --cs-track: #3a2d24;
+  --cs-text: #f3e6dc;
+  --cs-text-2: #b8967a;
+  --cs-text-sub: #c9a487;
+  --cs-text-mute: #b39a80;
+  --cs-overlay: rgba(0, 0, 0, 0.6);
+  --cs-accent-border: #7a4a2c;
+  --cs-danger: #ef7373;
+  --cs-danger-bg: #3d2222;
+  --cs-danger-border: #6b3434;
+  --cs-success: #81c784;
+  --cs-success-bg: #1f3324;
+  --cs-success-border: #2f5233;
+  --cs-info: #64b5f6;
+  --cs-info-bg: #1d2f40;
+  --cs-info-border: #35506b;
+  --cs-avatar-bg: #7a4a2c;
+  --cs-info-chevron: #6d8fb0;
+  --cs-warn: #f5c26b;
+  --cs-warn-bg: #3a3016;
+  --cs-warn-border: #6b5a1e;
+  --cs-gi-red-bg: #3d2222;    --cs-gi-red-fg: #ef7373;
+  --cs-gi-orange-bg: #3a2a20; --cs-gi-orange-fg: #ff8c42;
+  --cs-gi-yellow-bg: #3a3016; --cs-gi-yellow-fg: #f5c26b;
+  --cs-gi-green-bg: #1f3324;  --cs-gi-green-fg: #81c784;
+  --cs-gi-blue-bg: #1d2f40;   --cs-gi-blue-fg: #64b5f6;
+  --cs-gi-indigo-bg: #232844; --cs-gi-indigo-fg: #9fa8da;
+  --cs-gi-purple-bg: #33223a; --cs-gi-purple-fg: #ce93d8;
+}
+
+/* 只有深色才動 body 底色（過度捲動時露出的區域）；淺色維持原狀 */
+:root[data-theme="dark"] body {
+  background: var(--cs-bg);
 }
 
 @media (min-width: 481px) {

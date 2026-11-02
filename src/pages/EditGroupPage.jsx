@@ -209,7 +209,7 @@ const EditGroupPage = () => {
 
   if (!group) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)' }}>
         {t('common.loading')}
       </div>
     )
@@ -218,7 +218,7 @@ const EditGroupPage = () => {
   const isCreator = user?.uid === group.createdBy
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
 
       {/* Header */}
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -237,10 +237,10 @@ const EditGroupPage = () => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 群組名稱 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060' }}>{t('eg.name')}</div>
-            <div style={{ fontSize: 11, color: '#c4a882' }}>{name.length} / 20</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t('eg.name')}</div>
+            <div style={{ fontSize: 11, color: 'var(--cs-text-mute)' }}>{name.length} / 20</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
@@ -248,14 +248,14 @@ const EditGroupPage = () => {
               value={name}
               onChange={e => setName(e.target.value)}
               maxLength={20}
-              style={{ flex: 1, border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+              style={{ flex: 1, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
             />
             <button
               onClick={handleSaveName}
               disabled={saving || !name.trim() || name.trim() === group.name}
               style={{
                 padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
-                background: saving || !name.trim() || name.trim() === group.name ? '#e0c4b0' : '#FF8C42',
+                background: saving || !name.trim() || name.trim() === group.name ? 'var(--cs-line-soft)' : '#FF8C42',
                 color: '#fff',
               }}
             >
@@ -269,11 +269,11 @@ const EditGroupPage = () => {
           const budgetNum = parseFloat(budgetInput)
           const canSaveBudget = !budgetSaving && budgetNum > 0 && budgetNum !== group.budget?.amount
           return (
-            <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }}>{t('eg.budget')}</div>
+            <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('eg.budget')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '0 12px', background: '#fff8f4' }}>
-                  <span style={{ fontSize: 14, color: '#b08060', flexShrink: 0 }}>{getCurrency(group.baseCurrency).symbol}</span>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '0 12px', background: 'var(--cs-bg)' }}>
+                  <span style={{ fontSize: 14, color: 'var(--cs-text-sub)', flexShrink: 0 }}>{getCurrency(group.baseCurrency).symbol}</span>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -281,7 +281,7 @@ const EditGroupPage = () => {
                     onChange={e => /^\d{0,12}(\.\d{0,2})?$/.test(e.target.value) && setBudgetInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && canSaveBudget && handleSaveBudget()}
                     placeholder={t('eg.budgetPlaceholder')}
-                    style={{ flex: 1, minWidth: 0, border: 'none', padding: '10px 0', fontSize: 14, color: '#3d2b1f', outline: 'none', background: 'transparent' }}
+                    style={{ flex: 1, minWidth: 0, border: 'none', padding: '10px 0', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'transparent' }}
                   />
                 </div>
                 <button
@@ -290,7 +290,7 @@ const EditGroupPage = () => {
                   style={{
                     padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0,
                     cursor: canSaveBudget ? 'pointer' : 'not-allowed',
-                    background: canSaveBudget ? '#FF8C42' : '#e0c4b0', color: '#fff',
+                    background: canSaveBudget ? '#FF8C42' : 'var(--cs-line-soft)', color: '#fff',
                   }}
                 >
                   {budgetSaving ? t('eg.saving') : t('common.save')}
@@ -299,20 +299,20 @@ const EditGroupPage = () => {
                   <button
                     onClick={handleClearBudget}
                     disabled={budgetSaving}
-                    style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #f0d5c0', background: '#fff', color: '#e57373', fontSize: 13, flexShrink: 0, cursor: budgetSaving ? 'not-allowed' : 'pointer' }}
+                    style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 13, flexShrink: 0, cursor: budgetSaving ? 'not-allowed' : 'pointer' }}
                   >
                     {t('eg.budgetClear')}
                   </button>
                 )}
               </div>
-              <div style={{ fontSize: 11, color: '#c4a882', marginTop: 8 }}>{t('eg.budgetHint')}</div>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>{t('eg.budgetHint')}</div>
             </div>
           )
         })()}
 
         {/* 群組圖示 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('eg.icon')}</div>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('eg.icon')}</div>
           <GroupIconPicker
             icon={group.icon}
             color={group.iconColor}
@@ -322,15 +322,15 @@ const EditGroupPage = () => {
         </div>
 
         {/* 群組封面 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('eg.cover')}</div>
-          <div style={{ fontSize: 13, color: '#3d2b1f', marginBottom: 10 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('eg.cover')}</div>
+          <div style={{ fontSize: 13, color: 'var(--cs-text)', marginBottom: 10 }}>
             {coverSaving ? t('common.processing') : group.coverUrl ? t('eg.coverSet') : t('eg.coverNone')}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <label style={{
               flex: 1, textAlign: 'center', padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 500,
-              background: coverSaving ? '#e0c4b0' : '#FF8C42', color: '#fff', cursor: coverSaving ? 'not-allowed' : 'pointer',
+              background: coverSaving ? 'var(--cs-line-soft)' : '#FF8C42', color: '#fff', cursor: coverSaving ? 'not-allowed' : 'pointer',
             }}>
               {group.coverUrl ? t('eg.coverChange') : t('eg.coverChoose')}
               <input type="file" accept="image/*" onChange={handleCoverFile} disabled={coverSaving} style={{ display: 'none' }} />
@@ -339,13 +339,13 @@ const EditGroupPage = () => {
               <button
                 onClick={handleRemoveCover}
                 disabled={coverSaving}
-                style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #f0d5c0', background: '#fff', color: '#e57373', fontSize: 13, cursor: coverSaving ? 'not-allowed' : 'pointer' }}
+                style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 13, cursor: coverSaving ? 'not-allowed' : 'pointer' }}
               >
                 {t('eg.remove')}
               </button>
             )}
           </div>
-          <div style={{ fontSize: 11, color: '#c4a882', marginTop: 8 }}>{t('eg.coverHint')}</div>
+          <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>{t('eg.coverHint')}</div>
         </div>
 
         {/* 退出群組（非建立者；訪客退出等於刪掉這個名字，不開放） */}
@@ -354,8 +354,8 @@ const EditGroupPage = () => {
             onClick={handleLeaveGroup}
             disabled={leaving}
             style={{
-              width: '100%', padding: '14px 0', borderRadius: 16, border: '1px solid #ffcdd2', background: '#fff',
-              color: leaving ? '#b08060' : '#e57373', fontSize: 14, fontWeight: 500, cursor: leaving ? 'not-allowed' : 'pointer',
+              width: '100%', padding: '14px 0', borderRadius: 16, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)',
+              color: leaving ? 'var(--cs-text-sub)' : 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: leaving ? 'not-allowed' : 'pointer',
             }}
           >
             {leaving ? t('eg.leaving') : t('eg.leave')}
@@ -369,8 +369,8 @@ const EditGroupPage = () => {
               onClick={handleArchiveToggle}
               disabled={archiving}
               style={{
-                flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid #f0d5c0', background: '#fff',
-                color: archiving ? '#b08060' : '#FF8C42', fontSize: 14, fontWeight: 500, cursor: archiving ? 'not-allowed' : 'pointer',
+                flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid var(--cs-border)', background: 'var(--cs-card)',
+                color: archiving ? 'var(--cs-text-sub)' : '#FF8C42', fontSize: 14, fontWeight: 500, cursor: archiving ? 'not-allowed' : 'pointer',
               }}
             >
               {archiving ? t('common.processing') : group.archived ? t('eg.unarchive') : t('eg.archive')}
@@ -379,8 +379,8 @@ const EditGroupPage = () => {
               onClick={handleDeleteGroup}
               disabled={deleting}
               style={{
-                flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid #ffcdd2', background: '#fff',
-                color: deleting ? '#b08060' : '#e57373', fontSize: 14, fontWeight: 500, cursor: deleting ? 'not-allowed' : 'pointer',
+                flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)',
+                color: deleting ? 'var(--cs-text-sub)' : 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: deleting ? 'not-allowed' : 'pointer',
               }}
             >
               {deleting ? t('home.menu.deleting') : t('common.delete')}

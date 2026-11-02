@@ -68,7 +68,7 @@ const HomePage = () => {
 
   if (!authLoading && !user) {
     return (
-      <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
         <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
           {/* 裝飾 */}
           <PawDecor size={72} color="#FF8C42" opacity={0.08} style={{ top: -24, right: -8, bottom: 'auto' }} />
@@ -76,14 +76,14 @@ const HomePage = () => {
           {/* Logo / Icon */}
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <img src={catLogo} alt={t('app.title')} style={{ width: 80, height: 80, marginBottom: 16 }} />
-            <div style={{ fontSize: 26, fontWeight: 700, color: '#3d2b1f', marginBottom: 6 }}>{t('app.title')}</div>
-            <div style={{ fontSize: 14, color: '#b08060', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--cs-text)', marginBottom: 6 }}>{t('app.title')}</div>
+            <div style={{ fontSize: 14, color: 'var(--cs-text-sub)', lineHeight: 1.6 }}>
               {t('home.tagline1')}<br />{t('home.tagline2')}
             </div>
           </div>
 
           {/* 特色說明 */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: '16px 18px', marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: '16px 18px', marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               { Icon: Users, text: t('home.feature1') },
               { Icon: Wallet, text: t('home.feature2') },
@@ -91,7 +91,7 @@ const HomePage = () => {
             ].map(({ Icon, text }) => (
               <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 32, display: 'flex', justifyContent: 'center', flexShrink: 0 }}><Icon size={20} color="#FF8C42" /></div>
-                <div style={{ fontSize: 13, color: '#5a3e2b' }}>{text}</div>
+                <div style={{ fontSize: 13, color: 'var(--cs-text)' }}>{text}</div>
               </div>
             ))}
           </div>
@@ -102,11 +102,11 @@ const HomePage = () => {
             style={{ width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', background: '#06C755', color: '#fff', fontSize: 16, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 4px 16px rgba(6,199,85,0.35)' }}
           >
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M11 2C6.03 2 2 5.58 2 10c0 3.54 2.56 6.57 6.24 7.73-.09.31-.56 1.97-.64 2.27 0 0-.04.14.07.19.11.06.24.01.24.01.32-.04 3.72-2.45 4.09-2.7.66.09 1.34.14 2.03.14 4.97 0 9-3.58 9-8s-4.03-8-9-8z" fill="white"/>
+              <path d="M11 2C6.03 2 2 5.58 2 10c0 3.54 2.56 6.57 6.24 7.73-.09.31-.56 1.97-.64 2.27 0 0-.04.14.07.19.11.06.24.01.24.01.32-.04 3.72-2.45 4.09-2.7.66.09 1.34.14 2.03.14 4.97 0 9-3.58 9-8s-4.03-8-9-8z" fill="var(--cs-on-brand)"/>
             </svg>
             {t('home.loginLine')}
           </button>
-          <p style={{ marginTop: 14, fontSize: 12, color: '#b08060', textAlign: 'center', lineHeight: 1.6 }}>
+          <p style={{ marginTop: 14, fontSize: 12, color: 'var(--cs-text-sub)', textAlign: 'center', lineHeight: 1.6 }}>
             {t('home.agreePrefix')}
             <a href={legalHref('terms')} style={{ color: '#FF6B1A' }}>{t('home.terms')}</a>
             {t('home.and')}
@@ -118,7 +118,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#fff8f4' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--cs-bg)' }}>
 
       {/* Header */}
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '20px 16px 28px', position: 'relative', overflow: 'hidden' }}>
@@ -138,7 +138,7 @@ const HomePage = () => {
                 src={user?.avatar}
                 name={user?.name}
                 size={38}
-                style={{ background: '#ffe0c8', border: '2px solid rgba(255,255,255,0.6)' }}
+                style={{ background: 'var(--cs-soft-2)', border: '2px solid rgba(255,255,255,0.6)' }}
               />
             </button>
             <div>
@@ -154,7 +154,7 @@ const HomePage = () => {
       {/* 內容 */}
       <div className="cs-body" style={{ padding: '16px', flex: 1, paddingBottom: 24, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>{t('home.myGroups')}</div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('home.myGroups')}</div>
           {!user?.guest && (
             <button
               onClick={() => navigate('/create')}
@@ -166,7 +166,7 @@ const HomePage = () => {
         </div>
 
         {user?.guest && (
-          <div style={{ background: '#fff3ec', border: '0.5px solid #f0d5c0', borderRadius: 14, padding: 12, marginBottom: 12, fontSize: 12, color: '#b08060', lineHeight: 1.6 }}>
+          <div style={{ background: 'var(--cs-soft)', border: '0.5px solid var(--cs-border)', borderRadius: 14, padding: 12, marginBottom: 12, fontSize: 12, color: 'var(--cs-text-sub)', lineHeight: 1.6 }}>
             {t('home.guestNotice', { max: MAX_GUEST_NAMES })}
             <button
               onClick={() => loginWithLine('/')}
@@ -179,7 +179,7 @@ const HomePage = () => {
 
         {/* 載入中 */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>{t('common.loading')}</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
         )}
 
         {/* 空狀態 */}
@@ -188,8 +188,8 @@ const HomePage = () => {
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
               <GroupIcon icon="paw" color="orange" size={72} />
             </div>
-            <div style={{ color: '#b08060', fontSize: 14, marginBottom: 4 }}>{t('home.emptyTitle')}</div>
-            <div style={{ color: '#c4a882', fontSize: 13 }}>{t('home.emptyHint')}</div>
+            <div style={{ color: 'var(--cs-text-sub)', fontSize: 14, marginBottom: 4 }}>{t('home.emptyTitle')}</div>
+            <div style={{ color: 'var(--cs-text-mute)', fontSize: 13 }}>{t('home.emptyHint')}</div>
           </div>
         )}
 
@@ -204,13 +204,13 @@ const HomePage = () => {
             const isOverBudget = computeBudgetStatus(group.budget, group)?.level === 'over'
             // 有封面時卡片高度不變，封面當背景（lazy 載入）加暗色漸層，文字改淺色
             const hasCover = !!group.coverUrl
-            const subColor = hasCover ? 'rgba(255,255,255,0.85)' : '#b08060'
-            const nameStyle = { fontSize: 14, fontWeight: 500, color: hasCover ? '#fff' : '#3d2b1f', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+            const subColor = hasCover ? 'rgba(255,255,255,0.85)' : 'var(--cs-text-sub)'
+            const nameStyle = { fontSize: 14, fontWeight: 500, color: hasCover ? '#fff' : 'var(--cs-text)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
             return (
               <div
                 key={group.id}
                 onClick={() => navigate(`/group/${group.id}`)}
-                style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none', ...(hasCover && { position: 'relative', overflow: 'hidden', isolation: 'isolate' }) }}
+                style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none', ...(hasCover && { position: 'relative', overflow: 'hidden', isolation: 'isolate' }) }}
                 onTouchStart={e => e.currentTarget.style.transform = 'scale(0.97)'}
                 onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
               >
@@ -225,7 +225,7 @@ const HomePage = () => {
                   {isOverBudget ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                       <div style={{ ...nameStyle, marginBottom: 0, minWidth: 0 }}>{group.name}</div>
-                      <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 500, color: '#e57373', background: '#ffebee', borderRadius: 8, padding: '1px 6px' }}>
+                      <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 500, color: 'var(--cs-danger)', background: 'var(--cs-danger-bg)', borderRadius: 8, padding: '1px 6px' }}>
                         {t('home.overBudget')}
                       </span>
                     </div>
@@ -237,10 +237,10 @@ const HomePage = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: subColor }}>
                     <div style={{ display: 'flex' }}>
                       {profiles.map((member, i) => (
-                        <Avatar key={i} src={member.avatar} name={member.name} size={18} style={{ border: '1.5px solid #fff', marginLeft: i === 0 ? 0 : -5 }} />
+                        <Avatar key={i} src={member.avatar} name={member.name} size={18} style={{ border: `1.5px solid ${hasCover ? 'var(--cs-on-brand)' : 'var(--cs-card)'}`, marginLeft: i === 0 ? 0 : -5 }} />
                       ))}
                       {(group.members?.length || 0) > profiles.length && (
-                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: '1.5px solid #fff', marginLeft: -5, background: '#f0d5c0', color: '#b08060', fontSize: 9, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: `1.5px solid ${hasCover ? 'var(--cs-on-brand)' : 'var(--cs-card)'}`, marginLeft: -5, background: 'var(--cs-border)', color: 'var(--cs-text-sub)', fontSize: 9, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
                           +{group.members.length - profiles.length}
                         </div>
                       )}
@@ -250,14 +250,14 @@ const HomePage = () => {
                 </div>
                 {bal === null ? (
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: hasCover ? '#ffb88a' : '#FF6B1A' }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: hasCover ? 'var(--cs-on-cover-accent)' : '#FF6B1A' }}>
                       {getCurrency(group.baseCurrency).symbol} {fmt.num(group.totalAmount || 0)}
                     </div>
                     <div style={{ fontSize: 11, color: subColor }}>{t('group.totalExpense')}</div>
                   </div>
                 ) : (
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: isSettled ? subColor : isPositive ? (hasCover ? '#8fe08f' : '#4caf50') : (hasCover ? '#ffb88a' : '#FF6B1A') }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: isSettled ? subColor : isPositive ? (hasCover ? 'var(--cs-on-cover-success)' : '#4caf50') : (hasCover ? 'var(--cs-on-cover-accent)' : '#FF6B1A') }}>
                       {isSettled ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                           <Check size={13} strokeWidth={3} /> {t('home.settled')}
@@ -271,7 +271,7 @@ const HomePage = () => {
                     </div>
                   </div>
                 )}
-                <div style={{ color: hasCover ? 'rgba(255,255,255,0.8)' : '#e0b898', fontSize: 18 }}>›</div>
+                <div style={{ color: hasCover ? 'rgba(255,255,255,0.8)' : 'var(--cs-line-soft)', fontSize: 18 }}>›</div>
               </div>
             )
           }
@@ -291,11 +291,11 @@ const HomePage = () => {
                     { label: t('home.pageNext'), to: currentPage + 1, disabled: currentPage === pageCount },
                   ].map(({ label, to, disabled }, i) => (
                     <Fragment key={label}>
-                      {i === 1 && <span style={{ fontSize: 13, color: '#b08060' }}>{currentPage} / {pageCount}</span>}
+                      {i === 1 && <span style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>{currentPage} / {pageCount}</span>}
                       <button
                         onClick={() => { setPage(to); window.scrollTo({ top: 0 }) }}
                         disabled={disabled}
-                        style={{ border: '0.5px solid #f0d5c0', background: '#fff', color: '#b08060', borderRadius: 10, padding: '7px 14px', fontSize: 13, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
+                        style={{ border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', borderRadius: 10, padding: '7px 14px', fontSize: 13, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
                       >
                         {label}
                       </button>
@@ -311,8 +311,8 @@ const HomePage = () => {
                     onClick={() => setShowArchived(v => !v)}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: 10 }}
                   >
-                    <span style={{ fontSize: 12, color: '#b08060', fontWeight: 500 }}>{t('home.archived', { n: archivedGroups.length })}</span>
-                    <span style={{ fontSize: 11, color: '#c4a882', transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s' }}>›</span>
+                    <span style={{ fontSize: 12, color: 'var(--cs-text-sub)', fontWeight: 500 }}>{t('home.archived', { n: archivedGroups.length })}</span>
+                    <span style={{ fontSize: 11, color: 'var(--cs-text-mute)', transform: showArchived ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s' }}>›</span>
                   </button>
                   {showArchived && (
                     <div className="cs-group-list" style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.65 }}>
@@ -331,8 +331,8 @@ const HomePage = () => {
       {showSettings && (
         <>
           <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
-          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 720px) / 2 + 16px))', zIndex: 101, width: 220, background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
-            <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: '#fff', borderTop: '0.5px solid #f0d5c0', borderLeft: '0.5px solid #f0d5c0', transform: 'rotate(45deg)' }} />
+          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 720px) / 2 + 16px))', zIndex: 101, width: 220, background: 'var(--cs-card)', borderRadius: 14, border: '0.5px solid var(--cs-border)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
+            <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: 'var(--cs-card)', borderTop: '0.5px solid var(--cs-border)', borderLeft: '0.5px solid var(--cs-border)', transform: 'rotate(45deg)' }} />
             {[
               { Icon: Settings, label: t('group.settings'), onClick: () => navigate('/settings') },
               // 訪客沒有穩定身分，不提供收款方式
@@ -341,8 +341,8 @@ const HomePage = () => {
               { Icon: LineIcon, label: t('group.menu.official'), href: OFFICIAL_ACCOUNT_URL },
               { Icon: LogOut, label: t('home.menu.logout'), onClick: handleLogout },
             ].map(({ Icon, label, href, onClick }, i) => {
-              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid #f0d5c0', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: '#3d2b1f', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
-              const content = <><Icon size={18} color="#b08060" />{label}</>
+              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid var(--cs-border)', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
+              const content = <><Icon size={18} color="var(--cs-text-sub)" />{label}</>
               return href
                 ? <a key={label} href={href} style={style}>{content}</a>
                 : <button key={label} onClick={onClick} style={style}>{content}</button>

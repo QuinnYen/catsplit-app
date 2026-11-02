@@ -541,4 +541,8 @@ export default {
   'savings.confirmDeleteEntry': '確定要刪除這筆紀錄嗎？',
   'savings.saveFailed': '儲存失敗，請稍後再試',
   'savings.deleteFailed': '刪除失敗，請稍後再試',
+  'settings.theme': '外觀',
+  'settings.theme.system': '跟隨系統',
+  'settings.theme.light': '淺色',
+  'settings.theme.dark': '深色',
 }

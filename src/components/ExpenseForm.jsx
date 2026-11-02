@@ -12,21 +12,21 @@ import { categoryLabel, normalizeCategory } from '../i18n/codes'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, SPLIT_TYPES, NOTE_MAX_LENGTH } from '../config/expenseForm'
 
 const inputStyle = {
-  width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10,
-  padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4',
+  width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 10,
+  padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)',
 }
 
 const CUSTOM_OPTION = '__custom'
 
-const cardStyle ={ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }
-const labelStyle = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 8 }
+const cardStyle ={ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }
+const labelStyle = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }
 const chipActiveStyle = { background: '#FF8C42', color: '#fff', fontWeight: 500 }
-const chipIdleStyle = { background: '#fff3ec', color: '#b08060', fontWeight: 400 }
+const chipIdleStyle = { background: 'var(--cs-soft)', color: 'var(--cs-text-sub)', fontWeight: 400 }
 
 const Checkbox = ({ checked }) => (
   <div style={{
     width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-    border: checked ? 'none' : '1.5px solid #d0b09a',
+    border: checked ? 'none' : '1.5px solid var(--cs-line-soft)',
     background: checked ? '#FF8C42' : 'transparent',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   }}>
@@ -65,11 +65,11 @@ const PayerSelect = ({ members, value, onChange, placeholder }) => {
         onClick={() => setOpen(v => !v)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 12, cursor: 'pointer', border: 'none',
-          background: '#fff3ec', outline: '1.5px solid #FF8C42',
+          background: 'var(--cs-soft)', outline: '1.5px solid #FF8C42',
         }}
       >
         <Avatar src={current?.avatar} name={current?.name} size={28} />
-        <span style={{ fontSize: 14, color: '#3d2b1f', fontWeight: 500, flex: 1, textAlign: 'left' }}>{current?.name || placeholder}</span>
+        <span style={{ fontSize: 14, color: 'var(--cs-text)', fontWeight: 500, flex: 1, textAlign: 'left' }}>{current?.name || placeholder}</span>
         <ChevronDown size={16} color="#FF8C42" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
       </button>
       {open && (
@@ -77,7 +77,7 @@ const PayerSelect = ({ members, value, onChange, placeholder }) => {
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
           <div style={{
             position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 11, maxHeight: 240, overflowY: 'auto',
-            background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(255,140,66,0.18)', padding: 4,
+            background: 'var(--cs-card)', borderRadius: 12, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)', padding: 4,
           }}>
             {members.map(([uid, profile]) => (
               <button
@@ -85,11 +85,11 @@ const PayerSelect = ({ members, value, onChange, placeholder }) => {
                 onClick={() => { onChange(uid); setOpen(false) }}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', border: 'none',
-                  background: value === uid ? '#fff3ec' : 'transparent',
+                  background: value === uid ? 'var(--cs-soft)' : 'transparent',
                 }}
               >
                 <Avatar src={profile.avatar} name={profile.name} size={28} />
-                <span style={{ fontSize: 14, color: '#3d2b1f', fontWeight: value === uid ? 500 : 400, flex: 1, textAlign: 'left' }}>{profile.name}</span>
+                <span style={{ fontSize: 14, color: 'var(--cs-text)', fontWeight: value === uid ? 500 : 400, flex: 1, textAlign: 'left' }}>{profile.name}</span>
                 {value === uid && <Check size={16} color="#FF8C42" strokeWidth={3} />}
               </button>
             ))}
@@ -211,7 +211,7 @@ const ExpenseForm = ({
               </select>
             </div>
             <div style={{ flex: 2, minWidth: 0, position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 13 }}>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--cs-text-sub)', fontSize: 13 }}>
                 {getCurrency(currency).symbol}
               </span>
               <input
@@ -239,12 +239,12 @@ const ExpenseForm = ({
             />
           )}
           {currency !== baseCurrency && amount && exchangeRate && (
-            <div style={{ textAlign: 'right', fontSize: 12, color: '#b08060', marginTop: 6 }}>
+            <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 6 }}>
               ≈ {getCurrency(baseCurrency).symbol} {(amountNum * exchangeRate).toFixed(0)} {baseCurrency}
             </div>
           )}
           {budgetPreview && (
-            <div style={{ textAlign: 'right', fontSize: 12, marginTop: 6, color: { ok: '#b08060', warn: '#e08a00', over: '#e57373' }[budgetPreview.level] }}>
+            <div style={{ textAlign: 'right', fontSize: 12, marginTop: 6, color: { ok: 'var(--cs-text-sub)', warn: 'var(--cs-warn)', over: 'var(--cs-danger)' }[budgetPreview.level] }}>
               {budgetPreview.remaining < 0
                 ? t('form.budgetOver', { amount: `${getCurrency(baseCurrency).symbol} ${fmt.num(-budgetPreview.remaining)}` })
                 : kind === 'income'
@@ -255,11 +255,11 @@ const ExpenseForm = ({
         </div>
 
         {currency !== baseCurrency && (
-          <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: '#fff8f4', border: '0.5px solid #f0d5c0' }}>
+          <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: 'var(--cs-bg)', border: '0.5px solid var(--cs-border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12, color: '#b08060' }}>{t('form.rate', { currency })}</span>
+              <span style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('form.rate', { currency })}</span>
               {rateLoading ? (
-                <span style={{ fontSize: 12, color: '#c4a882' }}>{t('form.rateLoading')}</span>
+                <span style={{ fontSize: 12, color: 'var(--cs-text-mute)' }}>{t('form.rateLoading')}</span>
               ) : (
                 <input
                   type="number"
@@ -268,13 +268,13 @@ const ExpenseForm = ({
                   value={exchangeRate ?? ''}
                   onChange={e => setExchangeRate(parseFloat(e.target.value) || null)}
                   placeholder={t('form.rateEnter')}
-                  style={{ width: 100, border: `0.5px solid ${rateError ? '#e05a4f' : '#FF8C42'}`, borderRadius: 8, padding: '6px 8px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff' }}
+                  style={{ width: 100, border: `0.5px solid ${rateError ? 'var(--cs-danger)' : '#FF8C42'}`, borderRadius: 8, padding: '6px 8px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-card)' }}
                 />
               )}
-              <span style={{ fontSize: 12, color: '#b08060' }}>{baseCurrency}</span>
+              <span style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{baseCurrency}</span>
             </div>
             {!rateLoading && (
-              <div style={{ marginTop: 6, fontSize: 11, color: rateError ? '#e05a4f' : '#c4a882' }}>
+              <div style={{ marginTop: 6, fontSize: 11, color: rateError ? 'var(--cs-danger)' : 'var(--cs-text-mute)' }}>
                 {rateError
                   ? t('form.rateError')
                   : rateManual
@@ -302,13 +302,13 @@ const ExpenseForm = ({
         </div>
         {multiPayer ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{t(L.multiPayerHint)}</div>
+            <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t(L.multiPayerHint)}</div>
             {members.map(([uid, profile]) => (
               <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Avatar src={profile.avatar} name={profile.name} size={24} />
-                <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)' }}>{profile.name}</span>
                 <div style={{ position: 'relative', width: 110 }}>
-                  <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 12 }}>
+                  <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--cs-text-sub)', fontSize: 12 }}>
                     {getCurrency(currency).symbol}
                   </span>
                   <input
@@ -317,7 +317,7 @@ const ExpenseForm = ({
                     value={payerAmounts[uid] ?? ''}
                     onChange={e => setPayerAmounts(prev => ({ ...prev, [uid]: e.target.value }))}
                     placeholder="0"
-                    style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 8px 7px 34px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                    style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 8px 7px 34px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
                   />
                 </div>
               </div>
@@ -333,12 +333,12 @@ const ExpenseForm = ({
               onClick={() => setPayerExcluded(v => !v)}
               style={{
                 marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', width: '100%',
-                background: payerExcluded ? '#fff3ec' : '#fff8f4',
-                outline: payerExcluded ? '1.5px solid #FF8C42' : '0.5px solid #f0d5c0',
+                background: payerExcluded ? 'var(--cs-soft)' : 'var(--cs-bg)',
+                outline: payerExcluded ? '1.5px solid #FF8C42' : '0.5px solid var(--cs-border)',
               }}
             >
               <Checkbox checked={payerExcluded} />
-              <span style={{ fontSize: 13, color: payerExcluded ? '#FF6B1A' : '#b08060', fontWeight: payerExcluded ? 500 : 400 }}>
+              <span style={{ fontSize: 13, color: payerExcluded ? '#FF6B1A' : 'var(--cs-text-sub)', fontWeight: payerExcluded ? 500 : 400 }}>
                 {t(L.excludeLabel)}
               </span>
             </button>
@@ -361,7 +361,7 @@ const ExpenseForm = ({
               .map(([uid, profile]) => (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Avatar src={profile.avatar} name={profile.name} size={24} />
-                  <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                  <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)' }}>{profile.name}</span>
                   <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A' }}>
                     {getCurrency(currency).symbol} {effectiveUids.length > 0 ? (amountNum / effectiveUids.length).toFixed(0) : '0'}
                   </span>
@@ -373,7 +373,7 @@ const ExpenseForm = ({
         {/* 部分人分攤 */}
         {splitType === 'subset' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{t(L.subsetHint)}</div>
+            <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t(L.subsetHint)}</div>
             {members.map(([uid, profile]) => {
               const excluded = payerExcluded && uid === paidBy
               const checked = !excluded && subsetMembers[uid]
@@ -385,14 +385,14 @@ const ExpenseForm = ({
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 12, border: 'none',
                     cursor: excluded ? 'default' : 'pointer', transition: 'all 0.15s',
-                    background: excluded ? '#f5f5f5' : checked ? '#fff3ec' : '#fff8f4',
-                    outline: checked ? '1.5px solid #FF8C42' : '0.5px solid #f0d5c0',
+                    background: excluded ? 'var(--cs-track)' : checked ? 'var(--cs-soft)' : 'var(--cs-bg)',
+                    outline: checked ? '1.5px solid #FF8C42' : '0.5px solid var(--cs-border)',
                     opacity: excluded ? 0.4 : 1,
                   }}
                 >
                   <Checkbox checked={checked} />
                   <Avatar src={profile.avatar} name={profile.name} size={24} />
-                  <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f', textAlign: 'left' }}>{profile.name}</span>
+                  <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)', textAlign: 'left' }}>{profile.name}</span>
                   {amount && checked && effectiveUids.length > 0 && (
                     <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A' }}>
                       {getCurrency(currency).symbol} {(amountNum / effectiveUids.length).toFixed(0)}
@@ -407,7 +407,7 @@ const ExpenseForm = ({
         {/* 依份數 */}
         {splitType === 'shares' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 11, color: '#b08060', marginBottom: 2 }}>{t('form.sharesHint')}</div>
+            <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t('form.sharesHint')}</div>
             {members
               .filter(([uid]) => !payerExcluded || uid !== paidBy)
               .map(([uid, profile]) => {
@@ -415,23 +415,23 @@ const ExpenseForm = ({
                 return (
                   <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Avatar src={profile.avatar} name={profile.name} size={24} />
-                    <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                    <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)' }}>{profile.name}</span>
                     <input
                       type="number"
                       min="0"
                       value={shares[uid]}
                       onChange={e => setShares(prev => ({ ...prev, [uid]: e.target.value }))}
                       placeholder="0"
-                      style={{ width: 70, border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 8px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4', textAlign: 'center' }}
+                      style={{ width: 70, border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 8px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)', textAlign: 'center' }}
                     />
-                    <span style={{ fontSize: 11, color: '#b08060', width: 16 }}>{t('form.shareUnit')}</span>
+                    <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', width: 16 }}>{t('form.shareUnit')}</span>
                     <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A', width: 64, textAlign: 'right', visibility: amount ? 'visible' : 'hidden' }}>
                       {getCurrency(currency).symbol} {sharesTotal > 0 ? (s / sharesTotal * amountNum).toFixed(0) : '0'}
                     </span>
                   </div>
                 )
               })}
-            <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: '#b08060' }}>
+            <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>
               {t('form.sharesTotal', { n: sharesTotal })}
             </div>
           </div>
@@ -445,16 +445,16 @@ const ExpenseForm = ({
               .map(([uid, profile]) => (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Avatar src={profile.avatar} name={profile.name} size={24} />
-                  <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                  <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)' }}>{profile.name}</span>
                   <div style={{ position: 'relative', width: 90 }}>
                     <input
                       type="number"
                       value={percentages[uid]}
                       onChange={e => setPercentages(prev => ({ ...prev, [uid]: e.target.value }))}
                       placeholder="0"
-                      style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 24px 7px 8px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                      style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 24px 7px 8px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
                     />
-                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 12 }}>%</span>
+                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--cs-text-sub)', fontSize: 12 }}>%</span>
                   </div>
                   {amount && percentages[uid] && (
                     <span style={{ fontSize: 12, color: '#FF6B1A', width: 60, textAlign: 'right' }}>
@@ -477,9 +477,9 @@ const ExpenseForm = ({
               .map(([uid, profile]) => (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Avatar src={profile.avatar} name={profile.name} size={24} />
-                  <span style={{ flex: 1, fontSize: 13, color: '#3d2b1f' }}>{profile.name}</span>
+                  <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)' }}>{profile.name}</span>
                   <div style={{ position: 'relative', width: 110 }}>
-                    <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#b08060', fontSize: 12 }}>
+                    <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--cs-text-sub)', fontSize: 12 }}>
                       {getCurrency(currency).symbol}
                     </span>
                     <input
@@ -487,7 +487,7 @@ const ExpenseForm = ({
                       value={customAmounts[uid]}
                       onChange={e => setCustomAmounts(prev => ({ ...prev, [uid]: e.target.value }))}
                       placeholder="0"
-                      style={{ width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 8, padding: '7px 8px 7px 34px', fontSize: 13, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+                      style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 8, padding: '7px 8px 7px 34px', fontSize: 13, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
                     />
                   </div>
                 </div>
@@ -512,7 +512,7 @@ const ExpenseForm = ({
           maxLength={NOTE_MAX_LENGTH}
           style={inputStyle}
         />
-        <div style={{ textAlign: 'right', fontSize: 11, color: '#c4a882', marginTop: 4 }}>{note.length}/{NOTE_MAX_LENGTH}</div>
+        <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 4 }}>{note.length}/{NOTE_MAX_LENGTH}</div>
       </CollapsibleCard>
 
       {/* 收據上傳 */}
@@ -525,7 +525,7 @@ const ExpenseForm = ({
               <img
                 src={receiptPreview || existingReceiptUrl}
                 alt={t('form.receiptAlt')}
-                style={{ width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 10, background: '#f5f0eb', display: 'block' }}
+                style={{ width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 10, background: 'var(--cs-track)', display: 'block' }}
               />
               <button
                 onClick={() => {
@@ -545,9 +545,9 @@ const ExpenseForm = ({
             <label style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               gap: 6, padding: '20px 0', borderRadius: 10, cursor: 'pointer',
-              border: '1.5px dashed #f0d5c0', background: '#fff8f4', color: '#b08060',
+              border: '1.5px dashed var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)',
             }}>
-              <Camera size={28} color="#b08060" />
+              <Camera size={28} color="var(--cs-text-sub)" />
               <span style={{ fontSize: 13 }}>{t('form.receiptUpload')}</span>
               <input
                 type="file"

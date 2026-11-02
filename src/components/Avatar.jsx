@@ -16,7 +16,7 @@ const Avatar = ({ src, name, size = 38, style, ...rest }) => {
     height: size,
     borderRadius: '50%',
     objectFit: 'cover',
-    background: '#ffd4b3',
+    background: 'var(--cs-avatar-bg)',
     flexShrink: 0,
     display: 'inline-flex',
     alignItems: 'center',

@@ -11,6 +11,7 @@
     "test": "node --test",
     "test:rules": "firebase emulators:exec --only firestore --project demo-catsplit \"node --test \\\"firestore-tests/*.mjs\\\"\"",
     "check:cjk": "node scripts/check-cjk.mjs",
+    "check:colors": "node scripts/check-colors.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

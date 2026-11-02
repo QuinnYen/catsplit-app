@@ -8,6 +8,8 @@
     <title>貓咪分帳 CatSplit</title>
     <!-- 分享連結 /s/:id（含 LIFF 帶回來的 liff.state）在 App 載入前換回 /group/:id -->
     <script>(function(){var l=location,p=l.pathname,u=new URLSearchParams(l.search),s=u.get('liff.state'),c=0;if(s&&s.indexOf('/s/')===0){u.set('liff.state','/group/'+s.slice(3));c=1}if(p.indexOf('/s/')===0){p='/group/'+p.slice(3);c=1}if(c){var q=u.toString();history.replaceState(null,'',p+(q?'?'+q:'')+l.hash)}})()</script>
+    <!-- 畫面繪製前先設好主題，避免深色使用者載入時閃白。邏輯同 src/theme/theme.js 的 resolveTheme，修改時兩處要同步 -->
+    <script>(function(){var m=null;try{m=localStorage.getItem('cs-theme')}catch(e){}var d=m==='dark'||(m!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light'})()</script>
   </head>
   <body>
     <div id="root"></div>

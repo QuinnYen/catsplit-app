@@ -9,13 +9,13 @@ const pad = (n) => String(n).padStart(2, '0')
 
 const segmentStyle = (active) => ({
   flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', border: 'none', cursor: 'pointer',
-  fontSize: 14, color: '#3d2b1f', background: active ? '#fff3ec' : 'transparent', textAlign: 'left',
+  fontSize: 14, color: 'var(--cs-text)', background: active ? 'var(--cs-soft)' : 'transparent', textAlign: 'left',
 })
 const navBtnStyle = { border: 'none', background: 'none', padding: 6, cursor: 'pointer', display: 'flex' }
-const titleBtnStyle = { border: 'none', background: 'none', padding: '4px 8px', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#3d2b1f', borderRadius: 8 }
+const titleBtnStyle = { border: 'none', background: 'none', padding: '4px 8px', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', borderRadius: 8 }
 const cellStyle = (selected, outlined) => ({
   border: outlined && !selected ? '1px solid #FF8C42' : 'none', borderRadius: 8, padding: '8px 0', cursor: 'pointer', fontSize: 14,
-  background: selected ? '#FF8C42' : 'transparent', color: selected ? '#fff' : '#3d2b1f', fontWeight: selected ? 500 : 400,
+  background: selected ? '#FF8C42' : 'transparent', color: selected ? '#fff' : 'var(--cs-text)', fontWeight: selected ? 500 : 400,
 })
 
 // 日曆：日 → 點標題進月份 → 再點標題進年份，選完逐層返回
@@ -36,9 +36,9 @@ const CalendarPopup = ({ datePart, onPick }) => {
     return (
       <>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <button type="button" onClick={() => setYearPageStart(s => s - 12)} style={navBtnStyle}><ChevronLeft size={18} color="#b08060" /></button>
-          <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{yearPageStart} – {yearPageStart + 11}</div>
-          <button type="button" onClick={() => setYearPageStart(s => s + 12)} style={navBtnStyle}><ChevronRight size={18} color="#b08060" /></button>
+          <button type="button" onClick={() => setYearPageStart(s => s - 12)} style={navBtnStyle}><ChevronLeft size={18} color="var(--cs-text-sub)" /></button>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{yearPageStart} – {yearPageStart + 11}</div>
+          <button type="button" onClick={() => setYearPageStart(s => s + 12)} style={navBtnStyle}><ChevronRight size={18} color="var(--cs-text-sub)" /></button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
           {Array.from({ length: 12 }, (_, i) => yearPageStart + i).map(y => (
@@ -53,9 +53,9 @@ const CalendarPopup = ({ datePart, onPick }) => {
     return (
       <>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <button type="button" onClick={() => setView(v => ({ ...v, y: v.y - 1 }))} style={navBtnStyle}><ChevronLeft size={18} color="#b08060" /></button>
+          <button type="button" onClick={() => setView(v => ({ ...v, y: v.y - 1 }))} style={navBtnStyle}><ChevronLeft size={18} color="var(--cs-text-sub)" /></button>
           <button type="button" onClick={() => { setYearPageStart(view.y - 4); setLevel('year') }} style={titleBtnStyle}>{t('date.year', { y: view.y })}</button>
-          <button type="button" onClick={() => setView(v => ({ ...v, y: v.y + 1 }))} style={navBtnStyle}><ChevronRight size={18} color="#b08060" /></button>
+          <button type="button" onClick={() => setView(v => ({ ...v, y: v.y + 1 }))} style={navBtnStyle}><ChevronRight size={18} color="var(--cs-text-sub)" /></button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
           {Array.from({ length: 12 }, (_, m) => (
@@ -72,12 +72,12 @@ const CalendarPopup = ({ datePart, onPick }) => {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <button type="button" onClick={() => moveMonth(-1)} style={navBtnStyle}><ChevronLeft size={18} color="#b08060" /></button>
+        <button type="button" onClick={() => moveMonth(-1)} style={navBtnStyle}><ChevronLeft size={18} color="var(--cs-text-sub)" /></button>
         <button type="button" onClick={() => setLevel('month')} style={titleBtnStyle}>{t('date.monthTitle', { y: view.y, month: t(MONTH_KEYS[view.m]) })}</button>
-        <button type="button" onClick={() => moveMonth(1)} style={navBtnStyle}><ChevronRight size={18} color="#b08060" /></button>
+        <button type="button" onClick={() => moveMonth(1)} style={navBtnStyle}><ChevronRight size={18} color="var(--cs-text-sub)" /></button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, textAlign: 'center' }}>
-        {WEEKDAY_KEYS.map(k => <div key={k} style={{ fontSize: 11, color: '#c4a882', padding: '4px 0' }}>{t(k)}</div>)}
+        {WEEKDAY_KEYS.map(k => <div key={k} style={{ fontSize: 11, color: 'var(--cs-text-mute)', padding: '4px 0' }}>{t(k)}</div>)}
         {cells.map((day, i) => {
           if (!day) return <div key={i} />
           const d = `${view.y}-${pad(view.m + 1)}-${pad(day)}`
@@ -122,14 +122,14 @@ const ClockPopup = ({ hour, minute, onChange, onDone }) => {
   const hy = CLOCK_SIZE / 2 - CLOCK_R * Math.cos(rad)
   const labels = mode === 'hour' ? Array.from({ length: 12 }, (_, i) => i || 12) : Array.from({ length: 12 }, (_, i) => i * 5)
 
-  const bigBtn = (active) => ({ border: 'none', background: active ? '#fff3ec' : 'transparent', borderRadius: 10, padding: '4px 10px', fontSize: 32, fontWeight: 500, cursor: 'pointer', color: active ? '#FF6B1A' : '#3d2b1f' })
-  const periodBtn = (active) => ({ border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 13, cursor: 'pointer', background: active ? '#FF8C42' : '#fff3ec', color: active ? '#fff' : '#b08060' })
+  const bigBtn = (active) => ({ border: 'none', background: active ? 'var(--cs-soft)' : 'transparent', borderRadius: 10, padding: '4px 10px', fontSize: 32, fontWeight: 500, cursor: 'pointer', color: active ? '#FF6B1A' : 'var(--cs-text)' })
+  const periodBtn = (active) => ({ border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 13, cursor: 'pointer', background: active ? '#FF8C42' : 'var(--cs-soft)', color: active ? '#fff' : 'var(--cs-text-sub)' })
 
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 10 }}>
         <button type="button" onClick={() => setMode('hour')} style={bigBtn(mode === 'hour')}>{pad(h12)}</button>
-        <span style={{ fontSize: 32, color: '#b08060' }}>:</span>
+        <span style={{ fontSize: 32, color: 'var(--cs-text-sub)' }}>:</span>
         <button type="button" onClick={() => setMode('minute')} style={bigBtn(mode === 'minute')}>{pad(minute)}</button>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 8 }}>
           <button type="button" onClick={() => setPeriod(false)} style={periodBtn(!pm)}>{t('time.am')}</button>
@@ -147,7 +147,7 @@ const ClockPopup = ({ hour, minute, onChange, onDone }) => {
           else onDone()
         }}
       >
-        <circle cx={CLOCK_SIZE / 2} cy={CLOCK_SIZE / 2} r={CLOCK_SIZE / 2 - 4} fill="#fff3ec" />
+        <circle cx={CLOCK_SIZE / 2} cy={CLOCK_SIZE / 2} r={CLOCK_SIZE / 2 - 4} fill="var(--cs-soft)" />
         <line x1={CLOCK_SIZE / 2} y1={CLOCK_SIZE / 2} x2={hx} y2={hy} stroke="#FF8C42" strokeWidth={2} />
         <circle cx={CLOCK_SIZE / 2} cy={CLOCK_SIZE / 2} r={3} fill="#FF8C42" />
         <circle cx={hx} cy={hy} r={18} fill="#FF8C42" />
@@ -157,12 +157,12 @@ const ClockPopup = ({ hour, minute, onChange, onDone }) => {
           const y = CLOCK_SIZE / 2 - CLOCK_R * Math.cos(a)
           const selected = mode === 'hour' ? label === h12 : label === minute
           return (
-            <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={15} fill={selected ? '#fff' : '#3d2b1f'} pointerEvents="none">
+            <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={15} fill={selected ? 'var(--cs-on-brand)' : 'var(--cs-text)'} pointerEvents="none">
               {mode === 'minute' ? pad(label) : label}
             </text>
           )
         })}
-        {mode === 'minute' && minute % 5 !== 0 && <circle cx={hx} cy={hy} r={3} fill="#fff" />}
+        {mode === 'minute' && minute % 5 !== 0 && <circle cx={hx} cy={hy} r={3} fill="var(--cs-on-brand)" />}
       </svg>
     </>
   )
@@ -177,11 +177,11 @@ const DateTimeField = ({ value, onChange }) => {
 
   return (
     <div>
-      <div style={{ display: 'flex', border: '0.5px solid #f0d5c0', borderRadius: 10, background: '#fff8f4', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', border: '0.5px solid var(--cs-border)', borderRadius: 10, background: 'var(--cs-bg)', overflow: 'hidden' }}>
         <button type="button" onClick={() => setPopup('date')} style={segmentStyle(popup === 'date')}>
           <CalendarDays size={16} color="#FF8C42" />{datePart.replaceAll('-', '/')}
         </button>
-        <div style={{ width: 0.5, background: '#f0d5c0' }} />
+        <div style={{ width: 0.5, background: 'var(--cs-border)' }} />
         <button type="button" onClick={() => setPopup('time')} style={segmentStyle(popup === 'time')}>
           <Clock size={16} color="#FF8C42" />{pad(hh)}:{pad(mm)}
         </button>
@@ -190,9 +190,9 @@ const DateTimeField = ({ value, onChange }) => {
       {popup && (
         <div
           onClick={close}
-          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(61,43,31,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'var(--cs-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
         >
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 14, width: '100%', maxWidth: 320 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--cs-card)', borderRadius: 16, padding: 14, width: '100%', maxWidth: 320 }}>
             {popup === 'date' ? (
               <CalendarPopup datePart={datePart} onPick={d => { onChange(`${d}T${timePart}`); close() }} />
             ) : (

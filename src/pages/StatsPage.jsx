@@ -11,11 +11,12 @@ import { getCurrency } from '../config/currencies'
 import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory, categoryLabel } from '../i18n/codes'
 
-const CATEGORY_COLORS = ['#FF8C42', '#FFB37A', '#E8703A', '#F5C26B', '#C4A882', '#D98C5F', '#8FBF9F', '#7FA6C9']
+// 圖表色盤是資料色，兩種底色上都要分得清楚，所以固定不跟主題
+const CATEGORY_COLORS = ['#FF8C42', '#FFB37A', '#E8703A', '#F5C26B', '#C4A882', '#D98C5F', '#8FBF9F', '#7FA6C9'] // cs-color-ok
 const TREND_MONTHS = 12
 
-const cardStyle = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }
-const titleStyle = { fontSize: 13, fontWeight: 500, color: '#b08060', marginBottom: 12 }
+const cardStyle = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }
+const titleStyle = { fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }
 
 const MONTH_KEYS = ['stats.month.1', 'stats.month.2', 'stats.month.3', 'stats.month.4', 'stats.month.5', 'stats.month.6', 'stats.month.7', 'stats.month.8', 'stats.month.9', 'stats.month.10', 'stats.month.11', 'stats.month.12']
 
@@ -87,7 +88,7 @@ const StatsPage = () => {
 
   if (!group || !stats) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)' }}>
         {t('common.loading')}
       </div>
     )
@@ -102,18 +103,18 @@ const StatsPage = () => {
     <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
       {items.map(item => (
         <div key={item.label}>
-          <div style={{ fontSize: 11, color: '#b08060', marginBottom: 4 }}>{item.label}</div>
+          <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 4 }}>{item.label}</div>
           <div style={{ fontSize: 16, fontWeight: 600, color: item.color || '#FF6B1A' }}>{item.value}</div>
         </div>
       ))}
     </div>
   )
-  const incomeItem = { label: t('stats.totalIncome'), value: fmt(incomeTotal), color: '#1976d2' }
+  const incomeItem = { label: t('stats.totalIncome'), value: fmt(incomeTotal), color: 'var(--cs-info)' }
   // 結餘（收入 − 支出）：標籤與金額同一行置中，負數轉紅
   const balanceCard = (
     <div style={{ ...cardStyle, display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 10 }}>
-      <span style={{ fontSize: 14, color: '#b08060' }}>{t('stats.balance')}</span>
-      <span style={{ fontSize: 24, fontWeight: 700, color: balance < 0 ? '#e53935' : '#1976d2' }}>{fmt(balance)}</span>
+      <span style={{ fontSize: 14, color: 'var(--cs-text-sub)' }}>{t('stats.balance')}</span>
+      <span style={{ fontSize: 24, fontWeight: 700, color: balance < 0 ? 'var(--cs-danger)' : 'var(--cs-info)' }}>{fmt(balance)}</span>
     </div>
   )
   const maxMonth = Math.max(...stats.months.map(m => m.amount), 1)
@@ -129,7 +130,7 @@ const StatsPage = () => {
   }))
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
 
       {/* Header */}
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -148,8 +149,8 @@ const StatsPage = () => {
         {count === 0 ? (
           <>
             <div style={{ textAlign: 'center', padding: '48px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><BarChart3 size={48} color="#e0c4b0" /></div>
-              <div style={{ color: '#b08060', fontSize: 14 }}>{t('stats.empty')}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><BarChart3 size={48} color="var(--cs-line-soft)" /></div>
+              <div style={{ color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('stats.empty')}</div>
             </div>
             {incomes.length > 0 && balanceCard}
           </>
@@ -171,7 +172,7 @@ const StatsPage = () => {
               <div style={titleStyle}>{t('stats.byCategory')}</div>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
                 <svg width="160" height="160" viewBox="0 0 42 42" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="21" cy="21" r="15.915" fill="none" stroke="#fff3ec" strokeWidth="6" />
+                  <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--cs-soft)" strokeWidth="6" />
                   {segments.map(s => (
                     <circle
                       key={s.name}
@@ -187,9 +188,9 @@ const StatsPage = () => {
                 {segments.map(s => (
                   <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
                     <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, flexShrink: 0 }} />
-                    <span style={{ flex: 1, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{categoryLabel(s.name, t)}</span>
-                    <span style={{ color: '#b08060', flexShrink: 0 }}>{s.pct.toFixed(1)}%</span>
-                    <span style={{ color: '#3d2b1f', fontWeight: 500, minWidth: 80, textAlign: 'right', flexShrink: 0 }}>{fmt(s.amount)}</span>
+                    <span style={{ flex: 1, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{categoryLabel(s.name, t)}</span>
+                    <span style={{ color: 'var(--cs-text-sub)', flexShrink: 0 }}>{s.pct.toFixed(1)}%</span>
+                    <span style={{ color: 'var(--cs-text)', fontWeight: 500, minWidth: 80, textAlign: 'right', flexShrink: 0 }}>{fmt(s.amount)}</span>
                   </div>
                 ))}
               </div>
@@ -201,16 +202,16 @@ const StatsPage = () => {
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
                 {stats.months.map(m => (
                   <div key={m.key} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', minWidth: 0 }}>
-                    <div style={{ fontSize: 10, color: '#b08060', marginBottom: 4, whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 10, color: 'var(--cs-text-sub)', marginBottom: 4, whiteSpace: 'nowrap' }}>
                       {m.amount > 0 ? i18nFmt.num(Math.round(m.amount)) : ''}
                     </div>
                     <div style={{ width: '100%', maxWidth: 32, height: `${(m.amount / maxMonth) * 100}%`, minHeight: m.amount > 0 ? 3 : 0, background: '#FF8C42', borderRadius: '6px 6px 0 0' }} />
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', gap: 8, borderTop: '0.5px solid #f0d5c0', paddingTop: 6, marginTop: 0 }}>
+              <div style={{ display: 'flex', gap: 8, borderTop: '0.5px solid var(--cs-border)', paddingTop: 6, marginTop: 0 }}>
                 {stats.months.map(m => (
-                  <div key={m.key} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#b08060' }}>{t(m.label)}</div>
+                  <div key={m.key} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: 'var(--cs-text-sub)' }}>{t(m.label)}</div>
                 ))}
               </div>
             </div>
@@ -226,10 +227,10 @@ const StatsPage = () => {
                       <Avatar src={profile?.avatar} name={profile?.name} size={28} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                          <span style={{ color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.name || t('payer.unknown')}</span>
-                          <span style={{ color: '#3d2b1f', fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>{fmt(p.amount)}</span>
+                          <span style={{ color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.name || t('payer.unknown')}</span>
+                          <span style={{ color: 'var(--cs-text)', fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>{fmt(p.amount)}</span>
                         </div>
-                        <div style={{ height: 6, background: '#fff3ec', borderRadius: 3 }}>
+                        <div style={{ height: 6, background: 'var(--cs-soft)', borderRadius: 3 }}>
                           <div style={{ width: `${(p.amount / maxPayer) * 100}%`, height: '100%', background: '#FF8C42', borderRadius: 3 }} />
                         </div>
                       </div>

@@ -10,10 +10,10 @@ import PawDecor from '../components/PawDecor'
 import useSavingsEntries from '../hooks/useSavingsEntries'
 import { sumSaved, progressRatio } from '../utils/savings'
 
-const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14, cursor: 'pointer', textAlign: 'left', width: '100%' }
+const card = { background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14, cursor: 'pointer', textAlign: 'left', width: '100%' }
 
 export const ProgressBar = ({ ratio }) => (
-  <div style={{ height: 8, borderRadius: 4, background: '#f5e6d8', overflow: 'hidden' }}>
+  <div style={{ height: 8, borderRadius: 4, background: 'var(--cs-track)', overflow: 'hidden' }}>
     <div style={{ width: `${Math.round(ratio * 100)}%`, height: '100%', background: ratio >= 1 ? '#4caf50' : '#FF8C42', borderRadius: 4 }} />
   </div>
 )
@@ -27,11 +27,11 @@ const GoalCard = ({ goal, uid }) => {
   return (
     <button onClick={() => navigate(`/savings/${goal.id}`)} style={card}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-        <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.title}</div>
+        <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.title}</div>
         {saved >= goal.targetAmount && <div style={{ fontSize: 12, color: '#4caf50', fontWeight: 500, flexShrink: 0 }}>{t('savings.achieved')}</div>}
       </div>
       <ProgressBar ratio={progressRatio(saved, goal.targetAmount)} />
-      <div style={{ fontSize: 13, color: '#b08060', marginTop: 8 }}>{symbol} {fmt.num(saved)} / {fmt.num(goal.targetAmount)}</div>
+      <div style={{ fontSize: 13, color: 'var(--cs-text-sub)', marginTop: 8 }}>{symbol} {fmt.num(saved)} / {fmt.num(goal.targetAmount)}</div>
     </button>
   )
 }
@@ -54,7 +54,7 @@ const SavingsListPage = () => {
   }, [user.uid])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -67,8 +67,8 @@ const SavingsListPage = () => {
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button onClick={() => navigate('/savings/new')} style={{ background: '#FF8C42', color: '#fff', border: 'none', borderRadius: 20, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('savings.add')}</button>
         </div>
-        {goals === null && <div style={{ textAlign: 'center', padding: '32px 0', color: '#b08060' }}>{t('common.loading')}</div>}
-        {goals?.length === 0 && <div style={{ textAlign: 'center', padding: '32px 0', color: '#b08060', fontSize: 14 }}>{t('savings.empty')}</div>}
+        {goals === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
+        {goals?.length === 0 && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('savings.empty')}</div>}
         {goals?.map(g => <GoalCard key={g.id} goal={g} uid={user.uid} />)}
       </div>
     </div>

@@ -6,6 +6,7 @@ src/
 ├── App.jsx                  # 路由（多數頁面 lazy）、登入畫面、訪客自動切換群組
 ├── config/                  # firebase、liff、幣別、記帳表單常數、群組圖示、收款方式清單與銀行代碼表
 ├── context/AppContext.jsx   # 全域 user 狀態、LINE / 訪客登入、認領、訪客名字記錄
+├── theme/                   # 暗黑模式：ThemeProvider、useTheme、主題判斷（theme.js）
 ├── hooks/                   # 匯率、Storage 圖片（以登入身分下載）、我的群組（useMyGroups）
 ├── utils/                   # 分帳計算、群組彙總重算、預算狀態（budget.js）、刪除我的資料、Storage 清理、封面裁切
 ├── components/              # Avatar、TabBar、ExpenseForm、GuestJoin（訪客入口）、BankPicker、PaymentMethodModal…

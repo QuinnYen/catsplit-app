@@ -13,16 +13,16 @@ const TYPES = [
   ['all', 'group.filterAll'], ['expense', 'kind.expense'], ['income', 'kind.income'], ['settlement', 'search.type.settlement'],
 ]
 
-const sectionTitle = { fontSize: 13, fontWeight: 600, color: '#3d2b1f', margin: '16px 0 8px' }
-const dateInput = { flex: 1, minWidth: 0, border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '8px 10px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }
+const sectionTitle = { fontSize: 13, fontWeight: 600, color: 'var(--cs-text)', margin: '16px 0 8px' }
+const dateInput = { flex: 1, minWidth: 0, border: '0.5px solid var(--cs-border)', borderRadius: 10, padding: '8px 10px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }
 
 const Chip = ({ active, onClick, children }) => (
   <button
     onClick={onClick}
     style={{
       flexShrink: 0, padding: '6px 13px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-      border: active ? '1px solid #FF8C42' : '1px solid #f0d5c0',
-      background: active ? '#fff3ec' : '#fff', color: active ? '#FF6B1A' : '#8a6a52', fontWeight: active ? 600 : 400,
+      border: active ? '1px solid #FF8C42' : '1px solid var(--cs-border)',
+      background: active ? 'var(--cs-soft)' : 'var(--cs-card)', color: active ? '#FF6B1A' : 'var(--cs-text-2)', fontWeight: active ? 600 : 400,
     }}
   >
     {children}
@@ -30,15 +30,15 @@ const Chip = ({ active, onClick, children }) => (
 )
 
 const Segmented = ({ options, value, onChange }) => (
-  <div style={{ display: 'flex', border: '1px solid #f0d5c0', borderRadius: 10, overflow: 'hidden' }}>
+  <div style={{ display: 'flex', border: '1px solid var(--cs-border)', borderRadius: 10, overflow: 'hidden' }}>
     {options.map(([key, label], i) => (
       <button
         key={String(key)}
         onClick={() => onChange(key)}
         style={{
           flex: 1, padding: '10px 0', fontSize: 13, border: 'none', cursor: 'pointer',
-          borderLeft: i === 0 ? 'none' : '1px solid #f0d5c0',
-          background: value === key ? '#fff3ec' : '#fff', color: value === key ? '#FF6B1A' : '#8a6a52', fontWeight: value === key ? 600 : 400,
+          borderLeft: i === 0 ? 'none' : '1px solid var(--cs-border)',
+          background: value === key ? 'var(--cs-soft)' : 'var(--cs-card)', color: value === key ? '#FF6B1A' : 'var(--cs-text-2)', fontWeight: value === key ? 600 : 400,
         }}
       >
         {label}
@@ -64,11 +64,11 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.35)', touchAction: 'none' }} />
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 61, maxHeight: '88vh', display: 'flex', flexDirection: 'column',
-        background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 720, margin: '0 auto',
+        background: 'var(--cs-card)', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 720, margin: '0 auto',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px 4px' }}>
-          <div style={{ fontSize: 17, fontWeight: 600, color: '#3d2b1f' }}>{t('group.search')}</div>
-          <button onClick={onClose} aria-label={t('common.cancel')} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: '#b08060', display: 'flex' }}>
+          <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-text)' }}>{t('group.search')}</div>
+          <button onClick={onClose} aria-label={t('common.cancel')} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--cs-text-sub)', display: 'flex' }}>
             <X size={22} />
           </button>
         </div>
@@ -81,7 +81,7 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
           {f.range === 'custom' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
               <input type="date" value={f.from} onChange={e => patch({ from: e.target.value })} aria-label={t('search.from')} style={dateInput} />
-              <span style={{ color: '#b08060' }}>–</span>
+              <span style={{ color: 'var(--cs-text-sub)' }}>–</span>
               <input type="date" value={f.to} onChange={e => patch({ to: e.target.value })} aria-label={t('search.to')} style={dateInput} />
             </div>
           )}
@@ -115,7 +115,7 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
             onChange={e => patch({ text: e.target.value })}
             onKeyDown={e => e.key === 'Enter' && onApply(f)}
             placeholder={t('group.searchPlaceholder')}
-            style={{ width: '100%', border: '1px solid #f0d5c0', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4' }}
+            style={{ width: '100%', border: '1px solid var(--cs-border)', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
           />
 
           <div style={sectionTitle}>{t('search.scope')}</div>
@@ -126,10 +126,10 @@ const SearchSheet = ({ initial, categories, currencies, onApply, onClose }) => {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 10, padding: '12px 18px calc(14px + env(safe-area-inset-bottom, 0px))', borderTop: '0.5px solid #f5ece4' }}>
+        <div style={{ display: 'flex', gap: 10, padding: '12px 18px calc(14px + env(safe-area-inset-bottom, 0px))', borderTop: '0.5px solid var(--cs-track)' }}>
           <button
             onClick={() => setF(EMPTY_FILTERS)}
-            style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: '1px solid #f0d5c0', background: '#fff', color: '#FF8C42', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: '1px solid var(--cs-border)', background: 'var(--cs-card)', color: '#FF8C42', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
           >
             {t('search.reset')}
           </button>

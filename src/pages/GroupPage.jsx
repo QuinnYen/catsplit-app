@@ -228,11 +228,11 @@ const GroupPage = () => {
 
   if (groupMissing) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060', gap: 16, padding: 24, textAlign: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)', gap: 16, padding: 24, textAlign: 'center' }}>
         <div>{t('group.notFound')}</div>
         <button
           onClick={() => navigate('/')}
-          style={{ padding: '10px 24px', borderRadius: 12, border: '0.5px solid #f0d5c0', background: '#fff', color: '#3d2b1f', fontSize: 14, cursor: 'pointer' }}
+          style={{ padding: '10px 24px', borderRadius: 12, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer' }}
         >
           {t('group.backHome')}
         </button>
@@ -242,7 +242,7 @@ const GroupPage = () => {
 
   if (!group) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)' }}>
         {t('common.loading')}
       </div>
     )
@@ -254,7 +254,7 @@ const GroupPage = () => {
     const placeholders = (group.members || []).filter(m => group.memberProfiles?.[m]?.placeholder)
     const choosingIdentity = !user.guest && placeholders.length > 0 && !joinAsNew
     return (
-      <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column' }}>
         <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 32px', position: 'relative', overflow: 'hidden' }}>
           <PawDecor />
           <div style={{ textAlign: 'center', paddingTop: 8 }}>
@@ -266,32 +266,32 @@ const GroupPage = () => {
           </div>
         </div>
         <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-          <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('group.currentMembers')}</div>
+          <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('group.currentMembers')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {profiles.slice(0, 3).map((member, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar src={member.avatar} name={member.name} size={36} />
-                  <div style={{ fontSize: 14, color: '#3d2b1f', fontWeight: 500 }}>{member.name}</div>
+                  <div style={{ fontSize: 14, color: 'var(--cs-text)', fontWeight: 500 }}>{member.name}</div>
                 </div>
               ))}
               {(group.members?.length || 0) > 3 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#f0d5c0', color: '#b08060', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--cs-border)', color: 'var(--cs-text-sub)', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     +{group.members.length - 3}
                   </div>
-                  <div style={{ fontSize: 14, color: '#b08060' }}>{t('group.memberUnit')}</div>
+                  <div style={{ fontSize: 14, color: 'var(--cs-text-sub)' }}>{t('group.memberUnit')}</div>
                 </div>
               )}
             </div>
           </div>
-          {!user.guest && !choosingIdentity && <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 10 }}>{t('group.joinAs')}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff3ec', borderRadius: 12, padding: '10px 12px' }}>
+          {!user.guest && !choosingIdentity && <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('group.joinAs')}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--cs-soft)', borderRadius: 12, padding: '10px 12px' }}>
               <Avatar src={user?.avatar} name={user?.name} size={40} />
               <div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{user?.name}</div>
-                <div style={{ fontSize: 12, color: '#b08060', marginTop: 2 }}>{t('group.lineAccount')}</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{user?.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>{t('group.lineAccount')}</div>
               </div>
               <Check size={18} color="#FF8C42" strokeWidth={3} style={{ marginLeft: 'auto', flexShrink: 0 }} />
             </div>
@@ -301,19 +301,19 @@ const GroupPage = () => {
             <GuestJoin groupId={id} guests={placeholders.map(pid => ({ id: pid, name: group.memberProfiles[pid].name }))} />
           )}
           {choosingIdentity && (
-            <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 4 }}>{t('group.claimTitle')}</div>
-              <div style={{ fontSize: 11, color: '#c4a882', marginBottom: 10 }}>{t('group.claimHint')}</div>
+            <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 4 }}>{t('group.claimTitle')}</div>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginBottom: 10 }}>{t('group.claimHint')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {placeholders.map(pid => (
                   <button
                     key={pid}
                     onClick={() => handleClaim(pid)}
                     disabled={joining}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff3ec', border: 'none', borderRadius: 12, padding: '10px 12px', cursor: joining ? 'not-allowed' : 'pointer', textAlign: 'left' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--cs-soft)', border: 'none', borderRadius: 12, padding: '10px 12px', cursor: joining ? 'not-allowed' : 'pointer', textAlign: 'left' }}
                   >
                     <Avatar src={null} name={group.memberProfiles[pid].name} size={36} />
-                    <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{group.memberProfiles[pid].name}</span>
+                    <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{group.memberProfiles[pid].name}</span>
                     <span style={{ fontSize: 12, color: '#FF8C42' }}>{t('group.claimButton')}</span>
                   </button>
                 ))}
@@ -322,12 +322,12 @@ const GroupPage = () => {
           )}
           <div style={{ flex: 1 }} />
           {joinError && (
-            <div style={{ fontSize: 13, color: '#c0392b', textAlign: 'center' }}>{joinError}</div>
+            <div style={{ fontSize: 13, color: 'var(--cs-danger)', textAlign: 'center' }}>{joinError}</div>
           )}
           {choosingIdentity && (
             <button
               onClick={() => setJoinAsNew(true)}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', color: '#b08060', fontSize: 14, cursor: 'pointer' }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}
             >
               {t('group.notInList')}
             </button>
@@ -335,7 +335,7 @@ const GroupPage = () => {
           {joinAsNew && placeholders.length > 0 && !user.guest && (
             <button
               onClick={() => setJoinAsNew(false)}
-              style={{ background: 'none', border: 'none', color: '#b08060', fontSize: 13, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+              style={{ background: 'none', border: 'none', color: 'var(--cs-text-sub)', fontSize: 13, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
             >
               {t('group.backToClaim')}
             </button>
@@ -346,14 +346,14 @@ const GroupPage = () => {
             style={{
               width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
               cursor: joining ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
-              background: joining ? '#e0c4b0' : '#FF8C42', color: '#fff',
+              background: joining ? 'var(--cs-line-soft)' : '#FF8C42', color: '#fff',
             }}
           >
             {joining ? t('common.processing') : placeholders.length > 0 ? t('group.joinAsNew', { group: group.name }) : t('group.join', { group: group.name })}
           </button>}
           <button
             onClick={() => navigate('/')}
-            style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid #f0d5c0', background: '#fff', color: '#b08060', fontSize: 14, cursor: 'pointer' }}
+            style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}
           >
             {t('common.cancel')}
           </button>
@@ -367,7 +367,7 @@ const GroupPage = () => {
   const detailSettlement = settlements.find(s => s.id === detailSettlementId)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column' }}>
 
       {/* 設定選單（fixed 避免被 header 的 overflow 裁掉） */}
       {settingsPos && (
@@ -375,7 +375,7 @@ const GroupPage = () => {
           <div onClick={() => setSettingsPos(null)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
           <div style={{
             position: 'fixed', top: settingsPos.top, right: settingsPos.right, zIndex: 41, minWidth: 140, padding: 4,
-            background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
+            background: 'var(--cs-card)', borderRadius: 12, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(255,140,66,0.18)',
           }}>
             {[
               { label: t('group.menu.edit'), Icon: Pencil, onClick: () => navigate(`/group/${id}/edit`) },
@@ -390,7 +390,7 @@ const GroupPage = () => {
                 key={label} onClick={onClick} disabled={disabled}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none',
-                  background: 'transparent', fontSize: 14, color: '#3d2b1f', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, textAlign: 'left',
+                  background: 'transparent', fontSize: 14, color: 'var(--cs-text)', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, textAlign: 'left',
                 }}
               >
                 <Icon size={16} color="#FF8C42" />{label}
@@ -454,7 +454,7 @@ const GroupPage = () => {
           <button
             onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
             aria-label={t('group.menu.official')}
-            style={{ background: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+            style={{ background: 'var(--cs-on-brand)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
           >
             <LineIcon size={22} />
           </button>
@@ -480,11 +480,11 @@ const GroupPage = () => {
               name={member.name}
               title={member.name}
               size={28}
-              style={{ background: '#ffe0c8', border: '2px solid rgba(255,255,255,0.6)', marginLeft: i === 0 ? 0 : -6 }}
+              style={{ background: 'var(--cs-soft-2)', border: '2px solid rgba(255,255,255,0.6)', marginLeft: i === 0 ? 0 : -6 }}
             />
           ))}
           {(group.members?.length || 0) > 6 && (
-            <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.6)', marginLeft: -6, background: '#ffe0c8', color: '#b08060', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.6)', marginLeft: -6, background: 'var(--cs-soft-2)', color: 'var(--cs-text-sub)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
               +{group.members.length - 6}
             </div>
           )}
@@ -517,7 +517,7 @@ const GroupPage = () => {
             {budget && (
               <div style={{ marginTop: 8 }}>
                 <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.3)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', borderRadius: 3, width: `${Math.max(0, Math.min(budget.ratio, 1)) * 100}%`, background: { ok: '#fff', warn: '#FFD54F', over: '#FF5252' }[budget.level] }} />
+                  <div style={{ height: '100%', borderRadius: 3, width: `${Math.max(0, Math.min(budget.ratio, 1)) * 100}%`, background: { ok: 'var(--cs-on-brand)', warn: 'var(--cs-on-brand-warn)', over: 'var(--cs-on-brand-over)' }[budget.level] }} />
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 4, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                   {/* 幣別符號與金額之間用不換行空白，避免金額被拆到下一行 */}
@@ -540,9 +540,9 @@ const GroupPage = () => {
       {/* 操作按鈕 */}
       <div className="cs-body" style={{ padding: '16px 16px 0' }}>
         {showOaBanner && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '0.5px solid #f0d5c0', borderRadius: 12, padding: '8px 8px 8px 12px', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 12, padding: '8px 8px 8px 12px', marginBottom: 12 }}>
             <LineIcon size={18} />
-            <span style={{ flex: 1, fontSize: 12, color: '#3d2b1f' }}>{t('group.oaBanner')}</span>
+            <span style={{ flex: 1, fontSize: 12, color: 'var(--cs-text)' }}>{t('group.oaBanner')}</span>
             <button
               onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
               style={{ border: 'none', background: '#FF8C42', color: '#fff', borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
@@ -550,12 +550,12 @@ const GroupPage = () => {
               {t('group.oaBannerAdd')}
             </button>
             <button onClick={hideOaBanner} aria-label={t('group.oaBannerClose')} style={{ border: 'none', background: 'none', padding: 4, cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-              <X size={14} color="#b08060" />
+              <X size={14} color="var(--cs-text-sub)" />
             </button>
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#b08060' }}>{t('group.listTitle')}</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t('group.listTitle')}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               onClick={() => navigate(`/group/${id}/settle`)}
@@ -566,7 +566,7 @@ const GroupPage = () => {
             <button
               onClick={() => setSearchOpen(true)}
               aria-label={t('group.search')}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#b08060', display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--cs-text-sub)', display: 'flex', alignItems: 'center' }}
             >
               <Search size={16} />
               {isFiltering(filters) && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF6B1A', marginLeft: 2, alignSelf: 'flex-start' }} />}
@@ -578,14 +578,14 @@ const GroupPage = () => {
       {/* 支出列表 */}
       <div className="cs-body" style={{ padding: '0 16px 80px', flex: 1 }}>
         {loading && (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#b08060' }}>{t('common.loading')}</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
         )}
 
         {!loading && expenses.length === 0 && settlements.length === 0 && incomes.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 0' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Receipt size={48} color="#e0c4b0" /></div>
-            <div style={{ color: '#b08060', fontSize: 14, marginBottom: 4 }}>{t('group.emptyTitle')}</div>
-            <div style={{ color: '#c4a882', fontSize: 13 }}>{t('group.emptyHint')}</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Receipt size={48} color="var(--cs-line-soft)" /></div>
+            <div style={{ color: 'var(--cs-text-sub)', fontSize: 14, marginBottom: 4 }}>{t('group.emptyTitle')}</div>
+            <div style={{ color: 'var(--cs-text-mute)', fontSize: 13 }}>{t('group.emptyHint')}</div>
           </div>
         )}
 
@@ -617,7 +617,7 @@ const GroupPage = () => {
             categoryLabelOf: (raw) => categoryLabel(raw, t),
           })
           const filterBanner = filtering && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0 0', fontSize: 12, color: '#b08060' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0 0', fontSize: 12, color: 'var(--cs-text-sub)' }}>
               <span>{t('search.resultCount', { n: shownItems.length })}</span>
               <button
                 onClick={() => setFilters(EMPTY_FILTERS)}
@@ -631,8 +631,8 @@ const GroupPage = () => {
             <>
               {filterBanner}
               <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Search size={40} color="#e0c4b0" /></div>
-                <div style={{ color: '#b08060', fontSize: 14 }}>{t('group.noMatch')}</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Search size={40} color="var(--cs-line-soft)" /></div>
+                <div style={{ color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('group.noMatch')}</div>
               </div>
             </>
           )
@@ -657,7 +657,7 @@ const GroupPage = () => {
               {filterBanner}
               {groups.map(({ date, items }) => (
                 <div key={date}>
-                  <div style={{ fontSize: 11, color: '#c4a882', fontWeight: 500, padding: '12px 0 6px', letterSpacing: '0.03em' }}>
+                  <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', fontWeight: 500, padding: '12px 0 6px', letterSpacing: '0.03em' }}>
                     {date}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -669,14 +669,14 @@ const GroupPage = () => {
                           <div
                             key={item.id}
                             onClick={() => setDetailSettlementId(item.id)}
-                            style={{ background: '#f0faf0', borderRadius: 14, border: '0.5px solid #c8e6c9', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: 'var(--cs-success-bg)', borderRadius: 14, border: '0.5px solid var(--cs-success-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                           >
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', fontSize: 13, fontWeight: 500, color: '#2e7d32', marginBottom: 2 }}>
+                              <div style={{ display: 'flex', fontSize: 13, fontWeight: 500, color: 'var(--cs-success)', marginBottom: 2 }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</span>
                                 <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;{t('group.transferTo')}</span>
                               </div>
-                              <div style={{ display: 'flex', fontSize: 13, fontWeight: 500, color: '#2e7d32' }}>
+                              <div style={{ display: 'flex', fontSize: 13, fontWeight: 500, color: 'var(--cs-success)' }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
                                 {item.paymentMethod && (
                                   <span style={{ flexShrink: 0, whiteSpace: 'nowrap', marginLeft: 6, fontSize: 11, fontWeight: 400, color: '#66bb6a' }}>
@@ -686,7 +686,7 @@ const GroupPage = () => {
                               </div>
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                              <div style={{ fontSize: 15, fontWeight: 500, color: '#2e7d32' }}>
+                              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-success)' }}>
                                 {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.amount)}
                               </div>
                             </div>
@@ -700,20 +700,20 @@ const GroupPage = () => {
                           <div
                             key={item.id}
                             onClick={() => navigate(`/group/${id}/income/${item.id}`)}
-                            style={{ background: '#f0f6ff', borderRadius: 14, border: '0.5px solid #c5dcf7', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: 'var(--cs-info-bg)', borderRadius: 14, border: '0.5px solid var(--cs-info-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
                           >
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3 }}>
-                                <span style={{ fontSize: 12, fontWeight: 500, color: '#1976d2', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-info)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                                   {categoryLabel(item.category, t)}
                                 </span>
-                                <span style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {item.title}
                                 </span>
                               </div>
-                              <div style={{ fontSize: 12, color: '#b08060', display: 'flex' }}>
+                              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', display: 'flex' }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {payerLabel(item.received, group.memberProfiles, t)}
                                 </span>
@@ -721,16 +721,16 @@ const GroupPage = () => {
                               </div>
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                              <div style={{ fontSize: 15, fontWeight: 500, color: '#1976d2' }}>
+                              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-info)' }}>
                                 {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
                               </div>
                               {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
-                                <div style={{ fontSize: 11, color: '#c4a882', marginTop: 1 }}>
+                                <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>
                                   ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(item.amount)}
                                 </div>
                               )}
                             </div>
-                            <ChevronRight size={16} color="#64a8e8" style={{ flexShrink: 0 }} />
+                            <ChevronRight size={16} color="var(--cs-info-chevron)" style={{ flexShrink: 0 }} />
                           </div>
                         )
                       }
@@ -740,7 +740,7 @@ const GroupPage = () => {
                         <div key={item.id} style={{ position: 'relative' }}>
                           <div
                             onClick={() => navigate(`/group/${id}/expense/${item.id}`)}
-                            style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #f0d5c0', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: 'var(--cs-card)', borderRadius: 14, border: '0.5px solid var(--cs-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
                           >
@@ -749,11 +749,11 @@ const GroupPage = () => {
                                 <span style={{ fontSize: 12, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, whiteSpace: 'nowrap' }}>
                                   {categoryLabel(item.category, t)}
                                 </span>
-                                <span style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {item.title}
                                 </span>
                               </div>
-                              <div style={{ fontSize: 12, color: '#b08060', display: 'flex' }}>
+                              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', display: 'flex' }}>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {payerLabel(item.payments, group.memberProfiles, t)}
                                 </span>
@@ -765,7 +765,7 @@ const GroupPage = () => {
                                 {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
                               </div>
                               {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
-                                <div style={{ fontSize: 11, color: '#c4a882', marginTop: 1 }}>
+                                <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>
                                   ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(item.amount)}
                                 </div>
                               )}
@@ -777,7 +777,7 @@ const GroupPage = () => {
                                 setMenuUp(window.innerHeight - e.currentTarget.getBoundingClientRect().bottom < 190)
                                 setOpenMenuId(isMenuOpen ? null : item.id)
                               }}
-                              style={{ background: 'none', border: 'none', padding: '4px 6px', cursor: 'pointer', color: '#c4a882', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                              style={{ background: 'none', border: 'none', padding: '4px 6px', cursor: 'pointer', color: 'var(--cs-text-mute)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
                             >
                               <MoreVertical size={18} />
                             </button>
@@ -791,17 +791,17 @@ const GroupPage = () => {
                                 onClick={() => setOpenMenuId(null)}
                                 style={{ position: 'fixed', inset: 0, zIndex: 10 }}
                               />
-                              <div style={{ position: 'absolute', ...(menuUp ? { bottom: 'calc(100% + 4px)' } : { top: 'calc(100% + 4px)' }), right: 0, zIndex: 11, background: '#fff', borderRadius: 12, border: '0.5px solid #f0d5c0', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 120 }}>
+                              <div style={{ position: 'absolute', ...(menuUp ? { bottom: 'calc(100% + 4px)' } : { top: 'calc(100% + 4px)' }), right: 0, zIndex: 11, background: 'var(--cs-card)', borderRadius: 12, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 120 }}>
                                 <button
                                   onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/group/${id}/expense/${item.id}/edit`) }}
-                                  style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: '#3d2b1f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                                  style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                                 >
                                   <Pencil size={14} /> {t('common.edit')}
                                 </button>
-                                <div style={{ height: '0.5px', background: '#f0d5c0' }} />
+                                <div style={{ height: '0.5px', background: 'var(--cs-border)' }} />
                                 <button
                                   onClick={e => { e.stopPropagation(); handleDeleteExpense(item.id) }}
-                                  style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: '#e53935', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                                  style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: 'var(--cs-danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                                 >
                                   <Trash2 size={14} /> {t('common.delete')}
                                 </button>
@@ -845,19 +845,19 @@ const GroupPage = () => {
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: '20px 20px 0 0', padding: 20, paddingBottom: 28 }}
+            style={{ width: '100%', maxWidth: 480, background: 'var(--cs-card)', borderRadius: '20px 20px 0 0', padding: 20, paddingBottom: 28 }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3d2b1f' }}>{t('group.settlementDetail')}</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('group.settlementDetail')}</div>
               <button
                 onClick={() => setDetailSettlementId(null)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}
               >
-                <X size={20} color="#b08060" />
+                <X size={20} color="var(--cs-text-sub)" />
               </button>
             </div>
 
-            <div style={{ textAlign: 'center', fontSize: 26, fontWeight: 500, color: '#2e7d32', marginBottom: 16 }}>
+            <div style={{ textAlign: 'center', fontSize: 26, fontWeight: 500, color: 'var(--cs-success)', marginBottom: 16 }}>
               {getCurrency(detailSettlement.currency || group.baseCurrency).symbol} {fmt.num(detailSettlement.amount)}
             </div>
 
@@ -871,15 +871,15 @@ const GroupPage = () => {
                 [t('group.detail.by'), group.memberProfiles?.[detailSettlement.settledBy]?.name],
               ].filter(([, v]) => v).map(([label, value]) => (
                 <div key={label} style={{ display: 'flex', gap: 12, fontSize: 13 }}>
-                  <div style={{ width: 64, flexShrink: 0, color: '#b08060' }}>{label}</div>
-                  <div style={{ flex: 1, minWidth: 0, color: '#3d2b1f', wordBreak: 'break-word' }}>{value}</div>
+                  <div style={{ width: 64, flexShrink: 0, color: 'var(--cs-text-sub)' }}>{label}</div>
+                  <div style={{ flex: 1, minWidth: 0, color: 'var(--cs-text)', wordBreak: 'break-word' }}>{value}</div>
                 </div>
               ))}
             </div>
 
             <button
               onClick={() => handleDeleteSettlement(detailSettlement.id, group)}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 12, border: '1px solid #ffcdd2', background: '#fff', color: '#e57373', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 12, border: '1px solid var(--cs-danger-border)', background: 'var(--cs-card)', color: 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
               <Trash2 size={14} /> {t('group.deleteSettlement')}
             </button>

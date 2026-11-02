@@ -54,8 +54,8 @@ const TabBar = ({ context = 'home', groupId }) => {
 
   return (
     <div className="cs-tabbar" style={{
-      background: '#fff',
-      borderTop: '0.5px solid #f0d5c0',
+      background: 'var(--cs-card)',
+      borderTop: '0.5px solid var(--cs-border)',
       display: 'flex',
       padding: '8px 0 calc(8px + env(safe-area-inset-bottom, 0px))',
       position: 'fixed',
@@ -67,7 +67,7 @@ const TabBar = ({ context = 'home', groupId }) => {
       {tabs.map((tab, i) => {
         const isActive = location.pathname === tab.path
         const { Icon, action, label } = TAB_ICONS[tab.id]
-        const color = isActive || action ? '#FF6B1A' : '#b08060'
+        const color = isActive || action ? '#FF6B1A' : 'var(--cs-text-sub)'
         return (
           <button
             key={i}

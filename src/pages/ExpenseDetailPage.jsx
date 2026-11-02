@@ -50,7 +50,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
 
   if (!group || !expense) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)' }}>
         {t('common.loading')}
       </div>
     )
@@ -72,7 +72,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
     : 0
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
 
       {/* Header */}
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -95,27 +95,27 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* 主卡片 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
             <span style={{ fontSize: 13, fontWeight: 500, color: '#FF6B1A', flexShrink: 0, whiteSpace: 'nowrap' }}>
               {categoryLabel(expense.category, t)}
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 17, fontWeight: 600, color: '#3d2b1f', marginBottom: 4, wordBreak: 'break-word' }}>{expense.title}</div>
-              <div style={{ fontSize: 12, color: '#b08060' }}>{dateStr}{timeStr && ` ${timeStr}`}</div>
+              <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-text)', marginBottom: 4, wordBreak: 'break-word' }}>{expense.title}</div>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{dateStr}{timeStr && ` ${timeStr}`}</div>
             </div>
           </div>
 
           {/* 金額 */}
-          <div style={{ background: '#fff3ec', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+          <div style={{ background: 'var(--cs-soft)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <div style={{ fontSize: 11, color: '#b08060' }}>{isIncome ? t('detail.amountIncome') : t('detail.amountExpense')}</div>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.amountIncome') : t('detail.amountExpense')}</div>
               <div style={{ fontSize: 24, fontWeight: 600, color: '#FF6B1A' }}>
                 {expCurr.symbol} {fmt.num(expense.originalAmount ?? expense.amount)}
               </div>
             </div>
             {hasFx && (
-              <div style={{ textAlign: 'right', fontSize: 11, color: '#c4a882', marginTop: 2 }}>
+              <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 2 }}>
                 ≈ {baseCurr.symbol} {fmt.num(expense.amount)}{t('detail.rate', { rate: expense.exchangeRate?.toFixed(4) })}
               </div>
             )}
@@ -124,11 +124,11 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           {/* 付款人 */}
           {payerEntries.length > 1 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 12, color: '#b08060' }}>{isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
               {payerEntries.map(([uid, amt]) => (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar src={group.memberProfiles?.[uid]?.avatar} name={group.memberProfiles?.[uid]?.name} size={28} />
-                  <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>{group.memberProfiles?.[uid]?.name}</span>
+                  <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{group.memberProfiles?.[uid]?.name}</span>
                   <span style={{ fontSize: 14, color: '#FF6B1A', fontWeight: 500 }}>
                     {expCurr.symbol} {fmt.num(parseFloat((hasFx && expense.exchangeRate ? amt / expense.exchangeRate : amt).toFixed(2)))}
                   </span>
@@ -143,10 +143,10 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 size={32}
               />
               <div>
-                <div style={{ fontSize: 12, color: '#b08060' }}>{isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f' }}>
+                <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>
                   {payerLabel(expense[payField], group.memberProfiles, t)}
-                  {!(expense.splits?.[payerEntries[0]?.[0]] > 0) && <span style={{ fontSize: 11, color: '#b08060', fontWeight: 400 }}> {isIncome ? t('detail.notInIncome') : t('detail.notInSplit')}</span>}
+                  {!(expense.splits?.[payerEntries[0]?.[0]] > 0) && <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', fontWeight: 400 }}> {isIncome ? t('detail.notInIncome') : t('detail.notInSplit')}</span>}
                 </div>
               </div>
             </div>
@@ -154,9 +154,9 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         </div>
 
         {/* 分攤明細 */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 14 }}>
+        <div style={{ background: 'var(--cs-card)', borderRadius: 16, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#b08060' }}>{isIncome ? t('detail.splitIncome') : t('detail.splitExpense')}</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.splitIncome') : t('detail.splitExpense')}</div>
             <div style={{ fontSize: 12, color: '#FF8C42', fontWeight: 500 }}>
               {SPLIT_LABEL[expense.splitType] ? t(SPLIT_LABEL[expense.splitType]) : expense.splitType}
             </div>
@@ -184,15 +184,15 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar src={profile?.avatar} name={profile?.name} size={34} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#3d2b1f' }}>{profile?.name}</div>
-                    {hint && <div style={{ fontSize: 11, color: '#b08060' }}>{hint}</div>}
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text)' }}>{profile?.name}</div>
+                    {hint && <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{hint}</div>}
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#FF6B1A' }}>
                       {expCurr.symbol} {fmt.num(parseFloat(originalSplitAmt.toFixed(2)))}
                     </div>
                     {hasFx && (
-                      <div style={{ fontSize: 11, color: '#c4a882' }}>
+                      <div style={{ fontSize: 11, color: 'var(--cs-text-mute)' }}>
                         ≈ {baseCurr.symbol} {fmt.num(Math.round(splitAmt))}
                       </div>
                     )}
@@ -206,7 +206,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         {/* 備註 */}
         {expense.note && (
           <CollapsibleCard label={t('group.detail.note')} hasContent>
-            <div style={{ fontSize: 14, color: '#3d2b1f', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{expense.note}</div>
+            <div style={{ fontSize: 14, color: 'var(--cs-text)', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{expense.note}</div>
           </CollapsibleCard>
         )}
 
@@ -218,7 +218,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 <img
                   src={receiptUrl}
                   alt={t('form.receiptAlt')}
-                  style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 10, background: '#f5f0eb', display: 'block' }}
+                  style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 10, background: 'var(--cs-track)', display: 'block' }}
                 />
               </a>
             )}
@@ -227,12 +227,12 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
 
         {/* 我的份額卡 */}
         {expense.splits?.[user?.uid] != null && (
-          <div style={{ background: isPayer ? '#f0faf0' : '#fff3ec', borderRadius: 16, border: `0.5px solid ${isPayer ? '#c8e6c9' : '#f0d5c0'}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ background: isPayer ? 'var(--cs-success-bg)' : 'var(--cs-soft)', borderRadius: 16, border: `0.5px solid ${isPayer ? 'var(--cs-success-border)' : 'var(--cs-border)'}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 12, color: isPayer ? '#4caf50' : '#b08060', marginBottom: 2 }}>
+              <div style={{ fontSize: 12, color: isPayer ? '#4caf50' : 'var(--cs-text-sub)', marginBottom: 2 }}>
                 {isIncome ? (isPayer ? t('detail.myShare.incomePayer') : t('detail.myShare.incomeOther')) : (isPayer ? t('detail.myShare.expensePayer') : t('detail.myShare.expenseOther'))}
               </div>
-              <div style={{ fontSize: 20, fontWeight: 600, color: isPayer ? '#2e7d32' : '#FF6B1A' }}>
+              <div style={{ fontSize: 20, fontWeight: 600, color: isPayer ? 'var(--cs-success)' : '#FF6B1A' }}>
                 {expCurr.symbol} {fmt.num(parseFloat(
                   hasFx && expense.exchangeRate
                     ? (expense.splits[user.uid] / expense.exchangeRate).toFixed(2)

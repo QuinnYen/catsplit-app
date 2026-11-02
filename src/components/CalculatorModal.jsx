@@ -66,13 +66,13 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(61,43,31,0.4)', zIndex: 100 }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--cs-overlay)', zIndex: 100 }} />
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 101, maxWidth: 480, margin: '0 auto',
-        background: '#fff', borderRadius: '20px 20px 0 0', padding: 16, boxShadow: '0 -4px 20px rgba(255,140,66,0.2)',
+        background: 'var(--cs-card)', borderRadius: '20px 20px 0 0', padding: 16, boxShadow: '0 -4px 20px rgba(255,140,66,0.2)',
       }}>
-        <div style={{ background: '#fff8f4', border: '0.5px solid #f0d5c0', borderRadius: 12, padding: '10px 14px', marginBottom: 12, textAlign: 'right' }}>
-          <div style={{ minHeight: 22, fontSize: 15, color: '#b08060', wordBreak: 'break-all' }}>{expr || '0'}</div>
+        <div style={{ background: 'var(--cs-bg)', border: '0.5px solid var(--cs-border)', borderRadius: 12, padding: '10px 14px', marginBottom: 12, textAlign: 'right' }}>
+          <div style={{ minHeight: 22, fontSize: 15, color: 'var(--cs-text-sub)', wordBreak: 'break-all' }}>{expr || '0'}</div>
           <div style={{ minHeight: 30, fontSize: 24, fontWeight: 500, color: '#FF6B1A' }}>{result !== null ? `= ${result}` : ''}</div>
         </div>
 
@@ -86,7 +86,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
                 style={{
                   height: 48, borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 18, fontWeight: 500,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isOp ? '#FF8C42' : '#fff3ec', color: isOp ? '#fff' : '#3d2b1f',
+                  background: isOp ? '#FF8C42' : 'var(--cs-soft)', color: isOp ? '#fff' : 'var(--cs-text)',
                 }}
               >
                 {k === '⌫' ? <Delete size={20} /> : k}
@@ -98,7 +98,7 @@ const CalculatorModal = ({ initial, onConfirm, onClose }) => {
             disabled={result === null || result <= 0}
             style={{
               height: 48, borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 500, color: '#fff',
-              background: result !== null && result > 0 ? '#FF6B1A' : '#e8cdb8',
+              background: result !== null && result > 0 ? '#FF6B1A' : 'var(--cs-line-soft)',
               cursor: result !== null && result > 0 ? 'pointer' : 'not-allowed',
             }}
           >

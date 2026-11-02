@@ -262,14 +262,14 @@ const AddExpensePage = () => {
 
   if (!group) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fff8f4', color: '#b08060' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text-sub)' }}>
         {t('common.loading')}
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 80 }}>
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
         <PawDecor />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -286,7 +286,7 @@ const AddExpensePage = () => {
               onClick={() => switchKind(k)}
               style={{
                 padding: '5px 18px', borderRadius: 20, fontSize: 13, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.4)',
-                background: kind === k ? '#fff' : 'rgba(255,255,255,0.25)',
+                background: kind === k ? 'var(--cs-on-brand)' : 'rgba(255,255,255,0.25)',
                 color: kind === k ? '#FF6B1A' : '#fff', fontWeight: kind === k ? 500 : 400,
               }}
             >{label}</button>
@@ -341,7 +341,7 @@ const AddExpensePage = () => {
             style={{
               width: '100%', padding: '15px 0', borderRadius: 16, border: 'none', fontSize: 15, fontWeight: 500,
               cursor: isValid() && !loading ? 'pointer' : 'not-allowed', transition: 'all 0.15s',
-              background: isValid() && !loading ? '#FF8C42' : '#e0c4b0', color: '#fff',
+              background: isValid() && !loading ? '#FF8C42' : 'var(--cs-line-soft)', color: '#fff',
             }}
           >
             {loading ? t('add.submitting') : (
