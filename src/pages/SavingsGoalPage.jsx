@@ -1,18 +1,18 @@
-// /savings/:goalId — 儲蓄頁：已存金額、進度條、目標日期，可新增紀錄；紀錄清單在明細頁。
-import { useEffect, useState } from 'react'
+// /savings/:goalId — 儲蓄頁：已存金額、進度條、目標日期，可新增紀錄；紀錄清單在新增按鈕下方，點一列可編輯或刪除。
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { collection, doc, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore'
-import { Pencil, Trash2 } from 'lucide-react'
+import { collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
+import { Pencil } from 'lucide-react'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import { getCurrency } from '../config/currencies'
 import PawDecor from '../components/PawDecor'
 import SavingsEntryModal from '../components/SavingsEntryModal'
+import CollapsibleCard from '../components/CollapsibleCard'
 import useSavingsEntries from '../hooks/useSavingsEntries'
 import { ProgressBar } from './SavingsListPage'
 import { sumSaved, progressRatio, progressPercent, daysLeft } from '../utils/savings'
-import { deleteSavingsGoal } from '../utils/savingsData'
 import { todayStr } from '../utils/expenseHelpers'
 
 const card = { background: '#fff', borderRadius: 16, border: '0.5px solid #f0d5c0', padding: 16 }
@@ -25,6 +25,7 @@ const SavingsGoalPage = () => {
   const { goalId } = useParams()
   const [goal, setGoal] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [editing, setEditing] = useState(null)
   const entries = useSavingsEntries(user.uid, goalId)
 
   useEffect(() => {
@@ -37,19 +38,12 @@ const SavingsGoalPage = () => {
     })
   }, [user.uid, goalId, navigate])
 
-  const addEntry = (data) =>
-    addDoc(collection(db, 'users', user.uid, 'savingsGoals', goalId, 'entries'), { ...data, createdAt: serverTimestamp() })
+  // 日期新到舊；同日以建立時間新到舊（剛寫入、時間戳還沒回填的排最前）
+  const sorted = useMemo(() => (entries ?? []).slice().sort((a, b) =>
+    b.date.localeCompare(a.date) || (b.createdAt?.toMillis?.() ?? Infinity) - (a.createdAt?.toMillis?.() ?? Infinity)), [entries])
 
-  const handleDelete = async () => {
-    if (!confirm(t('savings.confirmDeleteGoal', { name: goal.title }))) return
-    try {
-      await deleteSavingsGoal(user.uid, goalId)
-      navigate('/savings', { replace: true })
-    } catch (err) {
-      console.error('Failed to delete savings goal', err)
-      alert(t('savings.deleteFailed'))
-    }
-  }
+  const entriesCol = collection(db, 'users', user.uid, 'savingsGoals', goalId, 'entries')
+  const addEntry = (data) => addDoc(entriesCol, { ...data, createdAt: serverTimestamp() })
 
   const saved = sumSaved(entries ?? [])
   const ratio = goal ? progressRatio(saved, goal.targetAmount) : 0
@@ -64,10 +58,7 @@ const SavingsGoalPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => navigate('/savings')} aria-label={t('savings.back')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}>‹</button>
           <div style={{ flex: 1, minWidth: 0, color: '#fff', fontSize: 16, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal?.title ?? t('savings.title')}</div>
-          {goal && <>
-            <button onClick={() => navigate(`/savings/${goalId}/edit`)} aria-label={t('common.edit')} style={iconBtn}><Pencil size={18} color="#fff" /></button>
-            <button onClick={handleDelete} aria-label={t('common.delete')} style={iconBtn}><Trash2 size={18} color="#fff" /></button>
-          </>}
+          {goal && <button onClick={() => navigate(`/savings/${goalId}/edit`)} aria-label={t('common.edit')} style={iconBtn}><Pencil size={18} color="#fff" /></button>}
         </div>
       </div>
 
@@ -87,12 +78,35 @@ const SavingsGoalPage = () => {
               </div>
             </div>
             <button onClick={() => setShowModal(true)} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>{t('savings.addEntry')}</button>
-            <button onClick={() => navigate(`/savings/${goalId}/entries`)} style={{ padding: '13px 0', borderRadius: 14, border: '0.5px solid #f0d5c0', background: '#fff', color: '#3d2b1f', fontSize: 15, cursor: 'pointer' }}>{t('savings.entries')}</button>
+
+            <CollapsibleCard label={`${t('savings.entries')} (${sorted.length})`} hasContent={sorted.length > 0}>
+              {sorted.length === 0 && <div style={{ textAlign: 'center', padding: '12px 0', color: '#b08060', fontSize: 14 }}>{t('savings.entries.empty')}</div>}
+              {sorted.map((e, i) => {
+                const isSave = e.type === 'save'
+                return (
+                  <button key={e.id} onClick={() => setEditing(e)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid #f0d5c0', cursor: 'pointer', textAlign: 'left' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: '#3d2b1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title || t(isSave ? 'savings.save' : 'savings.withdraw')}</div>
+                      <div style={{ fontSize: 12, color: '#b08060' }}>{fmt.shortDate(`${e.date}T00:00`)}</div>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: isSave ? '#2e9e5b' : '#e53935', flexShrink: 0 }}>{isSave ? '+' : '−'}{symbol} {fmt.num(e.amount)}</div>
+                  </button>
+                )
+              })}
+            </CollapsibleCard>
           </>
         )}
       </div>
 
       {showModal && <SavingsEntryModal entry={null} onClose={() => setShowModal(false)} onSubmit={addEntry} />}
+      {editing && (
+        <SavingsEntryModal
+          entry={editing}
+          onClose={() => setEditing(null)}
+          onSubmit={(data) => updateDoc(doc(entriesCol, editing.id), data)}
+          onDelete={() => deleteDoc(doc(entriesCol, editing.id))}
+        />
+      )}
     </div>
   )
 }

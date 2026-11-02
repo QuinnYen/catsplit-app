@@ -25,7 +25,6 @@ const PaymentMethodsPage = lazy(() => import('./pages/PaymentMethodsPage'))
 const SavingsListPage = lazy(() => import('./pages/SavingsListPage'))
 const SavingsGoalFormPage = lazy(() => import('./pages/SavingsGoalFormPage'))
 const SavingsGoalPage = lazy(() => import('./pages/SavingsGoalPage'))
-const SavingsEntriesPage = lazy(() => import('./pages/SavingsEntriesPage'))
 const StatsPage = lazy(() => import('./pages/StatsPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
@@ -135,7 +134,6 @@ const ProtectedRoutes = () => {
       <Route path="/savings/new" element={user.guest ? <Navigate to="/" /> : <SavingsGoalFormPage />} />
       <Route path="/savings/:goalId/edit" element={user.guest ? <Navigate to="/" /> : <SavingsGoalFormPage />} />
       <Route path="/savings/:goalId" element={user.guest ? <Navigate to="/" /> : <SavingsGoalPage />} />
-      <Route path="/savings/:goalId/entries" element={user.guest ? <Navigate to="/" /> : <SavingsEntriesPage />} />
       <Route path="/group/:id" element={<GroupPage />} />
       <Route path="/group/:id/add" element={<AddExpensePage />} />
       <Route path="/group/:id/settle" element={<SettlePage />} />

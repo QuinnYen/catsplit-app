@@ -5,8 +5,9 @@ import { todayStr } from '../utils/expenseHelpers'
 const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff8f4', boxSizing: 'border-box' }
 const label = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 6 }
 
-// 新增或編輯一筆存提款紀錄。entry 為既有紀錄（編輯）或 null（新增）；onSubmit 由呼叫端寫入 Firestore，失敗時要 throw
-const SavingsEntryModal = ({ entry, onClose, onSubmit }) => {
+// 新增或編輯一筆存提款紀錄。entry 為既有紀錄（編輯）或 null（新增）；onSubmit、onDelete 由呼叫端寫入 Firestore，失敗時要 throw。
+// 只有編輯模式且有 onDelete 時才顯示刪除鈕
+const SavingsEntryModal = ({ entry, onClose, onSubmit, onDelete }) => {
   const { t } = useI18n()
   const [type, setType] = useState(entry?.type ?? 'save')
   const [amount, setAmount] = useState(entry ? String(entry.amount) : '')
@@ -25,6 +26,19 @@ const SavingsEntryModal = ({ entry, onClose, onSubmit }) => {
     } catch (err) {
       console.error('Failed to save savings entry', err)
       setError(t('savings.saveFailed'))
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm(t('savings.confirmDeleteEntry'))) return
+    setSaving(true)
+    try {
+      await onDelete()
+      onClose()
+    } catch (err) {
+      console.error('Failed to delete savings entry', err)
+      setError(t('savings.deleteFailed'))
       setSaving(false)
     }
   }
@@ -61,6 +75,9 @@ const SavingsEntryModal = ({ entry, onClose, onSubmit }) => {
           <button onClick={onClose} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '0.5px solid #f0d5c0', background: '#fff8f4', color: '#3d2b1f', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>
           <button onClick={handleSubmit} disabled={saving || !date} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: saving || !date ? 0.6 : 1 }}>{t('common.save')}</button>
         </div>
+        {entry && onDelete && (
+          <button onClick={handleDelete} disabled={saving} style={{ background: 'none', border: 'none', color: '#e53935', fontSize: 14, cursor: 'pointer', padding: 4, opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>
+        )}
       </div>
     </div>
   )

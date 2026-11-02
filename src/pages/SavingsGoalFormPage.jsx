@@ -7,6 +7,7 @@ import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import { CURRENCIES } from '../config/currencies'
 import PawDecor from '../components/PawDecor'
+import { deleteSavingsGoal } from '../utils/savingsData'
 
 const input = { width: '100%', border: '0.5px solid #f0d5c0', borderRadius: 10, padding: '10px 12px', fontSize: 14, color: '#3d2b1f', outline: 'none', background: '#fff', boxSizing: 'border-box' }
 const label = { fontSize: 12, fontWeight: 500, color: '#b08060', marginBottom: 6 }
@@ -60,6 +61,19 @@ const SavingsGoalFormPage = () => {
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm(t('savings.confirmDeleteGoal', { name: title }))) return
+    setSaving(true)
+    try {
+      await deleteSavingsGoal(user.uid, goalId)
+      navigate('/savings', { replace: true })
+    } catch (err) {
+      console.error('Failed to delete savings goal', err)
+      alert(t('savings.deleteFailed'))
+      setSaving(false)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#fff8f4', paddingBottom: 40 }}>
       <div className="cs-header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B1A 100%)', padding: '16px 16px 20px', position: 'relative', overflow: 'hidden' }}>
@@ -97,6 +111,7 @@ const SavingsGoalFormPage = () => {
             </div>
             {error && <div style={{ fontSize: 13, color: '#e53935' }}>{error}</div>}
             <button onClick={handleSave} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: 'none', background: '#FF8C42', color: '#fff', fontSize: 15, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.save')}</button>
+            {editing && <button onClick={handleDelete} disabled={saving} style={{ padding: '13px 0', borderRadius: 14, border: '0.5px solid #f0d5c0', background: '#fff', color: '#e53935', fontSize: 15, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>{t('common.delete')}</button>}
           </>
         )}
       </div>
