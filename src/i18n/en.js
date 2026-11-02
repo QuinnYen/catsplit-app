@@ -453,6 +453,7 @@ export default {
   'eg.budgetFailed': 'Failed to save. Please try again later',
   'flex.transferTitle': 'CatSplit: transfer recorded',
   'flex.transferAlt': '{from} paid {to} {amount}',
+  'flex.openGroup': 'Open group',
   'transfer.title': 'Record transfer',
   'transfer.suggested': 'Suggested {amount}',
   'transfer.payeeMethods': '{name}\'s payment methods',

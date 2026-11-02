@@ -16,6 +16,7 @@
 | P11 | CSV 匯出美化 | [x] |
 | P12 | 個人記帳 | [ ] |
 | P13 | 群組頁改版：導覽列與搜尋 | [x] |
+| P14 | 獨立帳號：多種登入方式與帳號綁定 | [ ] |
 | — | 後續與已知小問題 | [ ] |
 
 ---
@@ -178,6 +179,39 @@
 - [x] 語言檔新增 `search.*`，`group.noMatch` 改成「找不到符合的帳目」，移除 `group.clearFilter`、`group.noCategoryMatch`。
 
 **驗證**：兩步都用 emulator 加 headless Chrome 截圖給使用者看；手機寬度確認底部內容不被導覽列擋住；`npm run lint`、`npm test`、`npm run build`。更新 `README.md` 的功能清單（明細可依類別篩選與搜尋那一行）。
+
+---
+
+## P14 獨立帳號：多種登入方式與帳號綁定
+
+定位：App 要成為**獨立服務**，不再只寄生在 LINE 裡。LINE 官方帳號只當加好友入口，**不做通知、不做推廣**（所以不需要任何推播、Messaging API 或訂閱追蹤）。資料要能跨登入方式共通：同一個人用 LINE 或其他方式登入，看到同一份群組與帳目；也能把 LINE 與其他帳號綁在一起。**範圍大，動工前先做設計決定，再拆項目**（類似 P12）。
+
+**現況（設計的起點）**
+- uid 直接等於 LINE userId（`lineLogin`、`verifyLiffToken` 發 custom token）；訪客的 uid 是 `p_` 開頭的成員 id（見 `docs/identity-and-guests.md`）。
+- uid 散落在 `groups.members`、`memberProfiles` 的 key、支出與收入的 `payments`、`received`、`splits`、轉帳的 `from`、`to`、`memberBalances`，所以**帳號合併 = 改寫這些參照**。`migrateMember`（訪客認領與退出群組用）已經做了大半，可重用。
+- Firestore rules 用 `isLineUser()`（其實是「不是訪客」）判斷；`users/{uid}/paymentMethods`、`users/{uid}/settings/profile`（全域暱稱）都以 uid 為 key。
+- LINE 專屬的前端：LIFF 初始化、在 LINE 內自動登入、`sendMessages` 與 `shareTargetPicker`（只在 LINE 內建瀏覽器出現，不受其他登入影響）。
+
+**要先決定**
+- [ ] **提供哪些登入方式**：Google、Apple、Email（信箱連結或密碼）？先做哪一種。Apple 只有在做原生 App 才強制，純網頁可後做。
+- [ ] **身分模型**（最關鍵）：
+  - A. **內部 uid ＋ 身分對照表**：新增 `identities/{provider:subject}` → 內部 uid；現有 LINE 使用者的內部 uid 就是現在的 LINE userId（**向下相容、不用搬資料**）；所有登入方式都經 Cloud Function 驗證後發 custom token，uid 一律是內部 uid。綁定帳號 = 在對照表加一筆。
+  - B. 沿用 Firebase Auth 原生帳號連結（`linkWithCredential`）：每種登入方式一個 Firebase uid，靠 Auth 合併。LINE 是 custom token、不是原生 provider，混用會很別扭。
+  - 傾向 A，但要先驗證 custom token 與 rules、`request.auth.token` 的相容性。
+- [ ] **綁定的方向與安全性**：綁定必須證明「兩個帳號都是本人」（同一個 session 內依序通過兩邊驗證），否則可被冒用接管別人的帳號；解除綁定要保證至少剩一種登入方式。
+- [ ] **兩個帳號都已有資料時的合併**：兩個帳號可能在同一個群組裡各是一位成員，合併後同一人要併成一位（成員、`memberProfiles`、`memberBalances`、筆數、建立者、帳目參照）。先確認 `migrateMember` 在「目標已是成員」時對餘額與筆數是相加還是覆蓋，必要時修正並補測試。
+- [ ] **名字與頭像的來源**：非 LINE 登入沒有 LINE 頭像與名字；全域暱稱（`users/{uid}/settings/profile`）要成為必填或有預設值；頭像是否允許自訂上傳。已做的「頭像、名字同步」要改成依來源。
+- [ ] **訪客**：是否保留？訪客綁定其他登入方式（不只 LINE）時的認領流程（`claimMember`）。
+- [ ] **登入畫面**：在 LINE 內自動登入維持不變；外部瀏覽器顯示多種登入選項；首頁、設定頁要有「已綁定的登入方式」管理。
+
+**會牽動的工作（決定後再拆）**
+- [ ] Cloud Functions：驗證各 provider 的憑證並發 token；綁定、解除綁定、合併帳號（會碰到所有群組，要能中途失敗重試）。
+- [ ] `firestore.rules`：把 `isLineUser()` 改成不綁 LINE 的語意（例如「非訪客」），補 `firestore-tests`。
+- [ ] 刪除我的資料（`deleteMyData`、`detachMember`）要涵蓋所有綁定的登入方式與對照表。
+- [ ] `public/privacy.html`、`public/terms.html`（中英文）補寫新的登入方式與資料來源；`docs/identity-and-guests.md` 更新。
+- [ ] `README.md` 與 `docs/operations.md`（新的 Firebase Auth provider 設定、網域授權）。
+
+**風險**：uid 是整個資料模型的主鍵，錯誤的合併不可逆；要有 dry-run 與備份（見 `docs/operations.md` 備份）。LINE 的「官方帳號」與本項無關，維持現狀。
 
 ---
 

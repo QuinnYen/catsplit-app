@@ -453,6 +453,7 @@ export default {
   'eg.budgetFailed': '儲存失敗，請稍後再試',
   'flex.transferTitle': '貓咪分帳 CatSplit 記錄轉帳',
   'flex.transferAlt': '{from} 轉給 {to} {amount}',
+  'flex.openGroup': '開啟群組',
   'transfer.title': '記錄轉帳',
   'transfer.suggested': '建議 {amount}',
   'transfer.payeeMethods': '{name} 的收款方式',

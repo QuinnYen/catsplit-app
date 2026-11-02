@@ -16,6 +16,7 @@ import { getCurrency } from '../config/currencies'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
 import { useI18n } from '../i18n/I18nProvider'
 import { computeBudgetStatus } from '../utils/budget'
+import { buildLedgerFlex, groupLiffUrl } from '../utils/flexMessages'
 
 const AddExpensePage = () => {
   const { id } = useParams()
@@ -234,50 +235,19 @@ const AddExpensePage = () => {
         const splitCount = effectiveUids.length
         const perPerson = splitCount > 0 ? Math.round(parseFloat(amount) / splitCount) : 0
         try {
-          await liffInstance.sendMessages([{
-            type: 'flex',
+          await liffInstance.sendMessages([buildLedgerFlex({
             altText: t('flex.alt', { payer: payerName, title: title.trim(), amount: `${currencyObj.symbol}${fmt.num(parseFloat(amount))}` }),
-            contents: {
-              type: 'bubble',
-              size: 'kilo',
-              header: {
-                type: 'box', layout: 'vertical', paddingAll: '16px',
-                backgroundColor: '#FF8C42',
-                contents: [{
-                  type: 'text', text: t('flex.title'), color: '#ffffff', size: 'sm', weight: 'bold',
-                }],
-              },
-              body: {
-                type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '16px',
-                contents: [
-                  { type: 'text', text: title.trim(), weight: 'bold', size: 'lg', color: '#3d2b1f', wrap: true },
-                  { type: 'text', text: `${currencyObj.symbol} ${fmt.num(parseFloat(amount))}`, size: 'xxl', weight: 'bold', color: '#FF6B1A' },
-                  { type: 'separator', margin: 'md' },
-                  {
-                    type: 'box', layout: 'horizontal', margin: 'md',
-                    contents: [
-                      { type: 'text', text: t('flex.payer'), size: 'sm', color: '#b08060', flex: 1 },
-                      { type: 'text', text: payerName, size: 'sm', color: '#3d2b1f', align: 'end' },
-                    ],
-                  },
-                  {
-                    type: 'box', layout: 'horizontal',
-                    contents: [
-                      { type: 'text', text: t('flex.perPerson'), size: 'sm', color: '#b08060', flex: 1 },
-                      { type: 'text', text: `${currencyObj.symbol} ${fmt.num(perPerson)}`, size: 'sm', color: '#3d2b1f', align: 'end' },
-                    ],
-                  },
-                  {
-                    type: 'box', layout: 'horizontal',
-                    contents: [
-                      { type: 'text', text: t('flex.group'), size: 'sm', color: '#b08060', flex: 1 },
-                      { type: 'text', text: group.name, size: 'sm', color: '#3d2b1f', align: 'end' },
-                    ],
-                  },
-                ],
-              },
-            },
-          }])
+            headerText: t('flex.title'),
+            title: title.trim(),
+            amount: `${currencyObj.symbol} ${fmt.num(parseFloat(amount))}`,
+            rows: [
+              [t('flex.payer'), payerName],
+              [t('flex.perPerson'), `${currencyObj.symbol} ${fmt.num(perPerson)}`],
+              [t('flex.group'), group.name],
+            ],
+            openLabel: t('flex.openGroup'),
+            groupUrl: groupLiffUrl(id),
+          })])
         } catch (e) {
           console.warn('liff.sendMessages failed', e)
         }

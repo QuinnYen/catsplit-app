@@ -12,6 +12,7 @@ import ShareToLineToggle from '../components/ShareToLineToggle'
 import PawDecor from '../components/PawDecor'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
+import { buildLedgerFlex, groupLiffUrl } from '../utils/flexMessages'
 import { useI18n } from '../i18n/I18nProvider'
 import { PAYMENT_METHOD_CODES, paymentMethodLabel } from '../i18n/codes'
 
@@ -87,38 +88,20 @@ const TransferPage = () => {
         const from = group.memberProfiles?.[fromUid]?.name ?? t('common.someone')
         const to = group.memberProfiles?.[toUid]?.name ?? t('common.someone')
         const symbol = getCurrency(currency).symbol
-        const row = (label, value) => ({
-          type: 'box', layout: 'horizontal',
-          contents: [
-            { type: 'text', text: label, size: 'sm', color: '#b08060', flex: 1 },
-            { type: 'text', text: value, size: 'sm', color: '#3d2b1f', align: 'end', wrap: true },
-          ],
-        })
         try {
-          await liffInstance.sendMessages([{
-            type: 'flex',
+          await liffInstance.sendMessages([buildLedgerFlex({
             altText: t('flex.transferAlt', { from, to, amount: `${symbol}${fmt.num(actualAmount)}` }),
-            contents: {
-              type: 'bubble',
-              size: 'kilo',
-              header: {
-                type: 'box', layout: 'vertical', paddingAll: '16px',
-                backgroundColor: '#FF8C42',
-                contents: [{ type: 'text', text: t('flex.transferTitle'), color: '#ffffff', size: 'sm', weight: 'bold' }],
-              },
-              body: {
-                type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '16px',
-                contents: [
-                  { type: 'text', text: `${from} → ${to}`, weight: 'bold', size: 'lg', color: '#3d2b1f', wrap: true },
-                  { type: 'text', text: `${symbol} ${fmt.num(actualAmount)}`, size: 'xxl', weight: 'bold', color: '#FF6B1A' },
-                  { type: 'separator', margin: 'md' },
-                  { ...row(t('group.detail.method'), paymentMethodLabel(paymentMethod, t)), margin: 'md' },
-                  ...(note.trim() ? [row(t('group.detail.note'), note.trim())] : []),
-                  row(t('flex.group'), group.name),
-                ],
-              },
-            },
-          }])
+            headerText: t('flex.transferTitle'),
+            title: `${from} → ${to}`,
+            amount: `${symbol} ${fmt.num(actualAmount)}`,
+            rows: [
+              [t('group.detail.method'), paymentMethodLabel(paymentMethod, t)],
+              ...(note.trim() ? [[t('group.detail.note'), note.trim()]] : []),
+              [t('flex.group'), group.name],
+            ],
+            openLabel: t('flex.openGroup'),
+            groupUrl: groupLiffUrl(id),
+          })])
         } catch (e) {
           console.warn('liff.sendMessages failed', e)
         }
