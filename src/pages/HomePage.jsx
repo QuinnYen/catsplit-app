@@ -9,7 +9,6 @@ import useMyGroups from '../hooks/useMyGroups'
 import Avatar from '../components/Avatar'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
-import { getCurrency } from '../config/currencies'
 import { computeBudgetStatus } from '../utils/budget'
 import catLogo from '../assets/cat-logo.webp'
 
@@ -39,7 +38,7 @@ const GROUPS_PER_PAGE = 10
 
 const HomePage = () => {
   const { user, loading: authLoading, loginWithLine, logout, guestNames } = useApp()
-  const { t, fmt, lang } = useI18n()
+  const { t, lang } = useI18n()
   const navigate = useNavigate()
   // 英文版條款與隱私權政策是另一份靜態頁；中文版維持原網址
   const legalHref = (page) => lang === 'en' ? `/${page}.en.html` : `/${page}.html`
@@ -198,7 +197,7 @@ const HomePage = () => {
             // 有封面時卡片高度不變，封面當背景（lazy 載入）加暗色漸層，文字改淺色
             const hasCover = !!group.coverUrl
             const subColor = hasCover ? 'rgba(255,255,255,0.85)' : 'var(--cs-rc-sub)'
-            const amountStyle = { fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap' }
+            const statusStyle = { fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', textAlign: 'right' }
             const nameStyle = { fontSize: 15, fontWeight: 600, color: hasCover ? '#fff' : 'var(--cs-rc-ink)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
             return (
               <div
@@ -242,32 +241,18 @@ const HomePage = () => {
                     {t('group.memberCount', { n: group.members?.length })}
                   </div>
                 </div>
-                {/* 票根切口：虛線加上下缺口，右側固定寬度放餘額 */}
-                <div aria-hidden="true" style={{ position: 'absolute', top: 0, bottom: 0, right: 108, borderLeft: `1.5px dashed ${hasCover ? 'rgba(255,255,255,0.4)' : 'var(--cs-rc-rule)'}` }} />
-                <div aria-hidden="true" style={{ position: 'absolute', top: -6, right: 102, width: 12, height: 12, borderRadius: '50%', background: 'var(--cs-rc-bg)', border: '1px solid var(--cs-rc-rule)', boxSizing: 'border-box' }} />
-                <div aria-hidden="true" style={{ position: 'absolute', bottom: -6, right: 102, width: 12, height: 12, borderRadius: '50%', background: 'var(--cs-rc-bg)', border: '1px solid var(--cs-rc-rule)', boxSizing: 'border-box' }} />
-                <div style={{ width: 108, boxSizing: 'border-box', padding: '0 12px', flexShrink: 0 }}>
-                {bal === null ? (
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ ...amountStyle, color: hasCover ? 'var(--cs-on-cover-accent)' : 'var(--cs-rc-ink)' }}>
-                      {getCurrency(group.baseCurrency).symbol} {fmt.num(group.totalAmount || 0)}
-                    </div>
-                    <div style={{ fontSize: 11, color: subColor }}>{t('group.totalExpense')}</div>
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ ...amountStyle, color: isSettled ? subColor : isPositive ? (hasCover ? 'var(--cs-on-cover-success)' : 'var(--cs-rc-get)') : (hasCover ? 'var(--cs-on-cover-accent)' : 'var(--cs-rc-owe)') }}>
-                      {isSettled ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                          <Check size={13} strokeWidth={3} /> {t('home.settled')}
-                        </span>
-                      ) : isPositive
-                        ? `+${getCurrency(group.baseCurrency).symbol} ${fmt.num(Math.round(bal))}`
-                        : `${getCurrency(group.baseCurrency).symbol} ${fmt.num(Math.round(bal))}`}
-                    </div>
-                    <div style={{ fontSize: 11, color: subColor }}>
-                      {isSettled ? '' : isPositive ? t('home.toReceive') : t('home.toPay')}
-                    </div>
+                {/* 票根切口：右欄放狀態字樣（待收款／待付款／已結清），虛線與缺口放在欄內 */}
+                <div style={{ position: 'relative', alignSelf: 'stretch', margin: '-14px 0', minWidth: 108, boxSizing: 'border-box', padding: '0 12px', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div aria-hidden="true" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, borderLeft: `1.5px dashed ${hasCover ? 'rgba(255,255,255,0.4)' : 'var(--cs-rc-rule)'}` }} />
+                <div aria-hidden="true" style={{ position: 'absolute', top: -6, left: -6, width: 12, height: 12, borderRadius: '50%', background: 'var(--cs-rc-bg)', border: '1px solid var(--cs-rc-rule)', boxSizing: 'border-box' }} />
+                <div aria-hidden="true" style={{ position: 'absolute', bottom: -6, left: -6, width: 12, height: 12, borderRadius: '50%', background: 'var(--cs-rc-bg)', border: '1px solid var(--cs-rc-rule)', boxSizing: 'border-box' }} />
+                {bal !== null && (
+                  <div style={{ ...statusStyle, color: isSettled ? subColor : isPositive ? (hasCover ? 'var(--cs-on-cover-success)' : 'var(--cs-rc-get)') : (hasCover ? 'var(--cs-on-cover-accent)' : 'var(--cs-rc-owe)') }}>
+                    {isSettled ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <Check size={15} strokeWidth={3} /> {t('home.settled')}
+                      </span>
+                    ) : isPositive ? t('home.toReceive') : t('home.toPay')}
                   </div>
                 )}
                 </div>
