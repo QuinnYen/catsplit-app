@@ -1,6 +1,6 @@
 # TODO
 
-> 更新日期：2026-11-01。只列尚未完成的項目；已完成的功能（P0 共用基礎、P1 多國語言、P2 網頁版置中、P3 收入、P4 預算第一版）見 `README.md` 與 `docs/`。
+> 更新日期：2026-11-03。只列尚未完成的項目；已完成的功能（P0 共用基礎、P1 多國語言、P2 網頁版置中、P3 收入、P4 預算第一版、P10 統計趨勢範圍、P11 CSV 匯出美化、P13 群組頁改版）見 `README.md` 與 `docs/`。
 > 狀態：`[ ]` 未開始　`[~]` 進行中
 
 **每項完成時都要做**：`npm run lint`、`npm test`、`npm run build`；更新 `README.md` 功能清單與相關 `docs/`；涉及 rules 或 functions 的，**rules 與前端放在同一個 PR**（CI 推 `main` 就部署，新欄位沒有 rules 會在正式環境被拒絕）；rules 改動要有測試（`npm run test:rules`）並用兩個帳號實測（見 `docs/operations.md`）。
@@ -8,15 +8,12 @@
 | # | 項目 | 狀態 |
 |---|---|---|
 | P5 | 更多收款碼 | [ ] |
-| P6 | 訂閱方式評估（只評估不實作） | [ ] |
 | P7 | 逐項分帳 | [ ] |
 | P8 | 分類預算 | [ ] |
 | P9 | 重複性支出 | [ ] |
-| P10 | 統計趨勢範圍 | [x] |
-| P11 | CSV 匯出美化 | [x] |
 | P12 | 個人記帳 | [ ] |
-| P13 | 群組頁改版：導覽列與搜尋 | [x] |
 | P14 | 獨立帳號：多種登入方式與帳號綁定 | [ ] |
+| P17 | 群組 Bot 與 LINE 群組綁定 | [ ] |
 | — | 後續與已知小問題 | [ ] |
 
 ---
@@ -47,41 +44,6 @@
 
 ---
 
-## P6 訂閱方式評估（只評估，不實作）
-
-**現況**
-- `public/terms.html` 寫「目前免費使用」，規劃自願捐款；`public/privacy.html` 承諾無廣告、無資料販售、無追蹤。
-- 程式沒有方案、配額概念，限制都是固定常數：`MAX_MEMBERS=50`、`MAX_GUEST_NAMES=3`、`MAX_CSV_CHARS`。
-- 成本主要在：Firestore 讀取（`GroupPage` 的 `onSnapshot` 沒有上限）、Storage（收據、封面，沒有每人配額）、Functions（`sharePage` 每次開分享連結都會跑）。Functions 在 Blaze 方案、`maxInstances:5`；設 `minInstances` 會增加最低帳單且 CI 無法互動確認。
-
-**模式比較**
-
-| 模式 | 優點 | 缺點 |
-|---|---|---|
-| 自願捐款 | 不改產品、符合現行條款 | 收入不穩定 |
-| 群組 Pro（建立者付費） | 價值在群組，不是個人；付費者明確 | 要做群組層級的功能閘門 |
-| 個人 Pro | 容易理解 | 群組成員多半不付費，轉換率低 |
-| 一次性解鎖 | 金流簡單 | 沒有經常性收入，難覆蓋持續成本 |
-
-**初步傾向**：核心維持免費，**以「群組」計價**。可付費的功能候選：預算提醒、收據 OCR、更多收款碼、更大群組、完整匯出。
-
-**技術前提（若要做）**
-- 方案資料放 `groups/{gid}.plan` 或 `users/{uid}/plan`，**只能由 Cloud Function 透過金流 webhook 寫入**，rules 禁止客戶端寫。
-- 現有限制常數改為可依方案調整；功能閘門要同時在 rules 與 UI 判斷。
-
-**金流與法遵（需另行確認）**
-- LINE 內是網頁 App，LIFF 內付款的平台規範要先確認。
-- 候選：Stripe Billing、綠界定期定額、TapPay。
-- 統一發票與營業登記、消費者保護法（退款、試用）、條款與隱私政策更新。
-
-**決策前先量的數字**：MAU、每位使用者的 Firebase 成本、付費轉換率假設。
-
-- [ ] 蒐集目前用量與成本（Firebase 用量頁、預算警示）。
-- [ ] 確認 LIFF 內付款規範與可用金流。
-- [ ] 產出決策結論（做／不做、模式、定價區間），另存為 `docs/monetization.md`。
-
----
-
 ## P7 逐項分帳
 
 現況：一筆支出只能選一種分帳方式（均分、部分均分、份數、百分比、自訂金額），整筆套同一個比例；`splits` 是每人分攤金額的 map。
@@ -90,7 +52,7 @@
 - [ ] 品項明細要不要存進支出文件（`items`）：存了才能編輯與顯示，但要補 rules 驗證與 `EditExpensePage` 還原。
 - [ ] 稅金與服務費：按各人品項小計比例分攤，或平均分，需決定預設。
 - [ ] 外幣：品項金額在原幣別，換算沿用 `applyExchangeRate`（尾差歸最大出資者）。
-- [ ] 與收據照片的關係：先只做手動輸入，OCR 另議（`P6` 的功能候選）。
+- [ ] 與收據照片的關係：先只做手動輸入，OCR 另議。
 - [ ] 補單元測試（`expenseHelpers`）。
 
 **風險**：新增表單已經很長，UI 要避免讓一般均分變得更難操作；品項金額加總與總額不一致時的處理。
@@ -122,28 +84,6 @@
 
 ---
 
-## P10 統計趨勢範圍
-
-原先構想的群組日期區間欄位已放棄（會提前記帳，區間會與實際用途衝突）。改為趨勢圖依帳目實際日期決定範圍。
-
-- [x] 統計頁每月趨勢：從最早到最晚有帳目的月份，上限 12 個月（超過取最近 12 個月）；標題改為「每月趨勢」。
-
----
-
-## P11 CSV 匯出美化
-
-定位：個人保存用。維持 CSV（不新增套件）、只用群組基準幣、不含「誰該轉給誰」的結算建議、不沿用搜尋條件。組裝邏輯在 `src/utils/csvExport.js`（純函式，測試在 `csvExport.test.js`）。
-
-- [x] 明細區：類型（支出、收入、轉帳）、日期（YYYY-MM-DD）、時間、標題、類別、付款人、收款人、金額（基準幣）、分帳方式、我的分攤、備註；依日期由舊到新。
-- [x] 修正外幣支出付款人金額單位不一致：付款人與收款人金額本來就是基準幣，不再和原幣別的「原始金額」並列；原始金額、幣別、換算金額三欄拿掉。
-- [x] 彙總區：群組總支出、（有才有）群組總收入、我支出已付、我支出應分攤、（有才有）我收入已收與應分得、（有才有）我轉帳轉出與轉入、我的淨餘額（與結算頁一致）。
-- [x] 英文介面欄位標題（`csv.*` 已有中英兩份）；檔名沒有收入與轉帳時維持「支出明細」，否則「收支明細」。
-- [x] UTF-8 BOM 與公式開頭防護沿用；補測試。
-- 已不需要：每位成員的分攤欄位（個人保存只看自己的）、xlsx、字元上限重估（每列長度穩定）。
-- 已知（未處理）：`TransferPage` 把轉帳金額直接計入成員餘額，不管轉帳幣別；非基準幣的轉帳可能讓餘額不準，CSV 照原樣輸出該金額。
-
----
-
 ## P12 個人記帳
 
 目前只有群組分帳，沒有個人的收支紀錄。**這項範圍最大，動工前要先決定方向**：
@@ -157,28 +97,6 @@
 - [ ] rules：個人資料只有本人可讀寫，並補 `firestore-tests`。
 - [ ] 隱私權政策要補寫個人帳本的資料（見 `public/privacy.html`）。
 - [ ] 產出設計說明後再拆項目（另存 `docs/` 或拆成子項）。
-
----
-
-## P13 群組頁改版：導覽列與搜尋
-
-動機：使用者看不懂底部導覽列的計算機圖示（結算）；群組頁的搜尋框會和明細、類別標籤擠在一起。分兩步，**依序做**：
-
-**步驟 1：導覽列與結算按鈕**（`TabBar.jsx`、`GroupPage.jsx`）
-- [x] 導覽列拿掉圖示下的文字（上一輪加的），回到純圖示；首頁與「＋」的圖示使用者看得懂。
-- [x] 群組頁導覽列拿掉「結算」，剩首頁與「＋」兩個圖示，排版要保持對稱不偏空。
-- [x] 「結算」改成文字按鈕（主色小圓角，寫「結算」兩字，不放圖示），放在「消費明細」標題列右側、搜尋入口旁。
-- [x] 其他頁面（新增、結算、轉帳等）的導覽列只需同步拿掉文字，其餘不變。
-- [x] 取捨：按鈕在列表區，往下捲就看不到；結算不是高頻操作，先接受。
-
-**步驟 2：搜尋改成底部彈出的條件選單，按「搜尋」後直接篩選原列表**（`SearchSheet.jsx`、`searchFilter.js`、`GroupPage.jsx`）
-- [x] 改版：原本做成全螢幕搜尋頁，使用者改要「彈出選單、選完按搜尋，在原群組頁顯示」，並參考 LINE 記帳類 App 的條件選單。
-- [x] 選單條件：日期（全部時間、這個月、上個月、今年、去年、自訂區間）、類型（全部、支出、收入、轉帳）、類別、貨幣（群組用到兩種以上才顯示）、搜尋文字、範圍（全部／只與我相關的）；底部「重置」「搜尋」。
-- [x] 篩選套用在群組頁原列表（含收入與轉帳）；有條件時列表上方顯示「符合 N 筆」與「清除篩選」，放大鏡旁有橘點。
-- [x] 比對邏輯放 `src/utils/searchFilter.js`（純函式）並補 `searchFilter.test.js`；轉帳沒有類別，選了類別就不會出現。
-- [x] 語言檔新增 `search.*`，`group.noMatch` 改成「找不到符合的帳目」，移除 `group.clearFilter`、`group.noCategoryMatch`。
-
-**驗證**：兩步都用 emulator 加 headless Chrome 截圖給使用者看；手機寬度確認底部內容不被導覽列擋住；`npm run lint`、`npm test`、`npm run build`。更新 `README.md` 的功能清單（明細可依類別篩選與搜尋那一行）。
 
 ---
 
@@ -212,6 +130,35 @@
 - [ ] `README.md` 與 `docs/operations.md`（新的 Firebase Auth provider 設定、網域授權）。
 
 **風險**：uid 是整個資料模型的主鍵，錯誤的合併不可逆；要有 dry-run 與備份（見 `docs/operations.md` 備份）。LINE 的「官方帳號」與本項無關，維持現狀。
+
+---
+
+## P17 群組 Bot 與 LINE 群組綁定
+
+來源：`CatSplit × LINE 平台 API 研究報告…（2026-11）.md` §4 P17。在 LINE 群組內查結算、餘額、記帳，回覆一律用 **reply（不計費）**。
+
+**前置（本項不含，需先有）**：Messaging API webhook 基礎（`lineWebhook` 驗簽、冪等、`lineProcessEvent`）；官方帳號 @uhu2720z 啟用 Messaging API，且 **channel 與 LINE Login channel 同一個 Provider**（否則 webhook 的 userId 對不上）；Console 開啟 Use webhook、Webhook redelivery、Allow bot to join group chats；OA Manager 關閉或縮小自動回應。
+
+**限制**：`liff.getContext()` 已拿不到 `groupId`（2023-02 停止提供），只能從 webhook 端取得；一般帳號不能列出群組全部成員 userId（只限認證或 premium），要靠成員發言或 LIFF 登入逐步對應；群組 postback 不保證有 `source.userId`；Loading animation 只限 1 對 1。
+
+- [ ] **綁定流程**：
+  - [ ] `join` 事件 → 以 reply 送歡迎 Flex，按鈕 URI 指向 `https://liff.line.me/{liffId}/bind?code={一次性綁定碼}`。
+  - [ ] 綁定碼存 `lineGroupBindCodes/{code}`：`{lineGroupId, expiresAt（10 分鐘）, usedAt}`。
+  - [ ] LIFF 綁定頁：列出使用者有權限的 CatSplit 群組 → callable `lineBindGroup` 驗證碼與權限 → 寫入 `lineGroups/{lineGroupId}.catsplitGroupId` 與 `groups/{gid}.lineGroupId`。
+- [ ] **指令**（reply）：
+  - [ ] 「結算」「餘額」「@小明 欠多少」→ 回傳 Flex 結算卡。
+  - [ ] 「午餐 300 @小明 @小華」→ 用 `mentionees[].userId` 對應成員（不比對顯示名稱）；解析成功回「確認新增」卡，按鈕用 URI 開 LIFF 確認頁（避開群組 postback 無 userId）。
+- [ ] **事件**：
+  - [ ] `messageEdited`：以 timestamp 最大者為準更新草稿金額（事件可能亂序）。
+  - [ ] `unsend`：刪除未確認的草稿。
+  - [ ] `leave`：解除群組綁定；`memberLeft`：標記成員已離開。
+- [ ] **Functions**：`lineBindGroup`（onCall）；`lineProcessEvent` 內新增 `handlers/group.ts`、`handlers/command.ts`。
+- [ ] **Firestore**：`lineGroups/{lineGroupId}`、`lineGroupBindCodes/{code}`、`groups/{gid}.members[].lineUserId`；`line*` 集合 rules 一律 `allow read, write: if false`（只給 Admin SDK）。
+- [ ] 文件：`docs/` 新增群組 Bot 說明；`README.md` 功能清單、`docs/operations.md`（Secrets、Console 設定）。
+
+**驗證**：綁定碼過期與重複使用；非群組成員誤綁；1 分鐘內一定要 reply（重度計算不可依賴 loading）；兩個帳號實測 rules。
+
+**風險**：綁定碼外流會讓外人把群組綁到別人的 CatSplit 群組 → 必須驗證操作者是該群組成員且綁定碼一次性；Bot 在群組內只能靠 reply，超過 1 分鐘或使用者沒觸發事件就得 push（計費，依群組人數算）。
 
 ---
 
