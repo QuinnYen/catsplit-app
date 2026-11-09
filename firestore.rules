@@ -68,7 +68,7 @@ service cloud.firestore {
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1
         && request.resource.data.name.size() <= 20
-        && request.resource.data.type in ['cash', 'credit', 'debit', 'emoney', 'transit'];
+        && request.resource.data.type in ['cash', 'credit', 'mobile', 'debit', 'emoney', 'transit'];
       allow delete: if isLineUser() && request.auth.uid == userId;
     }
 

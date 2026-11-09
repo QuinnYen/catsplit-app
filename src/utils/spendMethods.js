@@ -1,6 +1,6 @@
 // 支出的「付款方式」：固定五個大類（存在 expense.paymentMethod），
 // 使用者清單裡的名稱（例如「國泰 CUBE」）只當備註存在 expense.paymentNote，統計只看大類。
-export const SPEND_TYPES = ['cash', 'credit', 'debit', 'emoney', 'transit']
+export const SPEND_TYPES = ['cash', 'credit', 'mobile', 'debit', 'emoney', 'transit']
 export const CASH = 'cash'
 export const DEFAULT_LIST_TYPE = 'credit'
 

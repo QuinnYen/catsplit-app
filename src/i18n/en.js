@@ -519,6 +519,7 @@ export default {
   'spend.title': 'Payment methods used',
   'spend.type.cash': 'Cash',
   'spend.type.credit': 'Credit card',
+  'spend.type.mobile': 'Mobile pay',
   'spend.type.debit': 'Debit card',
   'spend.type.emoney': 'E-money',
   'spend.type.transit': 'Transit card',

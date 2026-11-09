@@ -519,6 +519,7 @@ export default {
   'spend.title': '付款方式',
   'spend.type.cash': '現金',
   'spend.type.credit': '信用卡',
+  'spend.type.mobile': '行動支付',
   'spend.type.debit': '簽帳卡',
   'spend.type.emoney': '電子貨幣',
   'spend.type.transit': '交通卡',
