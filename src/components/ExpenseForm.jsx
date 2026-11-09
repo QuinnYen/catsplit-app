@@ -151,6 +151,8 @@ const ExpenseForm = ({
   showShareOption,
   // 預算提示（computeBudgetStatus 的結果；undefined 時不顯示）
   budgetPreview,
+  // 付款方式（僅支出；spendMethods 為 undefined 時不顯示，例如訪客）
+  spendMethod, setSpendMethod, spendMethods,
 }) => {
   const { t, fmt } = useI18n()
   const [showCalc, setShowCalc] = useState(false)
@@ -259,6 +261,18 @@ const ExpenseForm = ({
                 : kind === 'income'
                   ? t('form.budgetRefund', { amount: `${getCurrency(baseCurrency).symbol} ${fmt.num(currency === baseCurrency ? amountNum : amountNum * exchangeRate)}` })
                   : t('form.budgetUse', { percent: Math.max(0, Math.floor(budgetPreview.ratio * 100)) })}
+            </div>
+          )}
+
+          {kind === 'expense' && spendMethods && (
+            <div style={{ marginTop: 12 }}>
+              <div style={labelStyle}>{t('form.spendMethod')}</div>
+              <select value={spendMethod} onChange={e => setSpendMethod(e.target.value)} style={inputStyle}>
+                <option value="cash">{t('payMethod.cash')}</option>
+                {spendMethods.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                {/* 編輯舊帳時，那張卡可能已從清單刪除，仍要能顯示原值 */}
+                {spendMethod !== 'cash' && !spendMethods.some(m => m.name === spendMethod) && <option value={spendMethod}>{spendMethod}</option>}
+              </select>
             </div>
           )}
         </div>

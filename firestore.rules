@@ -60,6 +60,17 @@ service cloud.firestore {
       allow delete: if isLineUser() && request.auth.uid == userId;
     }
 
+    // 個人付款方式（記帳時選用的信用卡等）：只有本人能讀寫（訪客不能寫）
+    match /users/{userId}/spendMethods/{methodId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if isLineUser()
+        && request.auth.uid == userId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 20;
+      allow delete: if isLineUser() && request.auth.uid == userId;
+    }
+
     // 個人儲蓄目標與其存提款紀錄：只有本人能讀寫（訪客不能寫）
     match /users/{userId}/savingsGoals/{goalId} {
       allow read: if request.auth != null && request.auth.uid == userId;

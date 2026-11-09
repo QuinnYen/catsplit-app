@@ -5,6 +5,7 @@ import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore
 import { ref, uploadBytes } from 'firebase/storage'
 import { CheckCircle2, Trash2 } from 'lucide-react'
 import { db, storage } from '../config/firebase'
+import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
@@ -16,9 +17,12 @@ import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory } from '../i18n/codes'
 import { computeBudgetStatus } from '../utils/budget'
+import useSpendMethods from '../hooks/useSpendMethods'
+import { CASH, normalizeSpendMethod } from '../utils/spendMethods'
 
 const EditExpensePage = ({ kind = 'expense' }) => {
   const { t } = useI18n()
+  const { user } = useApp()
   const { id, expenseId } = useParams()
   const navigate = useNavigate()
   const isIncome = kind === 'income'
@@ -52,6 +56,8 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const [existingReceiptPath, setExistingReceiptPath] = useState(null)
   const [removeExistingReceipt, setRemoveExistingReceipt] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [spendMethod, setSpendMethod] = useState(CASH)
+  const spendMethods = useSpendMethods(user?.guest ? null : user?.uid)
 
   const [savedRate, setSavedRate] = useState(null)
   const isSponsorship = !!originalExpense?.isSponsorship
@@ -76,6 +82,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       if (expense.receiptPath) setExistingReceiptPath(expense.receiptPath)
       setTitle(expense.title)
       setNote(expense.note || '')
+      setSpendMethod(normalizeSpendMethod(expense.paymentMethod))
       setAmount(String(expense.originalAmount ?? expense.amount))
       setCurrency(expense.currency || base)
       setSavedRate({ currency: expense.currency || base, rate: expense.exchangeRate ?? 1 })
@@ -226,6 +233,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
         note: note.trim(),
+        ...(!isIncome && { paymentMethod: spendMethod }),
         createdAt: Timestamp.fromDate(new Date(expenseDate)),
         hasTime: true,
         ...receiptUpdate,
@@ -310,6 +318,8 @@ const EditExpensePage = ({ kind = 'expense' }) => {
           existingReceiptPath={existingReceiptPath}
           removeExistingReceipt={removeExistingReceipt} setRemoveExistingReceipt={setRemoveExistingReceipt}
           budgetPreview={budgetPreview}
+          spendMethod={spendMethod} setSpendMethod={setSpendMethod}
+          spendMethods={user?.guest || isIncome ? undefined : spendMethods ?? []}
         />
 
         {/* 固定在底部導覽列上方，捲動時一直可見；捲到底時回到原位，刪除按鈕在它下方 */}

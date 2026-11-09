@@ -22,6 +22,7 @@ const TransferPage = lazy(() => import('./pages/TransferPage'))
 const EditExpensePage = lazy(() => import('./pages/EditExpensePage'))
 const ExpenseDetailPage = lazy(() => import('./pages/ExpenseDetailPage'))
 const PaymentMethodsPage = lazy(() => import('./pages/PaymentMethodsPage'))
+const SpendMethodsPage = lazy(() => import('./pages/SpendMethodsPage'))
 const SavingsListPage = lazy(() => import('./pages/SavingsListPage'))
 const SavingsGoalFormPage = lazy(() => import('./pages/SavingsGoalFormPage'))
 const SavingsGoalPage = lazy(() => import('./pages/SavingsGoalPage'))
@@ -130,6 +131,7 @@ const ProtectedRoutes = () => {
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/payment-methods" element={user.guest ? <Navigate to="/" /> : <PaymentMethodsPage />} />
+      <Route path="/spend-methods" element={user.guest ? <Navigate to="/" /> : <SpendMethodsPage />} />
       <Route path="/savings" element={user.guest ? <Navigate to="/" /> : <SavingsListPage />} />
       <Route path="/savings/new" element={user.guest ? <Navigate to="/" /> : <SavingsGoalFormPage />} />
       <Route path="/savings/:goalId/edit" element={user.guest ? <Navigate to="/" /> : <SavingsGoalFormPage />} />

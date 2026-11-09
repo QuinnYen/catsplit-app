@@ -15,6 +15,8 @@ import { getCurrency } from '../config/currencies'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORIES } from '../config/expenseForm'
 import { useI18n } from '../i18n/I18nProvider'
 import { computeBudgetStatus } from '../utils/budget'
+import useSpendMethods from '../hooks/useSpendMethods'
+import { CASH } from '../utils/spendMethods'
 import { buildLedgerFlex, groupLiffUrl, sendLedgerFlex } from '../utils/flexMessages'
 
 const AddExpensePage = () => {
@@ -47,6 +49,8 @@ const AddExpensePage = () => {
   const [receiptFile, setReceiptFile] = useState(null)
   const [receiptPreview, setReceiptPreview] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [spendMethod, setSpendMethod] = useState(CASH)
+  const spendMethods = useSpendMethods(user?.guest ? null : user?.uid)
 
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 
@@ -192,6 +196,7 @@ const AddExpensePage = () => {
         exchangeRate: rate,
         amount: baseAmount,
         payments: basePayments,
+        paymentMethod: spendMethod,
         splitType,
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
@@ -332,6 +337,8 @@ const AddExpensePage = () => {
           shareToLine={shareToLine} setShareToLine={setShareToLine}
           showShareOption={kind === 'expense' && safeIsInClient()}
           budgetPreview={budgetPreview}
+          spendMethod={spendMethod} setSpendMethod={setSpendMethod}
+          spendMethods={user?.guest ? undefined : spendMethods ?? []}
         />
 
         {/* 固定在底部導覽列上方，捲動時一直可見 */}

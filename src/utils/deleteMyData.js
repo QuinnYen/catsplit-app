@@ -59,7 +59,15 @@ const deleteMyPaymentMethods = async (uid) => {
   await batch.commit()
 }
 
-const deleteMyNickname = (uid) => deleteDoc(doc(db, 'users', uid, 'settings', 'profile'))
+const deleteMySpendMethods = async (uid) => {
+  const snap = await getDocs(collection(db, 'users', uid, 'spendMethods'))
+  if (snap.empty) return
+  const batch = writeBatch(db)
+  snap.docs.forEach(d => batch.delete(d.ref))
+  await batch.commit()
+}
+
+const deleteMyNickname =(uid) => deleteDoc(doc(db, 'users', uid, 'settings', 'profile'))
 const deleteMyOaPrompt = (uid) => deleteDoc(doc(db, 'users', uid, 'settings', 'oaPrompt'))
 
 // 依序處理；中途失敗會丟出錯誤，已處理的群組不會回復，重按一次即可繼續。
@@ -68,6 +76,7 @@ export const deleteMyData = async (groups, uid) => {
   const { toDelete, toLeave } = planDeleteMyData(groups, uid)
   for (const g of toDelete) await deleteWholeGroup(g.id)
   await deleteMyPaymentMethods(uid)
+  await deleteMySpendMethods(uid)
   await deleteAllSavings(uid)
   await deleteMyNickname(uid)
   await deleteMyOaPrompt(uid)
