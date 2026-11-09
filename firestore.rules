@@ -179,10 +179,6 @@ service cloud.firestore {
         allow read, write: if isMemberOf(groupId);
       }
 
-      match /sponsorships/{sponsorshipId} {
-        allow read, write: if isMemberOf(groupId);
-      }
-
       match /settlements/{settlementId} {
         allow read, write: if isMemberOf(groupId);
       }

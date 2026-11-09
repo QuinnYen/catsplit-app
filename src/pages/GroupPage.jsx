@@ -153,7 +153,9 @@ const GroupPage = () => {
   }
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
-  const incomeTotal = incomes.reduce((sum, i) => sum + i.amount, 0)
+  // 贊助不算收入（不進總收入與預算）
+  const realIncomeList = incomes.filter(i => !i.isSponsorship)
+  const incomeTotal = realIncomeList.reduce((sum, i) => sum + i.amount, 0)
   // 預算用已訂閱的清單加總（與總額卡的淨支出一致），不讀群組彙總欄位
   const budget = computeBudgetStatus(group?.budget, { totalAmount: total, totalIncome: incomeTotal })
 
@@ -507,7 +509,7 @@ const GroupPage = () => {
               {t('group.totalExpense')} · {t('group.expenseCount', { n: expenses.length })}
             </div>
             {/* 收入只列出金額，不下結論（可能是起始金，也可能是退款）；差額看統計頁的結餘 */}
-            {incomes.length > 0 && (
+            {realIncomeList.length > 0 && (
               <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginBottom: 4 }}>
                 {t('stats.totalIncome')} {getCurrency(group.baseCurrency).symbol} {fmt.num(incomeTotal)}
               </div>
@@ -713,7 +715,7 @@ const GroupPage = () => {
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {payerLabel(item.received, group.memberProfiles, t)}
                                 </span>
-                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;{t('group.receivedSuffix')}{expenseTimeStr(item) && ` · ${expenseTimeStr(item)}`}</span>
+                                <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>&nbsp;{t(item.isSponsorship ? 'group.sponsoredSuffix' : 'group.receivedSuffix')}{expenseTimeStr(item) && ` · ${expenseTimeStr(item)}`}</span>
                               </div>
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>

@@ -194,11 +194,10 @@ const migrateMember = async (groupId, fromId, toUid, profileOverride = {}) => {
   if (!group.members?.includes(fromId)) return false
 
   const writer = db.bulkWriter()
-  const [expenses, settlements, incomes, sponsorships] = await Promise.all([
+  const [expenses, settlements, incomes] = await Promise.all([
     groupRef.collection('expenses').get(),
     groupRef.collection('settlements').get(),
     groupRef.collection('incomes').get(),
-    groupRef.collection('sponsorships').get(),
   ])
 
   expenses.docs.forEach((d) => {
@@ -213,11 +212,6 @@ const migrateMember = async (groupId, fromId, toUid, profileOverride = {}) => {
 
   incomes.docs.forEach((d) => {
     const patch = migrationPatch(d.data(), MIGRATION_FIELDS.incomes, fromId, toUid)
-    if (patch) writer.update(d.ref, patch)
-  })
-
-  sponsorships.docs.forEach((d) => {
-    const patch = migrationPatch(d.data(), MIGRATION_FIELDS.sponsorships, fromId, toUid)
     if (patch) writer.update(d.ref, patch)
   })
 

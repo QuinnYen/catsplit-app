@@ -8,7 +8,7 @@ import { db, storage } from '../config/firebase'
 import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
-import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
+import { DEFAULT_CATEGORIES, EDIT_INCOME_CATEGORIES } from '../config/expenseForm'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, primaryPayer } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
@@ -25,7 +25,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const col = isIncome ? 'incomes' : 'expenses'
   const payField = isIncome ? 'received' : 'payments'
   const detailPath = `/group/${id}/${isIncome ? 'income' : 'expense'}/${expenseId}`
-  const categoryList = isIncome ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
+  const categoryList = isIncome ? EDIT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
 
   const [group, setGroup] = useState(null)
   const [originalExpense, setOriginalExpense] = useState(null)
@@ -54,6 +54,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const [loading, setLoading] = useState(false)
 
   const [savedRate, setSavedRate] = useState(null)
+  const isSponsorship = !!originalExpense?.isSponsorship
 
   const { exchangeRate, setManualRate, rateLoading, rateError, rateManual } = useExchangeRate(currency, baseCurrency, savedRate)
 
@@ -158,7 +159,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const sign = isIncome ? -1 : 1
   const amountNum = parseFloat(amount) || 0
   const baseAmountNum = currency === baseCurrency ? amountNum : (!rateLoading && exchangeRate > 0 ? amountNum * exchangeRate : 0)
-  const budgetPreview = baseAmountNum > 0
+  const budgetPreview = baseAmountNum > 0 && !isSponsorship
     ? computeBudgetStatus(group?.budget, { totalAmount: group?.totalAmount, totalIncome: group?.totalIncome }, { delta: sign * baseAmountNum, replace: sign * (originalExpense?.amount ?? 0) }) ?? undefined
     : undefined
 
@@ -239,7 +240,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   }
 
   const handleDelete = async () => {
-    if (!window.confirm(isIncome ? t('edit.confirmDeleteIncome') : t('group.confirmDeleteExpense'))) return
+    if (!window.confirm(isSponsorship ? t('edit.confirmDeleteSponsorship') : isIncome ? t('edit.confirmDeleteIncome') : t('group.confirmDeleteExpense'))) return
     setLoading(true)
     try {
       await deleteDoc(doc(db, 'groups', id, col, expenseId))
@@ -268,7 +269,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
             onClick={() => navigate(detailPath)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{isIncome ? t('edit.income') : t('edit.expense')}</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{isSponsorship ? t('edit.sponsorship') : isIncome ? t('edit.income') : t('edit.expense')}</div>
         </div>
       </div>
 
@@ -277,7 +278,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}
       >
         <ExpenseForm
-          kind={kind}
+          kind={isSponsorship ? 'sponsorship' : kind}
           title={title} setTitle={setTitle}
           category={category} setCategory={setCategory}
           customCategory={customCategory} setCustomCategory={setCustomCategory}
@@ -341,7 +342,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         >
           {loading ? t('common.processing') : (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Trash2 size={16} /> {isIncome ? t('edit.deleteIncome') : t('edit.deleteExpense')}
+              <Trash2 size={16} /> {isSponsorship ? t('edit.deleteSponsorship') : isIncome ? t('edit.deleteIncome') : t('edit.deleteExpense')}
             </span>
           )}
         </button>

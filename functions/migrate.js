@@ -18,7 +18,6 @@ export const MIGRATION_FIELDS = {
   expenses: { maps: ['payments', 'splits', 'shares'], ids: ['createdBy'] },
   settlements: { maps: [], ids: ['from', 'to', 'settledBy'] },
   incomes: { maps: ['received', 'splits', 'shares'], ids: ['createdBy'] },
-  sponsorships: { maps: ['recipients'], ids: ['from', 'createdBy'] },
 }
 
 // 回傳把 fromId 轉成 toUid 的更新內容；沒有需要改的欄位時回傳 null

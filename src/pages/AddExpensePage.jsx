@@ -12,7 +12,7 @@ import ExpenseForm from '../components/ExpenseForm'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, payerLabel, computeMemberBalances } from '../utils/expenseHelpers'
 import { getCurrency } from '../config/currencies'
-import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../config/expenseForm'
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORIES } from '../config/expenseForm'
 import { useI18n } from '../i18n/I18nProvider'
 import { computeBudgetStatus } from '../utils/budget'
 import { buildLedgerFlex, groupLiffUrl, sendLedgerFlex } from '../utils/flexMessages'
@@ -91,7 +91,7 @@ const AddExpensePage = () => {
   const amountNum = parseFloat(amount) || 0
   const baseAmountNum = currency === baseCurrency ? amountNum : (!rateLoading && exchangeRate > 0 ? amountNum * exchangeRate : 0)
   const budgetPreview = baseAmountNum > 0
-    ? computeBudgetStatus(group?.budget, { totalAmount: group?.totalAmount, totalIncome: group?.totalIncome }, { delta: kind === 'income' ? -baseAmountNum : baseAmountNum }) ?? undefined
+    ? kind === 'sponsorship' ? undefined : computeBudgetStatus(group?.budget, { totalAmount: group?.totalAmount, totalIncome: group?.totalIncome }, { delta: kind === 'income' ? -baseAmountNum : baseAmountNum }) ?? undefined
     : undefined
 
   const effectiveUids = (() => {
@@ -131,7 +131,8 @@ const AddExpensePage = () => {
   const switchKind = (next) => {
     if (next === kind) return
     setKind(next)
-    setCategory((next === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES)[0])
+    setCategory((next === 'sponsorship' ? DEFAULT_SPONSOR_CATEGORIES : next === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES)[0])
+    setPayerExcluded(next === 'sponsorship') // 贊助人通常不分給自己
     setIsEditingCategory(false)
     setCustomCategory('')
   }
@@ -145,7 +146,7 @@ const AddExpensePage = () => {
       const payments = buildPayments({ multiPayer, paidBy, payerAmounts, totalAmount })
       const { rate, baseAmount, baseSplits, basePayments } = applyExchangeRate({ totalAmount, splits, payments, currency, baseCurrency, exchangeRate })
 
-      if (kind === 'income') {
+      if (kind !== 'expense') {
         const incomeBatch = writeBatch(db)
         incomeBatch.set(doc(collection(db, 'groups', id, 'incomes')), {
           title: title.trim(),
@@ -155,6 +156,7 @@ const AddExpensePage = () => {
           exchangeRate: rate,
           amount: baseAmount,
           received: basePayments,
+          ...(kind === 'sponsorship' && { isSponsorship: true }),
           splitType,
           splits: baseSplits,
           ...(splitType === 'shares' && { shares }),
@@ -169,7 +171,8 @@ const AddExpensePage = () => {
         Object.entries(incomeDelta).forEach(([uid, amt]) => {
           incomeBalanceDelta[`memberBalances.${uid}`] = increment(amt)
         })
-        incomeBatch.update(doc(db, 'groups', id), {
+        // 贊助只動餘額，不算收入（不進總收入、淨支出與預算）
+        incomeBatch.update(doc(db, 'groups', id), kind === 'sponsorship' ? incomeBalanceDelta : {
           totalIncome: increment(baseAmount),
           incomeCount: increment(1),
           ...incomeBalanceDelta,
@@ -275,10 +278,10 @@ const AddExpensePage = () => {
             onClick={() => navigate(`/group/${id}`)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{kind === 'income' ? t('add.income') : t('add.expense')}</div>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{kind === 'sponsorship' ? t('add.sponsorship') : kind === 'income' ? t('add.income') : t('add.expense')}</div>
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-          {[['expense', t('kind.expense')], ['income', t('kind.income')]].map(([k, label]) => (
+          {[['expense', t('kind.expense')], ['income', t('kind.income')], ['sponsorship', t('kind.sponsorship')]].map(([k, label]) => (
             <button
               key={k}
               onClick={() => switchKind(k)}

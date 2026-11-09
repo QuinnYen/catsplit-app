@@ -32,6 +32,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [expense, setExpense] = useState(null)
+  const isSponsorship = !!expense?.isSponsorship
   const receiptUrl = useStorageImage(expense?.receiptPath)
 
   useEffect(() => {
@@ -80,7 +81,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
             onClick={() => navigate(`/group/${id}`)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
-          <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500 }}>{isIncome ? t('detail.incomeTitle') : t('detail.expenseTitle')}</div>
+          <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500 }}>{isSponsorship ? t('detail.sponsorshipTitle') : isIncome ? t('detail.incomeTitle') : t('detail.expenseTitle')}</div>
           <button
             onClick={() => navigate(`/group/${id}/${routeSeg}/${expenseId}/edit`)}
             style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 6, padding: '5px 14px', fontSize: 13, cursor: 'pointer' }}
@@ -107,7 +108,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           {/* 金額 */}
           <div style={{ background: 'var(--cs-soft)', borderRadius: 6, padding: '12px 14px', marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.amountIncome') : t('detail.amountExpense')}</div>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{isSponsorship ? t('detail.amountSponsorship') : isIncome ? t('detail.amountIncome') : t('detail.amountExpense')}</div>
               <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 24, fontWeight: 600, color: 'var(--cs-rc-owe)' }}>
                 {expCurr.symbol} {fmt.num(expense.originalAmount ?? expense.amount)}
               </div>
@@ -122,7 +123,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           {/* 付款人 */}
           {payerEntries.length > 1 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{isSponsorship ? t('detail.whoSponsored') : isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
               {payerEntries.map(([uid, amt]) => (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar src={group.memberProfiles?.[uid]?.avatar} name={group.memberProfiles?.[uid]?.name} size={28} />
@@ -141,7 +142,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 size={32}
               />
               <div>
-                <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
+                <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{isSponsorship ? t('detail.whoSponsored') : isIncome ? t('detail.whoReceived') : t('detail.whoPaid')}</div>
                 <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>
                   {payerLabel(expense[payField], group.memberProfiles, t)}
                   {!(expense.splits?.[payerEntries[0]?.[0]] > 0) && <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', fontWeight: 400 }}> {isIncome ? t('detail.notInIncome') : t('detail.notInSplit')}</span>}
@@ -154,7 +155,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
         {/* 分攤明細 */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{isIncome ? t('detail.splitIncome') : t('detail.splitExpense')}</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)' }}>{isSponsorship ? t('detail.splitSponsorship') : isIncome ? t('detail.splitIncome') : t('detail.splitExpense')}</div>
             <div style={{ fontSize: 12, color: 'var(--cs-rc-stamp)', fontWeight: 500 }}>
               {SPLIT_LABEL[expense.splitType] ? t(SPLIT_LABEL[expense.splitType]) : expense.splitType}
             </div>
@@ -228,7 +229,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           <div style={{ background: isPayer ? 'var(--cs-success-bg)' : 'var(--cs-soft)', borderRadius: 6, border: `0.5px solid ${isPayer ? 'var(--cs-success-border)' : 'var(--cs-border)'}`, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 12, color: isPayer ? 'var(--cs-rc-get)' : 'var(--cs-text-sub)', marginBottom: 2 }}>
-                {isIncome ? (isPayer ? t('detail.myShare.incomePayer') : t('detail.myShare.incomeOther')) : (isPayer ? t('detail.myShare.expensePayer') : t('detail.myShare.expenseOther'))}
+                {isSponsorship ? (isPayer ? t('detail.myShare.sponsorPayer') : t('detail.myShare.sponsorOther')) : isIncome ? (isPayer ? t('detail.myShare.incomePayer') : t('detail.myShare.incomeOther')) : (isPayer ? t('detail.myShare.expensePayer') : t('detail.myShare.expenseOther'))}
               </div>
               <div style={{ fontSize: 20, fontWeight: 600, color: isPayer ? 'var(--cs-success)' : 'var(--cs-rc-owe)' }}>
                 {expCurr.symbol} {fmt.num(parseFloat(

@@ -9,7 +9,7 @@ import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel, normalizeCategory } from '../i18n/codes'
-import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, SPLIT_TYPES, NOTE_MAX_LENGTH } from '../config/expenseForm'
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORIES, SPLIT_TYPES, NOTE_MAX_LENGTH } from '../config/expenseForm'
 
 const inputStyle = {
   width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6,
@@ -53,6 +53,15 @@ const LABELS = {
     multiPayerHint: 'form.income.multiPayerHint',
     excludeLabel: 'form.income.excludeLabel',
     subsetHint: 'form.income.subsetHint',
+  },
+  sponsorship: {
+    titlePlaceholder: 'form.sponsorship.titlePlaceholder',
+    payerTitle: 'form.sponsorship.payerTitle',
+    payerPlaceholder: 'form.sponsorship.payerPlaceholder',
+    multiPayer: 'form.sponsorship.multiPayer',
+    multiPayerHint: 'form.sponsorship.multiPayerHint',
+    excludeLabel: 'form.sponsorship.excludeLabel',
+    subsetHint: 'form.sponsorship.subsetHint',
   },
 }
 
@@ -146,7 +155,7 @@ const ExpenseForm = ({
   const { t, fmt } = useI18n()
   const [showCalc, setShowCalc] = useState(false)
   const L = LABELS[kind]
-  const categories = kind === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
+  const categories = kind === 'sponsorship' ? DEFAULT_SPONSOR_CATEGORIES : kind === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
   const amountNum = parseFloat(amount) || 0
   const existingReceiptUrl = useStorageImage(existingReceiptPath)
 
@@ -253,6 +262,10 @@ const ExpenseForm = ({
             </div>
           )}
         </div>
+
+        {kind === 'sponsorship' && (
+          <div style={{ marginTop: 10, fontSize: 11, color: 'var(--cs-text-mute)' }}>{t('form.sponsorship.note')}</div>
+        )}
 
         {currency !== baseCurrency && (
           <div style={{ marginTop: 10, padding: 10, borderRadius: 6, background: 'var(--cs-bg)', border: '0.5px solid var(--cs-border)' }}>

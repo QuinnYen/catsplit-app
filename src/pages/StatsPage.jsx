@@ -36,7 +36,7 @@ const StatsPage = () => {
       ])
       if (!groupSnap.exists()) return
       setGroup({ id: groupSnap.id, ...groupSnap.data() })
-      setIncomes(incSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+      setIncomes(incSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => !i.isSponsorship)) // 贊助不算收入
       setExpenses(expSnap.docs.map(d => ({ id: d.id, ...d.data() })))
     }
     fetchData()

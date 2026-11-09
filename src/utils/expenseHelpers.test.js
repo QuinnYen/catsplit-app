@@ -280,8 +280,10 @@ test('computeMemberBalances：收入支援 Firestore 文件（有 data()）', ()
   assert.deepEqual(computeMemberBalances(['a', 'b'], [], [], [doc]), { a: -50, b: 50 })
 })
 
-test('computeMemberBalances：贊助人減總額、受贊助人各加自己的金額，且不算支出', () => {
-  const sponsorships = [{ from: 'A', amount: 100000, recipients: { B: 50000, C: 50000 } }]
-  assert.deepEqual(computeMemberBalances(['A', 'B', 'C'], [], [], [], sponsorships), { A: -100000, B: 50000, C: 50000 })
-  assert.equal(computeGroupAggregates(['A', 'B', 'C'], [], [], [], sponsorships).totalAmount, 0)
+test('computeMemberBalances／computeGroupAggregates：贊助照收入算餘額，但不進總收入與筆數', () => {
+  const sponsorship = { isSponsorship: true, amount: 100, received: { a: 100 }, splits: { b: 50, c: 50 } }
+  assert.deepEqual(computeMemberBalances(['a', 'b', 'c'], [], [], [sponsorship]), { a: -100, b: 50, c: 50 })
+  const agg = computeGroupAggregates(['a', 'b', 'c'], [], [], [sponsorship])
+  assert.equal(agg.totalIncome, 0)
+  assert.equal(agg.incomeCount, 0)
 })

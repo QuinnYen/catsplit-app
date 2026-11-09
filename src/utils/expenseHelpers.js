@@ -156,9 +156,8 @@ export const computeMemberExpenseCounts = (expenseDocs) => {
 /**
  * 從所有支出（+ 結清紀錄、收入）重算 memberBalances
  * 收入是反向的支出：分得者 +splits、收款者 -received
- * 贊助是送錢：贊助人 -amount、受贊助人各 +recipients
  */
-export const computeMemberBalances = (memberUids, expenseDocs, settlementDocs = [], incomeDocs = [], sponsorshipDocs = []) => {
+export const computeMemberBalances = (memberUids, expenseDocs, settlementDocs = [], incomeDocs = []) => {
   const balances = {}
   memberUids.forEach(uid => { balances[uid] = 0 })
   expenseDocs.forEach(d => {
@@ -184,26 +183,22 @@ export const computeMemberBalances = (memberUids, expenseDocs, settlementDocs = 
       balances[uid] = (balances[uid] || 0) + amt
     })
   })
-  sponsorshipDocs.forEach(d => {
-    const s = typeof d.data === 'function' ? d.data() : d
-    balances[s.from] = (balances[s.from] || 0) - s.amount
-    Object.entries(s.recipients || {}).forEach(([uid, amt]) => {
-      balances[uid] = (balances[uid] || 0) + amt
-    })
-  })
   return balances
 }
 
+// 贊助存在 incomes 集合（isSponsorship: true），餘額照收入算，但不算收入（不進總收入、淨支出與預算）
+export const realIncomes = (incomeDocs) => incomeDocs.filter(d => !(typeof d.data === 'function' ? d.data() : d).isSponsorship)
+
 /**
- * 從所有支出（+ 結清紀錄、收入、贊助）重算群組彙總欄位：
+ * 從所有支出（+ 結清紀錄、收入）重算群組彙總欄位：
  * totalAmount、totalExpenses、memberBalances、memberExpenseCounts、totalIncome、incomeCount
  * totalAmount 維持純支出；收入另計於 totalIncome／incomeCount
  */
-export const computeGroupAggregates = (memberUids, expenseDocs, settlementDocs = [], incomeDocs = [], sponsorshipDocs = []) => ({
+export const computeGroupAggregates = (memberUids, expenseDocs, settlementDocs = [], incomeDocs = []) => ({
   totalAmount: expenseDocs.reduce((sum, d) => sum + (typeof d.data === 'function' ? d.data() : d).amount, 0),
   totalExpenses: expenseDocs.length,
-  memberBalances: computeMemberBalances(memberUids, expenseDocs, settlementDocs, incomeDocs, sponsorshipDocs),
+  memberBalances: computeMemberBalances(memberUids, expenseDocs, settlementDocs, incomeDocs),
   memberExpenseCounts: computeMemberExpenseCounts(expenseDocs),
-  totalIncome: incomeDocs.reduce((sum, d) => sum + (typeof d.data === 'function' ? d.data() : d).amount, 0),
-  incomeCount: incomeDocs.length,
+  totalIncome: realIncomes(incomeDocs).reduce((sum, d) => sum + (typeof d.data === 'function' ? d.data() : d).amount, 0),
+  incomeCount: realIncomes(incomeDocs).length,
 })
