@@ -3,7 +3,7 @@ import { db } from '../config/firebase'
 import { computeGroupAggregates } from './expenseHelpers'
 
 /**
- * 讀取群組全部支出、轉帳與收入，重算彙總欄位並寫回群組文件（編輯／刪除支出與收入、刪除轉帳共用）。
+ * 讀取群組全部支出、轉帳、收入與贊助，重算彙總欄位並寫回群組文件（編輯／刪除支出與收入、刪除轉帳共用）。
  * members 以交易內讀到的群組文件為準，傳入的 members 只當備援。
  */
 export const recomputeGroupAggregates = async (groupId, members) => {
@@ -13,11 +13,12 @@ export const recomputeGroupAggregates = async (groupId, members) => {
     // 但新增支出／轉帳的 batch 都會同時改群組文件，期間若有新增，這次提交會失敗並重跑
     const snap = await tx.get(groupRef)
     const currentMembers = snap.data()?.members ?? members
-    const [expSnap, setSnap, incSnap] = await Promise.all([
+    const [expSnap, setSnap, incSnap, sponSnap] = await Promise.all([
       getDocs(collection(db, 'groups', groupId, 'expenses')),
       getDocs(collection(db, 'groups', groupId, 'settlements')),
       getDocs(collection(db, 'groups', groupId, 'incomes')),
+      getDocs(collection(db, 'groups', groupId, 'sponsorships')),
     ])
-    tx.update(groupRef, computeGroupAggregates(currentMembers, expSnap.docs, setSnap.docs, incSnap.docs))
+    tx.update(groupRef, computeGroupAggregates(currentMembers, expSnap.docs, setSnap.docs, incSnap.docs, sponSnap.docs))
   })
 }

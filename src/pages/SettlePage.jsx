@@ -1,15 +1,17 @@
 // /group/:id/settle — 結算：每人餘額、最少轉帳次數的轉帳建議（可換算貨幣）與已結清紀錄。
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
-import { AlertTriangle, Check, CheckCircle2, PartyPopper } from 'lucide-react'
+import { doc, collection, getDoc, getDocs, deleteDoc } from 'firebase/firestore'
+import { AlertTriangle, Check, CheckCircle2, Gift, PartyPopper, Trash2 } from 'lucide-react'
 import { db } from '../config/firebase'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
+import SponsorModal from '../components/SponsorModal'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
+import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useI18n } from '../i18n/I18nProvider'
 import { paymentMethodLabel } from '../i18n/codes'
 
@@ -22,6 +24,9 @@ const SettlePage = () => {
   const [balances, setBalances] = useState({})
   const [settledRecords, setSettledRecords] = useState([])
   const [settlements, setSettlements] = useState([])
+  const [sponsorships, setSponsorships] = useState([])
+  const [showSponsor, setShowSponsor] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const [loading, setLoading] = useState(true)
   const [displayCurrency, setDisplayCurrency] = useState(null)
 
@@ -37,19 +42,22 @@ const SettlePage = () => {
       const groupData = { id: groupSnap.id, ...groupSnap.data() }
       setGroup(groupData)
 
-      const [expensesSnap, settlementsSnap, incomesSnap] = await Promise.all([
+      const [expensesSnap, settlementsSnap, incomesSnap, sponsorshipsSnap] = await Promise.all([
         getDocs(collection(db, 'groups', id, 'expenses')),
         getDocs(collection(db, 'groups', id, 'settlements')),
         getDocs(collection(db, 'groups', id, 'incomes')),
+        getDocs(collection(db, 'groups', id, 'sponsorships')),
       ])
       const expensesData = expensesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setExpenses(expensesData)
       const settlementsData = settlementsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setSettledRecords(settlementsData)
       const incomesData = incomesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      const sponsorshipsData = sponsorshipsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      setSponsorships(sponsorshipsData)
 
-      // 計算餘額：支出分帳 + 已結清紀錄 + 收入
-      const balance = computeMemberBalances(groupData.members, expensesData, settlementsData, incomesData)
+      // 計算餘額：支出分帳 + 已結清紀錄 + 收入 + 贊助
+      const balance = computeMemberBalances(groupData.members, expensesData, settlementsData, incomesData, sponsorshipsData)
       setBalances(balance)
 
       const result = []
@@ -85,7 +93,18 @@ const SettlePage = () => {
       setLoading(false)
     }
     fetchData()
-  }, [id])
+  }, [id, reloadKey])
+
+  const handleDeleteSponsorship = async (sponsorshipId) => {
+    if (!window.confirm(t('sponsor.confirmDelete'))) return
+    try {
+      await deleteDoc(doc(db, 'groups', id, 'sponsorships', sponsorshipId))
+      await recomputeGroupAggregates(id, group.members)
+      setReloadKey(k => k + 1)
+    } catch (error) {
+      console.error('Failed to delete sponsorship', error)
+    }
+  }
 
   if (loading || !group) {
     return (
@@ -133,6 +152,13 @@ const SettlePage = () => {
               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
               <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowSponsor(true)}
+              style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0, padding: '6px 10px', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
+            >
+              <Gift size={13} /> {t('sponsor.button')}
+            </button>
           </div>
 
           {/* 貨幣選單 + 總支出 */}
@@ -241,6 +267,33 @@ const SettlePage = () => {
           )}
         </div>
 
+        {/* 贊助紀錄 */}
+        {sponsorships.length > 0 && (
+          <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }}>{t('sponsor.history')}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {sponsorships.map(s => {
+                const names = Object.keys(s.recipients || {}).map(uid => group.memberProfiles?.[uid]?.name ?? t('common.someone')).join(', ')
+                return (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid var(--cs-track)' }}>
+                    <Gift size={16} color="var(--cs-rc-get)" style={{ flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: 'var(--cs-text-sub)' }}>
+                      <div style={{ color: 'var(--cs-text)', fontWeight: 500 }}>{group.memberProfiles?.[s.from]?.name}</div>
+                      <div>{t('sponsor.to', { names })}{s.note ? ` · ${s.note}` : ''}</div>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-get)', flexShrink: 0 }}>
+                      {getCurrency(s.currency || baseCurrency).symbol} {i18nFmt.num(s.originalAmount ?? s.amount)}
+                    </div>
+                    <button type="button" onClick={() => handleDeleteSponsorship(s.id)} aria-label={t('common.delete')} style={{ border: 'none', background: 'none', padding: 4, cursor: 'pointer', display: 'flex' }}>
+                      <Trash2 size={14} color="var(--cs-text-mute)" />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 已結清紀錄 */}
         {settledRecords.length > 0 && (
           <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
@@ -270,6 +323,14 @@ const SettlePage = () => {
           </div>
         )}
       </div>
+      {showSponsor && (
+        <SponsorModal
+          group={group}
+          groupId={id}
+          onClose={() => setShowSponsor(false)}
+          onSaved={() => { setShowSponsor(false); setReloadKey(k => k + 1) }}
+        />
+      )}
       <TabBar context="settle" groupId={id} />
     </div>
   )
