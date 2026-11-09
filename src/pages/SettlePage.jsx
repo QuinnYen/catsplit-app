@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
-import { AlertTriangle, Check, CheckCircle2, PartyPopper } from 'lucide-react'
+import { AlertTriangle, Check, CheckCircle2, Info, PartyPopper } from 'lucide-react'
 import { db } from '../config/firebase'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import CollapsibleCard from '../components/CollapsibleCard'
+import SettleBreakdownModal from '../components/SettleBreakdownModal'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
@@ -24,6 +25,7 @@ const SettlePage = () => {
   const [settledRecords, setSettledRecords] = useState([])
   const [settlements, setSettlements] = useState([])
   const [sponsorships, setSponsorships] = useState([])
+  const [breakdown, setBreakdown] = useState(null)
   const [loading, setLoading] = useState(true)
   const [displayCurrency, setDisplayCurrency] = useState(null)
 
@@ -102,6 +104,14 @@ const SettlePage = () => {
   const dispCurr = getCurrency(displayCurrency || baseCurrency)
   const fmt = (amount) => `${dispCurr.symbol} ${i18nFmt.num(Math.round(amount * displayRate))}`
 
+  // 贊助：給出去為負、收到為正
+  const sponsoredOf = (uid) => sponsorships.reduce((sum, s) => sum + (s.splits?.[uid] || 0) - (s.received?.[uid] || 0), 0)
+  const breakdownRows = (breakdown ? [breakdown.from, breakdown.to] : []).map(uid => {
+    const net = balances[uid] ?? 0
+    const sponsor = sponsoredOf(uid)
+    return { uid, name: group.memberProfiles?.[uid]?.name, avatar: group.memberProfiles?.[uid]?.avatar, trip: net - sponsor, sponsor, net }
+  })
+
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
   const totalText = rateLoading ? '...' : fmt(total)
 
@@ -170,8 +180,7 @@ const SettlePage = () => {
               const paid = expenses.reduce((sum, e) => sum + (e.payments?.[uid] || 0), 0)
               const shouldPay = expenses.reduce((sum, e) => sum + (e.splits?.[uid] || 0), 0)
               const diff = balances[uid] ?? 0
-              // 贊助：給出去為負、收到為正
-              const sponsored = sponsorships.reduce((sum, s) => sum + (s.splits?.[uid] || 0) - (s.received?.[uid] || 0), 0)
+              const sponsored = sponsoredOf(uid)
 
               return (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -234,14 +243,26 @@ const SettlePage = () => {
                       </div>
                       <Avatar src={to?.avatar} name={to?.name} size={32} />
                     </div>
-                    <button
-                      onClick={() => navigate(
-                        `/group/${id}/transfer?from=${s.from}&to=${s.to}&amount=${s.amount}&currency=${baseCurrency}`
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => navigate(
+                          `/group/${id}/transfer?from=${s.from}&to=${s.to}&amount=${s.amount}&currency=${baseCurrency}`
+                        )}
+                        style={{ flex: 1, padding: '10px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                      >
+                        {t('settle.goTransfer')}
+                      </button>
+                      {sponsorships.length > 0 && (
+                        <button
+                          onClick={() => setBreakdown(s)}
+                          aria-label={t('settle.breakdown')}
+                          title={t('settle.breakdown')}
+                          style={{ width: 42, borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <Info size={18} color="var(--cs-text-sub)" />
+                        </button>
                       )}
-                      style={{ width: '100%', padding: '10px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
-                    >
-                      {t('settle.goTransfer')}
-                    </button>
+                    </div>
                   </div>
                 )
               })}
@@ -278,6 +299,9 @@ const SettlePage = () => {
           </div>
         )}
       </div>
+      {breakdown && (
+        <SettleBreakdownModal rows={breakdownRows} amount={breakdown.amount} fmt={fmt} onClose={() => setBreakdown(null)} />
+      )}
       <TabBar context="settle" groupId={id} />
     </div>
   )
