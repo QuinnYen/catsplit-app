@@ -18,6 +18,13 @@ export const shiftMonth = (key, delta) => {
 export const latestMonthKey = (millisList, nowMs) =>
   toMonthKey(new Date(millisList.length ? Math.max(...millisList) : nowMs))
 
+// 最早有帳的月份：傳入各筆帳的時間（毫秒），沒有帳回傳 null
+export const earliestMonthKey = (millisList) =>
+  millisList.length ? toMonthKey(new Date(Math.min(...millisList))) : null
+
+// 'YYYY-MM' 字串可直接比大小；min、max 缺漏代表不限制
+export const isMonthInRange = (key, min, max) => (!min || key >= min) && (!max || key <= max)
+
 // 已載入明細的小計：支出筆數與金額、收入金額（贊助不算收入）
 export const summarizeLoaded = (expenses, incomes) => ({
   count: expenses.length,

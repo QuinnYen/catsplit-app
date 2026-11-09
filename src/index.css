@@ -73,6 +73,13 @@
   --cs-gi-blue-bg: #e3f2fd;   --cs-gi-blue-fg: #1e88e5;
   --cs-gi-indigo-bg: #e8eaf6; --cs-gi-indigo-fg: #3949ab;
   --cs-gi-purple-bg: #f3e5f5; --cs-gi-purple-fg: #8e44ad;
+  /* 群組頁支出明細列依付款方式的淡底色；信用卡單獨定義，深色模式要比卡片底亮才分得出來 */
+  --cs-spend-cash-bg: var(--cs-gi-green-bg);
+  --cs-spend-credit-bg: #e3f2fd;
+  --cs-spend-mobile-bg: var(--cs-gi-purple-bg);
+  --cs-spend-debit-bg: var(--cs-gi-yellow-bg);
+  --cs-spend-emoney-bg: var(--cs-gi-orange-bg);
+  --cs-spend-transit-bg: var(--cs-gi-red-bg);
   /* 收據帳本風格（首頁試做，之後逐頁套用）：紙、收據、墨、副字、虛線、頁首、印章橘、應付、應收 */
   --cs-rc-bg: #e9ecef;
   --cs-rc-card: #fbfbf9;
@@ -130,6 +137,7 @@
   --cs-gi-blue-bg: #1d2f40;   --cs-gi-blue-fg: #64b5f6;
   --cs-gi-indigo-bg: #232844; --cs-gi-indigo-fg: #9fa8da;
   --cs-gi-purple-bg: #33223a; --cs-gi-purple-fg: #ce93d8;
+  --cs-spend-credit-bg: #2b5a8c;
 }
 
 /* 收據撕邊：用 mask 把 .cs-header 底緣直接切成鋸齒（16px 一格、深 8px），

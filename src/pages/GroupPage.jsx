@@ -26,7 +26,7 @@ import { buildCsv, csvFileName } from '../utils/csvExport'
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { computeBudgetStatus } from '../utils/budget'
-import { toMonthKey, monthRange, shiftMonth, latestMonthKey, summarizeLoaded } from '../utils/monthRange'
+import { toMonthKey, monthRange, shiftMonth, latestMonthKey, earliestMonthKey, isMonthInRange, summarizeLoaded } from '../utils/monthRange'
 
 const EXPORT_CSV_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/exportCsv')
 
@@ -41,6 +41,7 @@ const GroupPage = () => {
   const [incomes, setIncomes] = useState([])
   const [loading, setLoading] = useState(true)
   const [monthKey, setMonthKey] = useState(null) // 'YYYY-MM'；null 表示還在找最近有帳的月份
+  const [monthSpan, setMonthSpan] = useState(null) // { first, last }：有帳的最早與最晚月份；查詢失敗時維持 null（不限制）
   const [allMode, setAllMode] = useState(false)
   const [monthPickerOpen, setMonthPickerOpen] = useState(false)
   const [groupHasItems, setGroupHasItems] = useState(true)
@@ -96,14 +97,20 @@ const GroupPage = () => {
   useEffect(() => {
     if (!isMember) return
     let cancelled = false
-    const latest = (col) => getDocs(query(collection(db, 'groups', id, col), orderBy('createdAt', 'desc'), limit(1)))
-    Promise.all([latest('expenses'), latest('incomes'), latest('settlements')]).then(snaps => {
+    // 各集合查最新與最舊各一筆（共 6 筆讀取），得到有帳的起訖月份；預設落在最晚的那個月
+    const cols = ['expenses', 'incomes', 'settlements']
+    const edge = (col, dir) => getDocs(query(collection(db, 'groups', id, col), orderBy('createdAt', dir), limit(1)))
+    Promise.all([...cols.map(c => edge(c, 'desc')), ...cols.map(c => edge(c, 'asc'))]).then(snaps => {
       if (cancelled) return
-      setGroupHasItems(snaps.some(sn => !sn.empty))
-      const millis = snaps.flatMap(sn => sn.docs.map(d => d.data().createdAt?.toMillis?.() ?? 0)).filter(Boolean)
-      setMonthKey(latestMonthKey(millis, Date.now()))
+      const newest = snaps.slice(0, cols.length)
+      const oldest = snaps.slice(cols.length)
+      const millisOf = (list) => list.flatMap(sn => sn.docs.map(d => d.data().createdAt?.toMillis?.() ?? 0)).filter(Boolean)
+      const last = latestMonthKey(millisOf(newest), Date.now())
+      setGroupHasItems(newest.some(sn => !sn.empty))
+      setMonthSpan({ first: earliestMonthKey(millisOf(oldest)) ?? last, last })
+      setMonthKey(last)
     }).catch(error => {
-      console.error('Failed to find latest month:', error)
+      console.error('Failed to find month range:', error)
       if (!cancelled) setMonthKey(toMonthKey(new Date()))
     })
     return () => { cancelled = true }
@@ -603,19 +610,21 @@ const GroupPage = () => {
         </div>
 
         {/* 月份切換：搜尋／篩選中改看全部結果，這一列先收起 */}
-        {monthKey && groupHasItems && !isFiltering(filters) && (() => {
+        {monthKey && groupHasItems && !isFiltering(filters) && (!monthSpan || monthSpan.first !== monthSpan.last) && (() => {
           const sum = summarizeLoaded(expenses, incomes)
           const symbol = getCurrency(group.baseCurrency).symbol
-          const arrow = { background: 'none', border: 'none', fontSize: 22, lineHeight: 1, padding: '2px 12px', cursor: 'pointer', color: 'var(--cs-text-sub)' }
+          const arrow = (enabled) => ({ background: 'none', border: 'none', fontSize: 22, lineHeight: 1, padding: '2px 12px', cursor: enabled ? 'pointer' : 'default', color: 'var(--cs-text-sub)', opacity: enabled ? 1 : 0.3 })
+          const canPrev = isMonthInRange(shiftMonth(monthKey, -1), monthSpan?.first, monthSpan?.last)
+          const canNext = isMonthInRange(shiftMonth(monthKey, 1), monthSpan?.first, monthSpan?.last)
           return (
             <div style={{ marginBottom: 4 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '4px 0', opacity: allMode ? 0.5 : 1 }}>
-                  <button onClick={() => selectMonth(shiftMonth(monthKey, -1))} aria-label={t('month.prev')} style={arrow}>‹</button>
+                  <button onClick={() => selectMonth(shiftMonth(monthKey, -1))} disabled={!canPrev} aria-label={t('month.prev')} style={arrow(canPrev)}>‹</button>
                   <button onClick={() => setMonthPickerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', padding: '6px 4px' }}>
                     {fmt.yearMonth(monthRange(monthKey).start)} ▾
                   </button>
-                  <button onClick={() => selectMonth(shiftMonth(monthKey, 1))} aria-label={t('month.next')} style={arrow}>›</button>
+                  <button onClick={() => selectMonth(shiftMonth(monthKey, 1))} disabled={!canNext} aria-label={t('month.next')} style={arrow(canNext)}>›</button>
                 </div>
                 <button
                   onClick={toggleAll}
@@ -884,6 +893,8 @@ const GroupPage = () => {
       {monthPickerOpen && monthKey && (
         <MonthPicker
           value={monthKey}
+          min={monthSpan?.first}
+          max={monthSpan?.last}
           onPick={(key) => { setMonthPickerOpen(false); selectMonth(key) }}
           onClose={() => setMonthPickerOpen(false)}
         />

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { toMonthKey, monthRange, shiftMonth, latestMonthKey, summarizeLoaded } from './monthRange.js'
+import { toMonthKey, monthRange, shiftMonth, latestMonthKey, earliestMonthKey, isMonthInRange, summarizeLoaded } from './monthRange.js'
 
 test('toMonthKey：月份補零', () => {
   assert.equal(toMonthKey(new Date(2026, 0, 31)), '2026-01')
@@ -39,4 +39,19 @@ test('summarizeLoaded：贊助不算收入', () => {
     [{ amount: 30 }, { amount: 999, isSponsorship: true }],
   )
   assert.deepEqual(r, { count: 2, expenseTotal: 150, incomeTotal: 30 })
+})
+
+test('earliestMonthKey：取最早的帳所在月份，沒有帳回傳 null', () => {
+  const a = new Date(2026, 8, 15).getTime()
+  const b = new Date(2026, 9, 3).getTime()
+  assert.equal(earliestMonthKey([b, a]), '2026-09')
+  assert.equal(earliestMonthKey([]), null)
+})
+
+test('isMonthInRange：含兩端，缺漏代表不限制', () => {
+  assert.equal(isMonthInRange('2026-09', '2026-09', '2026-10'), true)
+  assert.equal(isMonthInRange('2026-10', '2026-09', '2026-10'), true)
+  assert.equal(isMonthInRange('2026-11', '2026-09', '2026-10'), false)
+  assert.equal(isMonthInRange('2025-12', '2026-09', '2026-10'), false)
+  assert.equal(isMonthInRange('2020-01', undefined, undefined), true)
 })
