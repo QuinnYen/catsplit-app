@@ -70,11 +70,12 @@ const SettlePage = () => {
         const creditor = creditors[i]
         const debtor = debtors[j]
         const amount = Math.min(creditor.amt, debtor.amt)
-        if (amount > 0.01) {
+        // 四捨五入後為 0 的殘餘（分帳除不盡）不列成建議
+        if (Math.round(amount) > 0) {
           result.push({
             from: debtor.uid,
             to: creditor.uid,
-            amount: parseFloat(amount.toFixed(0)),
+            amount: Math.round(amount),
           })
         }
         creditor.amt -= amount
