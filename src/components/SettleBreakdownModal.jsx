@@ -1,5 +1,5 @@
-// 轉帳建議的計算說明彈窗：列出這筆轉帳兩個人的「旅費淨額＋贊助＝合計淨額」，說明為什麼是這個金額。
-// rows：[{ uid, name, avatar, trip, sponsor, net }]，金額皆為群組基準幣別，fmt 負責換算與格式化。
+// 轉帳建議的計算說明彈窗：列出這筆轉帳兩個人的算式（付了、應付、已結清轉帳、收入／退款、贊助 ＝ 合計淨額）。
+// rows：[{ uid, name, avatar, paid, owes, settled, income, sponsor, net }]，金額皆為群組基準幣別，fmt 負責換算與格式化。
 import { X } from 'lucide-react'
 import Avatar from './Avatar'
 import { useI18n } from '../i18n/I18nProvider'
@@ -33,9 +33,12 @@ const BreakdownModal = ({ rows, amount, fmt, onClose }) => {
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text)' }}>{r.name}</div>
               </div>
               {[
-                [t('settle.tripNet'), r.trip],
+                [t('settle.linePaid'), r.paid, true],
+                [t('settle.lineOwes'), -r.owes, true],
+                [t('settle.lineSettled'), r.settled],
+                [t('settle.lineIncome'), r.income],
                 [t('settle.sponsorLine'), r.sponsor],
-              ].map(([label, v]) => (
+              ].filter(([, v, always]) => always || Math.abs(v) > 0.01).map(([label, v]) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--cs-text-sub)', marginBottom: 4 }}>
                   <span>{label}</span>
                   <span style={{ color: color(v), fontVariantNumeric: 'tabular-nums' }}>{signed(v)}</span>

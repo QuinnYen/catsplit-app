@@ -12,6 +12,7 @@ import SettleBreakdownModal from '../components/SettleBreakdownModal'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
+import { buildPersonBreakdown } from '../utils/settleBreakdown'
 import { useI18n } from '../i18n/I18nProvider'
 import { paymentMethodLabel } from '../i18n/codes'
 
@@ -24,7 +25,7 @@ const SettlePage = () => {
   const [balances, setBalances] = useState({})
   const [settledRecords, setSettledRecords] = useState([])
   const [settlements, setSettlements] = useState([])
-  const [sponsorships, setSponsorships] = useState([])
+  const [incomes, setIncomes] = useState([])
   const [breakdown, setBreakdown] = useState(null)
   const [loading, setLoading] = useState(true)
   const [displayCurrency, setDisplayCurrency] = useState(null)
@@ -51,7 +52,7 @@ const SettlePage = () => {
       const settlementsData = settlementsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setSettledRecords(settlementsData)
       const incomesData = incomesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-      setSponsorships(incomesData.filter(i => i.isSponsorship))
+      setIncomes(incomesData)
 
       // 計算餘額：支出分帳 + 已結清紀錄 + 收入（含贊助）
       const balance = computeMemberBalances(groupData.members, expensesData, settlementsData, incomesData)
@@ -104,13 +105,12 @@ const SettlePage = () => {
   const dispCurr = getCurrency(displayCurrency || baseCurrency)
   const fmt = (amount) => `${dispCurr.symbol} ${i18nFmt.num(Math.round(amount * displayRate))}`
 
-  // 贊助：給出去為負、收到為正
-  const sponsoredOf = (uid) => sponsorships.reduce((sum, s) => sum + (s.splits?.[uid] || 0) - (s.received?.[uid] || 0), 0)
-  const breakdownRows = (breakdown ? [breakdown.from, breakdown.to] : []).map(uid => {
-    const net = balances[uid] ?? 0
-    const sponsor = sponsoredOf(uid)
-    return { uid, name: group.memberProfiles?.[uid]?.name, avatar: group.memberProfiles?.[uid]?.avatar, trip: net - sponsor, sponsor, net }
-  })
+  // 某人的餘額由哪些部分組成（付了、應付、已結清轉帳、收入／退款、贊助），加總等於他的餘額
+  const personBreakdown = (uid) => buildPersonBreakdown(uid, { expenses, settlements: settledRecords, incomes })
+  const signedFmt = (v) => `${v > 0 ? '+' : '-'}${fmt(Math.abs(v))}`
+  const breakdownRows = (breakdown ? [breakdown.from, breakdown.to] : []).map(uid => ({
+    uid, name: group.memberProfiles?.[uid]?.name, avatar: group.memberProfiles?.[uid]?.avatar, ...personBreakdown(uid),
+  }))
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
   const totalText = rateLoading ? '...' : fmt(total)
@@ -177,21 +177,21 @@ const SettlePage = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {group.members.map(uid => {
               const profile = group.memberProfiles?.[uid]
-              const paid = expenses.reduce((sum, e) => sum + (e.payments?.[uid] || 0), 0)
-              const shouldPay = expenses.reduce((sum, e) => sum + (e.splits?.[uid] || 0), 0)
+              const d = personBreakdown(uid)
               const diff = balances[uid] ?? 0
-              const sponsored = sponsoredOf(uid)
 
               return (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar src={profile?.avatar} name={profile?.name} size={36} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text)', marginBottom: 2 }}>{profile?.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.paid', { amount: fmt(paid) })}</div>
-                    <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.owes', { amount: fmt(shouldPay) })}</div>
-                    {Math.abs(sponsored) > 0.01 && (
-                      <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.sponsored', { amount: `${sponsored > 0 ? '+' : '-'}${fmt(Math.abs(sponsored))}` })}</div>
-                    )}
+                    <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.paid', { amount: fmt(d.paid) })}</div>
+                    <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.owes', { amount: fmt(d.owes) })}</div>
+                    {[[t('settle.lineSettled'), d.settled], [t('settle.lineIncome'), d.income], [t('settle.sponsorLine'), d.sponsor]]
+                      .filter(([, v]) => Math.abs(v) > 0.01)
+                      .map(([label, v]) => (
+                        <div key={label} style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{label} {signedFmt(v)}</div>
+                      ))}
                   </div>
                   <div style={{
                     fontSize: 13, fontWeight: 500, flexShrink: 0,
@@ -252,16 +252,14 @@ const SettlePage = () => {
                       >
                         {t('settle.goTransfer')}
                       </button>
-                      {sponsorships.length > 0 && (
-                        <button
-                          onClick={() => setBreakdown(s)}
-                          aria-label={t('settle.breakdown')}
-                          title={t('settle.breakdown')}
-                          style={{ width: 42, borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <Info size={18} color="var(--cs-text-sub)" />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => setBreakdown(s)}
+                        aria-label={t('settle.breakdown')}
+                        title={t('settle.breakdown')}
+                        style={{ width: 42, borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Info size={18} color="var(--cs-text-sub)" />
+                      </button>
                     </div>
                   </div>
                 )
