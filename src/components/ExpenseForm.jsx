@@ -538,6 +538,10 @@ const ExpenseForm = ({
               ))}
             <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(customTotal - amountNum) < 0.01 ? 'var(--cs-rc-get)' : 'var(--cs-rc-owe)' }}>
               {t('form.allocatedSum', { symbol: getCurrency(currency).symbol, a: customTotal.toFixed(0), b: amount || 0 })}
+              {amountNum > 0 && Math.abs(amountNum - customTotal) >= 0.01 && (
+                // 還差多少或超出多少，免得另外開計算機；最多顯示到小數兩位
+                ` · ${t(customTotal < amountNum ? 'form.remaining' : 'form.overAllocated', { symbol: getCurrency(currency).symbol, n: fmt.num(Math.round(Math.abs(amountNum - customTotal) * 100) / 100) })}`
+              )}
             </div>
           </div>
         )}

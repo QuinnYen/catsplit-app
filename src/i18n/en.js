@@ -295,6 +295,8 @@ export default {
   'form.sharesTotal': '{n} shares in total',
   'form.allocatedPercent': 'Allocated {p}% / 100%',
   'form.allocatedSum': 'Allocated {symbol} {a} / {b}',
+  'form.remaining': '{symbol} {n} left',
+  'form.overAllocated': '{symbol} {n} over',
   'form.shareToLine': 'Share to a LINE chat after saving',
   'form.noteLabel': 'Note (optional)',
   'form.notePlaceholder': 'e.g. who joined, what it was for...',

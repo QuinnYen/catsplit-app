@@ -295,6 +295,8 @@ export default {
   'form.sharesTotal': '共 {n} 份',
   'form.allocatedPercent': '已分配 {p}% / 100%',
   'form.allocatedSum': '已分配 {symbol} {a} / {b}',
+  'form.remaining': '剩餘 {symbol} {n}',
+  'form.overAllocated': '超出 {symbol} {n}',
   'form.shareToLine': '儲存後分享到 LINE 群組',
   'form.noteLabel': '備註（選填）',
   'form.notePlaceholder': '例如：和誰一起、用途說明...',
