@@ -18,7 +18,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory } from '../i18n/codes'
 import { computeBudgetStatus } from '../utils/budget'
 import useSpendMethods from '../hooks/useSpendMethods'
-import { CASH, encodeSpend, decodeSpend } from '../utils/spendMethods'
+import { CASH, normalizeSpendType } from '../utils/spendMethods'
 
 const EditExpensePage = ({ kind = 'expense' }) => {
   const { t } = useI18n()
@@ -56,7 +56,8 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const [existingReceiptPath, setExistingReceiptPath] = useState(null)
   const [removeExistingReceipt, setRemoveExistingReceipt] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [spendMethod, setSpendMethod] = useState(CASH)
+  const [spendType, setSpendType] = useState(CASH)
+  const [spendNote, setSpendNote] = useState('')
   const spendMethods = useSpendMethods(user?.guest ? null : user?.uid)
 
   const [savedRate, setSavedRate] = useState(null)
@@ -82,7 +83,8 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       if (expense.receiptPath) setExistingReceiptPath(expense.receiptPath)
       setTitle(expense.title)
       setNote(expense.note || '')
-      setSpendMethod(encodeSpend(expense.paymentMethod, expense.paymentNote))
+      setSpendType(normalizeSpendType(expense.paymentMethod))
+      setSpendNote(expense.paymentNote || '')
       setAmount(String(expense.originalAmount ?? expense.amount))
       setCurrency(expense.currency || base)
       setSavedRate({ currency: expense.currency || base, rate: expense.exchangeRate ?? 1 })
@@ -233,7 +235,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
         note: note.trim(),
-        ...(!isIncome && { paymentMethod: decodeSpend(spendMethod).type, paymentNote: decodeSpend(spendMethod).note || deleteField() }),
+        ...(!isIncome && { paymentMethod: spendType, paymentNote: spendNote || deleteField() }),
         createdAt: Timestamp.fromDate(new Date(expenseDate)),
         hasTime: true,
         ...receiptUpdate,
@@ -318,7 +320,8 @@ const EditExpensePage = ({ kind = 'expense' }) => {
           existingReceiptPath={existingReceiptPath}
           removeExistingReceipt={removeExistingReceipt} setRemoveExistingReceipt={setRemoveExistingReceipt}
           budgetPreview={budgetPreview}
-          spendMethod={spendMethod} setSpendMethod={setSpendMethod}
+          spendType={spendType} setSpendType={setSpendType}
+          spendNote={spendNote} setSpendNote={setSpendNote}
           spendMethods={user?.guest || isIncome ? undefined : spendMethods ?? []}
         />
 

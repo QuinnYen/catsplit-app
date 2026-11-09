@@ -9,7 +9,7 @@ import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel, normalizeCategory } from '../i18n/codes'
-import { SPEND_TYPES, spendTypeLabel, encodeSpend, decodeSpend } from '../utils/spendMethods'
+import { SPEND_TYPES, spendTypeLabel, normalizeSpendType } from '../utils/spendMethods'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORIES, SPLIT_TYPES, NOTE_MAX_LENGTH } from '../config/expenseForm'
 
 const inputStyle = {
@@ -153,7 +153,7 @@ const ExpenseForm = ({
   // 預算提示（computeBudgetStatus 的結果；undefined 時不顯示）
   budgetPreview,
   // 付款方式（僅支出；spendMethods 為 undefined 時不顯示，例如訪客）
-  spendMethod, setSpendMethod, spendMethods,
+  spendType, setSpendType, spendNote, setSpendNote, spendMethods,
 }) => {
   const { t, fmt } = useI18n()
   const [showCalc, setShowCalc] = useState(false)
@@ -266,16 +266,28 @@ const ExpenseForm = ({
           )}
 
           {kind === 'expense' && spendMethods && (
-            <div style={{ marginTop: 12 }}>
-              <div style={labelStyle}>{t('form.spendMethod')}</div>
-              <select value={spendMethod} onChange={e => setSpendMethod(e.target.value)} style={inputStyle}>
-                {SPEND_TYPES.map(c => <option key={c} value={c}>{spendTypeLabel(c, t)}</option>)}
-                {spendMethods.map(m => <option key={m.id} value={encodeSpend(m.type, m.name)}>{spendTypeLabel(m.type, t)}・{m.name}</option>)}
-                {/* 編輯舊帳時，那張卡可能已從清單刪除，仍要能顯示原值 */}
-                {spendMethod.includes('|') && !spendMethods.some(m => encodeSpend(m.type, m.name) === spendMethod) && (
-                  <option value={spendMethod}>{spendTypeLabel(decodeSpend(spendMethod).type, t)}・{decodeSpend(spendMethod).note}</option>
-                )}
-              </select>
+            <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={labelStyle}>{t('form.spendMethod')}</div>
+                <select value={spendType} onChange={e => { setSpendType(e.target.value); setSpendNote('') }} style={inputStyle}>
+                  {SPEND_TYPES.map(c => <option key={c} value={c}>{spendTypeLabel(c, t)}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 2, minWidth: 0 }}>
+                <div style={labelStyle}>{t('form.spendNote')}</div>
+                {(() => {
+                  const items = spendMethods.filter(m => normalizeSpendType(m.type) === spendType)
+                  // 編輯舊帳時，那個項目可能已從清單刪除，仍要能顯示原值
+                  const orphan = spendNote && !items.some(m => m.name === spendNote)
+                  return (
+                    <select value={spendNote} onChange={e => setSpendNote(e.target.value)} disabled={items.length === 0 && !orphan} style={inputStyle}>
+                      <option value="">{t('form.spendNoteNone')}</option>
+                      {items.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                      {orphan && <option value={spendNote}>{spendNote}</option>}
+                    </select>
+                  )
+                })()}
+              </div>
             </div>
           )}
         </div>

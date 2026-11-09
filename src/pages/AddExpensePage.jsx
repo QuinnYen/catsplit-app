@@ -16,7 +16,7 @@ import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORI
 import { useI18n } from '../i18n/I18nProvider'
 import { computeBudgetStatus } from '../utils/budget'
 import useSpendMethods from '../hooks/useSpendMethods'
-import { CASH, decodeSpend } from '../utils/spendMethods'
+import { CASH } from '../utils/spendMethods'
 import { buildLedgerFlex, groupLiffUrl, sendLedgerFlex } from '../utils/flexMessages'
 
 const AddExpensePage = () => {
@@ -49,7 +49,8 @@ const AddExpensePage = () => {
   const [receiptFile, setReceiptFile] = useState(null)
   const [receiptPreview, setReceiptPreview] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [spendMethod, setSpendMethod] = useState(CASH)
+  const [spendType, setSpendType] = useState(CASH)
+  const [spendNote, setSpendNote] = useState('')
   const spendMethods = useSpendMethods(user?.guest ? null : user?.uid)
 
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
@@ -196,8 +197,8 @@ const AddExpensePage = () => {
         exchangeRate: rate,
         amount: baseAmount,
         payments: basePayments,
-        paymentMethod: decodeSpend(spendMethod).type,
-        ...(decodeSpend(spendMethod).note && { paymentNote: decodeSpend(spendMethod).note }),
+        paymentMethod: spendType,
+        ...(spendNote && { paymentNote: spendNote }),
         splitType,
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
@@ -338,7 +339,8 @@ const AddExpensePage = () => {
           shareToLine={shareToLine} setShareToLine={setShareToLine}
           showShareOption={kind === 'expense' && safeIsInClient()}
           budgetPreview={budgetPreview}
-          spendMethod={spendMethod} setSpendMethod={setSpendMethod}
+          spendType={spendType} setSpendType={setSpendType}
+          spendNote={spendNote} setSpendNote={setSpendNote}
           spendMethods={user?.guest ? undefined : spendMethods ?? []}
         />
 
