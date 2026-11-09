@@ -9,7 +9,7 @@ import { useApp } from '../context/AppContext'
 import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
-import { DEFAULT_CATEGORIES, EDIT_INCOME_CATEGORIES } from '../config/expenseForm'
+import { DEFAULT_CATEGORIES, EDIT_EXPENSE_CATEGORIES, EDIT_INCOME_CATEGORIES } from '../config/expenseForm'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, primaryPayer } from '../utils/expenseHelpers'
 import { deleteFileByPath } from '../utils/storageCleanup'
@@ -29,7 +29,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
   const col = isIncome ? 'incomes' : 'expenses'
   const payField = isIncome ? 'received' : 'payments'
   const detailPath = `/group/${id}/${isIncome ? 'income' : 'expense'}/${expenseId}`
-  const categoryList = isIncome ? EDIT_INCOME_CATEGORIES : DEFAULT_CATEGORIES
+  const categoryList = isIncome ? EDIT_INCOME_CATEGORIES : EDIT_EXPENSE_CATEGORIES
 
   const [group, setGroup] = useState(null)
   const [originalExpense, setOriginalExpense] = useState(null)

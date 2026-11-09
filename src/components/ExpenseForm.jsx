@@ -187,6 +187,8 @@ const ExpenseForm = ({
               style={inputStyle}
             >
               {categories.map(c => <option key={c} value={c}>{categoryLabel(c, t)}</option>)}
+              {/* 舊支出的類別還是已移除的「其他」時，編輯時仍要顯示得出來 */}
+              {kind === 'expense' && !isEditingCategory && normalizeCategory(category) === 'other' && <option value="other">{categoryLabel('other', t)}</option>}
               <option value={CUSTOM_OPTION}>{t('form.custom')}</option>
             </select>
           </div>

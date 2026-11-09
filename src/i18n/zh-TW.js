@@ -11,6 +11,7 @@ export default {
   'category.shopping': '購物',
   'category.entertainment': '娛樂',
   'category.daily': '日用品',
+  'category.medical': '醫療',
   'category.other': '其他',
   'category.refund': '退款',
   'category.advance': '預收款',

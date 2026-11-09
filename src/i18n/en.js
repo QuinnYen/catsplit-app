@@ -11,6 +11,7 @@ export default {
   'category.shopping': 'Shopping',
   'category.entertainment': 'Entertainment',
   'category.daily': 'Daily needs',
+  'category.medical': 'Medical',
   'category.other': 'Other',
   'category.refund': 'Refund',
   'category.advance': 'Advance payment',
