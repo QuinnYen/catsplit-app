@@ -90,51 +90,49 @@ const CalendarPopup = ({ datePart, onPick }) => {
 
 const CLOCK_SIZE = 240
 const CLOCK_R = 90
+const CLOCK_R_INNER = 58
 
-// 時鐘：先選小時（12 小時制 + 上午/下午），選完自動切到分鐘，放開手指即套用並關閉
+// 時鐘：先選小時（24 小時制，外圈 12、1–11，內圈 00、13–23），選完自動切到分鐘，放開手指即套用並關閉
 const ClockPopup = ({ hour, minute, onChange, onDone }) => {
-  const { t } = useI18n()
   const [mode, setMode] = useState('hour')
   const [dragging, setDragging] = useState(false)
-  const pm = hour >= 12
-  const h12 = hour % 12 || 12
+  // 24 小時制：外圈 12、1–11，內圈 00、13–23
+  const outer = hour >= 1 && hour <= 12
 
-  const angleFromEvent = (e) => {
+  const apply = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const dx = e.clientX - (rect.left + rect.width / 2)
     const dy = e.clientY - (rect.top + rect.height / 2)
-    return (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360
-  }
-  const apply = (e) => {
-    const angle = angleFromEvent(e)
+    const angle = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360
     if (mode === 'hour') {
-      const h = Math.round(angle / 30) % 12
-      onChange(h + (pm ? 12 : 0), minute)
+      const idx = Math.round(angle / 30) % 12
+      const isOuter = Math.hypot(dx, dy) > (CLOCK_R + CLOCK_R_INNER) / 2 * (rect.width / CLOCK_SIZE)
+      onChange(isOuter ? idx || 12 : idx ? idx + 12 : 0, minute)
     } else {
       onChange(hour, Math.round(angle / 6) % 60)
     }
   }
-  const setPeriod = (toPm) => onChange((hour % 12) + (toPm ? 12 : 0), minute)
 
-  const handAngle = mode === 'hour' ? (h12 % 12) * 30 : minute * 6
+  const handAngle = mode === 'hour' ? (hour % 12) * 30 : minute * 6
+  const handR = mode === 'hour' && !outer ? CLOCK_R_INNER : CLOCK_R
   const rad = (handAngle * Math.PI) / 180
-  const hx = CLOCK_SIZE / 2 + CLOCK_R * Math.sin(rad)
-  const hy = CLOCK_SIZE / 2 - CLOCK_R * Math.cos(rad)
-  const labels = mode === 'hour' ? Array.from({ length: 12 }, (_, i) => i || 12) : Array.from({ length: 12 }, (_, i) => i * 5)
+  const hx = CLOCK_SIZE / 2 + handR * Math.sin(rad)
+  const hy = CLOCK_SIZE / 2 - handR * Math.cos(rad)
+  const labels = mode === 'hour'
+    ? [
+        ...Array.from({ length: 12 }, (_, i) => ({ text: String(i || 12), value: i || 12, r: CLOCK_R, i })),
+        ...Array.from({ length: 12 }, (_, i) => ({ text: pad(i ? i + 12 : 0), value: i ? i + 12 : 0, r: CLOCK_R_INNER, i })),
+      ]
+    : Array.from({ length: 12 }, (_, i) => ({ text: pad(i * 5), value: i * 5, r: CLOCK_R, i }))
 
   const bigBtn = (active) => ({ border: 'none', background: active ? 'var(--cs-soft)' : 'transparent', borderRadius: 6, padding: '4px 10px', fontSize: 32, fontWeight: 500, cursor: 'pointer', color: active ? 'var(--cs-rc-owe)' : 'var(--cs-text)' })
-  const periodBtn = (active) => ({ border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 13, cursor: 'pointer', background: active ? 'var(--cs-rc-stamp)' : 'var(--cs-soft)', color: active ? '#fff' : 'var(--cs-text-sub)' })
 
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 10 }}>
-        <button type="button" onClick={() => setMode('hour')} style={bigBtn(mode === 'hour')}>{pad(h12)}</button>
+        <button type="button" onClick={() => setMode('hour')} style={bigBtn(mode === 'hour')}>{pad(hour)}</button>
         <span style={{ fontSize: 32, color: 'var(--cs-text-sub)' }}>:</span>
         <button type="button" onClick={() => setMode('minute')} style={bigBtn(mode === 'minute')}>{pad(minute)}</button>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 8 }}>
-          <button type="button" onClick={() => setPeriod(false)} style={periodBtn(!pm)}>{t('time.am')}</button>
-          <button type="button" onClick={() => setPeriod(true)} style={periodBtn(pm)}>{t('time.pm')}</button>
-        </div>
       </div>
       <svg
         width={CLOCK_SIZE} height={CLOCK_SIZE} viewBox={`0 0 ${CLOCK_SIZE} ${CLOCK_SIZE}`}
@@ -151,14 +149,14 @@ const ClockPopup = ({ hour, minute, onChange, onDone }) => {
         <line x1={CLOCK_SIZE / 2} y1={CLOCK_SIZE / 2} x2={hx} y2={hy} stroke="var(--cs-rc-stamp)" strokeWidth={2} />
         <circle cx={CLOCK_SIZE / 2} cy={CLOCK_SIZE / 2} r={3} fill="var(--cs-rc-stamp)" />
         <circle cx={hx} cy={hy} r={18} fill="var(--cs-rc-stamp)" />
-        {labels.map((label, i) => {
+        {labels.map(({ text, value, r, i }, k) => {
           const a = (i * 30 * Math.PI) / 180
-          const x = CLOCK_SIZE / 2 + CLOCK_R * Math.sin(a)
-          const y = CLOCK_SIZE / 2 - CLOCK_R * Math.cos(a)
-          const selected = mode === 'hour' ? label === h12 : label === minute
+          const x = CLOCK_SIZE / 2 + r * Math.sin(a)
+          const y = CLOCK_SIZE / 2 - r * Math.cos(a)
+          const selected = mode === 'hour' ? value === hour : value === minute
           return (
-            <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={15} fill={selected ? 'var(--cs-on-brand)' : 'var(--cs-text)'} pointerEvents="none">
-              {mode === 'minute' ? pad(label) : label}
+            <text key={k} x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={r === CLOCK_R_INNER ? 13 : 15} fill={selected ? 'var(--cs-on-brand)' : 'var(--cs-text)'} pointerEvents="none">
+              {text}
             </text>
           )
         })}

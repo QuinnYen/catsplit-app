@@ -161,6 +161,11 @@
   .cs-cover-bg {
     display: block !important;
   }
+  /* 模糊放大版 scale(1.15) 會超出 header 左右，mask 只裁畫面不裁捲動範圍，導致頁面右側多出空白可橫向捲動；
+     overflow: clip 不會建立捲動容器，不影響 sticky */
+  .cs-header {
+    overflow: clip;
+  }
   .cs-cover {
     left: max(0px, calc((100% - 720px) / 2)) !important;
     right: max(0px, calc((100% - 720px) / 2)) !important;
