@@ -516,6 +516,7 @@ export default {
   'home.menu.spend': '付款方式',
   'spend.title': '付款方式',
   'spend.back': '返回',
+  'spend.credit': '信用卡',
   'spend.hint': '記支出時可選擇付款方式，統計頁會依方式加總。只有你自己看得到這份清單。',
   'spend.mine': '我的付款方式',
   'spend.builtin': '內建，無法修改',

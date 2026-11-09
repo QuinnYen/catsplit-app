@@ -516,6 +516,7 @@ export default {
   'home.menu.spend': 'Payment methods used',
   'spend.title': 'Payment methods used',
   'spend.back': 'Back',
+  'spend.credit': 'Credit card',
   'spend.hint': 'Pick one when adding an expense; the stats page totals by method. Only you can see this list.',
   'spend.mine': 'My methods',
   'spend.builtin': 'Built in, cannot be changed',

@@ -7,6 +7,7 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import useSpendMethods from '../hooks/useSpendMethods'
+import { BUILTIN_SPEND_METHODS, spendMethodLabel, isReservedSpendName } from '../utils/spendMethods'
 
 const NAME_MAX = 20
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
@@ -27,7 +28,7 @@ const SpendMethodsPage = () => {
   const handleSave = async () => {
     const name = form.name.trim()
     if (!name) return setError(t('spend.err.name'))
-    if (name.toLowerCase() === 'cash' || name === t('payMethod.cash') || methods.some(m => m.name === name && m.id !== form.id)) return setError(t('spend.err.duplicate'))
+    if (isReservedSpendName(name, t) || methods.some(m => m.name === name && m.id !== form.id)) return setError(t('spend.err.duplicate'))
     setSaving(true)
     try {
       if (form.id) await updateDoc(doc(colRef, form.id), { name })
@@ -67,10 +68,12 @@ const SpendMethodsPage = () => {
           <button onClick={() => { setForm({ name: '' }); setError('') }} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('spend.add')}</button>
         </div>
 
-        <div style={card}>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{t('payMethod.cash')}</div>
-          <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>{t('spend.builtin')}</div>
-        </div>
+        {BUILTIN_SPEND_METHODS.map(c => (
+          <div key={c} style={card}>
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{spendMethodLabel(c, t)}</div>
+            <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>{t('spend.builtin')}</div>
+          </div>
+        ))}
 
         {methods === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
 

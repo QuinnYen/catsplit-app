@@ -9,6 +9,7 @@ import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel, normalizeCategory } from '../i18n/codes'
+import { BUILTIN_SPEND_METHODS, spendMethodLabel } from '../utils/spendMethods'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORIES, SPLIT_TYPES, NOTE_MAX_LENGTH } from '../config/expenseForm'
 
 const inputStyle = {
@@ -268,10 +269,10 @@ const ExpenseForm = ({
             <div style={{ marginTop: 12 }}>
               <div style={labelStyle}>{t('form.spendMethod')}</div>
               <select value={spendMethod} onChange={e => setSpendMethod(e.target.value)} style={inputStyle}>
-                <option value="cash">{t('payMethod.cash')}</option>
+                {BUILTIN_SPEND_METHODS.map(c => <option key={c} value={c}>{spendMethodLabel(c, t)}</option>)}
                 {spendMethods.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
                 {/* 編輯舊帳時，那張卡可能已從清單刪除，仍要能顯示原值 */}
-                {spendMethod !== 'cash' && !spendMethods.some(m => m.name === spendMethod) && <option value={spendMethod}>{spendMethod}</option>}
+                {!BUILTIN_SPEND_METHODS.includes(spendMethod) && !spendMethods.some(m => m.name === spendMethod) && <option value={spendMethod}>{spendMethod}</option>}
               </select>
             </div>
           )}
