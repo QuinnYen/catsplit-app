@@ -470,6 +470,7 @@ export default {
   'settle.total': 'Total',
   'settle.paid': 'Paid {amount}',
   'settle.owes': 'Owes {amount}',
+  'settle.sponsored': 'Sponsorship {amount}',
   'settle.suggestions': 'Suggested transfers',
   'settle.allSettled': 'Everyone is settled up!',
   'settle.noTransfers': 'No transfers needed',

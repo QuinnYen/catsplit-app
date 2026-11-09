@@ -7,6 +7,7 @@ import { db } from '../config/firebase'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
+import CollapsibleCard from '../components/CollapsibleCard'
 import SponsorModal from '../components/SponsorModal'
 import { CURRENCIES, getCurrency } from '../config/currencies'
 import useExchangeRate from '../hooks/useExchangeRate'
@@ -185,14 +186,15 @@ const SettlePage = () => {
         </div>
 
         {/* 每人明細 */}
-        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }}>{t('settle.perPerson')}</div>
+        <CollapsibleCard label={t('settle.perPerson')}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {group.members.map(uid => {
               const profile = group.memberProfiles?.[uid]
               const paid = expenses.reduce((sum, e) => sum + (e.payments?.[uid] || 0), 0)
               const shouldPay = expenses.reduce((sum, e) => sum + (e.splits?.[uid] || 0), 0)
               const diff = balances[uid] ?? 0
+              // 贊助：給出去為負、收到為正
+              const sponsored = sponsorships.reduce((sum, s) => sum + (s.recipients?.[uid] || 0) - (s.from === uid ? s.amount : 0), 0)
 
               return (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -201,6 +203,9 @@ const SettlePage = () => {
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text)', marginBottom: 2 }}>{profile?.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.paid', { amount: fmt(paid) })}</div>
                     <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.owes', { amount: fmt(shouldPay) })}</div>
+                    {Math.abs(sponsored) > 0.01 && (
+                      <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{t('settle.sponsored', { amount: `${sponsored > 0 ? '+' : '-'}${fmt(Math.abs(sponsored))}` })}</div>
+                    )}
                   </div>
                   <div style={{
                     fontSize: 13, fontWeight: 500, flexShrink: 0,
@@ -216,7 +221,7 @@ const SettlePage = () => {
               )
             })}
           </div>
-        </div>
+        </CollapsibleCard>
 
         {/* 轉帳建議 */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>

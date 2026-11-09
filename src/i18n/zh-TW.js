@@ -470,6 +470,7 @@ export default {
   'settle.total': '總支出',
   'settle.paid': '付了 {amount}',
   'settle.owes': '應付 {amount}',
+  'settle.sponsored': '贊助 {amount}',
   'settle.suggestions': '轉帳建議',
   'settle.allSettled': '大家都結清了！',
   'settle.noTransfers': '不需要任何轉帳',
