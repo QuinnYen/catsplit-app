@@ -9,7 +9,7 @@ import TabBar from '../components/TabBar'
 import { getCurrency } from '../config/currencies'
 import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory, categoryLabel } from '../i18n/codes'
-import { sumBySpendMethod, spendMethodLabel } from '../utils/spendMethods'
+import { sumBySpendMethod, spendTypeLabel } from '../utils/spendMethods'
 
 // 圖表色盤是資料色，兩種底色上都要分得清楚，所以固定不跟主題
 const CATEGORY_COLORS = ['#E8651A', '#3B7DD8', '#2F9E7A', '#D4A017', '#8A63C9', '#D4577A', '#5B8A9A', '#8B95A5'] // cs-color-ok
@@ -203,7 +203,7 @@ const StatsPage = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {stats.methods.map(m => (
                   <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                    <span style={{ flex: 1, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{spendMethodLabel(m.name, t)}</span>
+                    <span style={{ flex: 1, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{spendTypeLabel(m.name, t)}</span>
                     <span style={{ color: 'var(--cs-text-sub)', flexShrink: 0 }}>{stats.total > 0 ? ((m.amount / stats.total) * 100).toFixed(1) : '0.0'}%</span>
                     <span style={{ color: 'var(--cs-text)', fontWeight: 500, minWidth: 80, textAlign: 'right', flexShrink: 0 }}>{fmt(m.amount)}</span>
                   </div>

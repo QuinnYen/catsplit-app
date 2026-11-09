@@ -16,7 +16,7 @@ import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORI
 import { useI18n } from '../i18n/I18nProvider'
 import { computeBudgetStatus } from '../utils/budget'
 import useSpendMethods from '../hooks/useSpendMethods'
-import { CASH } from '../utils/spendMethods'
+import { CASH, decodeSpend } from '../utils/spendMethods'
 import { buildLedgerFlex, groupLiffUrl, sendLedgerFlex } from '../utils/flexMessages'
 
 const AddExpensePage = () => {
@@ -196,7 +196,8 @@ const AddExpensePage = () => {
         exchangeRate: rate,
         amount: baseAmount,
         payments: basePayments,
-        paymentMethod: spendMethod,
+        paymentMethod: decodeSpend(spendMethod).type,
+        ...(decodeSpend(spendMethod).note && { paymentNote: decodeSpend(spendMethod).note }),
         splitType,
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),

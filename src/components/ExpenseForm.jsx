@@ -9,7 +9,7 @@ import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel, normalizeCategory } from '../i18n/codes'
-import { BUILTIN_SPEND_METHODS, spendMethodLabel } from '../utils/spendMethods'
+import { SPEND_TYPES, spendTypeLabel, encodeSpend, decodeSpend } from '../utils/spendMethods'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORIES, SPLIT_TYPES, NOTE_MAX_LENGTH } from '../config/expenseForm'
 
 const inputStyle = {
@@ -269,10 +269,12 @@ const ExpenseForm = ({
             <div style={{ marginTop: 12 }}>
               <div style={labelStyle}>{t('form.spendMethod')}</div>
               <select value={spendMethod} onChange={e => setSpendMethod(e.target.value)} style={inputStyle}>
-                {BUILTIN_SPEND_METHODS.map(c => <option key={c} value={c}>{spendMethodLabel(c, t)}</option>)}
-                {spendMethods.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                {SPEND_TYPES.map(c => <option key={c} value={c}>{spendTypeLabel(c, t)}</option>)}
+                {spendMethods.map(m => <option key={m.id} value={encodeSpend(m.type, m.name)}>{spendTypeLabel(m.type, t)}・{m.name}</option>)}
                 {/* 編輯舊帳時，那張卡可能已從清單刪除，仍要能顯示原值 */}
-                {!BUILTIN_SPEND_METHODS.includes(spendMethod) && !spendMethods.some(m => m.name === spendMethod) && <option value={spendMethod}>{spendMethod}</option>}
+                {spendMethod.includes('|') && !spendMethods.some(m => encodeSpend(m.type, m.name) === spendMethod) && (
+                  <option value={spendMethod}>{spendTypeLabel(decodeSpend(spendMethod).type, t)}・{decodeSpend(spendMethod).note}</option>
+                )}
               </select>
             </div>
           )}

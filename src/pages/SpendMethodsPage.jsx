@@ -1,4 +1,4 @@
-// /spend-methods — 我的付款方式：新增、改名、刪除記帳時可選的付款方式（現金是內建的）。
+// /spend-methods — 我的付款方式清單：新增、修改、刪除記帳時可選的項目，每項歸屬一個固定大類（現金、信用卡…），統計只看大類。
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
@@ -7,7 +7,7 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import useSpendMethods from '../hooks/useSpendMethods'
-import { BUILTIN_SPEND_METHODS, spendMethodLabel, isReservedSpendName } from '../utils/spendMethods'
+import { SPEND_TYPES, DEFAULT_LIST_TYPE, normalizeSpendType, spendTypeLabel } from '../utils/spendMethods'
 
 const NAME_MAX = 20
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
@@ -28,11 +28,11 @@ const SpendMethodsPage = () => {
   const handleSave = async () => {
     const name = form.name.trim()
     if (!name) return setError(t('spend.err.name'))
-    if (isReservedSpendName(name, t) || methods.some(m => m.name === name && m.id !== form.id)) return setError(t('spend.err.duplicate'))
+    if (methods.some(m => m.name === name && m.id !== form.id)) return setError(t('spend.err.duplicate'))
     setSaving(true)
     try {
-      if (form.id) await updateDoc(doc(colRef, form.id), { name })
-      else await addDoc(colRef, { name, createdAt: serverTimestamp() })
+      if (form.id) await updateDoc(doc(colRef, form.id), { name, type: form.type })
+      else await addDoc(colRef, { name, type: form.type, createdAt: serverTimestamp() })
       setForm(null)
     } catch (err) {
       console.error('Failed to save spend method', err)
@@ -65,22 +65,18 @@ const SpendMethodsPage = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('spend.mine')}</div>
-          <button onClick={() => { setForm({ name: '' }); setError('') }} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('spend.add')}</button>
+          <button onClick={() => { setForm({ name: '', type: DEFAULT_LIST_TYPE }); setError('') }} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('spend.add')}</button>
         </div>
-
-        {BUILTIN_SPEND_METHODS.map(c => (
-          <div key={c} style={card}>
-            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{spendMethodLabel(c, t)}</div>
-            <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>{t('spend.builtin')}</div>
-          </div>
-        ))}
 
         {methods === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
 
         {methods?.map(m => (
           <div key={m.id} style={{ ...card, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-            <button onClick={() => { setForm({ id: m.id, name: m.name }); setError('') }} aria-label={t('common.edit')} style={iconBtn}><Pencil size={18} color="var(--cs-text-sub)" /></button>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>{spendTypeLabel(m.type, t)}</div>
+            </div>
+            <button onClick={() => { setForm({ id: m.id, name: m.name, type: normalizeSpendType(m.type) }); setError('') }} aria-label={t('common.edit')} style={iconBtn}><Pencil size={18} color="var(--cs-text-sub)" /></button>
             <button onClick={() => handleDelete(m)} aria-label={t('common.delete')} style={iconBtn}><Trash2 size={18} color="var(--cs-danger)" /></button>
           </div>
         ))}
@@ -90,6 +86,9 @@ const SpendMethodsPage = () => {
             <div style={{ ...card, width: '100%', maxWidth: 360, padding: 20, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{form.id ? t('spend.editTitle') : t('spend.addTitle')}</div>
               <input type="text" maxLength={NAME_MAX} value={form.name} autoFocus onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setError('') }} placeholder={t('spend.namePlaceholder')} style={input} />
+              <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} style={input}>
+                {SPEND_TYPES.map(c => <option key={c} value={c}>{spendTypeLabel(c, t)}</option>)}
+              </select>
               {error && <div style={{ fontSize: 12, color: 'var(--cs-danger)' }}>{error}</div>}
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => setForm(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text-sub)', fontSize: 14, cursor: 'pointer' }}>{t('common.cancel')}</button>

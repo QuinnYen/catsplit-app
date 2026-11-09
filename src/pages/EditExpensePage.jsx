@@ -1,7 +1,7 @@
 // /group/:id/expense/:expenseId/edit — 編輯或刪除單筆支出，並重新計算群組餘額與統計。
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, deleteDoc, deleteField, Timestamp } from 'firebase/firestore'
 import { ref, uploadBytes } from 'firebase/storage'
 import { CheckCircle2, Trash2 } from 'lucide-react'
 import { db, storage } from '../config/firebase'
@@ -18,7 +18,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory } from '../i18n/codes'
 import { computeBudgetStatus } from '../utils/budget'
 import useSpendMethods from '../hooks/useSpendMethods'
-import { CASH, normalizeSpendMethod } from '../utils/spendMethods'
+import { CASH, encodeSpend, decodeSpend } from '../utils/spendMethods'
 
 const EditExpensePage = ({ kind = 'expense' }) => {
   const { t } = useI18n()
@@ -82,7 +82,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       if (expense.receiptPath) setExistingReceiptPath(expense.receiptPath)
       setTitle(expense.title)
       setNote(expense.note || '')
-      setSpendMethod(normalizeSpendMethod(expense.paymentMethod))
+      setSpendMethod(encodeSpend(expense.paymentMethod, expense.paymentNote))
       setAmount(String(expense.originalAmount ?? expense.amount))
       setCurrency(expense.currency || base)
       setSavedRate({ currency: expense.currency || base, rate: expense.exchangeRate ?? 1 })
@@ -233,7 +233,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         splits: baseSplits,
         ...(splitType === 'shares' && { shares }),
         note: note.trim(),
-        ...(!isIncome && { paymentMethod: spendMethod }),
+        ...(!isIncome && { paymentMethod: decodeSpend(spendMethod).type, paymentNote: decodeSpend(spendMethod).note || deleteField() }),
         createdAt: Timestamp.fromDate(new Date(expenseDate)),
         hasTime: true,
         ...receiptUpdate,

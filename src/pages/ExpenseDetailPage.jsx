@@ -12,7 +12,7 @@ import { toLocalDateStr, expenseTimeStr, payerLabel } from '../utils/expenseHelp
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel } from '../i18n/codes'
-import { spendMethodLabel } from '../utils/spendMethods'
+import { spendMethodText } from '../utils/spendMethods'
 
 const SPLIT_LABEL = {
   equal: 'detail.split.equal',
@@ -155,7 +155,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
           {!isIncome && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 12, borderTop: '0.5px solid var(--cs-border)', fontSize: 12 }}>
               <span style={{ color: 'var(--cs-text-sub)' }}>{t('group.detail.method')}</span>
-              <span style={{ color: 'var(--cs-text)', fontWeight: 500 }}>{spendMethodLabel(expense.paymentMethod, t)}</span>
+              <span style={{ color: 'var(--cs-text)', fontWeight: 500 }}>{spendMethodText(expense, t)}</span>
             </div>
           )}
         </div>
