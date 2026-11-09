@@ -1,7 +1,7 @@
 // /group/:id — 群組首頁：總支出、依時間排列的支出與轉帳紀錄（可搜尋、依類別篩選）；訪客從邀請連結進來時也在此選名字加入。
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, collection, onSnapshot, orderBy, query, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore'
+import { doc, collection, onSnapshot, orderBy, query, where, limit, getDocs, Timestamp, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 
 import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download, Users } from 'lucide-react'
 import { db, auth } from '../config/firebase'
@@ -16,6 +16,8 @@ import { buildShareContent } from '../utils/shareContent'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import SearchSheet from '../components/SearchSheet'
+import MonthPicker from '../components/MonthPicker'
+import { spendTypeBg } from '../utils/spendMethods'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
 import { getCurrency } from '../config/currencies'
@@ -24,6 +26,7 @@ import { buildCsv, csvFileName } from '../utils/csvExport'
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { computeBudgetStatus } from '../utils/budget'
+import { toMonthKey, monthRange, shiftMonth, latestMonthKey, summarizeLoaded } from '../utils/monthRange'
 
 const EXPORT_CSV_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/exportCsv')
 
@@ -37,6 +40,10 @@ const GroupPage = () => {
   const [settlements, setSettlements] = useState([])
   const [incomes, setIncomes] = useState([])
   const [loading, setLoading] = useState(true)
+  const [monthKey, setMonthKey] = useState(null) // 'YYYY-MM'；null 表示還在找最近有帳的月份
+  const [allMode, setAllMode] = useState(false)
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false)
+  const [groupHasItems, setGroupHasItems] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
   const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [openMenuId, setOpenMenuId] = useState(null)
@@ -82,52 +89,63 @@ const GroupPage = () => {
     return () => unsubscribe()
   }, [id, user?.uid])
 
-  useEffect(() => {
-    if (!isMember) return
-    const q = query(
-      collection(db, 'groups', id, 'expenses'),
-      orderBy('createdAt', 'desc')
-    )
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      setExpenses(data)
-      setLoading(false)
-    }, (error) => {
-      console.error('Failed to load expenses:', error)
-      setLoading(false)
-    })
-    return () => unsubscribe()
-  }, [id, isMember])
+  // 明細依月份載入：預設是最近有帳的月份；按「全部」、開搜尋或套用篩選時才載入全部
+  const loadAll = allMode || searchOpen || isFiltering(filters)
+  const rangeKey = loadAll ? 'all' : monthKey
 
   useEffect(() => {
     if (!isMember) return
-    const q = query(
-      collection(db, 'groups', id, 'settlements'),
-      orderBy('createdAt', 'desc')
-    )
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      setSettlements(data)
-    }, (error) => {
-      console.error('Failed to load settlements:', error)
+    let cancelled = false
+    const latest = (col) => getDocs(query(collection(db, 'groups', id, col), orderBy('createdAt', 'desc'), limit(1)))
+    Promise.all([latest('expenses'), latest('incomes'), latest('settlements')]).then(snaps => {
+      if (cancelled) return
+      setGroupHasItems(snaps.some(sn => !sn.empty))
+      const millis = snaps.flatMap(sn => sn.docs.map(d => d.data().createdAt?.toMillis?.() ?? 0)).filter(Boolean)
+      setMonthKey(latestMonthKey(millis, Date.now()))
+    }).catch(error => {
+      console.error('Failed to find latest month:', error)
+      if (!cancelled) setMonthKey(toMonthKey(new Date()))
     })
-    return () => unsubscribe()
+    return () => { cancelled = true }
   }, [id, isMember])
 
   useEffect(() => {
-    if (!isMember) return
-    const q = query(
-      collection(db, 'groups', id, 'incomes'),
-      orderBy('createdAt', 'desc')
-    )
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      setIncomes(data)
-    }, (error) => {
-      console.error('Failed to load incomes:', error)
-    })
-    return () => unsubscribe()
-  }, [id, isMember])
+    if (!isMember || !rangeKey) return
+    const rangeQuery = (col) => {
+      const base = collection(db, 'groups', id, col)
+      if (rangeKey === 'all') return query(base, orderBy('createdAt', 'desc'))
+      const { start, end } = monthRange(rangeKey)
+      return query(base, where('createdAt', '>=', Timestamp.fromDate(start)), where('createdAt', '<', Timestamp.fromDate(end)), orderBy('createdAt', 'desc'))
+    }
+    const toList = (snapshot) => snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+    const unsubs = [
+      onSnapshot(rangeQuery('expenses'), (snapshot) => {
+        setExpenses(toList(snapshot))
+        setLoading(false)
+      }, (error) => {
+        console.error('Failed to load expenses:', error)
+        setLoading(false)
+      }),
+      onSnapshot(rangeQuery('settlements'), (snapshot) => setSettlements(toList(snapshot)), (error) => {
+        console.error('Failed to load settlements:', error)
+      }),
+      onSnapshot(rangeQuery('incomes'), (snapshot) => setIncomes(toList(snapshot)), (error) => {
+        console.error('Failed to load incomes:', error)
+      }),
+    ]
+    return () => unsubs.forEach(unsub => unsub())
+  }, [id, isMember, rangeKey])
+
+  const selectMonth = (key) => {
+    if (!allMode && key === monthKey) return
+    setLoading(true)
+    setAllMode(false)
+    setMonthKey(key)
+  }
+  const toggleAll = () => {
+    setLoading(true)
+    setAllMode(a => !a)
+  }
 
   const handleDeleteExpense = async (expenseId) => {
     if (!window.confirm(t('group.confirmDeleteExpense'))) return
@@ -152,21 +170,32 @@ const GroupPage = () => {
     }
   }
 
-  const total = expenses.reduce((sum, e) => sum + e.amount, 0)
-  // 贊助不算收入（不進總收入與預算）
-  const realIncomeList = incomes.filter(i => !i.isSponsorship)
-  const incomeTotal = realIncomeList.reduce((sum, i) => sum + i.amount, 0)
-  // 預算用已訂閱的清單加總（與總額卡的淨支出一致），不讀群組彙總欄位
+  // 總額卡與預算讀群組彙總（不受月份影響；贊助不進總收入與預算）
+  const total = group?.totalAmount ?? 0
+  const incomeTotal = group?.totalIncome ?? 0
   const budget = computeBudgetStatus(group?.budget, { totalAmount: total, totalIncome: incomeTotal })
 
   const handleExportCSV = async () => {
     if (exporting) return
-    const csv = buildCsv({ expenses, incomes, settlements, group, uid: user?.uid, t })
-    const filename = csvFileName({ group, incomes, settlements, t })
+    // 畫面上只載入部分月份，匯出要抓全部帳目
+    setExporting(true)
+    let csv, filename
+    try {
+      const [expSnap, setSnap, incSnap] = await Promise.all(['expenses', 'settlements', 'incomes'].map(col => getDocs(collection(db, 'groups', id, col))))
+      const toList = (snap) => snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      const allIncomes = toList(incSnap)
+      const allSettlements = toList(setSnap)
+      csv = buildCsv({ expenses: toList(expSnap), incomes: allIncomes, settlements: allSettlements, group, uid: user?.uid, t })
+      filename = csvFileName({ group, incomes: allIncomes, settlements: allSettlements, t })
+    } catch (e) {
+      console.error('Export failed', e)
+      alert(t('group.exportFailed'))
+      setExporting(false)
+      return
+    }
 
     // LINE 內建瀏覽器無法下載 blob：請雲端函式存檔並回傳短效網址，在外部瀏覽器開啟下載
     if (liffInstance?.isInClient?.() && EXPORT_CSV_URL) {
-      setExporting(true)
       try {
         const idToken = await auth.currentUser.getIdToken()
         const res = await fetch(EXPORT_CSV_URL, {
@@ -193,6 +222,7 @@ const GroupPage = () => {
     a.download = filename
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
+    setExporting(false)
   }
 
   // LINE 使用者認領訪客名字：之後這個名字只有本人能用
@@ -382,7 +412,7 @@ const GroupPage = () => {
               { label: t('eg.members'), Icon: Users, onClick: () => navigate(`/group/${id}/members`) },
               { label: t('group.menu.invite'), Icon: UserPlus, onClick: () => { setSettingsPos(null); setInviteOpen(true) } },
               {
-                label: exporting ? t('group.menu.exporting') : t('group.menu.export'), Icon: Download, disabled: expenses.length + incomes.length === 0 || exporting,
+                label: exporting ? t('group.menu.exporting') : t('group.menu.export'), Icon: Download, disabled: !groupHasItems || exporting,
                 onClick: async () => { await handleExportCSV(); setSettingsPos(null) },
               },
             ].map(({ label, Icon, onClick, disabled }) => (
@@ -506,10 +536,10 @@ const GroupPage = () => {
         >
           <div style={{ flex: 1 }}>
             <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>
-              {t('group.totalExpense')} · {t('group.expenseCount', { n: expenses.length })}
+              {t('group.totalExpense')} · {t('group.expenseCount', { n: group.totalExpenses ?? 0 })}
             </div>
             {/* 收入只列出金額，不下結論（可能是起始金，也可能是退款）；差額看統計頁的結餘 */}
-            {realIncomeList.length > 0 && (
+            {(group.incomeCount ?? 0) > 0 && (
               <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginBottom: 4 }}>
                 {t('stats.totalIncome')} {getCurrency(group.baseCurrency).symbol} {fmt.num(incomeTotal)}
               </div>
@@ -571,6 +601,38 @@ const GroupPage = () => {
             </button>
           </div>
         </div>
+
+        {/* 月份切換：搜尋／篩選中改看全部結果，這一列先收起 */}
+        {monthKey && groupHasItems && !isFiltering(filters) && (() => {
+          const sum = summarizeLoaded(expenses, incomes)
+          const symbol = getCurrency(group.baseCurrency).symbol
+          const arrow = { background: 'none', border: 'none', fontSize: 22, lineHeight: 1, padding: '2px 12px', cursor: 'pointer', color: 'var(--cs-text-sub)' }
+          return (
+            <div style={{ marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '4px 0', opacity: allMode ? 0.5 : 1 }}>
+                  <button onClick={() => selectMonth(shiftMonth(monthKey, -1))} aria-label={t('month.prev')} style={arrow}>‹</button>
+                  <button onClick={() => setMonthPickerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: 'var(--cs-text)', padding: '6px 4px' }}>
+                    {fmt.yearMonth(monthRange(monthKey).start)} ▾
+                  </button>
+                  <button onClick={() => selectMonth(shiftMonth(monthKey, 1))} aria-label={t('month.next')} style={arrow}>›</button>
+                </div>
+                <button
+                  onClick={toggleAll}
+                  style={{ padding: '10px 14px', borderRadius: 6, fontSize: 13, cursor: 'pointer', border: allMode ? '1.5px solid var(--cs-rc-stamp)' : '0.5px solid var(--cs-border)', background: allMode ? 'var(--cs-soft)' : 'var(--cs-card)', color: allMode ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)' }}
+                >
+                  {t('month.all')}
+                </button>
+              </div>
+              {!loading && (
+                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--cs-text-sub)' }}>
+                  {t('group.expenseCount', { n: sum.count })} · {t('group.totalExpense')} {symbol} {fmt.num(sum.expenseTotal)}
+                  {sum.incomeTotal > 0 && ` · ${t('stats.totalIncome')} ${symbol} ${fmt.num(sum.incomeTotal)}`}
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </div>
 
       {/* 支出列表 */}
@@ -579,7 +641,7 @@ const GroupPage = () => {
           <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
         )}
 
-        {!loading && expenses.length === 0 && settlements.length === 0 && incomes.length === 0 && (
+        {!loading && !groupHasItems && (
           <div style={{ textAlign: 'center', padding: '48px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Receipt size={48} color="var(--cs-line-soft)" /></div>
             <div style={{ color: 'var(--cs-text-sub)', fontSize: 14, marginBottom: 4 }}>{t('group.emptyTitle')}</div>
@@ -607,7 +669,9 @@ const GroupPage = () => {
             ...incomes.map(i => ({ ...i, _type: 'income' })),
           ].sort((a, b) => dayKey(b) - dayKey(a) || sortTime(b) - sortTime(a))
 
-          if (allItems.length === 0) return null
+          if (allItems.length === 0) return groupHasItems ? (
+            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('month.empty')}</div>
+          ) : null
 
           const filtering = isFiltering(filters)
           const shownItems = applyFilters(allItems, filters, {
@@ -738,7 +802,7 @@ const GroupPage = () => {
                         <div key={item.id} style={{ position: 'relative' }}>
                           <div
                             onClick={() => navigate(`/group/${id}/expense/${item.id}`)}
-                            style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: spendTypeBg(item.paymentMethod), borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
                           >
@@ -816,6 +880,14 @@ const GroupPage = () => {
           )
         })()}
       </div>
+
+      {monthPickerOpen && monthKey && (
+        <MonthPicker
+          value={monthKey}
+          onPick={(key) => { setMonthPickerOpen(false); selectMonth(key) }}
+          onClose={() => setMonthPickerOpen(false)}
+        />
+      )}
 
       {searchOpen && (
         <SearchSheet

@@ -1,6 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { sumBySpendMethod, normalizeSpendType, spendMethodText } from './spendMethods.js'
+import { sumBySpendMethod, normalizeSpendType, spendMethodText, spendTypeBg, SPEND_TYPES } from './spendMethods.js'
+
+test('spendTypeBg：六個大類顏色互不相同，缺值與不認得的值同現金', () => {
+  const colors = SPEND_TYPES.map(spendTypeBg)
+  assert.equal(new Set(colors).size, SPEND_TYPES.length)
+  assert.equal(spendTypeBg(undefined), spendTypeBg('cash'))
+  assert.equal(spendTypeBg('不認得'), spendTypeBg('cash'))
+})
 
 const t = k => ({ 'spend.type.cash': '現金', 'spend.type.credit': '信用卡', 'spend.type.transit': '交通卡' }[k] ?? k)
 

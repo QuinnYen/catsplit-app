@@ -9,6 +9,10 @@ export const normalizeSpendType = (raw) => (SPEND_TYPES.includes(raw) ? raw : CA
 
 export const spendTypeLabel = (raw, t) => t(`spend.type.${normalizeSpendType(raw)}`)
 
+// 群組頁明細列的淡底色：借用主題裡兩種模式都有的 --cs-gi-{色}-bg（靛與藍太像，所以不用）
+const SPEND_TINT = { cash: 'green', credit: 'blue', mobile: 'purple', debit: 'yellow', emoney: 'orange', transit: 'red' }
+export const spendTypeBg = (raw) => `var(--cs-gi-${SPEND_TINT[normalizeSpendType(raw)]}-bg)`
+
 // 明細顯示：「信用卡・國泰 CUBE」，沒有備註就只有大類
 export const spendMethodText = (expense, t) =>
   [spendTypeLabel(expense.paymentMethod, t), expense.paymentNote].filter(Boolean).join('・')
