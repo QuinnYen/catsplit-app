@@ -17,7 +17,7 @@ import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
 import SearchSheet from '../components/SearchSheet'
 import MonthPicker from '../components/MonthPicker'
-import { spendTypeBg } from '../utils/spendMethods'
+import { spendTypeBg, spendTypeColor } from '../utils/spendMethods'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
 import { getCurrency } from '../config/currencies'
@@ -811,7 +811,7 @@ const GroupPage = () => {
                         <div key={item.id} style={{ position: 'relative' }}>
                           <div
                             onClick={() => navigate(`/group/${id}/expense/${item.id}`)}
-                            style={{ background: spendTypeBg(item.paymentMethod), borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: `linear-gradient(90deg, ${spendTypeBg(item.paymentMethod)}, var(--cs-card) 70%)`, borderRadius: 8, border: '0.5px solid var(--cs-border)', borderLeft: `4px solid ${spendTypeColor(item.paymentMethod)}`, padding: '12px 14px 12px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
                           >

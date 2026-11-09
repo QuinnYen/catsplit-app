@@ -9,8 +9,10 @@ export const normalizeSpendType = (raw) => (SPEND_TYPES.includes(raw) ? raw : CA
 
 export const spendTypeLabel = (raw, t) => t(`spend.type.${normalizeSpendType(raw)}`)
 
-// 群組頁明細列的淡底色：色票定義在 index.css 的 --cs-spend-{大類}-bg（兩種主題各自調整）
+// 群組頁明細列的底色：色票定義在 index.css 的 --cs-spend-{大類}-bg（兩種主題各自調整），從左往右淡出到卡片色
 export const spendTypeBg = (raw) => `var(--cs-spend-${normalizeSpendType(raw)}-bg)`
+// 明細列左邊線的顏色
+export const spendTypeColor = (raw) => `var(--cs-spend-${normalizeSpendType(raw)})`
 
 // 明細顯示：「信用卡・國泰 CUBE」，沒有備註就只有大類
 export const spendMethodText = (expense, t) =>
