@@ -1,0 +1,26 @@
+# 匯率頁與其他小功能
+
+日期：2026-11-14　狀態：backlog（自 todo.md 搬入，尚未 brainstorm；動工前先走設計流程產出正式 spec）
+
+
+**匯率換算頁（P12 之後、P18 之前；尚無 spec）**
+- [ ] 等使用者提供喜歡的 App 截圖，依截圖寫 spec；視覺沿用專案 `--cs-*` 主題變數（暗黑模式、`check:colors`）。
+- [ ] 「記一筆」接到 P12 約定的 `/ledger/new?amount=…&currency=…&rate=…&source=fx`。
+- [ ] 目前 `CURRENCIES` 只有 TWD、JPY、USD、EUR、CNY，匯率來源 open.er-api.com；截圖的 App 若支援更多幣別或歷史匯率，寫 spec 時決定是否擴充。
+
+**預算（第一版之後）**
+- 分類預算：已移到 P8。
+- 每月：`period.type = 'monthly'`＋月初日；需要本月帳目加總；`StatsPage` 加期間選擇器與預算標記。
+- 跨過 80%／100% 時用 `liff.sendMessages` 提醒（需避免重複提醒）。
+- 開放修改基準幣時，要同步換算或清除 `budget`。
+
+**網頁版**
+- [ ] 鍵盤操作與滑鼠 hover 狀態。
+
+**已知小問題**
+- `memberExpenseCounts` 有寫入但 `src/` 找不到讀取者。
+- 建立者「移除成員」是直接移除，被移除者的名字會顯示為「未知」，與「退出」保留訪客名字的行為不一致。
+- 移除成員後 `memberBalances` 仍殘留其 key。
+- `guestLogin` 沒有頻率限制。
+- `GroupPage` 的 `expenses`、`settlements` 查詢沒有上限，帳目多時讀取量會成長。
+- 官方帳號加好友：授權畫面的選項只在第一次授權出現。已改為在 LINE 內進 App 時（任何頁面），對非好友呼叫 `liff.requestFriendship()`，每 30 天最多一次（`useOfficialAccountPrompt`，掛在 `App.jsx` 的 `ProtectedRoutes`），上次檢查時間存 `users/{uid}/settings/oaPrompt`；首頁與群組設定的「官方帳號」入口保留。已在 LINE 實測：封鎖或刪除過官方帳號的人，LINE 會改問「解除封鎖」（`getFriendship` 分不出兩者，LINE 行為，非 bug）。

@@ -15,7 +15,7 @@ functions/index.js           # lineLogin、verifyLiffToken、guestLogin、claimM
 firestore.rules              # Firestore 存取規則
 firestore-tests/             # rules 測試（npm run test:rules，需模擬器）
 storage.rules                # Storage 存取規則
-storage-cors.json            # bucket CORS（需手動套用）
+scripts/storage/            # bucket CORS 與生命週期設定（需手動套用，見 operations.md）
 ```
 
 ## 技術棧

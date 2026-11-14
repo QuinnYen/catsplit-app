@@ -13,10 +13,10 @@
 
 ## Storage CORS
 
-`getBlob()` 需要 bucket 設定 CORS，設定內容在 `storage-cors.json`，不會隨部署更新，需手動套用：
+`getBlob()` 需要 bucket 設定 CORS，設定內容在 `scripts/storage/storage-cors.json`，不會隨部署更新，需手動套用：
 
 ```bash
-gcloud storage buckets update gs://catsplit-app.firebasestorage.app --cors-file=storage-cors.json
+gcloud storage buckets update gs://catsplit-app.firebasestorage.app --cors-file=scripts/storage/storage-cors.json
 ```
 
 ## 匯出 CSV（`exportCsv`）
@@ -35,10 +35,10 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
    gcloud iam service-accounts add-iam-policy-binding $SA      --member="serviceAccount:$SA" --role=roles/iam.serviceAccountTokenCreator --project=catsplit-app
    ```
 
-2. **自動清除**：`exports/` 底下的檔案 1 天後刪除（設定在 `storage-lifecycle.json`）。這個指令會**取代整個 bucket 的生命週期設定**，目前沒有其他規則。
+2. **自動清除**：`exports/` 底下的檔案 1 天後刪除（設定在 `scripts/storage/storage-lifecycle.json`）。這個指令會**取代整個 bucket 的生命週期設定**，目前沒有其他規則。
 
    ```bash
-   gcloud storage buckets update gs://catsplit-app.firebasestorage.app --lifecycle-file=storage-lifecycle.json
+   gcloud storage buckets update gs://catsplit-app.firebasestorage.app --lifecycle-file=scripts/storage/storage-lifecycle.json
    ```
 
 `storage.rules` 沒有 `exports/` 的規則，所以前端無法直接讀寫，只有函式（Admin SDK）能存取。
@@ -48,7 +48,7 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 漏改會導致登入或收據載入失敗。
 
 1. `functions/index.js` 的 `ALLOWED_ORIGINS`
-2. `storage-cors.json`，並重新執行上面的指令
+2. `scripts/storage/storage-cors.json`，並重新執行上面的指令
 3. LINE Developers 後台的 LIFF Endpoint URL 與 LINE Login Callback URL
 
 ## 備份與用量
