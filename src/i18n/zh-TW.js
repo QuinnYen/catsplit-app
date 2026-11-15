@@ -494,6 +494,7 @@ export default {
   'flex.openGroup': '開啟群組',
   'transfer.title': '記錄轉帳',
   'transfer.suggested': '建議 {amount}',
+  'transfer.rateError': '匯率抓取失敗，請稍後再試，或改用群組基準幣轉帳',
   'transfer.payeeMethods': '{name} 的收款方式',
   'transfer.counterparty': '對方',
   'transfer.notePlaceholder': '例如：現金面交、分兩次轉...',

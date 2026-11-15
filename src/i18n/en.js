@@ -494,6 +494,7 @@ export default {
   'flex.openGroup': 'Open group',
   'transfer.title': 'Record transfer',
   'transfer.suggested': 'Suggested {amount}',
+  'transfer.rateError': 'Failed to fetch the exchange rate. Please try again later, or transfer in the group currency',
   'transfer.payeeMethods': '{name}\'s payment methods',
   'transfer.counterparty': 'The other person',
   'transfer.notePlaceholder': 'e.g. Cash in person, paid in two transfers...',

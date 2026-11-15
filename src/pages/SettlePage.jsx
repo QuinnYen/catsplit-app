@@ -30,9 +30,7 @@ const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
 
   const handleGo = () => {
     if (!ready) return
-    onGo(isForeign
-      ? `amount=${shown}&currency=${currency}&rate=${1 / exchangeRate}&baseAmount=${s.amount}`
-      : `amount=${s.amount}&currency=${baseCurrency}`)
+    onGo(`amount=${s.amount}&currency=${currency}`)
   }
 
   return (

@@ -11,6 +11,8 @@ import StickyFooter from '../components/StickyFooter'
 import ShareToLineToggle from '../components/ShareToLineToggle'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
 import { getCurrency } from '../config/currencies'
+import useExchangeRate from '../hooks/useExchangeRate'
+import { computeTransferAmounts } from '../utils/transferAmounts'
 import { buildLedgerFlex, groupLiffUrl, sendLedgerFlex } from '../utils/flexMessages'
 import { useI18n } from '../i18n/I18nProvider'
 import { PAYMENT_METHOD_CODES, paymentMethodLabel } from '../i18n/codes'
@@ -27,14 +29,11 @@ const TransferPage = () => {
 
   const fromUid = searchParams.get('from')
   const toUid = searchParams.get('to')
-  const suggestedAmount = parseFloat(searchParams.get('amount') || '0')
-  const currency = searchParams.get('currency') || 'TWD'
-  // 結算頁選了非基底幣別時帶入：rate = 1 單位該幣別等於多少基底幣，baseAmount = 建議金額的基底幣精確值
-  const rate = parseFloat(searchParams.get('rate') || '1')
-  const suggestedBase = parseFloat(searchParams.get('baseAmount') || '0')
+  const baseSuggested = parseFloat(searchParams.get('amount') || '0') // 結算頁的建議金額，單位是群組基準幣
+  const currency = searchParams.get('currency') || 'TWD' // 這筆要用哪個幣別轉；匯率由本頁自己抓，不從網址帶
 
   const [group, setGroup] = useState(null)
-  const [customAmount, setCustomAmount] = useState(String(suggestedAmount))
+  const [customAmount, setCustomAmount] = useState(null) // null：沒改過，沿用建議金額
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [note, setNote] = useState('')
   const [shareToLine, setShareToLine] = useState(false)
@@ -60,14 +59,14 @@ const TransferPage = () => {
 
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 
-  const actualAmount = parseFloat(customAmount) || 0
   const baseCurrency = group?.baseCurrency || 'TWD'
   const isForeign = currency !== baseCurrency
-  // 餘額一律以基底幣別計算；金額沒改就用結算頁給的精確基底值，避免來回換算的誤差
-  const baseAmount = !isForeign ? actualAmount
-    : actualAmount === suggestedAmount && suggestedBase > 0 ? suggestedBase
-    : parseFloat((actualAmount * rate).toFixed(2))
-  const isValid = actualAmount > 0 && (!isForeign || rate > 0)
+  // 群組還沒載入時傳空字串，hook 不會去抓匯率
+  const { exchangeRate: rateToCurrency, rateError } = useExchangeRate(baseCurrency, group ? currency : '')
+  const { ready, suggested: suggestedAmount, actual: actualAmount, baseAmount, rate } = computeTransferAmounts({
+    baseSuggested, currency, baseCurrency, rateToCurrency, customAmount,
+  })
+  const isValid = ready && actualAmount > 0
 
   const handleConfirm = async () => {
     if (!isValid) return
@@ -176,7 +175,7 @@ const TransferPage = () => {
             <input
               type="number"
               inputMode="decimal"
-              value={customAmount}
+              value={customAmount ?? (ready ? String(suggestedAmount) : '')}
               onChange={e => setCustomAmount(e.target.value)}
               style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 22, fontWeight: 700, color: 'var(--cs-rc-owe)', textAlign: 'center' }}
             />
@@ -186,10 +185,13 @@ const TransferPage = () => {
               ≈ {fmt.money(baseAmount, baseCurrency)}
             </div>
           )}
-          {actualAmount !== suggestedAmount && suggestedAmount > 0 && (
+          {isForeign && rateError && (
+            <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--cs-danger)', marginTop: 8 }}>{t('transfer.rateError')}</div>
+          )}
+          {ready && actualAmount !== suggestedAmount && suggestedAmount > 0 && (
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <button
-                onClick={() => setCustomAmount(String(suggestedAmount))}
+                onClick={() => setCustomAmount(null)}
                 style={{ fontSize: 11, color: 'var(--cs-text-sub)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
               >
                 {t('transfer.suggested', { amount: fmt.money(suggestedAmount, currency) })}
