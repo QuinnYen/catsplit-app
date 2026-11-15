@@ -495,7 +495,7 @@ export default {
   'settle.calculating': 'Calculating...',
   'settle.title': 'Settle up',
   'settle.summary': '{members} members · {count} expenses',
-  'settle.fxNote': 'Amounts converted at the live rate are for reference only. The actual amount is in {currency}',
+  'settle.currency': 'Transfer currency',
   'settle.perPerson': 'Spending by person',
   'settle.total': 'Total',
   'settle.paid': 'Paid {amount}',

@@ -785,8 +785,13 @@ const GroupPage = () => {
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
                               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-success)' }}>
-                                {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.amount)}
+                                {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
                               </div>
+                              {item.originalAmount != null && (
+                                <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>
+                                  ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(item.amount)}
+                                </div>
+                              )}
                             </div>
                             <ChevronRight size={16} color="#66bb6a" style={{ flexShrink: 0 }} />
                           </div>
@@ -966,7 +971,12 @@ const GroupPage = () => {
             </div>
 
             <div style={{ textAlign: 'center', fontSize: 26, fontWeight: 500, color: 'var(--cs-success)', marginBottom: 16 }}>
-              {getCurrency(detailSettlement.currency || group.baseCurrency).symbol} {fmt.num(detailSettlement.amount)}
+              {getCurrency(detailSettlement.currency || group.baseCurrency).symbol} {fmt.num(detailSettlement.originalAmount ?? detailSettlement.amount)}
+              {detailSettlement.originalAmount != null && (
+                <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--cs-text-mute)', marginTop: 2 }}>
+                  ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(detailSettlement.amount)}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>

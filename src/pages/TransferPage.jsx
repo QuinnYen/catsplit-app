@@ -29,6 +29,9 @@ const TransferPage = () => {
   const toUid = searchParams.get('to')
   const suggestedAmount = parseFloat(searchParams.get('amount') || '0')
   const currency = searchParams.get('currency') || 'TWD'
+  // 結算頁選了非基底幣別時帶入：rate = 1 單位該幣別等於多少基底幣，baseAmount = 建議金額的基底幣精確值
+  const rate = parseFloat(searchParams.get('rate') || '1')
+  const suggestedBase = parseFloat(searchParams.get('baseAmount') || '0')
 
   const [group, setGroup] = useState(null)
   const [customAmount, setCustomAmount] = useState(String(suggestedAmount))
@@ -58,7 +61,13 @@ const TransferPage = () => {
   const safeIsInClient = () => { try { return liffInstance?.isInClient() ?? false } catch { return false } }
 
   const actualAmount = parseFloat(customAmount) || 0
-  const isValid = actualAmount > 0
+  const baseCurrency = group?.baseCurrency || 'TWD'
+  const isForeign = currency !== baseCurrency
+  // 餘額一律以基底幣別計算；金額沒改就用結算頁給的精確基底值，避免來回換算的誤差
+  const baseAmount = !isForeign ? actualAmount
+    : actualAmount === suggestedAmount && suggestedBase > 0 ? suggestedBase
+    : parseFloat((actualAmount * rate).toFixed(2))
+  const isValid = actualAmount > 0 && (!isForeign || rate > 0)
 
   const handleConfirm = async () => {
     if (!isValid) return
@@ -69,8 +78,9 @@ const TransferPage = () => {
       batch.set(doc(collection(db, 'groups', id, 'settlements')), {
         from: fromUid,
         to: toUid,
-        amount: actualAmount,
+        amount: baseAmount,
         currency,
+        ...(isForeign && { originalAmount: actualAmount, exchangeRate: rate }),
         paymentMethod,
         note: note.trim(),
         settledBy: user.uid,
@@ -78,8 +88,8 @@ const TransferPage = () => {
         createdAt: serverTimestamp(),
       })
       batch.update(doc(db, 'groups', id), {
-        [`memberBalances.${fromUid}`]: increment(actualAmount),
-        [`memberBalances.${toUid}`]: increment(-actualAmount),
+        [`memberBalances.${fromUid}`]: increment(baseAmount),
+        [`memberBalances.${toUid}`]: increment(-baseAmount),
       })
       await batch.commit()
 
@@ -171,6 +181,11 @@ const TransferPage = () => {
               style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 22, fontWeight: 700, color: 'var(--cs-rc-owe)', textAlign: 'center' }}
             />
           </div>
+          {isForeign && (
+            <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 6 }}>
+              ≈ {getCurrency(baseCurrency).symbol} {fmt.num(Math.round(baseAmount))}
+            </div>
+          )}
           {actualAmount !== suggestedAmount && suggestedAmount > 0 && (
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <button

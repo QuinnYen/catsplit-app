@@ -495,7 +495,7 @@ export default {
   'settle.calculating': '計算中...',
   'settle.title': '結算',
   'settle.summary': '{members} 位成員 · {count} 筆消費',
-  'settle.fxNote': '以即時匯率換算僅供參考，實際金額以 {currency} 為準',
+  'settle.currency': '轉帳幣別',
   'settle.perPerson': '每人支出明細',
   'settle.total': '總支出',
   'settle.paid': '付了 {amount}',

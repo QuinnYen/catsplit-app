@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
-import { AlertTriangle, Check, CheckCircle2, Info, PartyPopper } from 'lucide-react'
+import { Check, CheckCircle2, Info, PartyPopper } from 'lucide-react'
 import { db } from '../config/firebase'
 import TabBar from '../components/TabBar'
 import Avatar from '../components/Avatar'
@@ -16,6 +16,73 @@ import { buildPersonBreakdown } from '../utils/settleBreakdown'
 import { useI18n } from '../i18n/I18nProvider'
 import { paymentMethodLabel } from '../i18n/codes'
 
+// 單筆轉帳建議：右下角可各自選擇要用哪個幣別轉，金額依即時匯率換算；紀錄會存實際轉的幣別與匯率
+const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
+  const { t, fmt } = useI18n()
+  const [currency, setCurrency] = useState(baseCurrency)
+  const { exchangeRate, rateLoading } = useExchangeRate(baseCurrency, currency)
+  const isForeign = currency !== baseCurrency
+  const ready = !isForeign || (exchangeRate != null && exchangeRate > 0)
+  const shown = isForeign ? Math.round(s.amount * (exchangeRate ?? 0)) : s.amount
+  const amountText = !ready ? (rateLoading ? '...' : '—') : `${getCurrency(currency).symbol} ${fmt.num(shown)}`
+
+  const handleGo = () => {
+    if (!ready) return
+    onGo(isForeign
+      ? `amount=${shown}&currency=${currency}&rate=${1 / exchangeRate}&baseAmount=${s.amount}`
+      : `amount=${s.amount}&currency=${baseCurrency}`)
+  }
+
+  return (
+    <div style={{ background: 'var(--cs-soft)', borderRadius: 6, padding: '12px 14px', border: isForeign ? '1.5px solid var(--cs-warn)' : '0.5px solid var(--cs-border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <Avatar src={from?.avatar} name={from?.name} size={32} />
+        <div style={{ fontSize: 13, color: 'var(--cs-text)', flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</div>
+          <div style={{ display: 'flex', marginTop: 2 }}>
+            <span style={{ color: 'var(--cs-text-sub)', flexShrink: 0, whiteSpace: 'nowrap' }}>{t('settle.to')}&nbsp;</span>
+            <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
+          </div>
+        </div>
+        <div style={{ flexShrink: 0, textAlign: 'right' }}>
+          <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 15, fontWeight: 700, color: 'var(--cs-rc-owe)' }}>{amountText}</div>
+          {isForeign && (
+            <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>≈ {getCurrency(baseCurrency).symbol} {fmt.num(s.amount)}</div>
+          )}
+        </div>
+        <Avatar src={to?.avatar} name={to?.name} size={32} />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1, display: 'flex', borderRadius: 6, overflow: 'hidden', background: 'var(--cs-rc-stamp)', opacity: ready ? 1 : 0.6 }}>
+          <button
+            onClick={handleGo}
+            disabled={!ready}
+            style={{ flex: 1, padding: '10px 0', border: 'none', background: 'transparent', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: ready ? 'pointer' : 'default' }}
+          >
+            {t('settle.goTransfer')}
+          </button>
+          <select
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+            aria-label={t('settle.currency')}
+            style={{ width: 84, border: 'none', borderLeft: '0.5px solid rgba(0,0,0,0.2)', background: 'transparent', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, textAlign: 'center', cursor: 'pointer', outline: 'none' }}
+          >
+            {CURRENCIES.map(c => <option key={c.code} value={c.code} style={{ color: 'var(--cs-text)', background: 'var(--cs-card)' }}>{c.code}</option>)}
+          </select>
+        </div>
+        <button
+          onClick={onInfo}
+          aria-label={t('settle.breakdown')}
+          title={t('settle.breakdown')}
+          style={{ width: 42, borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Info size={18} color="var(--cs-text-sub)" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const SettlePage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -28,12 +95,8 @@ const SettlePage = () => {
   const [incomes, setIncomes] = useState([])
   const [breakdown, setBreakdown] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [displayCurrency, setDisplayCurrency] = useState(null)
 
   const baseCurrency = group?.baseCurrency || 'TWD'
-  // hook: fetchExchangeRate(from=baseCurrency, to=displayCurrency)
-  const { exchangeRate, rateLoading } = useExchangeRate(baseCurrency, displayCurrency || baseCurrency)
-  const displayRate = exchangeRate ?? 1
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,7 +151,6 @@ const SettlePage = () => {
       }
 
       setSettlements(result)
-      setDisplayCurrency(groupData.baseCurrency || 'TWD')
       setLoading(false)
     }
     fetchData()
@@ -102,8 +164,7 @@ const SettlePage = () => {
     )
   }
 
-  const dispCurr = getCurrency(displayCurrency || baseCurrency)
-  const fmt = (amount) => `${dispCurr.symbol} ${i18nFmt.num(Math.round(amount * displayRate))}`
+  const fmt = (amount) => `${getCurrency(baseCurrency).symbol} ${i18nFmt.num(Math.round(amount))}`
 
   // 某人的餘額由哪些部分組成（付了、應付、已結清轉帳、收入／退款、贊助），加總等於他的餘額
   const personBreakdown = (uid) => buildPersonBreakdown(uid, { expenses, settlements: settledRecords, incomes })
@@ -113,7 +174,7 @@ const SettlePage = () => {
   }))
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
-  const totalText = rateLoading ? '...' : fmt(total)
+  const totalText = fmt(total)
 
   // 金額位數多時逐級縮小字體，最後才用「…」截斷
   const amountStyle = (text) => ({
@@ -141,31 +202,13 @@ const SettlePage = () => {
 
         {/* 總覽卡片 */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <GroupIcon icon={group.icon} color={group.iconColor} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
               <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
             </div>
-          </div>
-
-          {/* 貨幣選單 + 總支出 */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <select
-                value={displayCurrency}
-                onChange={e => setDisplayCurrency(e.target.value)}
-                style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '8px 10px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
-              >
-                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
-              </select>
-              {displayCurrency !== baseCurrency && (
-                <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 6, display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-                  <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} /> {t('settle.fxNote', { currency: `${getCurrency(baseCurrency).symbol} ${baseCurrency}` })}
-                </div>
-              )}
-            </div>
-            <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
+            <div style={{ flexShrink: 0, maxWidth: '50%', textAlign: 'right' }}>
               <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t('settle.total')}</div>
               <div style={{ ...amountStyle(totalText), fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{totalText}</div>
             </div>
@@ -221,49 +264,17 @@ const SettlePage = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {settlements.map((s, i) => {
-                const from = group.memberProfiles?.[s.from]
-                const to = group.memberProfiles?.[s.to]
-                return (
-                  <div
-                    key={i}
-                    style={{ background: 'var(--cs-soft)', borderRadius: 6, padding: '12px 14px', border: '0.5px solid var(--cs-border)' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                      <Avatar src={from?.avatar} name={from?.name} size={32} />
-                      <div style={{ fontSize: 13, color: 'var(--cs-text)', flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{from?.name}</div>
-                        <div style={{ display: 'flex', marginTop: 2 }}>
-                          <span style={{ color: 'var(--cs-text-sub)', flexShrink: 0, whiteSpace: 'nowrap' }}>{t('settle.to')}&nbsp;</span>
-                          <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{to?.name}</span>
-                        </div>
-                      </div>
-                      <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 15, fontWeight: 700, color: 'var(--cs-rc-owe)', flexShrink: 0 }}>
-                        {rateLoading ? '...' : fmt(s.amount)}
-                      </div>
-                      <Avatar src={to?.avatar} name={to?.name} size={32} />
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        onClick={() => navigate(
-                          `/group/${id}/transfer?from=${s.from}&to=${s.to}&amount=${s.amount}&currency=${baseCurrency}`
-                        )}
-                        style={{ flex: 1, padding: '10px 0', borderRadius: 6, border: 'none', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
-                      >
-                        {t('settle.goTransfer')}
-                      </button>
-                      <button
-                        onClick={() => setBreakdown(s)}
-                        aria-label={t('settle.breakdown')}
-                        title={t('settle.breakdown')}
-                        style={{ width: 42, borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <Info size={18} color="var(--cs-text-sub)" />
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+              {settlements.map((s, i) => (
+                <TransferCard
+                  key={i}
+                  s={s}
+                  from={group.memberProfiles?.[s.from]}
+                  to={group.memberProfiles?.[s.to]}
+                  baseCurrency={baseCurrency}
+                  onGo={(query) => navigate(`/group/${id}/transfer?from=${s.from}&to=${s.to}&${query}`)}
+                  onInfo={() => setBreakdown(s)}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -288,7 +299,7 @@ const SettlePage = () => {
                       </div>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-get)', flexShrink: 0 }}>
-                      {getCurrency(s.currency || baseCurrency).symbol} {i18nFmt.num(s.amount)}
+                      {getCurrency(s.currency || baseCurrency).symbol} {i18nFmt.num(s.originalAmount ?? s.amount)}
                     </div>
                   </div>
                 )
