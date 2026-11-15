@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { doc, getDoc, updateDoc, collection, getDocs, writeBatch, deleteField } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage } from '../config/firebase'
-import { getCurrency } from '../config/currencies'
+import { CURRENCIES, getCurrency } from '../config/currencies'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import GroupIconPicker from '../components/GroupIconPicker'
@@ -82,6 +82,16 @@ const EditGroupPage = () => {
       alert(t('eg.budgetFailed'))
     }
     setBudgetSaving(false)
+  }
+
+  // 母國貨幣只用於明細頁的參考金額，選了就直接存；空字串代表不顯示
+  const handleChangeHomeCurrency = async (code) => {
+    try {
+      await updateDoc(doc(db, 'groups', id), { homeCurrency: code || deleteField() })
+      setGroup(prev => ({ ...prev, homeCurrency: code || undefined }))
+    } catch (error) {
+      console.error('Failed to update home currency', error)
+    }
   }
 
   const handleChangeIcon = async (patch) => {
@@ -307,6 +317,20 @@ const EditGroupPage = () => {
             </div>
           )
         })()}
+
+        {/* 母國貨幣（明細頁參考用） */}
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('cg.homeCurrency')}</div>
+          <select
+            value={group.homeCurrency || ''}
+            onChange={e => handleChangeHomeCurrency(e.target.value)}
+            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+          >
+            <option value="">{t('cg.homeCurrencyNone')}</option>
+            {CURRENCIES.filter(c => c.code !== (group.baseCurrency || 'TWD')).map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
+          </select>
+          <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>{t('cg.homeCurrencyHint')}</div>
+        </div>
 
         {/* 群組圖示 */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>

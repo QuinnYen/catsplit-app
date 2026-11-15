@@ -8,8 +8,9 @@ import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
 import CollapsibleCard from '../components/CollapsibleCard'
 import { getCurrency } from '../config/currencies'
-import { toLocalDateStr, expenseTimeStr, payerLabel } from '../utils/expenseHelpers'
+import { toLocalDateStr, expenseTimeStr, payerLabel, savedHomeRate } from '../utils/expenseHelpers'
 import { useStorageImage } from '../hooks/useStorageImage'
+import useExchangeRate from '../hooks/useExchangeRate'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel } from '../i18n/codes'
 import { spendMethodText } from '../utils/spendMethods'
@@ -35,6 +36,12 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
   const [expense, setExpense] = useState(null)
   const isSponsorship = !!expense?.isSponsorship
   const receiptUrl = useStorageImage(expense?.receiptPath)
+  // 母國貨幣參考：1 基底幣 = ? 母國幣。優先用記帳時存下的匯率，沒有（舊帳目）才抓即時匯率；
+  // 不需要即時匯率時傳空字串，hook 不會去抓
+  const homeCode = group?.homeCurrency && group.homeCurrency !== (group.baseCurrency || 'TWD') ? group.homeCurrency : ''
+  const savedRate = savedHomeRate(expense, homeCode)
+  const { exchangeRate: liveRate } = useExchangeRate(group?.baseCurrency || 'TWD', savedRate ? '' : homeCode)
+  const homeRate = savedRate ?? liveRate
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +67,10 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
   const baseCurr = getCurrency(group.baseCurrency || 'TWD')
   const expCurr = getCurrency(expense.currency || group.baseCurrency || 'TWD')
   const hasFx = expense.currency && expense.currency !== (group.baseCurrency || 'TWD')
+  // 支出本身就是母國貨幣時，主金額已經是了，不再重複；匯率抓不到就不顯示
+  const homeCurr = getCurrency(homeCode || baseCurr.code)
+  const showHomeRef = !!homeCode && homeRate > 0 && expense.currency !== homeCode
+  const homeDecimals = ['USD', 'EUR'].includes(homeCode) ? 2 : 0
   const payerEntries = Object.entries(expense[payField] || {})
   const isPayer = user?.uid in (expense[payField] || {})
 
@@ -117,6 +128,15 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
             {hasFx && (
               <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 2 }}>
                 ≈ {baseCurr.symbol} {fmt.num(expense.amount)}{t('detail.rate', { rate: expense.exchangeRate?.toFixed(4) })}
+              </div>
+            )}
+            {showHomeRef && (
+              <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 4 }}>
+                {t(savedRate ? 'detail.homeRefSaved' : 'detail.homeRef', {
+                  amount: `${homeCurr.symbol} ${fmt.num(parseFloat((expense.amount * homeRate).toFixed(homeDecimals)))}`,
+                  base: baseCurr.symbol,
+                  rate: `${homeCurr.symbol} ${parseFloat(homeRate.toPrecision(4))}`,
+                })}
               </div>
             )}
           </div>

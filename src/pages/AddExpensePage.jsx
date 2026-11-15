@@ -10,8 +10,8 @@ import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
 import useExchangeRate from '../hooks/useExchangeRate'
-import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, payerLabel, computeMemberBalances } from '../utils/expenseHelpers'
-import { getCurrency } from '../config/currencies'
+import { nowStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, payerLabel, computeMemberBalances, buildHomeRef } from '../utils/expenseHelpers'
+import { getCurrency, fetchExchangeRate } from '../config/currencies'
 import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SPONSOR_CATEGORIES } from '../config/expenseForm'
 import { useI18n } from '../i18n/I18nProvider'
 import { computeBudgetStatus } from '../utils/budget'
@@ -150,6 +150,7 @@ const AddExpensePage = () => {
       const splits = computeSplits({ splitType, totalAmount, effectiveUids, allMemberEntries: members, shares, percentages, customAmounts })
       const payments = buildPayments({ multiPayer, paidBy, payerAmounts, totalAmount })
       const { rate, baseAmount, baseSplits, basePayments } = applyExchangeRate({ totalAmount, splits, payments, currency, baseCurrency, exchangeRate })
+      const homeRef = await buildHomeRef({ homeCurrency: group?.homeCurrency, baseCurrency, currency, fetchRate: fetchExchangeRate })
 
       if (kind !== 'expense') {
         const incomeBatch = writeBatch(db)
@@ -159,6 +160,7 @@ const AddExpensePage = () => {
           currency,
           originalAmount: totalAmount,
           exchangeRate: rate,
+          ...homeRef,
           amount: baseAmount,
           received: basePayments,
           ...(kind === 'sponsorship' && { isSponsorship: true }),
@@ -195,6 +197,7 @@ const AddExpensePage = () => {
         currency,
         originalAmount: totalAmount,
         exchangeRate: rate,
+        ...homeRef,
         amount: baseAmount,
         payments: basePayments,
         paymentMethod: spendType,

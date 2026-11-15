@@ -16,6 +16,22 @@ export const scrollFocusedIntoView = (e) => {
 
 export const todayStr = () => toLocalDateStr(new Date())
 
+// 母國貨幣參考匯率（1 基底幣 = ? 母國幣），記帳時存進帳目；沒設母國幣、與基底幣相同、
+// 或這筆本身就是母國幣（金額已是母國幣）時不存。抓不到匯率也不擋記帳，只是不存
+export const buildHomeRef = async ({ homeCurrency, baseCurrency, currency, fetchRate }) => {
+  if (!homeCurrency || homeCurrency === baseCurrency || currency === homeCurrency) return {}
+  try {
+    const homeRate = await fetchRate(baseCurrency, homeCurrency)
+    return homeRate > 0 ? { homeCurrency, homeRate } : {}
+  } catch {
+    return {}
+  }
+}
+
+// 帳目存的母國匯率；幣別和群組目前的母國幣不同（之後改設過）就視為沒有
+export const savedHomeRate = (expense, homeCurrency) =>
+  homeCurrency && expense?.homeCurrency === homeCurrency && expense.homeRate > 0 ? expense.homeRate : null
+
 // datetime-local 輸入框用的 YYYY-MM-DDTHH:mm（本地時間，精確到分）
 export const toLocalDateTimeStr = (d) =>
   `${toLocalDateStr(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`

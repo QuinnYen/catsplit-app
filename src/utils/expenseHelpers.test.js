@@ -1,6 +1,31 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, computeGroupAggregates, primaryPayer, payerLabel, buildPayments, matchExpense } from './expenseHelpers.js'
+import { computeSplits, applyExchangeRate, computeMemberBalances, computeMemberExpenseCounts, computeGroupAggregates, primaryPayer, payerLabel, buildPayments, matchExpense, buildHomeRef, savedHomeRate } from './expenseHelpers.js'
+
+test('buildHomeRef：有母國幣就存當下匯率與幣別', async () => {
+  const fetchRate = async (from, to) => (from === 'JPY' && to === 'TWD' ? 0.22 : 0)
+  assert.deepEqual(await buildHomeRef({ homeCurrency: 'TWD', baseCurrency: 'JPY', currency: 'JPY', fetchRate }), { homeCurrency: 'TWD', homeRate: 0.22 })
+})
+
+test('buildHomeRef：沒設、等於基底幣、或這筆本身是母國幣時不存', async () => {
+  const fetchRate = async () => 0.22
+  assert.deepEqual(await buildHomeRef({ homeCurrency: '', baseCurrency: 'JPY', currency: 'JPY', fetchRate }), {})
+  assert.deepEqual(await buildHomeRef({ homeCurrency: 'JPY', baseCurrency: 'JPY', currency: 'JPY', fetchRate }), {})
+  assert.deepEqual(await buildHomeRef({ homeCurrency: 'TWD', baseCurrency: 'JPY', currency: 'TWD', fetchRate }), {})
+})
+
+test('buildHomeRef：抓不到匯率不丟錯、不存', async () => {
+  const fetchRate = async () => { throw new Error('offline') }
+  assert.deepEqual(await buildHomeRef({ homeCurrency: 'TWD', baseCurrency: 'JPY', currency: 'JPY', fetchRate }), {})
+})
+
+test('savedHomeRate：只在母國幣仍相符時採用', () => {
+  const e = { homeCurrency: 'TWD', homeRate: 0.22 }
+  assert.equal(savedHomeRate(e, 'TWD'), 0.22)
+  assert.equal(savedHomeRate(e, 'USD'), null)
+  assert.equal(savedHomeRate(e, ''), null)
+  assert.equal(savedHomeRate({}, 'TWD'), null)
+})
 
 const sum = (obj) => Object.values(obj).reduce((s, v) => s + v, 0)
 const members = [['a'], ['b'], ['c']]

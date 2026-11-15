@@ -11,7 +11,8 @@ import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
 import { DEFAULT_CATEGORIES, EDIT_EXPENSE_CATEGORIES, EDIT_INCOME_CATEGORIES } from '../config/expenseForm'
 import useExchangeRate from '../hooks/useExchangeRate'
-import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, primaryPayer } from '../utils/expenseHelpers'
+import { toLocalDateTimeStr, scrollFocusedIntoView, computeSplits, applyExchangeRate, buildPayments, primaryPayer, buildHomeRef, savedHomeRate } from '../utils/expenseHelpers'
+import { fetchExchangeRate } from '../config/currencies'
 import { deleteFileByPath } from '../utils/storageCleanup'
 import { recomputeGroupAggregates } from '../utils/groupAggregates'
 import { useI18n } from '../i18n/I18nProvider'
@@ -221,6 +222,8 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       const splits = computeSplits({ splitType, totalAmount, effectiveUids, allMemberEntries: members, shares, percentages, customAmounts })
       const payments = buildPayments({ multiPayer, paidBy, payerAmounts, totalAmount })
       const { rate, baseAmount, baseSplits, basePayments } = applyExchangeRate({ totalAmount, splits, payments, currency, baseCurrency, exchangeRate })
+      // 已存過（且母國幣沒改）就沿用記帳時的匯率；舊帳目或母國幣改過才補存當下匯率
+      const homeRef = savedHomeRate(originalExpense, group?.homeCurrency) ? {} : await buildHomeRef({ homeCurrency: group?.homeCurrency, baseCurrency, currency, fetchRate: fetchExchangeRate })
 
       const receiptUpdate = await handleReceiptUpdate()
       await updateDoc(doc(db, 'groups', id, col, expenseId), {
@@ -229,6 +232,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
         currency,
         originalAmount: totalAmount,
         exchangeRate: rate,
+        ...homeRef,
         amount: baseAmount,
         [payField]: basePayments,
         splitType,

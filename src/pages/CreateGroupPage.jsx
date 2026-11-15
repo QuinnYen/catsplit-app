@@ -19,6 +19,7 @@ const CreateGroupPage = () => {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [baseCurrency, setBaseCurrency] = useState('TWD')
+  const [homeCurrency, setHomeCurrency] = useState('')
   const [icon, setIcon] = useState(DEFAULT_GROUP_ICON)
   const [iconColor, setIconColor] = useState(DEFAULT_GROUP_COLOR)
   const [loading, setLoading] = useState(false)
@@ -43,6 +44,7 @@ const CreateGroupPage = () => {
         totalExpenses: 0,
         memberExpenseCounts: {},
         baseCurrency,
+        ...(homeCurrency && homeCurrency !== baseCurrency && { homeCurrency }),
       createdAt: serverTimestamp(),
       })
       navigate(`/group/${docRef.id}`)
@@ -98,6 +100,22 @@ const CreateGroupPage = () => {
           </select>
           <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>
             {t('cg.baseCurrencyHint')}
+          </div>
+        </div>
+
+        {/* 母國貨幣（選填，明細頁參考用） */}
+        <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('cg.homeCurrency')}</div>
+          <select
+            value={homeCurrency}
+            onChange={e => setHomeCurrency(e.target.value)}
+            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+          >
+            <option value="">{t('cg.homeCurrencyNone')}</option>
+            {CURRENCIES.filter(c => c.code !== baseCurrency).map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
+          </select>
+          <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>
+            {t('cg.homeCurrencyHint')}
           </div>
         </div>
 
