@@ -5,7 +5,8 @@ import { collection, doc, getDoc, addDoc, updateDoc, serverTimestamp } from 'fir
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import { CURRENCIES } from '../config/currencies'
+import { CURRENCIES, PINNED_CURRENCIES } from '../config/currencies'
+import CurrencySelect from '../components/CurrencySelect'
 import { deleteSavingsGoal } from '../utils/savingsData'
 import { isValidAmount } from '../utils/savings'
 
@@ -96,9 +97,7 @@ const SavingsGoalFormPage = () => {
             </div>
             <div>
               <div style={label}>{t('savings.form.currency')}</div>
-              <select value={currency} onChange={e => setCurrency(e.target.value)} disabled={editing} style={input}>
-                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
-              </select>
+              <CurrencySelect value={currency} onChange={setCurrency} disabled={editing} pinned={PINNED_CURRENCIES} />
               {editing && <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 4 }}>{t('savings.form.currencyLocked')}</div>}
             </div>
             <div>

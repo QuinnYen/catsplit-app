@@ -4,7 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { doc, getDoc, updateDoc, collection, getDocs, writeBatch, deleteField } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage } from '../config/firebase'
-import { CURRENCIES, getCurrency } from '../config/currencies'
+import { getCurrency, PINNED_CURRENCIES } from '../config/currencies'
+import CurrencySelect from '../components/CurrencySelect'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import GroupIconPicker from '../components/GroupIconPicker'
@@ -321,14 +322,13 @@ const EditGroupPage = () => {
         {/* 母國貨幣（明細頁參考用） */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('cg.homeCurrency')}</div>
-          <select
+          <CurrencySelect
             value={group.homeCurrency || ''}
-            onChange={e => handleChangeHomeCurrency(e.target.value)}
-            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
-          >
-            <option value="">{t('cg.homeCurrencyNone')}</option>
-            {CURRENCIES.filter(c => c.code !== (group.baseCurrency || 'TWD')).map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
-          </select>
+            onChange={handleChangeHomeCurrency}
+            exclude={[group.baseCurrency || 'TWD']}
+            pinned={PINNED_CURRENCIES}
+            noneLabel={t('cg.homeCurrencyNone')}
+          />
           <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>{t('cg.homeCurrencyHint')}</div>
         </div>
 

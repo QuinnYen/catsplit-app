@@ -7,7 +7,7 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
 import CollapsibleCard from '../components/CollapsibleCard'
-import { getCurrency } from '../config/currencies'
+import { getCurrency, formatRate, roundToCurrency } from '../config/currencies'
 import { toLocalDateStr, expenseTimeStr, payerLabel, savedHomeRate } from '../utils/expenseHelpers'
 import { useStorageImage } from '../hooks/useStorageImage'
 import useExchangeRate from '../hooks/useExchangeRate'
@@ -70,7 +70,6 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
   // 支出本身就是母國貨幣時，主金額已經是了，不再重複；匯率抓不到就不顯示
   const homeCurr = getCurrency(homeCode || baseCurr.code)
   const showHomeRef = !!homeCode && homeRate > 0 && expense.currency !== homeCode
-  const homeDecimals = ['USD', 'EUR'].includes(homeCode) ? 2 : 0
   const payerEntries = Object.entries(expense[payField] || {})
   const isPayer = user?.uid in (expense[payField] || {})
 
@@ -127,16 +126,16 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
             </div>
             {hasFx && (
               <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 2 }}>
-                ≈ {baseCurr.symbol} {fmt.num(expense.amount)}{t('detail.rate', { rate: expense.exchangeRate?.toFixed(4) })}
+                ≈ {baseCurr.symbol} {fmt.num(expense.amount)}{t('detail.rate', { rate: formatRate(expense.exchangeRate) })}
               </div>
             )}
             {showHomeRef && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 4 }}>
                 <span style={{ fontSize: 11, color: 'var(--cs-text-mute)' }}>
-                  {t('detail.homeRate', { rate: parseFloat(homeRate.toPrecision(4)) })}
+                  {t('detail.homeRate', { rate: formatRate(homeRate) })}
                 </span>
                 <span style={{ flexShrink: 0 }}>
-                  {t('detail.homeApprox', { amount: `${homeCurr.symbol} ${fmt.num(parseFloat((expense.amount * homeRate).toFixed(homeDecimals)))}` })}
+                  {t('detail.homeApprox', { amount: `${homeCurr.symbol} ${fmt.num(roundToCurrency(expense.amount * homeRate, homeCode))}` })}
                 </span>
               </div>
             )}

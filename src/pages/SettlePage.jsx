@@ -9,7 +9,8 @@ import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import CollapsibleCard from '../components/CollapsibleCard'
 import SettleBreakdownModal from '../components/SettleBreakdownModal'
-import { CURRENCIES, getCurrency } from '../config/currencies'
+import { getCurrency, roundToCurrency, PINNED_CURRENCIES } from '../config/currencies'
+import CurrencySelect from '../components/CurrencySelect'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
 import { buildPersonBreakdown } from '../utils/settleBreakdown'
@@ -23,7 +24,7 @@ const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
   const { exchangeRate, rateLoading } = useExchangeRate(baseCurrency, currency)
   const isForeign = currency !== baseCurrency
   const ready = !isForeign || (exchangeRate != null && exchangeRate > 0)
-  const shown = isForeign ? Math.round(s.amount * (exchangeRate ?? 0)) : s.amount
+  const shown = isForeign ? roundToCurrency(s.amount * (exchangeRate ?? 0), currency) : s.amount
   const amountText = !ready ? (rateLoading ? '...' : '—') : `${getCurrency(currency).symbol} ${fmt.num(shown)}`
 
   const handleGo = () => {
@@ -61,14 +62,14 @@ const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
           >
             {t('settle.goTransfer')}
           </button>
-          <select
+          <CurrencySelect
             value={currency}
-            onChange={e => setCurrency(e.target.value)}
-            aria-label={t('settle.currency')}
-            style={{ width: 84, border: 'none', borderLeft: '0.5px solid rgba(0,0,0,0.2)', background: 'transparent', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, textAlign: 'center', cursor: 'pointer', outline: 'none' }}
-          >
-            {CURRENCIES.map(c => <option key={c.code} value={c.code} style={{ color: 'var(--cs-text)', background: 'var(--cs-card)' }}>{c.code}</option>)}
-          </select>
+            onChange={setCurrency}
+            compact
+            pinned={[baseCurrency, ...PINNED_CURRENCIES]}
+            ariaLabel={t('settle.currency')}
+            style={{ width: 96, border: 'none', borderLeft: '0.5px solid rgba(0,0,0,0.2)', borderRadius: 0, background: 'transparent', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, padding: '0 10px' }}
+          />
         </div>
         <button
           onClick={onInfo}

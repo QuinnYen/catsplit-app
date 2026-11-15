@@ -5,7 +5,8 @@ import Avatar from './Avatar'
 import DateTimeField from './DateTimeField'
 import CalculatorModal from './CalculatorModal'
 import CollapsibleCard from './CollapsibleCard'
-import { CURRENCIES, getCurrency } from '../config/currencies'
+import { getCurrency, PINNED_CURRENCIES } from '../config/currencies'
+import CurrencySelect from './CurrencySelect'
 import { useStorageImage } from '../hooks/useStorageImage'
 import { useI18n } from '../i18n/I18nProvider'
 import { categoryLabel, normalizeCategory } from '../i18n/codes'
@@ -220,9 +221,7 @@ const ExpenseForm = ({
           <div style={labelStyle}>{t('form.amount')}</div>
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...inputStyle, height: '100%' }}>
-                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
-              </select>
+              <CurrencySelect value={currency} onChange={setCurrency} compact pinned={[baseCurrency, ...PINNED_CURRENCIES]} style={{ ...inputStyle, height: '100%' }} />
             </div>
             <div style={{ flex: 2, minWidth: 0, position: 'relative' }}>
               <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--cs-text-sub)', fontSize: 13 }}>

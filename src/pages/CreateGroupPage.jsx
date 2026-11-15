@@ -8,7 +8,8 @@ import { useI18n } from '../i18n/I18nProvider'
 import TabBar from '../components/TabBar'
 import StickyFooter from '../components/StickyFooter'
 import Avatar from '../components/Avatar'
-import { CURRENCIES } from '../config/currencies'
+import { getCurrency, PINNED_CURRENCIES } from '../config/currencies'
+import CurrencySelect from '../components/CurrencySelect'
 import GroupIcon from '../components/GroupIcon'
 import GroupIconPicker from '../components/GroupIconPicker'
 import { DEFAULT_GROUP_ICON, DEFAULT_GROUP_COLOR } from '../config/groupIcons'
@@ -91,13 +92,11 @@ const CreateGroupPage = () => {
         {/* 基準貨幣 */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('cg.baseCurrency')}</div>
-          <select
+          <CurrencySelect
             value={baseCurrency}
-            onChange={e => setBaseCurrency(e.target.value)}
-            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
-          >
-            {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
-          </select>
+            onChange={code => { setBaseCurrency(code); if (code === homeCurrency) setHomeCurrency('') }}
+            pinned={PINNED_CURRENCIES}
+          />
           <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>
             {t('cg.baseCurrencyHint')}
           </div>
@@ -106,14 +105,13 @@ const CreateGroupPage = () => {
         {/* 母國貨幣（選填，明細頁參考用） */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 10 }}>{t('cg.homeCurrency')}</div>
-          <select
+          <CurrencySelect
             value={homeCurrency}
-            onChange={e => setHomeCurrency(e.target.value)}
-            style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
-          >
-            <option value="">{t('cg.homeCurrencyNone')}</option>
-            {CURRENCIES.filter(c => c.code !== baseCurrency).map(c => <option key={c.code} value={c.code}>{c.symbol} {t(c.labelKey)}</option>)}
-          </select>
+            onChange={setHomeCurrency}
+            exclude={[baseCurrency]}
+            pinned={PINNED_CURRENCIES}
+            noneLabel={t('cg.homeCurrencyNone')}
+          />
           <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 8 }}>
             {t('cg.homeCurrencyHint')}
           </div>
@@ -140,7 +138,7 @@ const CreateGroupPage = () => {
               </div>
               <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Avatar src={user?.avatar} name={user?.name} size={18} />
-                {t('cg.previewMeta', { symbol: CURRENCIES.find(c => c.code === baseCurrency)?.symbol, code: baseCurrency })}
+                {t('cg.previewMeta', { symbol: getCurrency(baseCurrency).symbol, code: baseCurrency })}
               </div>
             </div>
           </div>
