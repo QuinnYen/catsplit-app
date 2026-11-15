@@ -712,6 +712,12 @@ const GroupPage = () => {
             ? fmt.date(item.createdAt.toDate())
             : t('group.unknownDate')
 
+          // 非群組基底幣別的卡片用醒目外框，避免和基底幣別的金額看混
+          const foreignBorder = (item, normal = 'var(--cs-border)') =>
+            item.currency && item.currency !== (group.baseCurrency || 'TWD')
+              ? '1.5px solid var(--cs-warn)'
+              : `0.5px solid ${normal}`
+
           const groups = []
           let currentDate = null
           shownItems.forEach(item => {
@@ -740,7 +746,7 @@ const GroupPage = () => {
                           <div
                             key={item.id}
                             onClick={() => setDetailSettlementId(item.id)}
-                            style={{ background: 'var(--cs-success-bg)', borderRadius: 6, border: '0.5px solid var(--cs-success-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: 'var(--cs-success-bg)', borderRadius: 6, border: foreignBorder(item, 'var(--cs-success-border)'), padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                           >
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', fontSize: 13, fontWeight: 500, color: 'var(--cs-success)', marginBottom: 2 }}>
@@ -771,7 +777,7 @@ const GroupPage = () => {
                           <div
                             key={item.id}
                             onClick={() => navigate(`/group/${id}/income/${item.id}`)}
-                            style={{ background: 'var(--cs-info-bg)', borderRadius: 6, border: '0.5px solid var(--cs-info-border)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: 'var(--cs-info-bg)', borderRadius: 6, border: foreignBorder(item, 'var(--cs-info-border)'), padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
                           >
@@ -811,7 +817,7 @@ const GroupPage = () => {
                         <div key={item.id} style={{ position: 'relative' }}>
                           <div
                             onClick={() => navigate(`/group/${id}/expense/${item.id}`)}
-                            style={{ background: `linear-gradient(90deg, ${spendTypeBg(item.paymentMethod)}, var(--cs-card) 70%)`, borderRadius: 8, border: '0.5px solid var(--cs-border)', borderLeft: `4px solid ${spendTypeColor(item.paymentMethod)}`, padding: '12px 14px 12px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                            style={{ background: `linear-gradient(90deg, ${spendTypeBg(item.paymentMethod)}, var(--cs-card) 70%)`, borderRadius: 8, border: foreignBorder(item), borderLeft: `4px solid ${spendTypeColor(item.paymentMethod)}`, padding: '12px 14px 12px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
                           >
