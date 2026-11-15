@@ -242,7 +242,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       })
 
       await recomputeGroupAggregates(id, group.members)
-      navigate(`/group/${id}`)
+      navigate(`/group/${id}`, { state: { restoreList: true } })
     } catch (error) {
       console.error('Failed to save', error)
       setLoading(false)
@@ -256,7 +256,7 @@ const EditExpensePage = ({ kind = 'expense' }) => {
       await deleteDoc(doc(db, 'groups', id, col, expenseId))
       await deleteFileByPath(existingReceiptPath)
       await recomputeGroupAggregates(id, group.members)
-      navigate(`/group/${id}`)
+      navigate(`/group/${id}`, { state: { restoreList: true } })
     } catch (error) {
       console.error('Failed to delete', error)
       setLoading(false)

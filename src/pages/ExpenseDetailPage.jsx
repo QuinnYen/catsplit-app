@@ -79,7 +79,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
       <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
-            onClick={() => navigate(`/group/${id}`)}
+            onClick={() => navigate(`/group/${id}`, { state: { restoreList: true } })}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}
           >‹</button>
           <div style={{ flex: 1, color: '#fff', fontSize: 16, fontWeight: 500 }}>{isSponsorship ? t('detail.sponsorshipTitle') : isIncome ? t('detail.incomeTitle') : t('detail.expenseTitle')}</div>

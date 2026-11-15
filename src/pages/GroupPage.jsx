@@ -1,6 +1,6 @@
 // /group/:id — 群組首頁：總支出、依時間排列的支出與轉帳紀錄（可搜尋、依類別篩選）；訪客從邀請連結進來時也在此選名字加入。
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useNavigationType, useParams } from 'react-router-dom'
 import { doc, collection, onSnapshot, orderBy, query, where, limit, getDocs, Timestamp, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 
 import { Check, X, Receipt, Search, Trash2, Pencil, MoreVertical, ChevronRight, Settings, UserPlus, Download, Users } from 'lucide-react'
@@ -40,13 +40,21 @@ const GroupPage = () => {
   const [settlements, setSettlements] = useState([])
   const [incomes, setIncomes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [monthKey, setMonthKey] = useState(null) // 'YYYY-MM'；null 表示還在找最近有帳的月份
+  // 從明細頁按上一頁回來時，還原月份、篩選與捲動位置（只在 POP 導覽時讀取）
+  const navType = useNavigationType()
+  const location = useLocation()
+  const returnKey = `cs-group-return-${id}`
+  const [restore] = useState(() => {
+    if (navType !== 'POP' && !location.state?.restoreList) return null
+    try { return JSON.parse(sessionStorage.getItem(returnKey)) } catch { return null }
+  })
+  const [monthKey, setMonthKey] = useState(restore?.monthKey ?? null) // 'YYYY-MM'；null 表示還在找最近有帳的月份
   const [monthSpan, setMonthSpan] = useState(null) // { first, last }：有帳的最早與最晚月份；查詢失敗時維持 null（不限制）
-  const [allMode, setAllMode] = useState(false)
+  const [allMode, setAllMode] = useState(!!restore?.allMode)
   const [monthPickerOpen, setMonthPickerOpen] = useState(false)
   const [groupHasItems, setGroupHasItems] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  const [filters, setFilters] = useState(restore?.filters ?? EMPTY_FILTERS)
   const [openMenuId, setOpenMenuId] = useState(null)
   const [menuUp, setMenuUp] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -108,10 +116,10 @@ const GroupPage = () => {
       const last = latestMonthKey(millisOf(newest), Date.now())
       setGroupHasItems(newest.some(sn => !sn.empty))
       setMonthSpan({ first: earliestMonthKey(millisOf(oldest)) ?? last, last })
-      setMonthKey(last)
+      setMonthKey(prev => prev ?? last)
     }).catch(error => {
       console.error('Failed to find month range:', error)
-      if (!cancelled) setMonthKey(toMonthKey(new Date()))
+      if (!cancelled) setMonthKey(prev => prev ?? toMonthKey(new Date()))
     })
     return () => { cancelled = true }
   }, [id, isMember])
@@ -153,6 +161,19 @@ const GroupPage = () => {
     setLoading(true)
     setAllMode(a => !a)
   }
+
+  const openDetail = (path) => {
+    try {
+      sessionStorage.setItem(returnKey, JSON.stringify({ monthKey, allMode, filters, scrollY: window.scrollY }))
+    } catch { /* 存不了就回到最上面 */ }
+    navigate(path)
+  }
+
+  useEffect(() => {
+    if (!restore || loading) return
+    try { sessionStorage.removeItem(returnKey) } catch { /* ignore */ }
+    requestAnimationFrame(() => window.scrollTo({ top: restore.scrollY ?? 0 }))
+  }, [loading, restore, returnKey])
 
   const handleDeleteExpense = async (expenseId) => {
     if (!window.confirm(t('group.confirmDeleteExpense'))) return
@@ -776,7 +797,7 @@ const GroupPage = () => {
                         return (
                           <div
                             key={item.id}
-                            onClick={() => navigate(`/group/${id}/income/${item.id}`)}
+                            onClick={() => openDetail(`/group/${id}/income/${item.id}`)}
                             style={{ background: 'var(--cs-info-bg)', borderRadius: 6, border: foreignBorder(item, 'var(--cs-info-border)'), padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
@@ -816,7 +837,7 @@ const GroupPage = () => {
                       return (
                         <div key={item.id} style={{ position: 'relative' }}>
                           <div
-                            onClick={() => navigate(`/group/${id}/expense/${item.id}`)}
+                            onClick={() => openDetail(`/group/${id}/expense/${item.id}`)}
                             style={{ background: `linear-gradient(90deg, ${spendTypeBg(item.paymentMethod)}, var(--cs-card) 70%)`, borderRadius: 8, border: foreignBorder(item), borderLeft: `4px solid ${spendTypeColor(item.paymentMethod)}`, padding: '12px 14px 12px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                             onTouchStart={e => e.currentTarget.style.opacity = '0.75'}
                             onTouchEnd={e => e.currentTarget.style.opacity = '1'}
@@ -870,7 +891,7 @@ const GroupPage = () => {
                               />
                               <div style={{ position: 'absolute', ...(menuUp ? { bottom: 'calc(100% + 4px)' } : { top: 'calc(100% + 4px)' }), right: 0, zIndex: 11, background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 120 }}>
                                 <button
-                                  onClick={e => { e.stopPropagation(); setOpenMenuId(null); navigate(`/group/${id}/expense/${item.id}/edit`) }}
+                                  onClick={e => { e.stopPropagation(); setOpenMenuId(null); openDetail(`/group/${id}/expense/${item.id}/edit`) }}
                                   style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                                 >
                                   <Pencil size={14} /> {t('common.edit')}
