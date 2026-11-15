@@ -99,10 +99,10 @@ const TransferPage = () => {
         const symbol = getCurrency(currency).symbol
         try {
           await sendLedgerFlex(liffInstance, buildLedgerFlex({
-            altText: t('flex.transferAlt', { from, to, amount: `${symbol}${fmt.num(actualAmount)}` }),
+            altText: t('flex.transferAlt', { from, to, amount: `${symbol}${fmt.amount(actualAmount, currency)}` }),
             headerText: t('flex.transferTitle'),
             title: `${from} → ${to}`,
-            amount: `${symbol} ${fmt.num(actualAmount)}`,
+            amount: fmt.money(actualAmount, currency),
             rows: [
               [t('group.detail.method'), paymentMethodLabel(paymentMethod, t)],
               ...(note.trim() ? [[t('group.detail.note'), note.trim()]] : []),
@@ -183,7 +183,7 @@ const TransferPage = () => {
           </div>
           {isForeign && (
             <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 6 }}>
-              ≈ {getCurrency(baseCurrency).symbol} {fmt.num(Math.round(baseAmount))}
+              ≈ {fmt.money(baseAmount, baseCurrency)}
             </div>
           )}
           {actualAmount !== suggestedAmount && suggestedAmount > 0 && (
@@ -192,7 +192,7 @@ const TransferPage = () => {
                 onClick={() => setCustomAmount(String(suggestedAmount))}
                 style={{ fontSize: 11, color: 'var(--cs-text-sub)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
               >
-                {t('transfer.suggested', { amount: `${currencyObj.symbol} ${fmt.num(suggestedAmount)}` })}
+                {t('transfer.suggested', { amount: fmt.money(suggestedAmount, currency) })}
               </button>
             </div>
           )}

@@ -569,11 +569,11 @@ const GroupPage = () => {
             {/* 收入只列出金額，不下結論（可能是起始金，也可能是退款）；差額看統計頁的結餘 */}
             {(group.incomeCount ?? 0) > 0 && (
               <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginBottom: 4 }}>
-                {t('stats.totalIncome')} {getCurrency(group.baseCurrency).symbol} {fmt.num(incomeTotal)}
+                {t('stats.totalIncome')} {fmt.money(incomeTotal, group.baseCurrency)}
               </div>
             )}
             <div style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>
-              {getCurrency(group.baseCurrency).symbol} {fmt.num(total)}
+              {fmt.money(total, group.baseCurrency)}
             </div>
             {/* 預算進度條：<80% 白、80–99% 黃、≥100% 紅；淨額為負時寬度為 0 */}
             {budget && (
@@ -584,12 +584,12 @@ const GroupPage = () => {
                 <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 4, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                   {/* 幣別符號與金額之間用不換行空白，避免金額被拆到下一行 */}
                   <span>
-                  {t('group.budgetUsed', { spent: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.spent)}`, budget: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.amount)}` })}
+                  {t('group.budgetUsed', { spent: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.amount(budget.spent, group.baseCurrency)}`, budget: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.amount(budget.amount, group.baseCurrency)}` })}
                   </span>
                   <span style={{ whiteSpace: 'nowrap' }}>
                   {budget.remaining >= 0
-                    ? t('group.budgetLeft', { amount: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(budget.remaining)}` })
-                    : t('group.budgetOver', { amount: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.num(-budget.remaining)}` })}
+                    ? t('group.budgetLeft', { amount: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.amount(budget.remaining, group.baseCurrency)}` })
+                    : t('group.budgetOver', { amount: `${getCurrency(group.baseCurrency).symbol}\u00a0${fmt.amount(-budget.remaining, group.baseCurrency)}` })}
                   </span>
                 </div>
               </div>
@@ -633,7 +633,6 @@ const GroupPage = () => {
         {/* 月份切換：搜尋／篩選中改看全部結果，這一列先收起 */}
         {monthKey && groupHasItems && !isFiltering(filters) && (!monthSpan || monthSpan.first !== monthSpan.last) && (() => {
           const sum = summarizeLoaded(expenses, incomes)
-          const symbol = getCurrency(group.baseCurrency).symbol
           const arrow = (enabled) => ({ background: 'none', border: 'none', fontSize: 22, lineHeight: 1, padding: '2px 12px', cursor: enabled ? 'pointer' : 'default', color: 'var(--cs-text-sub)', opacity: enabled ? 1 : 0.3 })
           const canPrev = isMonthInRange(shiftMonth(monthKey, -1), monthSpan?.first, monthSpan?.last)
           const canNext = isMonthInRange(shiftMonth(monthKey, 1), monthSpan?.first, monthSpan?.last)
@@ -656,8 +655,8 @@ const GroupPage = () => {
               </div>
               {!loading && (
                 <div style={{ marginTop: 8, fontSize: 12, color: 'var(--cs-text-sub)' }}>
-                  {t('group.expenseCount', { n: sum.count })} · {t('group.totalExpense')} {symbol} {fmt.num(sum.expenseTotal)}
-                  {sum.incomeTotal > 0 && ` · ${t('stats.totalIncome')} ${symbol} ${fmt.num(sum.incomeTotal)}`}
+                  {t('group.expenseCount', { n: sum.count })} · {t('group.totalExpense')} {fmt.money(sum.expenseTotal, group.baseCurrency)}
+                  {sum.incomeTotal > 0 && ` · ${t('stats.totalIncome')} ${fmt.money(sum.incomeTotal, group.baseCurrency)}`}
                 </div>
               )}
             </div>
@@ -785,11 +784,11 @@ const GroupPage = () => {
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
                               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-success)' }}>
-                                {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
+                                {fmt.money(item.originalAmount ?? item.amount, item.currency || group.baseCurrency)}
                               </div>
                               {item.originalAmount != null && (
                                 <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>
-                                  ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(item.amount)}
+                                  ≈ {fmt.money(item.amount, group.baseCurrency)}
                                 </div>
                               )}
                             </div>
@@ -825,11 +824,11 @@ const GroupPage = () => {
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
                               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-info)' }}>
-                                {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
+                                {fmt.money(item.originalAmount ?? item.amount, item.currency || group.baseCurrency)}
                               </div>
                               {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
                                 <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>
-                                  ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(item.amount)}
+                                  ≈ {fmt.money(item.amount, group.baseCurrency)}
                                 </div>
                               )}
                             </div>
@@ -865,11 +864,11 @@ const GroupPage = () => {
                             </div>
                             <div style={{ flexShrink: 0, textAlign: 'right' }}>
                               <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 15, fontWeight: 600, color: 'var(--cs-rc-owe)' }}>
-                                {getCurrency(item.currency || group.baseCurrency).symbol} {fmt.num(item.originalAmount ?? item.amount)}
+                                {fmt.money(item.originalAmount ?? item.amount, item.currency || group.baseCurrency)}
                               </div>
                               {item.currency && item.currency !== (group.baseCurrency || 'TWD') && (
                                 <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>
-                                  ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(item.amount)}
+                                  ≈ {fmt.money(item.amount, group.baseCurrency)}
                                 </div>
                               )}
                             </div>
@@ -971,10 +970,10 @@ const GroupPage = () => {
             </div>
 
             <div style={{ textAlign: 'center', fontSize: 26, fontWeight: 500, color: 'var(--cs-success)', marginBottom: 16 }}>
-              {getCurrency(detailSettlement.currency || group.baseCurrency).symbol} {fmt.num(detailSettlement.originalAmount ?? detailSettlement.amount)}
+              {fmt.money(detailSettlement.originalAmount ?? detailSettlement.amount, detailSettlement.currency || group.baseCurrency)}
               {detailSettlement.originalAmount != null && (
                 <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--cs-text-mute)', marginTop: 2 }}>
-                  ≈ {getCurrency(group.baseCurrency).symbol} {fmt.num(detailSettlement.amount)}
+                  ≈ {fmt.money(detailSettlement.amount, group.baseCurrency)}
                 </div>
               )}
             </div>

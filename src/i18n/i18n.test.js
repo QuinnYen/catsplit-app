@@ -91,6 +91,15 @@ test('translate：缺 key 時呼叫 onMissing', () => {
   assert.deepEqual(seen, ['b'])
 })
 
+test('makeFormat：金額依貨幣小數位數固定位數', () => {
+  const f = makeFormat('en')
+  assert.equal(f.money(12.5, 'USD'), '$ 12.50')
+  assert.equal(f.money(1234.567, 'JPY'), '¥ 1,235')
+  assert.equal(f.money(4521.37, 'JPY'), '¥ 4,521')
+  assert.equal(f.amount(0.5, 'TWD'), '1')
+  assert.equal(makeFormat('zh-TW').money(1234.5, 'EUR'), '€ 1,234.50')
+})
+
 test('makeFormat：數字與月份', () => {
   assert.equal(makeFormat('en').num(1234.5), '1,234.5')
   assert.equal(makeFormat('zh-TW').month(new Date(2026, 9, 1)), '10月')

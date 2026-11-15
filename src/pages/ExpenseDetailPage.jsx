@@ -7,7 +7,7 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
 import CollapsibleCard from '../components/CollapsibleCard'
-import { getCurrency, formatRate, roundToCurrency } from '../config/currencies'
+import { getCurrency, formatRate } from '../config/currencies'
 import { toLocalDateStr, expenseTimeStr, payerLabel, savedHomeRate } from '../utils/expenseHelpers'
 import { useStorageImage } from '../hooks/useStorageImage'
 import useExchangeRate from '../hooks/useExchangeRate'
@@ -68,7 +68,6 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
   const expCurr = getCurrency(expense.currency || group.baseCurrency || 'TWD')
   const hasFx = expense.currency && expense.currency !== (group.baseCurrency || 'TWD')
   // 支出本身就是母國貨幣時，主金額已經是了，不再重複；匯率抓不到就不顯示
-  const homeCurr = getCurrency(homeCode || baseCurr.code)
   const showHomeRef = !!homeCode && homeRate > 0 && expense.currency !== homeCode
   const payerEntries = Object.entries(expense[payField] || {})
   const isPayer = user?.uid in (expense[payField] || {})
@@ -121,12 +120,12 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <div style={{ fontSize: 11, color: 'var(--cs-text-sub)' }}>{isSponsorship ? t('detail.amountSponsorship') : isIncome ? t('detail.amountIncome') : t('detail.amountExpense')}</div>
               <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 24, fontWeight: 600, color: 'var(--cs-rc-owe)' }}>
-                {expCurr.symbol} {fmt.num(expense.originalAmount ?? expense.amount)}
+                {fmt.money(expense.originalAmount ?? expense.amount, expCurr.code)}
               </div>
             </div>
             {hasFx && (
               <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 2 }}>
-                ≈ {baseCurr.symbol} {fmt.num(expense.amount)}{t('detail.rate', { rate: formatRate(expense.exchangeRate) })}
+                ≈ {fmt.money(expense.amount, baseCurr.code)}{t('detail.rate', { rate: formatRate(expense.exchangeRate) })}
               </div>
             )}
             {showHomeRef && (
@@ -135,7 +134,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                   {t('detail.homeRate', { rate: formatRate(homeRate) })}
                 </span>
                 <span style={{ flexShrink: 0 }}>
-                  {t('detail.homeApprox', { amount: `${homeCurr.symbol} ${fmt.num(roundToCurrency(expense.amount * homeRate, homeCode))}` })}
+                  {t('detail.homeApprox', { amount: fmt.money(expense.amount * homeRate, homeCode) })}
                 </span>
               </div>
             )}
@@ -150,7 +149,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                   <Avatar src={group.memberProfiles?.[uid]?.avatar} name={group.memberProfiles?.[uid]?.name} size={28} />
                   <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{group.memberProfiles?.[uid]?.name}</span>
                   <span style={{ fontSize: 14, color: 'var(--cs-rc-owe)', fontWeight: 500 }}>
-                    {expCurr.symbol} {fmt.num(parseFloat((hasFx && expense.exchangeRate ? amt / expense.exchangeRate : amt).toFixed(2)))}
+                    {fmt.money(hasFx && expense.exchangeRate ? amt / expense.exchangeRate : amt, expCurr.code)}
                   </span>
                 </div>
               ))}
@@ -216,11 +215,11 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>
-                      {expCurr.symbol} {fmt.num(parseFloat(originalSplitAmt.toFixed(2)))}
+                      {fmt.money(originalSplitAmt, expCurr.code)}
                     </div>
                     {hasFx && (
                       <div style={{ fontSize: 11, color: 'var(--cs-text-mute)' }}>
-                        ≈ {baseCurr.symbol} {fmt.num(Math.round(splitAmt))}
+                        ≈ {fmt.money(splitAmt, baseCurr.code)}
                       </div>
                     )}
                   </div>
@@ -260,11 +259,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
                 {isSponsorship ? (isPayer ? t('detail.myShare.sponsorPayer') : t('detail.myShare.sponsorOther')) : isIncome ? (isPayer ? t('detail.myShare.incomePayer') : t('detail.myShare.incomeOther')) : (isPayer ? t('detail.myShare.expensePayer') : t('detail.myShare.expenseOther'))}
               </div>
               <div style={{ fontSize: 20, fontWeight: 600, color: isPayer ? 'var(--cs-success)' : 'var(--cs-rc-owe)' }}>
-                {expCurr.symbol} {fmt.num(parseFloat(
-                  hasFx && expense.exchangeRate
-                    ? (expense.splits[user.uid] / expense.exchangeRate).toFixed(2)
-                    : expense.splits[user.uid].toFixed(2)
-                ))}
+                {fmt.money(hasFx && expense.exchangeRate ? expense.splits[user.uid] / expense.exchangeRate : expense.splits[user.uid], expCurr.code)}
               </div>
             </div>
             <div>{isPayer ? <HandCoins size={32} color="var(--cs-rc-get)" /> : <Banknote size={32} color="var(--cs-rc-owe)" />}</div>

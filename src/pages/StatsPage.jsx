@@ -6,7 +6,6 @@ import { BarChart3 } from 'lucide-react'
 import { db } from '../config/firebase'
 import Avatar from '../components/Avatar'
 import TabBar from '../components/TabBar'
-import { getCurrency } from '../config/currencies'
 import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory, categoryLabel } from '../i18n/codes'
 import { sumBySpendMethod, spendTypeLabel } from '../utils/spendMethods'
@@ -96,8 +95,8 @@ const StatsPage = () => {
     )
   }
 
-  const symbol = getCurrency(group.baseCurrency || 'TWD').symbol
-  const fmt = (n) => `${symbol} ${i18nFmt.num(Math.round(n))}`
+  const baseCode = group.baseCurrency || 'TWD'
+  const fmt = (n) => i18nFmt.money(n, baseCode)
   const count = expenses.length
   const incomeTotal = incomes.reduce((s, i) => s + i.amount, 0)
   const balance = incomeTotal - stats.total
@@ -218,7 +217,7 @@ const StatsPage = () => {
                 {stats.months.map(m => (
                   <div key={m.key} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', minWidth: 0 }}>
                     <div style={{ fontSize: 10, color: 'var(--cs-text-sub)', marginBottom: 4, whiteSpace: 'nowrap' }}>
-                      {m.amount > 0 ? i18nFmt.num(Math.round(m.amount)) : ''}
+                      {m.amount > 0 ? i18nFmt.amount(m.amount, baseCode) : ''}
                     </div>
                     <div style={{ width: '100%', maxWidth: 32, height: `${(m.amount / maxMonth) * 100}%`, minHeight: m.amount > 0 ? 3 : 0, background: 'var(--cs-rc-stamp)', borderRadius: '6px 6px 0 0' }} />
                   </div>

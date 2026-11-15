@@ -253,15 +253,15 @@ const ExpenseForm = ({
           )}
           {currency !== baseCurrency && amount && exchangeRate && (
             <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 6 }}>
-              ≈ {getCurrency(baseCurrency).symbol} {(amountNum * exchangeRate).toFixed(0)} {baseCurrency}
+              ≈ {fmt.money(amountNum * exchangeRate, baseCurrency)} {baseCurrency}
             </div>
           )}
           {budgetPreview && (
             <div style={{ textAlign: 'right', fontSize: 12, marginTop: 6, color: { ok: 'var(--cs-text-sub)', warn: 'var(--cs-warn)', over: 'var(--cs-danger)' }[budgetPreview.level] }}>
               {budgetPreview.remaining < 0
-                ? t('form.budgetOver', { amount: `${getCurrency(baseCurrency).symbol} ${fmt.num(-budgetPreview.remaining)}` })
+                ? t('form.budgetOver', { amount: fmt.money(-budgetPreview.remaining, baseCurrency) })
                 : kind === 'income'
-                  ? t('form.budgetRefund', { amount: `${getCurrency(baseCurrency).symbol} ${fmt.num(currency === baseCurrency ? amountNum : amountNum * exchangeRate)}` })
+                  ? t('form.budgetRefund', { amount: fmt.money(currency === baseCurrency ? amountNum : amountNum * exchangeRate, baseCurrency) })
                   : t('form.budgetUse', { percent: Math.max(0, Math.floor(budgetPreview.ratio * 100)) })}
             </div>
           )}
@@ -366,7 +366,7 @@ const ExpenseForm = ({
               </div>
             ))}
             <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(payerTotal - amountNum) < 0.01 ? 'var(--cs-rc-get)' : 'var(--cs-rc-owe)' }}>
-              {t('form.paidSum', { symbol: getCurrency(currency).symbol, paid: payerTotal.toFixed(0), total: amount || 0 })}
+              {t('form.paidSum', { symbol: getCurrency(currency).symbol, paid: fmt.amount(payerTotal, currency), total: amount ? fmt.amount(amountNum, currency) : 0 })}
             </div>
           </div>
         ) : (
@@ -406,7 +406,7 @@ const ExpenseForm = ({
                   <Avatar src={profile.avatar} name={profile.name} size={24} />
                   <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)' }}>{profile.name}</span>
                   <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>
-                    {getCurrency(currency).symbol} {effectiveUids.length > 0 ? (amountNum / effectiveUids.length).toFixed(0) : '0'}
+                    {fmt.money(effectiveUids.length > 0 ? amountNum / effectiveUids.length : 0, currency)}
                   </span>
                 </div>
               ))}
@@ -438,7 +438,7 @@ const ExpenseForm = ({
                   <span style={{ flex: 1, fontSize: 13, color: 'var(--cs-text)', textAlign: 'left' }}>{profile.name}</span>
                   {amount && checked && effectiveUids.length > 0 && (
                     <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>
-                      {getCurrency(currency).symbol} {(amountNum / effectiveUids.length).toFixed(0)}
+                      {fmt.money(amountNum / effectiveUids.length, currency)}
                     </span>
                   )}
                 </button>
@@ -469,7 +469,7 @@ const ExpenseForm = ({
                     />
                     <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', width: 16 }}>{t('form.shareUnit')}</span>
                     <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-owe)', width: 64, textAlign: 'right', visibility: amount ? 'visible' : 'hidden' }}>
-                      {getCurrency(currency).symbol} {sharesTotal > 0 ? (s / sharesTotal * amountNum).toFixed(0) : '0'}
+                      {fmt.money(sharesTotal > 0 ? s / sharesTotal * amountNum : 0, currency)}
                     </span>
                   </div>
                 )
@@ -501,7 +501,7 @@ const ExpenseForm = ({
                   </div>
                   {amount && percentages[uid] && (
                     <span style={{ fontSize: 12, color: 'var(--cs-rc-owe)', width: 60, textAlign: 'right' }}>
-                      {getCurrency(currency).symbol} {((parseFloat(percentages[uid]) || 0) / 100 * amountNum).toFixed(0)}
+                      {fmt.money((parseFloat(percentages[uid]) || 0) / 100 * amountNum, currency)}
                     </span>
                   )}
                 </div>
@@ -536,10 +536,10 @@ const ExpenseForm = ({
                 </div>
               ))}
             <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 500, color: Math.abs(customTotal - amountNum) < 0.01 ? 'var(--cs-rc-get)' : 'var(--cs-rc-owe)' }}>
-              {t('form.allocatedSum', { symbol: getCurrency(currency).symbol, a: customTotal.toFixed(0), b: amount || 0 })}
+              {t('form.allocatedSum', { symbol: getCurrency(currency).symbol, a: fmt.amount(customTotal, currency), b: amount ? fmt.amount(amountNum, currency) : 0 })}
               {amountNum > 0 && Math.abs(amountNum - customTotal) >= 0.01 && (
                 // 還差多少或超出多少，免得另外開計算機；最多顯示到小數兩位
-                ` · ${t(customTotal < amountNum ? 'form.remaining' : 'form.overAllocated', { symbol: getCurrency(currency).symbol, n: fmt.num(Math.round(Math.abs(amountNum - customTotal) * 100) / 100) })}`
+                ` · ${t(customTotal < amountNum ? 'form.remaining' : 'form.overAllocated', { symbol: getCurrency(currency).symbol, n: fmt.amount(Math.abs(amountNum - customTotal), currency) })}`
               )}
             </div>
           </div>

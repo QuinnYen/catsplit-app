@@ -9,10 +9,11 @@ import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import CollapsibleCard from '../components/CollapsibleCard'
 import SettleBreakdownModal from '../components/SettleBreakdownModal'
-import { getCurrency, roundToCurrency, PINNED_CURRENCIES } from '../config/currencies'
+import { roundToCurrency, PINNED_CURRENCIES } from '../config/currencies'
 import CurrencySelect from '../components/CurrencySelect'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
+import { computeSettleSuggestions } from '../utils/settleSuggestions'
 import { buildPersonBreakdown } from '../utils/settleBreakdown'
 import { useI18n } from '../i18n/I18nProvider'
 import { paymentMethodLabel } from '../i18n/codes'
@@ -25,7 +26,7 @@ const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
   const isForeign = currency !== baseCurrency
   const ready = !isForeign || (exchangeRate != null && exchangeRate > 0)
   const shown = isForeign ? roundToCurrency(s.amount * (exchangeRate ?? 0), currency) : s.amount
-  const amountText = !ready ? (rateLoading ? '...' : '—') : `${getCurrency(currency).symbol} ${fmt.num(shown)}`
+  const amountText = !ready ? (rateLoading ? '...' : '—') : fmt.money(shown, currency)
 
   const handleGo = () => {
     if (!ready) return
@@ -48,7 +49,7 @@ const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
         <div style={{ flexShrink: 0, textAlign: 'right' }}>
           <div style={{ fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 15, fontWeight: 700, color: 'var(--cs-rc-owe)' }}>{amountText}</div>
           {isForeign && (
-            <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>≈ {getCurrency(baseCurrency).symbol} {fmt.num(s.amount)}</div>
+            <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', marginTop: 1 }}>≈ {fmt.money(s.amount, baseCurrency)}</div>
           )}
         </div>
         <Avatar src={to?.avatar} name={to?.name} size={32} />
@@ -122,34 +123,7 @@ const SettlePage = () => {
       const balance = computeMemberBalances(groupData.members, expensesData, settlementsData, incomesData)
       setBalances(balance)
 
-      const result = []
-      const creditors = []
-      const debtors = []
-      Object.entries(balance).forEach(([uid, amt]) => {
-        if (amt > 0.01) creditors.push({ uid, amt })
-        else if (amt < -0.01) debtors.push({ uid, amt: -amt })
-      })
-      creditors.sort((a, b) => b.amt - a.amt)
-      debtors.sort((a, b) => b.amt - a.amt)
-
-      let i = 0, j = 0
-      while (i < creditors.length && j < debtors.length) {
-        const creditor = creditors[i]
-        const debtor = debtors[j]
-        const amount = Math.min(creditor.amt, debtor.amt)
-        // 四捨五入後為 0 的殘餘（分帳除不盡）不列成建議
-        if (Math.round(amount) > 0) {
-          result.push({
-            from: debtor.uid,
-            to: creditor.uid,
-            amount: Math.round(amount),
-          })
-        }
-        creditor.amt -= amount
-        debtor.amt -= amount
-        if (creditor.amt < 0.01) i++
-        if (debtor.amt < 0.01) j++
-      }
+      const result = computeSettleSuggestions(balance, groupData.baseCurrency || 'TWD')
 
       setSettlements(result)
       setLoading(false)
@@ -165,7 +139,7 @@ const SettlePage = () => {
     )
   }
 
-  const fmt = (amount) => `${getCurrency(baseCurrency).symbol} ${i18nFmt.num(Math.round(amount))}`
+  const fmt = (amount) => i18nFmt.money(amount, baseCurrency)
 
   // 某人的餘額由哪些部分組成（付了、應付、已結清轉帳、收入／退款、贊助），加總等於他的餘額
   const personBreakdown = (uid) => buildPersonBreakdown(uid, { expenses, settlements: settledRecords, incomes })
@@ -300,7 +274,7 @@ const SettlePage = () => {
                       </div>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-rc-get)', flexShrink: 0 }}>
-                      {getCurrency(s.currency || baseCurrency).symbol} {i18nFmt.num(s.originalAmount ?? s.amount)}
+                      {i18nFmt.money(s.originalAmount ?? s.amount, s.currency || baseCurrency)}
                     </div>
                   </div>
                 )

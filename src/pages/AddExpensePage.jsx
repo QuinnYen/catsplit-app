@@ -245,16 +245,16 @@ const AddExpensePage = () => {
         const payerName = payerLabel(basePayments, group.memberProfiles, t, t('common.someone'))
         const currencyObj = getCurrency(currency)
         const splitCount = effectiveUids.length
-        const perPerson = splitCount > 0 ? Math.round(parseFloat(amount) / splitCount) : 0
+        const perPerson = splitCount > 0 ? parseFloat(amount) / splitCount : 0
         try {
           await sendLedgerFlex(liffInstance, buildLedgerFlex({
-            altText: t('flex.alt', { payer: payerName, title: title.trim(), amount: `${currencyObj.symbol}${fmt.num(parseFloat(amount))}` }),
+            altText: t('flex.alt', { payer: payerName, title: title.trim(), amount: `${currencyObj.symbol}${fmt.amount(parseFloat(amount), currency)}` }),
             headerText: t('flex.title'),
             title: title.trim(),
-            amount: `${currencyObj.symbol} ${fmt.num(parseFloat(amount))}`,
+            amount: fmt.money(parseFloat(amount), currency),
             rows: [
               [t('flex.payer'), payerName],
-              [t('flex.perPerson'), `${currencyObj.symbol} ${fmt.num(perPerson)}`],
+              [t('flex.perPerson'), fmt.money(perPerson, currency)],
               [t('flex.group'), group.name],
             ],
             openLabel: t('flex.openGroup'),
