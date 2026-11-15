@@ -133,10 +133,7 @@ const ExpenseDetailPage = ({ kind = 'expense' }) => {
             {showHomeRef && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 4 }}>
                 <span style={{ fontSize: 11, color: 'var(--cs-text-mute)' }}>
-                  {t(savedRate ? 'detail.homeRateSaved' : 'detail.homeRateLive', {
-                    base: baseCurr.symbol,
-                    rate: `${homeCurr.symbol} ${parseFloat(homeRate.toPrecision(4))}`,
-                  })}
+                  {t('detail.homeRate', { rate: parseFloat(homeRate.toPrecision(4)) })}
                 </span>
                 <span style={{ flexShrink: 0 }}>
                   {t('detail.homeApprox', { amount: `${homeCurr.symbol} ${fmt.num(parseFloat((expense.amount * homeRate).toFixed(homeDecimals)))}` })}

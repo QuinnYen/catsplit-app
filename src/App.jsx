@@ -9,6 +9,7 @@ import LineIcon from './components/LineIcon'
 import useMyGroups from './hooks/useMyGroups'
 import useSyncMemberProfile from './hooks/useSyncMemberProfile'
 import useOfficialAccountPrompt from './hooks/useOfficialAccountPrompt'
+import { pageTitleKey } from './utils/pageTitle'
 
 // 首頁與群組頁是主要落地頁（含邀請連結），直接載入；其餘頁面用到才下載
 import HomePage from './pages/HomePage'
@@ -166,8 +167,20 @@ const AppRoutes = () => {
   return <ProtectedRoutes />
 }
 
+// 網頁標題：貓咪分帳 | 頁面名稱（隨語言與頁面變動；不認得的頁面只顯示 app 名稱）
+const PageTitle = () => {
+  const { pathname } = useLocation()
+  const { t } = useI18n()
+  useEffect(() => {
+    const key = pageTitleKey(pathname)
+    document.title = key ? `${t('app.name')} | ${t(key)}` : t('app.title')
+  }, [pathname, t])
+  return null
+}
+
 const App = () => (
   <BrowserRouter>
+    <PageTitle />
     <Suspense fallback={<LoadingScreen />}>
       <AppRoutes />
     </Suspense>

@@ -1,6 +1,8 @@
 // English dictionary (flat keys, placeholders use {name}). Must have exactly the same keys as zh-TW.js
 export default {
   'app.title': 'CatSplit',
+  'app.name': 'CatSplit',
+  'app.pageDetail': 'Details',
   'lang.zh-TW': 'Traditional Chinese',
   'lang.en': 'English',
   'settings.language': 'Language',
@@ -363,8 +365,7 @@ export default {
   'detail.amountIncome': 'Income amount',
   'detail.rate': ' (rate {rate})',
   'detail.homeApprox': '≈ {amount}',
-  'detail.homeRateSaved': 'Rate when recorded: 1 {base} ≈ {rate}',
-  'detail.homeRateLive': 'Live rate: 1 {base} ≈ {rate}',
+  'detail.homeRate': 'Rate {rate}',
   'detail.whoPaid': 'Paid by',
   'detail.whoReceived': 'Received by',
   'detail.notInSplit': '(Not part of the split)',

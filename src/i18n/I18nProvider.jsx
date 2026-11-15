@@ -45,8 +45,7 @@ export const I18nProvider = ({ children }) => {
 
   useEffect(() => {
     document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant'
-    document.title = t('app.title')
-  }, [lang, t])
+  }, [lang])
 
   const value = useMemo(
     () => ({ lang, setLang, t, fmt, enReady: EN_READY, applyAutoLanguage: setLiffLang }),

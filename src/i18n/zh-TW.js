@@ -1,6 +1,8 @@
 // 繁體中文字典（扁平 key，佔位符用 {name}）。缺 key 時 translate 會退回這份字典
 export default {
   'app.title': '貓咪分帳 CatSplit',
+  'app.name': '貓咪分帳',
+  'app.pageDetail': '明細',
   'lang.zh-TW': '繁體中文',
   'lang.en': 'English',
   'settings.language': '語言',
@@ -363,8 +365,7 @@ export default {
   'detail.amountIncome': '收入金額',
   'detail.rate': '（匯率 {rate}）',
   'detail.homeApprox': '約 {amount}',
-  'detail.homeRateSaved': '記帳時匯率 1 {base} ≈ {rate}',
-  'detail.homeRateLive': '即時匯率 1 {base} ≈ {rate}',
+  'detail.homeRate': '匯率 {rate}',
   'detail.whoPaid': '由誰付款',
   'detail.whoReceived': '由誰收款',
   'detail.notInSplit': '（不參與分攤）',
