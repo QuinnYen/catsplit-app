@@ -10,6 +10,7 @@ import Avatar from '../components/Avatar'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
 import { computeBudgetStatus } from '../utils/budget'
+import { getBalanceStatus } from '../utils/balanceStatus'
 import catLogo from '../assets/cat-logo.webp'
 
 const GREETINGS = [
@@ -190,8 +191,9 @@ const HomePage = () => {
           const renderCard = (group) => {
             const profiles = Object.values(group.memberProfiles || {}).slice(0, 3)
             const bal = group.memberBalances?.[myIdIn(group)] ?? null
-            const isSettled = bal !== null && Math.abs(bal) < 0.01
-            const isPositive = bal !== null && bal > 0.01
+            const balStatus = bal !== null ? getBalanceStatus(bal, group.baseCurrency) : null
+            const isSettled = balStatus === 'settled'
+            const isPositive = balStatus === 'receive'
             // 只顯示超支徽章（用群組彙總欄位，不讀帳目）；沒有超支時名稱列與原本相同
             const isOverBudget = computeBudgetStatus(group.budget, group)?.level === 'over'
             // 有封面時卡片高度不變，封面當背景（lazy 載入）加暗色漸層，文字改淺色

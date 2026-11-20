@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeProvider'
 import Avatar from '../components/Avatar'
 import TabBar from '../components/TabBar'
 import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
+import { isBalanceSettled } from '../utils/balanceStatus'
 
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
 
@@ -56,7 +57,7 @@ const SettingsPage = () => {
     const { toDelete, toLeave, toDissolve } = planDeleteMyData(groups, user.uid)
     const dissolveIds = new Set(toDissolve.map(g => g.id))
     const keep = toLeave.filter(g => !dissolveIds.has(g.id))
-    const owing = keep.filter(g => Math.abs(g.memberBalances?.[user.uid] ?? 0) >= 0.01)
+    const owing = keep.filter(g => !isBalanceSettled(g.memberBalances?.[user.uid], g.baseCurrency))
     const lines = [
       t('home.del.title'),
       '',
