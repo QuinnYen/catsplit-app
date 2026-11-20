@@ -19,11 +19,9 @@ import { buildPersonBreakdown } from '../utils/settleBreakdown'
 import { useI18n } from '../i18n/I18nProvider'
 import { paymentMethodLabel } from '../i18n/codes'
 
-// 單筆轉帳建議：右下角可各自選擇要用哪個幣別轉，金額依即時匯率換算；紀錄會存實際轉的幣別與匯率
-const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
+// 單筆轉帳建議：幣別與匯率由最上方總覽卡片統一選擇後傳入，金額依即時匯率換算；紀錄會存實際轉的幣別與匯率
+const TransferCard = ({ s, from, to, baseCurrency, currency, exchangeRate, rateLoading, onGo, onInfo }) => {
   const { t, fmt } = useI18n()
-  const [currency, setCurrency] = useState(baseCurrency)
-  const { exchangeRate, rateLoading } = useExchangeRate(baseCurrency, currency)
   const isForeign = currency !== baseCurrency
   const ready = !isForeign || (exchangeRate != null && exchangeRate > 0)
   const shown = isForeign ? roundToCurrency(s.amount * (exchangeRate ?? 0), currency) : s.amount
@@ -62,14 +60,6 @@ const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
           >
             {t('settle.goTransfer')}
           </button>
-          <CurrencySelect
-            value={currency}
-            onChange={setCurrency}
-            compact
-            pinned={[baseCurrency, ...PINNED_CURRENCIES]}
-            ariaLabel={t('settle.currency')}
-            style={{ width: 96, border: 'none', borderLeft: '0.5px solid rgba(0,0,0,0.2)', borderRadius: 0, background: 'transparent', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, padding: '0 10px' }}
-          />
         </div>
         <button
           onClick={onInfo}
@@ -96,8 +86,12 @@ const SettlePage = () => {
   const [incomes, setIncomes] = useState([])
   const [breakdown, setBreakdown] = useState(null)
   const [loading, setLoading] = useState(true)
+  // 轉帳幣別：null 代表沿用群組基準幣；整頁的轉帳建議共用同一個幣別與匯率
+  const [transferCurrency, setTransferCurrency] = useState(null)
 
   const baseCurrency = group?.baseCurrency || 'TWD'
+  const currency = transferCurrency ?? baseCurrency
+  const { exchangeRate, rateLoading } = useExchangeRate(baseCurrency, currency)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -187,6 +181,16 @@ const SettlePage = () => {
               <div style={{ ...amountStyle(totalText), fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{totalText}</div>
             </div>
           </div>
+          {/* 轉帳幣別：整頁的轉帳建議都用這個幣別換算 */}
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 6 }}>{t('settle.currency')}</div>
+            <CurrencySelect
+              value={currency}
+              onChange={setTransferCurrency}
+              pinned={[baseCurrency, ...PINNED_CURRENCIES]}
+              ariaLabel={t('settle.currency')}
+            />
+          </div>
         </div>
 
         {/* 每人明細 */}
@@ -246,6 +250,9 @@ const SettlePage = () => {
                   from={group.memberProfiles?.[s.from]}
                   to={group.memberProfiles?.[s.to]}
                   baseCurrency={baseCurrency}
+                  currency={currency}
+                  exchangeRate={exchangeRate}
+                  rateLoading={rateLoading}
                   onGo={(query) => navigate(`/group/${id}/transfer?from=${s.from}&to=${s.to}&${query}`)}
                   onInfo={() => setBreakdown(s)}
                 />
