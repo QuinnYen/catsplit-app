@@ -144,11 +144,9 @@ const SettlePage = () => {
   const total = expenses.reduce((sum, e) => sum + e.amount, 0)
   const totalText = fmt(total)
 
-  // 金額位數多時逐級縮小字體，最後才用「…」截斷
-  const amountStyle = (text) => ({
-    fontSize: text.length <= 10 ? 22 : text.length <= 13 ? 18 : text.length <= 16 ? 15 : 13,
-    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-  })
+  // 總額字體依「容器寬度 ÷ 字數」自動縮放（容器查詢單位 cqw，純 CSS）：22px 放得下就用 22px，最小 11px。
+  // 0.52 是每個字（數字、逗號、空格平均）約 0.52em 寬的估計值，換字型時要重新量
+  const totalFontSize = `clamp(11px, calc(100cqw / ${totalText.length * 0.52}), 22px)`
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column', paddingBottom: 80 }}>
@@ -177,20 +175,23 @@ const SettlePage = () => {
               <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
             </div>
           </div>
-          {/* 轉帳幣別（靠左）與總額（靠右）同一列；幣別整頁共用，沒選時按鈕上顯示「轉帳幣別」，選了才顯示幣別代碼 */}
-          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <CurrencySelect
-              value={transferCurrency || ''}
-              onChange={setTransferCurrency}
-              compact
-              placeholder={t('settle.currency')}
-              pinned={[baseCurrency, ...PINNED_CURRENCIES]}
-              ariaLabel={t('settle.currency')}
-              style={{ width: 'auto', minWidth: 130, flexShrink: 0, padding: '6px 10px', fontSize: 13 }}
-            />
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 6 }}>
-              <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', flexShrink: 0 }}>{t('settle.total')}</span>
-              <span style={{ ...amountStyle(totalText), minWidth: 0, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{totalText}</span>
+          {/* 左：轉帳幣別（整頁共用，沒選時是基準幣）；右：總支出。兩邊各有小標題，選擇器只顯示代碼，把寬度留給總額 */}
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'stretch', gap: 10 }}>
+            <div style={{ flexShrink: 0 }}>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t('settle.currency')}</div>
+              <CurrencySelect
+                value={currency}
+                onChange={setTransferCurrency}
+                compact
+                pinned={[baseCurrency, ...PINNED_CURRENCIES]}
+                ariaLabel={t('settle.currency')}
+                style={{ width: 'auto', minWidth: 84, padding: '6px 10px', fontSize: 13 }}
+              />
+            </div>
+            {/* containerType 讓底下的 cqw 以這個欄位的寬度為準 */}
+            <div style={{ flex: 1, minWidth: 0, containerType: 'inline-size', textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t('settle.total')}</div>
+              <div style={{ fontSize: totalFontSize, lineHeight: 1.2, whiteSpace: 'nowrap', fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{totalText}</div>
             </div>
           </div>
         </div>
