@@ -502,7 +502,7 @@ export default {
   'transfer.submit': '確認已轉帳',
   'settle.calculating': '計算中...',
   'settle.title': '結算',
-  'settle.summary': '{members} 位成員 · {count} 筆消費',
+  'settle.expenseCount': '{n} 筆消費',
   'settle.currency': '轉帳幣別',
   'settle.perPerson': '每人支出明細',
   'settle.total': '總支出',

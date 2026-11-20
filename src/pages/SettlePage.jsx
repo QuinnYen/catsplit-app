@@ -172,7 +172,7 @@ const SettlePage = () => {
             <GroupIcon icon={group.icon} color={group.iconColor} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
+              <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('group.memberCount', { n: group.members.length })} · {t('settle.expenseCount', { n: expenses.length })}</div>
             </div>
           </div>
           {/* 左：轉帳幣別（整頁共用，沒選時是基準幣）；右：總支出。兩邊各有小標題，選擇器只顯示代碼，把寬度留給總額 */}

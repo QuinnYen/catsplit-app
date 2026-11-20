@@ -10,8 +10,22 @@ import { scanCjk } from '../../scripts/check-cjk.mjs'
 
 const placeholders = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',')
 
-test('字典：兩種語言的 key 集合相同', () => {
-  assert.deepEqual(Object.keys(zhTW).sort(), Object.keys(en).sort())
+// 單數專用的 `.one` key 只有需要區分單複數的語言才有（英文），不列入兩種語言的 key 比對
+const isOne = (key) => key.endsWith('.one')
+
+test('字典：兩種語言的 key 集合相同（不含單數專用的 .one）', () => {
+  assert.deepEqual(Object.keys(zhTW).filter((k) => !isOne(k)).sort(), Object.keys(en).filter((k) => !isOne(k)).sort())
+})
+
+test('字典：.one 單數 key 一定有對應的原 key，且佔位符相同、含 {n}', () => {
+  for (const dict of [zhTW, en]) {
+    for (const key of Object.keys(dict).filter(isOne)) {
+      const base = key.slice(0, -'.one'.length)
+      assert.ok(dict[base] !== undefined, `${key} 沒有對應的 ${base}`)
+      assert.equal(placeholders(dict[key]), placeholders(dict[base]), key)
+      assert.ok(dict[key].includes('{n}'), `${key} 要用 {n}`)
+    }
+  }
 })
 
 test('字典：同一個 key 在兩種語言的佔位符相同', () => {
@@ -83,6 +97,20 @@ test('translate：取代 {name} 佔位符；缺 key 先退回 zh-TW，再退回 
   assert.equal(translate(dicts, 'en', 'b'), '只有中文')
   assert.equal(translate(dicts, 'en', 'zzz'), 'zzz')
   assert.equal(translate(dicts, 'zh-TW', 'a'), '你好 {name}')
+})
+
+test('translate：n 剛好是 1 且有 .one 時用單數，其他數字與沒有 .one 的語言維持原樣', () => {
+  const dicts = {
+    'zh-TW': { e: '{n} 筆消費', f: '{n} 筆', g: '{n} 項' },
+    en: { e: '{n} expenses', 'e.one': '{n} expense', f: '{n} items' },
+  }
+  assert.equal(translate(dicts, 'en', 'e', { n: 1 }), '1 expense')
+  assert.equal(translate(dicts, 'en', 'e', { n: 0 }), '0 expenses')
+  assert.equal(translate(dicts, 'en', 'e', { n: 2 }), '2 expenses')
+  assert.equal(translate(dicts, 'en', 'e', { n: '1' }), '1 expenses') // 只認數字 1
+  assert.equal(translate(dicts, 'en', 'f', { n: 1 }), '1 items') // 沒有 .one 就維持原樣
+  assert.equal(translate(dicts, 'zh-TW', 'e', { n: 1 }), '1 筆消費') // 中文不區分
+  assert.equal(translate(dicts, 'en', 'g', { n: 1 }), '1 項') // 缺 key 退回中文時用中文字典判斷
 })
 
 test('translate：缺 key 時呼叫 onMissing', () => {
