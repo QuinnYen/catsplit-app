@@ -1,6 +1,5 @@
 // 選貨幣：點開後底部彈出可搜尋的清單（代碼、名稱、符號都能搜），常用的（呼叫端指定 + 最近選過的）排在最前面。
 // compact 只顯示代碼，給金額欄旁邊這類窄位置用；noneLabel 有值時多一個「不選」選項（value 為空字串）。
-// placeholder 只在 value 為空時顯示在按鈕上，不會多出選項。
 import { useEffect, useMemo, useState } from 'react'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
@@ -29,7 +28,7 @@ const FIELD_STYLE = {
   color: 'var(--cs-text)', background: 'var(--cs-bg)', cursor: 'pointer', outline: 'none',
 }
 
-const CurrencySelect = ({ value, onChange, exclude = [], pinned = [], noneLabel, placeholder, compact = false, disabled = false, style, ariaLabel }) => {
+const CurrencySelect = ({ value, onChange, exclude = [], pinned = [], noneLabel, compact = false, disabled = false, style, ariaLabel }) => {
   const { t, lang } = useI18n()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -64,7 +63,7 @@ const CurrencySelect = ({ value, onChange, exclude = [], pinned = [], noneLabel,
   const close = () => { setOpen(false); setQuery('') }
 
   const current = value ? getCurrency(value) : null
-  const triggerText = !current ? (noneLabel ?? placeholder ?? '') : compact ? current.code : `${current.symbol} ${currencyName(current.code, lang)} (${current.code})`
+  const triggerText = !current ? (noneLabel ?? '') : compact ? current.code : `${current.symbol} ${currencyName(current.code, lang)} (${current.code})`
 
   const row = (key, label, selected, onPick) => (
     <button

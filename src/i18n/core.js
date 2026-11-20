@@ -17,11 +17,16 @@ export const pickLanguage = ({ urlLang, stored, liffLang, navLang, enReady = EN_
 }
 
 // 缺 key 時先退回 zh-TW，再退回 key 本身；缺 key 時呼叫 onMissing(key)
+// 單數：params.n 剛好是 1，且字典有 `${key}.one` 時改用它（例如英文 '{n} expense'）；
+// 沒有 .one 的語言（中文）與沒傳 n 的呼叫維持原樣
 export const translate = (dicts, lang, key, params, onMissing) => {
-  let text = dicts[lang]?.[key]
+  let dict = dicts[lang]
+  let text = dict?.[key]
   if (text === undefined) {
     onMissing?.(key)
-    text = dicts['zh-TW']?.[key] ?? key
+    dict = dicts['zh-TW']
+    text = dict?.[key] ?? key
   }
+  if (params?.n === 1 && dict?.[`${key}.one`] !== undefined) text = dict[`${key}.one`]
   return params ? text.replace(/\{(\w+)\}/g, (m, name) => (name in params ? params[name] : m)) : text
 }
