@@ -14,6 +14,7 @@ import CurrencySelect from '../components/CurrencySelect'
 import useExchangeRate from '../hooks/useExchangeRate'
 import { computeMemberBalances } from '../utils/expenseHelpers'
 import { computeSettleSuggestions } from '../utils/settleSuggestions'
+import { getBalanceStatus } from '../utils/balanceStatus'
 import { buildPersonBreakdown } from '../utils/settleBreakdown'
 import { useI18n } from '../i18n/I18nProvider'
 import { paymentMethodLabel } from '../i18n/codes'
@@ -195,6 +196,7 @@ const SettlePage = () => {
               const profile = group.memberProfiles?.[uid]
               const d = personBreakdown(uid)
               const diff = balances[uid] ?? 0
+              const diffStatus = getBalanceStatus(diff, group.baseCurrency)
 
               return (
                 <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -211,9 +213,9 @@ const SettlePage = () => {
                   </div>
                   <div style={{
                     fontSize: 13, fontWeight: 500, flexShrink: 0,
-                    color: diff > 0.01 ? 'var(--cs-rc-get)' : diff < -0.01 ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)'
+                    color: diffStatus === 'receive' ? 'var(--cs-rc-get)' : diffStatus === 'pay' ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)'
                   }}>
-                    {diff > 0.01 ? `+${fmt(diff)}` : diff < -0.01 ? fmt(diff) : (
+                    {diffStatus === 'receive' ? `+${fmt(diff)}` : diffStatus === 'pay' ? fmt(diff) : (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                         <Check size={13} strokeWidth={3} /> {t('home.settled')}
                       </span>
