@@ -170,26 +170,31 @@ const SettlePage = () => {
 
         {/* 總覽卡片 */}
         <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <GroupIcon icon={group.icon} color={group.iconColor} size={40} />
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 10 }}>
+            <div style={{ alignSelf: 'flex-start', flexShrink: 0 }}>
+              <GroupIcon icon={group.icon} color={group.iconColor} size={40} />
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
               <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
+              {/* 轉帳幣別：整頁的轉帳建議都用這個幣別換算 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', flexShrink: 0 }}>{t('settle.currency')}</span>
+                <CurrencySelect
+                  value={currency}
+                  onChange={setTransferCurrency}
+                  compact
+                  pinned={[baseCurrency, ...PINNED_CURRENCIES]}
+                  ariaLabel={t('settle.currency')}
+                  style={{ width: 84, padding: '5px 8px', fontSize: 13 }}
+                />
+              </div>
             </div>
-            <div style={{ flexShrink: 0, maxWidth: '50%', textAlign: 'right' }}>
+            {/* 總額靠底部，和左邊幣別選擇器同一列對齊 */}
+            <div style={{ flexShrink: 0, maxWidth: '50%', textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
               <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t('settle.total')}</div>
               <div style={{ ...amountStyle(totalText), fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{totalText}</div>
             </div>
-          </div>
-          {/* 轉帳幣別：整頁的轉帳建議都用這個幣別換算 */}
-          <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 6 }}>{t('settle.currency')}</div>
-            <CurrencySelect
-              value={currency}
-              onChange={setTransferCurrency}
-              pinned={[baseCurrency, ...PINNED_CURRENCIES]}
-              ariaLabel={t('settle.currency')}
-            />
           </div>
         </div>
 
