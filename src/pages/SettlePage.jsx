@@ -19,11 +19,9 @@ import { buildPersonBreakdown } from '../utils/settleBreakdown'
 import { useI18n } from '../i18n/I18nProvider'
 import { paymentMethodLabel } from '../i18n/codes'
 
-// 單筆轉帳建議：右下角可各自選擇要用哪個幣別轉，金額依即時匯率換算；紀錄會存實際轉的幣別與匯率
-const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
+// 單筆轉帳建議：幣別與匯率由最上方總覽卡片統一選擇後傳入，金額依即時匯率換算；紀錄會存實際轉的幣別與匯率
+const TransferCard = ({ s, from, to, baseCurrency, currency, exchangeRate, rateLoading, onGo, onInfo }) => {
   const { t, fmt } = useI18n()
-  const [currency, setCurrency] = useState(baseCurrency)
-  const { exchangeRate, rateLoading } = useExchangeRate(baseCurrency, currency)
   const isForeign = currency !== baseCurrency
   const ready = !isForeign || (exchangeRate != null && exchangeRate > 0)
   const shown = isForeign ? roundToCurrency(s.amount * (exchangeRate ?? 0), currency) : s.amount
@@ -62,14 +60,6 @@ const TransferCard = ({ s, from, to, baseCurrency, onGo, onInfo }) => {
           >
             {t('settle.goTransfer')}
           </button>
-          <CurrencySelect
-            value={currency}
-            onChange={setCurrency}
-            compact
-            pinned={[baseCurrency, ...PINNED_CURRENCIES]}
-            ariaLabel={t('settle.currency')}
-            style={{ width: 96, border: 'none', borderLeft: '0.5px solid rgba(0,0,0,0.2)', borderRadius: 0, background: 'transparent', color: 'var(--cs-rc-stamp-text)', fontSize: 14, fontWeight: 500, padding: '0 10px' }}
-          />
         </div>
         <button
           onClick={onInfo}
@@ -96,8 +86,12 @@ const SettlePage = () => {
   const [incomes, setIncomes] = useState([])
   const [breakdown, setBreakdown] = useState(null)
   const [loading, setLoading] = useState(true)
+  // 轉帳幣別：null 代表沿用群組基準幣；整頁的轉帳建議共用同一個幣別與匯率
+  const [transferCurrency, setTransferCurrency] = useState(null)
 
   const baseCurrency = group?.baseCurrency || 'TWD'
+  const currency = transferCurrency ?? baseCurrency
+  const { exchangeRate, rateLoading } = useExchangeRate(baseCurrency, currency)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -182,9 +176,21 @@ const SettlePage = () => {
               <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</div>
               <div style={{ fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('settle.summary', { members: group.members.length, count: expenses.length })}</div>
             </div>
-            <div style={{ flexShrink: 0, maxWidth: '50%', textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', marginBottom: 2 }}>{t('settle.total')}</div>
-              <div style={{ ...amountStyle(totalText), fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{totalText}</div>
+          </div>
+          {/* 轉帳幣別（靠左）與總額（靠右）同一列；幣別整頁共用，沒選時按鈕上顯示「轉帳幣別」，選了才顯示幣別代碼 */}
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <CurrencySelect
+              value={transferCurrency || ''}
+              onChange={setTransferCurrency}
+              compact
+              placeholder={t('settle.currency')}
+              pinned={[baseCurrency, ...PINNED_CURRENCIES]}
+              ariaLabel={t('settle.currency')}
+              style={{ width: 'auto', minWidth: 130, flexShrink: 0, padding: '6px 10px', fontSize: 13 }}
+            />
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 6 }}>
+              <span style={{ fontSize: 11, color: 'var(--cs-text-sub)', flexShrink: 0 }}>{t('settle.total')}</span>
+              <span style={{ ...amountStyle(totalText), minWidth: 0, fontWeight: 500, color: 'var(--cs-rc-owe)' }}>{totalText}</span>
             </div>
           </div>
         </div>
@@ -246,6 +252,9 @@ const SettlePage = () => {
                   from={group.memberProfiles?.[s.from]}
                   to={group.memberProfiles?.[s.to]}
                   baseCurrency={baseCurrency}
+                  currency={currency}
+                  exchangeRate={exchangeRate}
+                  rateLoading={rateLoading}
                   onGo={(query) => navigate(`/group/${id}/transfer?from=${s.from}&to=${s.to}&${query}`)}
                   onInfo={() => setBreakdown(s)}
                 />
