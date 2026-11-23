@@ -33,6 +33,7 @@ const SavingsGoalPage = lazy(() => import('./pages/SavingsGoalPage'))
 const StatsPage = lazy(() => import('./pages/StatsPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const MergePage = lazy(() => import('./pages/MergePage'))
+const LinkPage = lazy(() => import('./pages/LinkPage'))
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
 
 const LoadingScreen = () => {
@@ -189,6 +190,14 @@ const AppRoutes = () => {
     return (
       <Routes>
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      </Routes>
+    )
+  }
+  // /link：從 LINE 內「用 Google 綁定」帶到外部瀏覽器的一次性連結，頁面自己兌換並登入，不經過登入檢查
+  if (location.pathname === '/link') {
+    return (
+      <Routes>
+        <Route path="/link" element={<LinkPage />} />
       </Routes>
     )
   }

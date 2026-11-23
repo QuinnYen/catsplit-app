@@ -63,6 +63,8 @@ const ERROR_KEYS = {
   same_uid: 'merge.err.sameAccount',
   last_identity: 'merge.err.lastIdentity',
   network: 'merge.err.network',
+  link_invalid: 'link.invalid',
+  link_expired: 'link.expired',
 }
 export const mergeErrorKey = (code) => ERROR_KEYS[code] ?? 'merge.err.generic'
 

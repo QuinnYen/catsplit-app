@@ -12,6 +12,7 @@ import {
   bindIdentity as bindIdentityFlow, executeMerge as executeMergeFlow, unbindIdentity as unbindIdentityFlow,
   listIdentitiesOf, purgeExpired, deleteMergeDataOf,
 } from './mergeFlow.js'
+import { createLinkCode as createLinkCodeFlow, redeemLinkCode as redeemLinkCodeFlow, deleteLinkCodesOf } from './linkFlow.js'
 import { OAuth2Client } from 'google-auth-library'
 import { identityKey, resolveLineUid, resolveGoogleUid, makeUid, exchangeGoogleLogin, googleProfileFromPayload } from './identity.js'
 import { normalizeHl, previewText } from './sharePreview.js'
@@ -265,8 +266,8 @@ export const authExchange = onRequest(
 // 已登入（非訪客）的使用者再通過第二種身分的驗證，就能把它綁到自己的帳號；
 // 第二種身分若已是另一個有資料的帳號，要先預覽、確認後才合併（流程見 mergeFlow.js 與 docs/identity-and-guests.md）。
 
-// 需要登入且不是訪客的 POST 端點共用的外殼：處理 CORS、方法、身分，並把 MergeError 轉成對應的 HTTP 狀態
-const authedPost = (handler) => async (req, res) => {
+// POST 端點共用的外殼：處理 CORS 與方法，requireAuth 時要求登入且不是訪客；並把 MergeError 轉成對應的 HTTP 狀態
+const postHandler = (handler, { requireAuth }) => async (req, res) => {
   setCors(req, res)
   if (req.method === 'OPTIONS') {
     res.status(204).send('')
@@ -276,10 +277,13 @@ const authedPost = (handler) => async (req, res) => {
     res.status(405).json({ error: 'method_not_allowed' })
     return
   }
-  const caller = await verifyBearer(req)
-  if (!caller || caller.guest) {
-    res.status(401).json({ error: 'unauthenticated' })
-    return
+  let caller = null
+  if (requireAuth) {
+    caller = await verifyBearer(req)
+    if (!caller || caller.guest) {
+      res.status(401).json({ error: 'unauthenticated' })
+      return
+    }
   }
   try {
     res.json(await handler({ req, caller }))
@@ -288,10 +292,14 @@ const authedPost = (handler) => async (req, res) => {
       res.status(e.status).json({ error: e.code, ...e.extra })
       return
     }
-    console.error('authedPost error', e)
+    console.error('postHandler error', e)
     res.status(500).json({ error: 'internal_error' })
   }
 }
+// 需要登入且不是訪客的端點
+const authedPost = (handler) => postHandler(handler, { requireAuth: true })
+// 不需要登入的端點（憑證在請求內容裡，例如一次性連結碼）
+const publicPost = (handler) => postHandler(handler, { requireAuth: false })
 
 // 驗證第二種身分的憑證，回傳 { provider, subject }；憑證太舊或無效丟 MergeError(401)
 const verifyProof = async (proof) => {
@@ -408,6 +416,39 @@ export const unbindIdentity = onRequest(
     if (typeof identityId !== 'string' || !identityId || identityId.length > 200 || identityId.includes('/')) throw new MergeError('invalid_request', 400)
     const { mode } = await unbindIdentityFlow(getFirestore(), { callerUid: caller.uid, identityId, makeUid, nowMs: Date.now() })
     return { ok: true, mode }
+  })
+)
+
+/**
+ * 產生一次性連結碼（5 分鐘內有效、只能兌換一次），給「帶著登入狀態到外部瀏覽器」用。
+ * LINE 內建瀏覽器無法用 Google 登入（Google 不允許在內嵌 WebView 登入），所以由已登入的 LINE 帳號產生碼，
+ * 在手機的外部瀏覽器兌換（redeemLinkCode），再用手機上已登入的 Google 帳號完成綁定。回傳 { code, expiresAtMs }。
+ */
+export const createLinkCode = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5 },
+  authedPost(async ({ caller }) => {
+    const db = getFirestore()
+    const result = await createLinkCodeFlow(db, { uid: caller.uid, nowMs: Date.now() })
+    purgeExpired(db, Date.now(), 5).catch((e) => console.error('purgeExpired error', e))
+    return result
+  })
+)
+
+/**
+ * 兌換一次性連結碼：不需要登入，碼本身就是憑證（256 位元隨機、單次、5 分鐘）。
+ * 回傳該帳號的 custom token 與名稱、頭像，外部瀏覽器用它登入同一個帳號。body { code }。
+ */
+export const redeemLinkCode = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5 },
+  publicPost(async ({ req }) => {
+    const db = getFirestore()
+    const { uid } = await redeemLinkCodeFlow(db, { code: req.body?.code, nowMs: Date.now() })
+    const profile = (await db.doc(`users/${uid}`).get()).data() ?? {}
+    return {
+      uid,
+      firebaseToken: await getAuth().createCustomToken(uid),
+      profile: { name: profile.name ?? null, avatar: profile.avatar ?? null, provider: profile.provider ?? null },
+    }
   })
 )
 
@@ -704,6 +745,7 @@ export const detachMember = onRequest(
         // 牽涉到這個 uid 的合併紀錄與備份（備份裡有被併入帳號的資料）也一併刪除
         try {
           await deleteMergeDataOf(getFirestore(), caller.uid)
+          await deleteLinkCodesOf(getFirestore(), caller.uid)
         } catch (e) {
           console.error('detachMember delete merge data error', e)
           failed.push('merges')

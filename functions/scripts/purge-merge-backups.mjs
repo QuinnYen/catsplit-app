@@ -1,4 +1,4 @@
-// 清除過期的帳號合併紀錄與備份：沒人確認的預覽一天後、完成的合併與備份 30 天後（merges、mergeBackups 的 expireAtMs 小於現在）。
+// 清除過期的帳號合併紀錄、備份與一次性連結碼：沒人確認的預覽一天後、完成的合併與備份 30 天後（merges、mergeBackups 的 expireAtMs 小於現在）。
 // 進行中的合併 expireAtMs 為 null，不會被刪。預設只列出會刪什麼（dry-run），加 --apply 才真的刪；可重複執行。
 //
 // 用法（在 functions 資料夾內；通常由 .github/workflows/purge-merge-backups.yml 每天自動執行）：
@@ -24,7 +24,7 @@ const now = Date.now()
 
 const main = async () => {
   if (!apply) {
-    for (const col of ['merges', 'mergeBackups']) {
+    for (const col of ['merges', 'mergeBackups', 'linkCodes']) {
       const snap = await db.collection(col).where('expireAtMs', '<', now).get()
       console.log(`${col}：${snap.size} 筆已過期`)
       snap.docs.forEach((d) => console.log(`  ${col}/${d.id}（過期 ${Math.floor((now - d.data().expireAtMs) / 86_400_000)} 天）`))

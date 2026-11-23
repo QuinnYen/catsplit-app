@@ -21,7 +21,7 @@ export const createIdentityApi = ({ baseUrl = import.meta.env?.VITE_TOKEN_EXCHAN
     try {
       res = await fetchFn(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        headers: { 'Content-Type': 'application/json', ...(idToken && { Authorization: `Bearer ${idToken}` }) },
         body: JSON.stringify(body),
       })
     } catch {
@@ -37,6 +37,9 @@ export const createIdentityApi = ({ baseUrl = import.meta.env?.VITE_TOKEN_EXCHAN
     bindIdentity: (idToken, proof) => call('bindIdentity', idToken, proof),
     executeMerge: (idToken, mergeId, resolutions) => call('executeMerge', idToken, { mergeId, resolutions }),
     unbindIdentity: (idToken, identityId) => call('unbindIdentity', idToken, { identityId }),
+    // 在 LINE 內產生一次性連結碼（5 分鐘、單次），帶到外部瀏覽器兌換成同一個帳號的登入；兌換不需要登入
+    createLinkCode: (idToken) => call('createLinkCode', idToken),
+    redeemLinkCode: (code) => call('redeemLinkCode', null, { code }),
   }
 }
 

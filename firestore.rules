@@ -25,6 +25,10 @@ service cloud.firestore {
     match /mergeBackups/{id} {
       allow read, write: if false;
     }
+    // 一次性連結碼（帶著登入狀態到外部瀏覽器用），只存雜湊，同樣只有雲端函式能讀寫
+    match /linkCodes/{id} {
+      allow read, write: if false;
+    }
 
     // 成員新增一位虛擬成員：members 只多一人（arrayUnion 會加在最後），id 以 p_ 開頭
     // （LINE userId 不含底線，不會撞號），且 memberProfiles 只多這一筆並標記 placeholder

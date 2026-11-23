@@ -1,4 +1,4 @@
-// identities / merges / mergeBackups 只有雲端函式（Admin SDK）能讀寫，客戶端一律拒絕；需要 firestore emulator，用 npm run test:rules 執行
+// identities / merges / mergeBackups / linkCodes 只有雲端函式（Admin SDK）能讀寫，客戶端一律拒絕；需要 firestore emulator，用 npm run test:rules 執行
 import { test, before, beforeEach, after } from 'node:test'
 import { readFileSync } from 'node:fs'
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing'
@@ -12,6 +12,7 @@ const COLLECTIONS = [
   ['identities', 'line:Uabc'],
   ['merges', 'm1'],
   ['mergeBackups', 'b1'],
+  ['linkCodes', 'c1'],
 ]
 
 before(async () => {

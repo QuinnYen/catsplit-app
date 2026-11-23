@@ -2,7 +2,7 @@
 
 日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：進行中
 
-**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 已部署（#7）；PR3 已部署（#8）；PR4 已部署（#9）；PR5 已部署（#10）；PR6（前端綁定與合併介面）進行中。
+**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 已部署（#7）；PR3 已部署（#8）；PR4 已部署（#9）；PR5 已部署（#10）；PR6 已部署（#11）；PR7（LINE 內帶著登入狀態到外部瀏覽器綁定 Google）進行中。
 
 ## 0. 目標
 
@@ -134,9 +134,17 @@ D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 
 - **預覽暫存用 localStorage（10 分鐘過期）**，不是 `state` 或記憶體：LINE 授權會整頁跳轉，回來時記憶體已經沒了。
 - **合併完成後整頁重新載入**（`/settings?merged=1`），而不是只更新狀態：暱稱、群組等狀態都以合併後的帳號為準，最不容易出錯。
 - 後端補兩處讓前端可用：預覽的暱稱衝突帶上兩邊的暱稱（確認頁要讓使用者看懂選哪個），`executeMerge` 回傳保留帳號的 `profile`（名稱、頭像、登入方式，被刪帳號的 session 失效後要重建登入狀態）。
-- LINE 內建瀏覽器的設定頁只提供綁定 Google（登入的就是 LINE），並提供「用外部瀏覽器開啟」（外部瀏覽器是另一個 session，要先登入再綁定）。
+- LINE 內建瀏覽器的設定頁只提供綁定 Google（登入的就是 LINE）。**這個做法實測失敗**：Android 上 Google 登入彈出視窗停在 Google 的 `accounts.google.com/transform` 頁面，憑證傳不回我們的頁面；原本提供的「用外部瀏覽器開啟」又要重新登入 LINE。已在 PR7 改成帶著登入狀態到外部瀏覽器。
 
-### PR7：收尾與文件（S）
+### PR7：LINE 內帶著登入狀態到外部瀏覽器綁定 Google（M）
+
+PR6 部署後實測發現（Android）：LINE 內建瀏覽器按 Google 按鈕，會進到 Google 的重新登入頁，登入後停在 `accounts.google.com/transform` 一片空白。原因是 Google 不允許在內嵌 WebView 登入，而 LINE 的 WebView 也看不到手機上已登入的 Google 帳號。決定（D6）：LINE 內不放 Google 按鈕，改成帶著登入狀態到手機的外部瀏覽器。
+
+- 後端：`createLinkCode`（已登入，產生一次性連結碼）、`redeemLinkCode`（不需要登入，兌換成同一個帳號的 custom token 與 profile）；`functions/linkCode.js`（純函式）、`functions/linkFlow.js`（Firestore 流程）；`linkCodes` 集合 rules 全拒、只存雜湊、5 分鐘、單次；清除排程與刪除帳號都涵蓋。
+- 前端：設定頁在 LINE 內改成「用 Google 綁定」按鈕（**同時移除原本放在 Google 按鈕底下的「用外部瀏覽器開啟」與提示**）；新增 `/link` 頁兌換並登入；回到頁面時重新讀清單。
+- 測試：連結碼單元測試 5 項、整合測試 7 項、端到端 1 項、瀏覽器 6 項。
+
+### PR8：收尾與文件（S）
 
 - 更新 `docs/identity-and-guests.md`、`docs/operations.md`（Google OAuth 用戶端、授權網域、環境變數、備份排程、測試方式）、`docs/architecture.md`、`README.md`。
 - 更新 `public/privacy.html`、`public/terms.html`（中英文）：新增 Google 登入、身分對照、合併備份保留 30 天的說明。

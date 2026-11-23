@@ -37,3 +37,17 @@ export const canReuseCachedSession = ({ cached, firebaseUid, lineSub, hasPending
   && !hasPendingGuestNames
   && cachedLineUserId(cached) === lineSub
   && cached.uid === firebaseUid
+
+// 由雲端函式回傳的 profile（users/{uid} 的名稱、頭像、登入方式）重建本機的使用者資料。
+// 合併完成換 session、外部瀏覽器兌換連結碼登入時用：users 文件客戶端讀不到，名稱與頭像要靠回應帶過來
+export const sessionUserFromProfile = (uid, profile) => buildSessionUser({
+  uid,
+  lineUserId: /^U[0-9a-f]{32}$/.test(uid) ? uid : undefined, // 舊 LINE 使用者的 uid 就是 LINE userId
+  name: profile?.name ?? '',
+  avatar: typeof profile?.avatar === 'string' ? profile.avatar : null,
+  provider: profile?.provider === 'google' ? 'google' : undefined,
+})
+
+// 從 /link 的網址讀一次性連結碼：優先放在 # 後面（不會被送到伺服器，也不會出現在 Referer），沒有再看 ?code=
+export const readLinkCode = ({ hash = '', search = '' }) =>
+  new URLSearchParams(hash.replace(/^#/, '')).get('code') || new URLSearchParams(search).get('code') || null
