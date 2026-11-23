@@ -24,5 +24,10 @@
 
 - 集合 `identities/{provider:subject}` → `{ uid, provider, subject, createdAt }`，例如 `identities/line:U1234…`。只有雲端函式（Admin SDK）讀寫，rules 全拒（`merges`、`mergeBackups` 同）。
 - **目前（PR1）**：`lineLogin`、`verifyLiffToken` 登入時在 transaction 內查表；沒有對照項就沿用 LINE userId 當 uid 並建立對照項（懶建立）。所以現有與新的 LINE 使用者的 uid 都仍是 LINE userId，資料不用搬。回應新增 `uid`，仍保留 `userId`（LINE userId）。前端（PR2）以回應的 `uid` 為準，本機快取的使用者另存 `lineUserId`，只用來確認目前的 LIFF 使用者沒被換掉（見 `src/utils/authSession.js`）；舊版快取沒有 `lineUserId` 時以 `uid` 代替，現有使用者不需重新登入。查表失敗時退回 LINE userId，讓登入照常；帳號合併上線後必須拿掉這個退路。
-- 內部 uid 格式為 `u_` 加 20 位十六進位（`functions/identity.js` 的 `makeUid`），尚未有程式使用，留給 Google 登入。
+- 內部 uid 格式為 `u_` 加 20 位十六進位（`functions/identity.js` 的 `makeUid`），Google 登入的新帳號使用。
+- **Google 登入（PR3）**：登入畫面（外部瀏覽器）顯示 Google 按鈕，前端用 Google Identity Services 取得 ID token，`authExchange` 驗證後以 `identities/google:{sub}` 查表；沒有就建立新的內部 uid 與對照項（transaction，並行首次登入只會有一個 uid）並建立 `users/{uid}`（`provider: 'google'`）。Google 帳號的 `user.provider` 為 `'google'`，LINE 使用者沒有這個欄位。
+- **首次設定暱稱**：Google 帳號沒有 LINE 名字可當預設，所以雲端還沒有暱稱時，登入後先進「設定顯示名稱」頁（預設帶 Google 名字，最多 20 字），完成才進首頁；設定頁的暱稱也不能清空。LINE 使用者不經過這一頁。
+- **頭像**：Google 帳號的頭像一律是 `null`（畫面顯示名字首字），不存 Google 頭像網址。預設貓咪頭像之後再調整。
+- **還沒做的**：LINE 與 Google 互相綁定、帳號合併（PR5、PR6）。目前同一個人用 LINE 與 Google 登入會是兩個獨立帳號。
+- **刪除我的資料**會一併刪掉該 uid 的 `identities`（見 `docs/operations.md`）。
 - **補齊現有使用者**：`functions/scripts/backfill-identities.mjs` 掃描 `users/` 與群組 `members`，為缺對照項的 LINE 使用者補上。預設只列出（dry-run），加 `--apply` 才寫入，可重複執行。帳號綁定與合併上線前必須先跑過一次。

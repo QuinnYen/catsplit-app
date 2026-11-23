@@ -1,6 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { identityKey, isInternalUid, makeUid, resolveLineUid } from './identity.js'
+import {
+  identityKey, isInternalUid, makeUid, resolveLineUid,
+  cleanDisplayName, resolveGoogleUid, googleProfileFromPayload, exchangeGoogleLogin,
+} from './identity.js'
 
 test('makeUid：u_ 加 20 位十六進位，不以 p_ 開頭', () => {
   const uid = makeUid()
@@ -51,4 +54,77 @@ test('resolveLineUid：對照表沒有就沿用 LINE userId 並要求建立', ()
   assert.deepEqual(resolveLineUid({ identity: null, lineUserId: 'Uabc' }), { uid: 'Uabc', create: true })
   assert.deepEqual(resolveLineUid({ identity: {}, lineUserId: 'Uabc' }), { uid: 'Uabc', create: true })
   assert.deepEqual(resolveLineUid({ identity: { uid: '' }, lineUserId: 'Uabc' }), { uid: 'Uabc', create: true })
+})
+
+// ---------- Google ----------
+
+test('cleanDisplayName：去控制字元與頭尾空白，依字元數截斷，不切壞 emoji', () => {
+  assert.equal(cleanDisplayName('  小明\u0000\n  '), '小明')
+  assert.equal(cleanDisplayName('a'.repeat(60)), 'a'.repeat(50))
+  assert.equal(cleanDisplayName('😀'.repeat(60), 3), '😀😀😀')
+  assert.equal(cleanDisplayName(undefined), '')
+  assert.equal(cleanDisplayName(123), '')
+})
+
+test('resolveGoogleUid：已有對照項用該 uid；沒有就用新 uid 並要求建立', () => {
+  assert.deepEqual(resolveGoogleUid({ identity: { uid: 'u_00000000000000000001' }, newUid: 'u_x' }), { uid: 'u_00000000000000000001', create: false })
+  assert.deepEqual(resolveGoogleUid({ identity: null, newUid: 'u_00000000000000000002' }), { uid: 'u_00000000000000000002', create: true })
+  assert.deepEqual(resolveGoogleUid({ identity: { uid: '' }, newUid: 'u_00000000000000000003' }), { uid: 'u_00000000000000000003', create: true })
+})
+
+test('googleProfileFromPayload：取出 sub 與名字，名字缺少時退回 given_name 或空字串', () => {
+  assert.deepEqual(googleProfileFromPayload({ iss: 'https://accounts.google.com', sub: '1122', name: ' Amy ' }), { subject: '1122', name: 'Amy' })
+  assert.deepEqual(googleProfileFromPayload({ iss: 'accounts.google.com', sub: '1122', given_name: 'Amy' }), { subject: '1122', name: 'Amy' })
+  assert.deepEqual(googleProfileFromPayload({ iss: 'accounts.google.com', sub: '1122' }), { subject: '1122', name: '' })
+})
+
+test('googleProfileFromPayload：拒絕不明發行者、缺少或不安全的 sub、空 payload', () => {
+  assert.throws(() => googleProfileFromPayload({ iss: 'https://evil.example', sub: '1' }), /invalid_issuer/)
+  assert.throws(() => googleProfileFromPayload({ iss: 'accounts.google.com' }), /invalid_subject/)
+  assert.throws(() => googleProfileFromPayload({ iss: 'accounts.google.com', sub: 'a/b' }), /invalid_subject/)
+  assert.throws(() => googleProfileFromPayload(null), /invalid_payload/)
+})
+
+const fakeDeps = (over = {}) => {
+  const calls = []
+  return {
+    calls,
+    deps: {
+      verifyGoogle: async () => ({ iss: 'accounts.google.com', sub: '1122', name: 'Amy' }),
+      resolveUid: async (subject) => { calls.push(['resolve', subject]); return { uid: 'u_00000000000000000001', isNew: true } },
+      syncProfile: async (uid, name) => { calls.push(['sync', uid, name]) },
+      createToken: async (uid) => { calls.push(['token', uid]); return `token-${uid}` },
+      ...over,
+    },
+  }
+}
+
+test('exchangeGoogleLogin：成功時依序查表、同步資料、發 token', async () => {
+  const { deps, calls } = fakeDeps()
+  const r = await exchangeGoogleLogin({ idToken: 'abc', ...deps })
+  assert.equal(r.status, 200)
+  assert.deepEqual(r.body, { uid: 'u_00000000000000000001', isNew: true, displayName: 'Amy', firebaseToken: 'token-u_00000000000000000001' })
+  assert.deepEqual(calls, [['resolve', '1122'], ['sync', 'u_00000000000000000001', 'Amy'], ['token', 'u_00000000000000000001']])
+})
+
+test('exchangeGoogleLogin：缺少或過長的 idToken 回 400，且不會驗證或寫入', async () => {
+  const { deps, calls } = fakeDeps({ verifyGoogle: async () => { throw new Error('should not verify') } })
+  for (const idToken of [undefined, '', 123, 'x'.repeat(4097)]) {
+    assert.equal((await exchangeGoogleLogin({ idToken, ...deps })).status, 400)
+  }
+  assert.deepEqual(calls, [])
+})
+
+test('exchangeGoogleLogin：驗證失敗或 payload 不合法回 401，不查表也不發 token', async () => {
+  const bad = fakeDeps({ verifyGoogle: async () => { throw new Error('bad signature') } })
+  assert.deepEqual(await exchangeGoogleLogin({ idToken: 'abc', ...bad.deps }), { status: 401, body: { error: 'id_token_invalid' } })
+  const wrongIss = fakeDeps({ verifyGoogle: async () => ({ iss: 'https://evil.example', sub: '1' }) })
+  assert.equal((await exchangeGoogleLogin({ idToken: 'abc', ...wrongIss.deps })).status, 401)
+  assert.deepEqual(bad.calls, [])
+  assert.deepEqual(wrongIss.calls, [])
+})
+
+test('exchangeGoogleLogin：查表或發 token 失敗時丟出錯誤（由呼叫端轉成 500）', async () => {
+  const { deps } = fakeDeps({ resolveUid: async () => { throw new Error('firestore down') } })
+  await assert.rejects(() => exchangeGoogleLogin({ idToken: 'abc', ...deps }), /firestore down/)
 })

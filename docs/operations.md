@@ -45,7 +45,7 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 
 ## 本機模擬器跑雲端函式
 
-`npm run emulators` 只啟動 auth、firestore、storage，不含 functions。要實測登入、訪客、認領等雲端函式，另外啟動含 functions 的模擬器。LINE 驗證端點需要連外，所以預載 `functions/scripts/emulator-line-mock.mjs` 攔截那個請求（假的 `idToken` 直接當成 LINE userId，例如 `U` 加 32 位十六進位）。這個檔案只在本機以 `NODE_OPTIONS` 預載，不會被部署使用。
+`npm run emulators` 只啟動 auth、firestore、storage，不含 functions。要實測登入、訪客、認領等雲端函式，另外啟動含 functions 的模擬器。LINE 與 Google 的驗證都需要連外，所以預載 `functions/scripts/emulator-mocks.mjs` 假冒它們：`verifyLiffToken` 的假 `idToken` 直接當成 LINE userId（例如 `U` 加 32 位十六進位）；`authExchange` 的假 `idToken` 直接當成 Google 的 sub（例如 `1122`），以 `bad` 開頭的會模擬驗證失敗。這個檔案只在本機以 `NODE_OPTIONS` 預載，不會被部署使用。
 
 PowerShell，在專案根目錄：
 
@@ -54,7 +54,7 @@ PowerShell，在專案根目錄：
 Set-Content functions/.secret.local "LINE_CHANNEL_SECRET=dummy"
 
 # 啟動（路徑改成你的專案絕對路徑）
-$env:NODE_OPTIONS = "--import file:///C:/path/to/catsplit-app/functions/scripts/emulator-line-mock.mjs"
+$env:NODE_OPTIONS = "--import file:///C:/path/to/catsplit-app/functions/scripts/emulator-mocks.mjs"
 firebase emulators:start --only auth,firestore,functions --project demo-catsplit
 ```
 
@@ -76,6 +76,16 @@ node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫
 
 對本機模擬器執行時，先 `$env:FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080"`。
 
+## Google 登入設定
+
+Google 登入用 Google Identity Services 取得 ID token，由 `authExchange` 驗證，**不使用 Firebase Authentication 的 Google 提供者**，所以不需要在 Firebase Console 開啟 Google 登入，也不需要用戶端密鑰。
+
+- **OAuth 用戶端 ID**：在 Google Cloud Console（專案 `catsplit-app`）→ API 與服務 → 憑證建立「網頁應用程式」類型的 OAuth 用戶端。用戶端 ID 不是機密，直接寫在 `functions/index.js` 的 `GOOGLE_CLIENT_ID` 與 `src/config/google.js`，兩處必須相同（後端用它當 audience 驗證 token）。
+- **已授權的 JavaScript 來源**：`https://catsplit-app.web.app`、`https://catsplit-app.firebaseapp.com`、`http://localhost:5173`；重新導向 URI 留空。
+- **OAuth 同意畫面**：使用者類型「外部」，只用 `openid`、`email`、`profile`；**發布狀態必須是「正式版」**，停在「測試中」時只有手動加入的測試使用者能登入。
+- 登入畫面在 LINE 內建瀏覽器不顯示 Google 按鈕（常被擋）。
+- PR 預覽網址（`catsplit-app--pr-…web.app`）不在授權來源裡，而且預覽只部署 hosting，所以 Google 登入只能在合併部署後的正式網站實測。
+
 ## 綁定正式網域時要一起改
 
 漏改會導致登入或收據載入失敗。
@@ -83,6 +93,7 @@ node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫
 1. `functions/index.js` 的 `ALLOWED_ORIGINS`
 2. `scripts/storage/storage-cors.json`，並重新執行上面的指令
 3. LINE Developers 後台的 LIFF Endpoint URL 與 LINE Login Callback URL
+4. Google Cloud Console 的 OAuth 用戶端「已授權的 JavaScript 來源」
 
 ## 備份與用量
 
@@ -91,7 +102,9 @@ node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫
 - **訪客 Auth 紀錄自動清理**：Firestore 觸發器 `cleanupGuestsOnGroupDelete`（群組被刪；同時補刪留下的子集合與 Storage 收據、封面，所以在 Console 手動刪群組文件也會清乾淨）與 `cleanupGuestsOnMemberRemoved`（成員離開 `members`）會刪除 `p_` 開頭訪客的 Auth 紀錄；LINE 使用者的 Auth 不會被這兩個觸發器動到。觸發器 region 設為 `asia-east1`，**必須與 Firestore 資料庫位置相同**，否則部署會失敗。`cleanupGuestsOnMemberRemoved` 在每次群組文件更新（含每筆記帳）都會執行一次，只在 `members` 有人離開時才會刪除。
 - **UID 對照表 `users/{uid}`**：`lineLogin`、`verifyLiffToken` 每次登入會用 Admin SDK 寫入 `{ name, avatar, updatedAt }`，讓你在 Firestore Console 用 UID 反查是誰（Auth 的 Console 看不到 `displayName`）。rules 沒有開放這份文件（只開 `paymentMethods` 子集合），客戶端讀寫都被拒。`detachMember` 在 `deleteAccount` 成功後會一併刪除。App 快速登入路徑不會呼叫函式，所以要重新走完整登入才會更新。
 - **身分對照表 `identities/{provider:subject}`**：`lineLogin`、`verifyLiffToken` 登入時用 transaction 查表並懶建立；`identities`、`merges`、`mergeBackups` 客戶端讀寫一律被拒（`firestore-tests/identities.rules.mjs`）。補齊現有使用者見下方「身分對照表補齊」。
-- Cloud Functions（`lineLogin`、`verifyLiffToken`、`guestLogin`、`claimMember`、`detachMember`、`exportCsv`、`sharePage`）為公開端點，已設 `maxInstances: 5`。
+- **Google 登入 `authExchange`**：驗證 Google ID token（簽章與 audience）後，以 `identities/google:{sub}` 查表或建立內部 uid（`u_…`），發 custom token。查表與建立在 transaction 內，同一個 Google 帳號並行首次登入也只會有一個 uid；Google 沒有舊 uid 可沿用，所以查表失敗時直接回 500，不像 LINE 登入有退路。設定見下方「Google 登入設定」。
+- **刪除帳號時清除對照項**：`detachMember` 在 `deleteAccount` 成功後，依序刪 Auth、`users/{uid}`、`identities`（`uid` 等於自己的所有項目）。對照項放在最後，因為先刪對照項再刪 Auth 若中途失敗，Google 使用者下次登入會被配到新的 uid，舊資料就找不回來。
+- Cloud Functions（`lineLogin`、`verifyLiffToken`、`authExchange`、`guestLogin`、`claimMember`、`detachMember`、`exportCsv`、`sharePage`）為公開端點，已設 `maxInstances: 5`。
 
 ## 分帳計算
 

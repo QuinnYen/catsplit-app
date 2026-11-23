@@ -6,7 +6,18 @@
 // 登入回應裡的 uid。舊版後端（尚未部署）只回 userId，當時兩者相同
 export const uidFromLoginResponse = (data) => data.uid ?? data.userId
 
-export const buildSessionUser = ({ uid, lineUserId, name, avatar }) => ({ uid, lineUserId, name, avatar })
+// provider 只有非 LINE 的登入方式才會帶（例如 'google'）；沒有就代表 LINE（或舊版快取）
+export const buildSessionUser = ({ uid, lineUserId, name, avatar, provider }) => ({
+  uid, lineUserId, name, avatar, ...(provider && { provider }),
+})
+
+// 是不是在 LINE App 內建瀏覽器（user agent 帶 Line）；LINE 內建瀏覽器常擋 Google 登入，登入畫面不顯示 Google 按鈕
+export const isLineUserAgent = (userAgent) => /Line/i.test(userAgent || '')
+
+// Google 帳號沒有 LINE 名字可當預設，首次登入必須先設定顯示名稱（暱稱）：
+// 是 Google 使用者、暱稱已從雲端確認讀取完、而且還沒有暱稱
+export const needsNicknameSetup = ({ provider, isGuest, nicknameReady, nickname }) =>
+  provider === 'google' && !isGuest && !!nicknameReady && !nickname
 
 // 快取使用者對應的 LINE userId。舊版快取沒有 lineUserId，當時 uid 就是 LINE userId
 export const cachedLineUserId = (cached) => cached?.lineUserId ?? cached?.uid ?? null

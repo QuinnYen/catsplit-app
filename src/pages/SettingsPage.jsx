@@ -27,6 +27,9 @@ const SettingsPage = () => {
   const [nicknameInput, setNicknameInput] = useState(null)
   const [nicknameSaving, setNicknameSaving] = useState(false)
   const nicknameDirty = nicknameInput !== null && nicknameInput.trim() !== currentNickname
+  // Google 帳號沒有 LINE 名字可退回，顯示名稱不能清空
+  const isGoogleUser = user?.provider === 'google'
+  const canSaveNickname = nicknameDirty && !nicknameSaving && (!isGoogleUser || nicknameInput.trim() !== '')
 
   const handleSaveNickname = async () => {
     setNicknameSaving(true)
@@ -113,14 +116,14 @@ const SettingsPage = () => {
               />
               <button
                 onClick={handleSaveNickname}
-                disabled={!nicknameDirty || nicknameSaving}
-                style={{ padding: '10px 14px', borderRadius: 6, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: 'var(--cs-rc-stamp-text)', cursor: nicknameDirty && !nicknameSaving ? 'pointer' : 'not-allowed', background: nicknameDirty && !nicknameSaving ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)' }}
+                disabled={!canSaveNickname}
+                style={{ padding: '10px 14px', borderRadius: 6, border: 'none', fontSize: 13, fontWeight: 500, flexShrink: 0, color: 'var(--cs-rc-stamp-text)', cursor: canSaveNickname ? 'pointer' : 'not-allowed', background: canSaveNickname ? 'var(--cs-rc-stamp)' : 'var(--cs-line-soft)' }}
               >
                 {nicknameSaving ? t('settings.nicknameSaving') : t('settings.nicknameSave')}
               </button>
             </div>
             <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', lineHeight: 1.6, marginTop: 8 }}>
-              {t('settings.nicknameHint', { name: user?.lineName ?? user?.name })}
+              {isGoogleUser ? t('settings.nicknameHintRequired') : t('settings.nicknameHint', { name: user?.lineName ?? user?.name })}
             </div>
           </div>
         )}

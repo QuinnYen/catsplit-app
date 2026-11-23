@@ -20,6 +20,57 @@ export const identityKey = (provider, subject) => {
   return `${provider}:${subject}`
 }
 
+// ---------- Google ----------
+
+const GOOGLE_ISSUERS = ['accounts.google.com', 'https://accounts.google.com']
+
+// 顯示名稱：去掉控制字元、頭尾空白，最多 max 個字（以字元計，不會切壞中文或 emoji）；不是字串就回空字串
+export const cleanDisplayName = (value, max = 50) => {
+  if (typeof value !== 'string') return ''
+  const cleaned = Array.from(value).filter((ch) => ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) !== 127).join('').trim()
+  return Array.from(cleaned).slice(0, max).join('')
+}
+
+/**
+ * Google 登入要用哪個 uid：
+ * - 對照表已有 → 用對照表的 uid
+ * - 沒有 → 用新的內部 uid（newUid）並要求建立對照項；Google 使用者沒有「沿用舊 uid」的歷史包袱
+ */
+export const resolveGoogleUid = ({ identity, newUid }) => {
+  if (identity && typeof identity.uid === 'string' && identity.uid) {
+    return { uid: identity.uid, create: false }
+  }
+  return { uid: newUid, create: true }
+}
+
+// 從已通過簽章驗證的 Google ID token payload 取出身分：只信 sub 當身分，名字僅供預設顯示
+export const googleProfileFromPayload = (payload) => {
+  if (!payload || typeof payload !== 'object') throw new Error('invalid_payload')
+  if (!GOOGLE_ISSUERS.includes(payload.iss)) throw new Error('invalid_issuer')
+  identityKey('google', payload.sub) // 順便檢查 sub 能安全當成文件 id
+  return { subject: payload.sub, name: cleanDisplayName(payload.name ?? payload.given_name) }
+}
+
+/**
+ * Google 登入換發流程（相依都由外面注入，方便測試）：驗證 ID token → 查表或建立 uid → 同步使用者資料 → 發 custom token。
+ * 回傳 { status, body }。驗證失敗回 401；其他非預期錯誤直接丟出（呼叫端轉成 500）。
+ */
+export const exchangeGoogleLogin = async ({ idToken, verifyGoogle, resolveUid, syncProfile, createToken }) => {
+  if (typeof idToken !== 'string' || !idToken || idToken.length > 4096) {
+    return { status: 400, body: { error: 'missing_params' } }
+  }
+  let profile
+  try {
+    profile = googleProfileFromPayload(await verifyGoogle(idToken))
+  } catch {
+    return { status: 401, body: { error: 'id_token_invalid' } }
+  }
+  const { uid, isNew } = await resolveUid(profile.subject)
+  await syncProfile(uid, profile.name)
+  const firebaseToken = await createToken(uid)
+  return { status: 200, body: { uid, isNew, displayName: profile.name, firebaseToken } }
+}
+
 /**
  * LINE 登入要用哪個 uid：
  * - 對照表已有 → 用對照表的 uid（日後帳號合併後，LINE 身分可能指向別的 uid）

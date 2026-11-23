@@ -7,12 +7,16 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
 import { moveKey, swapId, MIGRATION_FIELDS, migrationPatch } from './migrate.js'
-import { identityKey, resolveLineUid } from './identity.js'
+import { OAuth2Client } from 'google-auth-library'
+import { identityKey, resolveLineUid, resolveGoogleUid, makeUid, exchangeGoogleLogin } from './identity.js'
 import { normalizeHl, previewText } from './sharePreview.js'
 
 initializeApp()
 
 const LINE_CHANNEL_ID = '2010062826'
+// Google OAuth 用戶端 ID（網頁應用程式）。不是機密，前端也會用（src/config/google.js）；驗證 ID token 時當作 audience
+const GOOGLE_CLIENT_ID = '210729139240-84a2bkkvtklu8qkj0fqhrgh9qu8l8goi.apps.googleusercontent.com'
+const googleClient = new OAuth2Client()
 const LINE_CHANNEL_SECRET = defineSecret('LINE_CHANNEL_SECRET')
 
 const ALLOWED_ORIGINS = new Set([
@@ -35,12 +39,13 @@ const setCors = (req, res) => {
 // 把 LINE 名稱與頭像寫進 users/{uid}，方便在 Console 用 UID 反查是誰；失敗不影響登入。
 // rules 沒有開放 users/{uid} 本身（只開 paymentMethods 子集合），客戶端讀寫都會被拒，只有 Admin SDK 寫得進去。
 // 刪除我的資料時由 detachMember 一併刪除。
-const syncUserProfile = async (uid, name, avatar) => {
+const syncUserProfile = async (uid, name, avatar, extra = {}) => {
   try {
     await getFirestore().doc(`users/${uid}`).set({
       name: typeof name === 'string' ? name : null,
       avatar: typeof avatar === 'string' && avatar.startsWith('https://') ? avatar : null,
       updatedAt: FieldValue.serverTimestamp(),
+      ...extra,
     }, { merge: true })
   } catch (e) {
     console.error('syncUserProfile error', e)
@@ -191,6 +196,66 @@ export const verifyLiffToken = onRequest(
       })
     } catch (e) {
       console.error('verifyLiffToken error', e)
+      res.status(500).json({ error: 'internal_error' })
+    }
+  }
+)
+
+// 查 identities/google:{sub}；沒有就產生新的內部 uid（u_…）並建立對照項，在 transaction 內完成，
+// 避免同一個 Google 帳號從兩個裝置同時首次登入而建出兩個 uid。Google 沒有舊 uid 可沿用，所以查表失敗時直接讓登入失敗
+const resolveUidForGoogle = async (subject) => {
+  const db = getFirestore()
+  const ref = db.doc(`identities/${identityKey('google', subject)}`)
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    // 每次 transaction 重試都重新產生 uid；只有最後成功寫入的那一個會被保留
+    const { uid, create } = resolveGoogleUid({ identity: snap.exists ? snap.data() : null, newUid: makeUid() })
+    if (create) {
+      tx.set(ref, { uid, provider: 'google', subject, createdAt: FieldValue.serverTimestamp() })
+    }
+    return { uid, isNew: create }
+  })
+}
+
+/**
+ * Google 登入：前端用 Google Identity Services 取得 ID token，這裡驗證簽章與 audience 後，
+ * 以 google:{sub} 查對照表換成內部 uid，發 Firebase custom token。body { provider: 'google', idToken }。
+ * 回傳 { uid, isNew, displayName, firebaseToken }；displayName 只是 Google 上的名字，供首次設定暱稱時當預設。
+ */
+export const authExchange = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5 },
+  async (req, res) => {
+    setCors(req, res)
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('')
+      return
+    }
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'method_not_allowed' })
+      return
+    }
+
+    const { provider, idToken } = req.body || {}
+    if (provider !== 'google') {
+      res.status(400).json({ error: 'unsupported_provider' })
+      return
+    }
+
+    try {
+      const { status, body } = await exchangeGoogleLogin({
+        idToken,
+        verifyGoogle: async (token) => {
+          const ticket = await googleClient.verifyIdToken({ idToken: token, audience: GOOGLE_CLIENT_ID })
+          return ticket.getPayload()
+        },
+        resolveUid: resolveUidForGoogle,
+        // Google 帳號的頭像一律用預設，不把 Google 頭像網址存進去
+        syncProfile: (uid, name) => syncUserProfile(uid, name, null, { provider: 'google' }),
+        createToken: (uid) => getAuth().createCustomToken(uid),
+      })
+      res.status(status).json(body)
+    } catch (e) {
+      console.error('authExchange error', e)
       res.status(500).json({ error: 'internal_error' })
     }
   }
@@ -527,6 +592,15 @@ export const detachMember = onRequest(
         } catch (e) {
           console.error('detachMember delete users doc error', e)
           failed.push('profile')
+        }
+        // 身分對照項（identities）也要刪：LINE 或 Google 的 subject 不能在帳號刪除後還留著。
+        // 放在刪 Auth 之後：先刪對照項再刪 Auth 若中途失敗，Google 使用者下次登入會被配到新的 uid，舊資料就找不回來
+        try {
+          const snap = await getFirestore().collection('identities').where('uid', '==', caller.uid).get()
+          await Promise.all(snap.docs.map((d) => d.ref.delete()))
+        } catch (e) {
+          console.error('detachMember delete identities error', e)
+          failed.push('identities')
         }
       }
     }
