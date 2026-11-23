@@ -62,7 +62,11 @@ firebase emulators:start --only auth,firestore,functions --project demo-catsplit
 
 ## 身分對照表補齊（`identities`）
 
-詳見[身分與訪客](identity-and-guests.md)。在 `functions` 資料夾內執行，需要有 Firestore 權限的服務帳號：
+詳見[身分與訪客](identity-and-guests.md)。
+
+**方法一（建議）：GitHub Actions 按鈕。** 到 GitHub 的 Actions 頁面，左側選「Backfill identities」→ Run workflow（分支選 `main`）。預設是 dry-run，只會在執行紀錄與摘要裡列出「找到幾位 LINE 使用者、幾位缺對照項」；確認數字合理後，再執行一次並勾選 `apply` 才會真的寫入。設定檔是 `.github/workflows/backfill-identities.yml`，沿用部署用的服務帳號 secret（`FIREBASE_SERVICE_ACCOUNT_CATSPLIT_APP`），該帳號需要有 Firestore 讀寫權限；只允許在 `main` 上執行。
+
+**方法二：在自己的電腦或 Cloud Shell 執行。** 在 `functions` 資料夾內執行，需要有 Firestore 權限的服務帳號：
 
 ```powershell
 $env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\to\service-account.json"
