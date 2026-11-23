@@ -112,6 +112,8 @@ export default {
   'group.detail.by': '記錄人',
   'group.deleteSettlement': '刪除這筆轉帳',
   'group.exportFailed': '匯出失敗，請稍後再試',
+  'group.exportLinkCopied': '已複製 5 分鐘有效的下載連結。請貼到手機瀏覽器的網址列開啟，即可下載 CSV。',
+  'group.exportLinkManual': '無法自動複製，請複製下方的下載連結（5 分鐘內有效），貼到手機瀏覽器的網址列開啟。',
   'csv.type': '類型',
   'csv.date': '日期',
   'csv.time': '時間',
