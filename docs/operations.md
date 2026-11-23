@@ -76,6 +76,29 @@ node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫
 
 對本機模擬器執行時，先 `$env:FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080"`。
 
+## 群組彙總檢查與修復
+
+群組文件上的彙總（`totalAmount`、`totalExpenses`、`totalIncome`、`incomeCount`、`memberBalances`、`memberExpenseCounts`）由客戶端新增帳目時用 `increment` 更新、編輯與刪除時整批重算，真正的來源是三個子集合的全部帳目（見 [`data-model.md`](data-model.md) 第 3 節）。**餘額對不上、或懷疑資料有問題時，用這個工具比對。**
+
+到 GitHub 的 **Actions** 頁面選 **Check group aggregates** → **Run workflow**（只能在 `main` 上執行）：
+
+1. 預設是 **dry-run**：列出哪些群組對不上、差在哪個欄位與成員（存的值與重算值），不寫入任何資料。結果在這次執行的 Summary。
+2. 確認無誤後，勾選 **apply** 再執行一次，才會把重算的值寫回。也可以在 **group** 欄填一個群組 id，只處理那個群組。
+3. 可重複執行。寫回時以讀到的版本為前提：掃描與寫入之間群組被改過（有人剛記帳）就跳過那個群組，結果會標示 `changed`，再跑一次即可，不會蓋掉剛新增的帳目。
+
+重算用客戶端同一份 `computeGroupAggregates`（`src/utils/expenseHelpers.js`），所以工具和 App 的算法不會分歧。金額與餘額寫回時取到分。差異容忍 0.005（浮點誤差不算）；沒存的欄位視為 0。
+
+**寫回前請先把 dry-run 的 Summary 存下來**（裡面有每個欄位修復前的值），需要還原時有依據。工具只會改這六個欄位，不動成員、名稱、預算等。
+
+本機對模擬器執行（先 `$env:FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080"`）：
+
+```powershell
+cd functions
+node scripts/check-aggregates.mjs --project demo-catsplit
+```
+
+測試：純函式 `functions/aggregates.test.js`（`npm test`）、Firestore 整合測試 `functions/emulator-tests/aggregateCheck.mjs`（`npm run test:merge`，含「寫入前被改過就跳過」）。
+
 ## 帳號綁定與合併（維運）
 
 端點與流程見[身分與訪客](identity-and-guests.md)。維運時要知道的事：

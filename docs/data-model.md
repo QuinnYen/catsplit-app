@@ -135,7 +135,7 @@
 | 冗餘資料 | 真正來源 | 誰維護 | 可能的漂移 | 修復手段 |
 |---|---|---|---|---|
 | `groups.memberProfiles[uid].name、avatar` | 使用者的暱稱（`settings/profile`）與 `users/{uid}` | **各人的前端**登入時同步到自己所在的每個群組（`useSyncMemberProfile`）；加入時寫入一份 | 使用者換暱稱後沒開 App，別人看到的還是舊的；訪客與已退出者沒有來源 | 使用者再開 App 就會同步；沒有後端修復 |
-| `groups.memberBalances`、`memberExpenseCounts`、`totalAmount`、`totalExpenses`、`totalIncome`、`incomeCount` | 三個子集合的全部帳目 | **客戶端**：新增時在同一個 batch 用 `increment` 更新；編輯與刪除時用 `recomputeGroupAggregates`（交易內重讀全部帳目並重算） | 新增靠「增量」，與重算的結果理論上相同；歷史上合併時出過 `memberExpenseCounts` 重複計算的 bug | 客戶端 `recomputeGroupAggregates`（任何編輯或刪除會觸發）；**沒有可由管理者手動觸發的整批重算** |
+| `groups.memberBalances`、`memberExpenseCounts`、`totalAmount`、`totalExpenses`、`totalIncome`、`incomeCount` | 三個子集合的全部帳目 | **客戶端**：新增時在同一個 batch 用 `increment` 更新；編輯與刪除時用 `recomputeGroupAggregates`（交易內重讀全部帳目並重算） | 新增靠「增量」，與重算的結果理論上相同；歷史上合併時出過 `memberExpenseCounts` 重複計算的 bug | 客戶端 `recomputeGroupAggregates`（任何編輯或刪除會觸發）；**維運工具** `functions/scripts/check-aggregates.mjs`（GitHub Actions「Check group aggregates」，dry-run 列出差異、`--apply` 寫回，見 `operations.md`） |
 | `users/{uid}.name、avatar、provider` | `names`、`avatars`、各登入方式 | 後端每次登入 | 規則固定，不應漂移 | 下次登入自動校正 |
 | 帳目裡的 `exchangeRate`、`homeRate` | 當時的匯率 | 記帳時寫入 | 刻意保存的快照，不是漂移 | — |
 
@@ -187,7 +187,7 @@
 依重要性排序，每項都可以獨立決定與執行。
 
 1. ~~把複合索引放進版本控制~~ 已完成（2026-11-23）。檔案內容依程式裡的查詢寫成，尚未與主控台現有索引逐一比對；要比對可執行 `firebase firestore:indexes --project catsplit-app` 匯出現有索引。
-2. **彙總的後端修復手段**：提供一個只有建立者（或管理者）能觸發的後端函式，從帳目整批重算群組彙總，並加上檢查腳本，能找出「彙總與帳目對不上」的群組。解決「餘額對不上時沒有保險」的問題。
+2. ~~彙總的整批重算與檢查工具~~ 已完成（2026-11-23），做成 GitHub Actions 維運工具而不是後端端點：不新增對外的權限面，且與 App 共用同一份重算函式。
 3. **P12 資料結構先設計再動手**：決定
    - 個人帳目是否與群組帳目共用同一套欄位（`payments`、`splits` 是群組專用，個人帳目只需要單一金額）。
    - 彙總要不要存（建議個人帳目的月總額用查詢計算，或另存**每月一份**的小文件，不要放在一個持續成長的父文件）。
