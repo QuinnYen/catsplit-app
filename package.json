@@ -11,6 +11,7 @@
     "test": "node --test",
     "test:rules": "firebase emulators:exec --only firestore --project demo-catsplit \"node --test \\\"firestore-tests/*.mjs\\\"\"",
     "test:merge": "firebase emulators:exec --only firestore --project demo-catsplit \"node --test \\\"functions/emulator-tests/*.mjs\\\"\"",
+    "test:e2e": "firebase emulators:exec --only auth,firestore,functions --project demo-catsplit \"node --test \\\"functions/emulator-e2e/*.mjs\\\"\"",
     "check:cjk": "node scripts/check-cjk.mjs",
     "check:colors": "node scripts/check-colors.mjs",
     "preview": "vite preview"

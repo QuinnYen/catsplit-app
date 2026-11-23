@@ -28,7 +28,7 @@
 - **Google 登入（PR3）**：登入畫面（外部瀏覽器）顯示 Google 按鈕，前端用 Google Identity Services 取得 ID token，`authExchange` 驗證後以 `identities/google:{sub}` 查表；沒有就建立新的內部 uid 與對照項（transaction，並行首次登入只會有一個 uid）並建立 `users/{uid}`（`provider: 'google'`）。Google 帳號的 `user.provider` 為 `'google'`，LINE 使用者沒有這個欄位。
 - **首次設定暱稱**：Google 帳號沒有 LINE 名字可當預設，所以雲端還沒有暱稱時，登入後先進「設定顯示名稱」頁（預設帶 Google 名字，最多 20 字），完成才進首頁；設定頁的暱稱也不能清空。LINE 使用者不經過這一頁。
 - **頭像**：Google 帳號的頭像一律是 `null`（畫面顯示名字首字），不存 Google 頭像網址。預設貓咪頭像之後再調整。
-- **還沒做的**：LINE 與 Google 互相綁定、帳號合併的 API 與介面（PR5、PR6）。目前同一個人用 LINE 與 Google 登入會是兩個獨立帳號。
+- **還沒做的**：設定頁「登入方式」與合併確認頁（PR6）。綁定與合併的後端（PR5）已完成，但前端還沒有入口，使用者目前無法使用；同一個人用 LINE 與 Google 登入仍是兩個獨立帳號。
 - **合併核心（PR4，尚未開放，沒有任何端點）**：`functions/merge.js`（純函式）與 `functions/memberOps.js`（Firestore 操作）。重點：
   - 保留哪個 uid 由系統決定：群組較多者保留，一樣多保留第一個參數；訪客（`p_`）與相同 uid 不能合併。
   - 兩邊都在同一群組：金額、餘額相加；**筆數改由搬移後的支出文件重算**（兩個帳號可能參與同一筆支出，直接相加會重複）。只有被併入帳號在的群組：成員身分直接改成保留帳號。
@@ -37,3 +37,23 @@
   - 先全部複製、再刪來源，可以重試：已複製的文件在重試時視為「保留」，資料相同。`users/{uid}` 本身不搬，合併最後與 Auth 一起刪。
 - **刪除我的資料**會一併刪掉該 uid 的 `identities`（見 `docs/operations.md`）。
 - **補齊現有使用者**：`functions/scripts/backfill-identities.mjs` 掃描 `users/` 與群組 `members`，為缺對照項的 LINE 使用者補上。預設只列出（dry-run），加 `--apply` 才寫入，可重複執行。帳號綁定與合併上線前必須先跑過一次。
+
+### 綁定與合併的端點（PR5，前端入口在 PR6）
+
+全部要求登入且不是訪客（訪客一律 401），失敗回 `{ error }` 與對應的 HTTP 狀態。
+
+| 端點 | 用途 |
+|---|---|
+| `listIdentities` | 列出自己已綁定的登入方式 `[{ id, provider, createdAtMs }]` |
+| `bindIdentity` | 綁定第二種登入方式；`{ provider: 'google', idToken }`、`{ provider: 'line', code, redirectUri }`（外部瀏覽器）或 `{ provider: 'line', liffIdToken }`（LINE 內） |
+| `executeMerge` | 確認並執行合併，`{ mergeId, resolutions? }`，可重試 |
+| `unbindIdentity` | 解除一個登入方式，`{ identityId }` |
+
+- **`bindIdentity` 的結果**：`bound`（新增一筆對照項）、`already_bound`，或 `merge_required` 加預覽（`mergeId`、`initiatorIsDropped`、受影響的群組、帳目筆數、自己轉給自己的轉帳數、個人資料衝突與預設建議、`expiresAtMs`）。驗證與預覽在同一次呼叫完成（LINE 授權碼只能用一次）。
+- **憑證驗證**：Google ID token 簽發後 10 分鐘內才接受；LINE 授權碼的 `redirectUri` 必須是我們網域的 `/auth/callback`。LINE 內的 `liffIdToken` 沿用 LINE 驗證端點的有效期。
+- **判斷要不要合併**（`functions/bind.js` 的 `decideBind`）：對照表已有且是自己 → `already_bound`；已有但是別的帳號 → 合併；對照表沒有、但這個 LINE userId 已是現有帳號的 uid（有 `users` 文件、個人資料或是某群組成員，還沒懶建立對照項的舊使用者）→ 是自己就補建，是別人就合併並在完成時補建對照項；都沒有 → 新增一筆。
+- **保留哪個**：群組較多的帳號保留（一樣多保留發起人）。若發起人是被併入而刪除的那個帳號，`executeMerge` 回傳保留帳號的 `firebaseToken` 與 `sessionReplaced: true`，前端要用它重新登入。
+- **分階段與重試**：`previewed → started → groups_done → profile_done → done`，進度存 `merges/{id}`（同一對帳號固定同一份）。失敗時用同一個 `mergeId` 再呼叫即可從斷點繼續；同時執行兩次會被租約擋下（409）。
+- **備份**：動資料前先備份到 `mergeBackups/{mergeId}`（meta 加子集合 `groupDocs`、`personal`、`keepOverwritten`），保留 30 天，由 GitHub Actions 每天清除。**目前沒有一鍵還原**，要還原就依備份內容用腳本寫回（`groupDocs` 的每筆有 `groupId`、`col`、`docId`、`data`；`personal` 的每筆有 `path` 與 `data`；meta 的 `dropIdentities` 與 `dropUserDoc` 是被併入帳號的對照項與 `users` 文件）。
+- **登入**：`verifyLiffToken`、`lineLogin` 查對照表失敗時直接回 500，不再退回 LINE userId（合併後對照項可能指向別的 uid）。
+- **刪除我的資料**（`detachMember` 的 `deleteAccount`）會一併刪掉該 uid 的對照項、牽涉到它的 `merges` 與 `mergeBackups`（備份裡有被併入帳號的資料）。

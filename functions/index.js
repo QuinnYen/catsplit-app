@@ -7,8 +7,13 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
 import { migrateMember as migrateMemberOp } from './memberOps.js'
+import { MergeError, parseBindRequest, isFreshProof } from './bind.js'
+import {
+  bindIdentity as bindIdentityFlow, executeMerge as executeMergeFlow, unbindIdentity as unbindIdentityFlow,
+  listIdentitiesOf, purgeExpired, deleteMergeDataOf,
+} from './mergeFlow.js'
 import { OAuth2Client } from 'google-auth-library'
-import { identityKey, resolveLineUid, resolveGoogleUid, makeUid, exchangeGoogleLogin } from './identity.js'
+import { identityKey, resolveLineUid, resolveGoogleUid, makeUid, exchangeGoogleLogin, googleProfileFromPayload } from './identity.js'
 import { normalizeHl, previewText } from './sharePreview.js'
 
 initializeApp()
@@ -54,24 +59,19 @@ const syncUserProfile = async (uid, name, avatar, extra = {}) => {
 
 // 查 identities/line:{userId} 決定這個 LINE 使用者的內部 uid；沒有對照項就沿用 LINE userId 並建立（懶建立）。
 // 在 transaction 內完成，避免並行登入建出兩筆。對照表只有 Admin SDK 讀寫得到（rules 全拒）。
-// 目前還沒有任何帳號合併，對照項必然等於 LINE userId，所以查表失敗時退回 LINE userId 讓登入照常；
-// 帳號合併上線（PR5）後，對照項可能指向別的 uid，那時必須移除這個退路，改成登入失敗。
+// 帳號合併之後，對照項可能指向別的 uid（不再等於 LINE userId），所以查表失敗時不能退回 LINE userId，
+// 否則會登入到已被併掉的舊帳號；失敗就讓登入失敗（呼叫端回 500），使用者重試即可。
 const resolveUidForLine = async (lineUserId) => {
-  try {
-    const db = getFirestore()
-    const ref = db.doc(`identities/${identityKey('line', lineUserId)}`)
-    return await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref)
-      const { uid, create } = resolveLineUid({ identity: snap.exists ? snap.data() : null, lineUserId })
-      if (create) {
-        tx.set(ref, { uid, provider: 'line', subject: lineUserId, createdAt: FieldValue.serverTimestamp() })
-      }
-      return uid
-    })
-  } catch (e) {
-    console.error('resolveUidForLine error', e)
-    return lineUserId
-  }
+  const db = getFirestore()
+  const ref = db.doc(`identities/${identityKey('line', lineUserId)}`)
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    const { uid, create } = resolveLineUid({ identity: snap.exists ? snap.data() : null, lineUserId })
+    if (create) {
+      tx.set(ref, { uid, provider: 'line', subject: lineUserId, createdAt: FieldValue.serverTimestamp() })
+    }
+    return uid
+  })
 }
 
 export const lineLogin = onRequest(
@@ -259,6 +259,147 @@ export const authExchange = onRequest(
       res.status(500).json({ error: 'internal_error' })
     }
   }
+)
+
+// ---------- 綁定與帳號合併 ----------
+// 已登入（非訪客）的使用者再通過第二種身分的驗證，就能把它綁到自己的帳號；
+// 第二種身分若已是另一個有資料的帳號，要先預覽、確認後才合併（流程見 mergeFlow.js 與 docs/identity-and-guests.md）。
+
+// 需要登入且不是訪客的 POST 端點共用的外殼：處理 CORS、方法、身分，並把 MergeError 轉成對應的 HTTP 狀態
+const authedPost = (handler) => async (req, res) => {
+  setCors(req, res)
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('')
+    return
+  }
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'method_not_allowed' })
+    return
+  }
+  const caller = await verifyBearer(req)
+  if (!caller || caller.guest) {
+    res.status(401).json({ error: 'unauthenticated' })
+    return
+  }
+  try {
+    res.json(await handler({ req, caller }))
+  } catch (e) {
+    if (e instanceof MergeError) {
+      res.status(e.status).json({ error: e.code, ...e.extra })
+      return
+    }
+    console.error('authedPost error', e)
+    res.status(500).json({ error: 'internal_error' })
+  }
+}
+
+// 驗證第二種身分的憑證，回傳 { provider, subject }；憑證太舊或無效丟 MergeError(401)
+const verifyProof = async (proof) => {
+  const proofError = () => new MergeError('proof_invalid', 401)
+  try {
+    if (proof.provider === 'google') {
+      const ticket = await googleClient.verifyIdToken({ idToken: proof.idToken, audience: GOOGLE_CLIENT_ID })
+      const payload = ticket.getPayload()
+      // Google ID token 簽發後 10 分鐘內才接受，避免外洩的舊 token 被拿來把別人的帳號併進自己的
+      if (!isFreshProof(payload?.iat, Date.now())) throw new MergeError('proof_expired', 401)
+      return { provider: 'google', subject: googleProfileFromPayload(payload).subject }
+    }
+    if (proof.liffIdToken) {
+      const res = await fetch('https://api.line.me/oauth2/v2.1/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id_token: proof.liffIdToken, client_id: LINE_CHANNEL_ID }),
+      })
+      if (!res.ok) throw proofError()
+      const claims = await res.json()
+      identityKey('line', claims.sub)
+      return { provider: 'line', subject: claims.sub }
+    }
+    // LINE 授權碼（外部瀏覽器）只能用一次
+    const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: proof.code,
+        redirect_uri: proof.redirectUri,
+        client_id: LINE_CHANNEL_ID,
+        client_secret: LINE_CHANNEL_SECRET.value(),
+      }),
+    })
+    if (!tokenRes.ok) throw proofError()
+    const { access_token } = await tokenRes.json()
+    const profileRes = await fetch('https://api.line.me/v2/profile', { headers: { Authorization: `Bearer ${access_token}` } })
+    if (!profileRes.ok) throw proofError()
+    const profile = await profileRes.json()
+    identityKey('line', profile.userId)
+    return { provider: 'line', subject: profile.userId }
+  } catch (e) {
+    if (e instanceof MergeError) throw e
+    console.error('verifyProof error', e?.message || e)
+    throw proofError()
+  }
+}
+
+// 列出自己已綁定的登入方式（對照表客戶端讀不到），給設定頁的「登入方式」用
+export const listIdentities = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5 },
+  authedPost(async ({ caller }) => {
+    const list = await listIdentitiesOf(getFirestore(), caller.uid)
+    return { identities: list.map(({ id, provider, createdAtMs }) => ({ id, provider, createdAtMs })) }
+  })
+)
+
+/**
+ * 綁定第二種登入方式。body：{ provider: 'google', idToken } 或 { provider: 'line', code, redirectUri }（外部瀏覽器）
+ * 或 { provider: 'line', liffIdToken }（LINE 內）。回傳 { status: 'bound' | 'already_bound' }，
+ * 或 { status: 'merge_required', mergeId, ...預覽 }：對方是另一個有資料的帳號，要使用者確認後呼叫 executeMerge。
+ * 憑證（尤其 LINE 授權碼只能用一次）在這一步驗證並直接產生預覽，之後的執行只需要 mergeId。
+ */
+export const bindIdentity = onRequest(
+  { secrets: [LINE_CHANNEL_SECRET], cors: false, region: 'asia-east1', maxInstances: 5, timeoutSeconds: 120 },
+  authedPost(async ({ req, caller }) => {
+    const proof = parseBindRequest(req.body, { allowedOrigins: ALLOWED_ORIGINS })
+    const { provider, subject } = await verifyProof(proof)
+    return bindIdentityFlow(getFirestore(), { callerUid: caller.uid, provider, subject, nowMs: Date.now() })
+  })
+)
+
+/**
+ * 確認並執行合併。body：{ mergeId, resolutions? }，resolutions 是使用者對需要決定的衝突的選擇 { 路徑: 'keep' | 'drop' }。
+ * 分階段、可重試（失敗時用同一個 mergeId 再呼叫一次即可從斷點繼續）。完成時回傳保留帳號的 custom token：
+ * 若發起人是被併入而刪除的那個帳號，原本的 session 會失效，前端要用這個 token 重新登入。
+ */
+export const executeMerge = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5, timeoutSeconds: 300 },
+  authedPost(async ({ req, caller }) => {
+    const { mergeId, resolutions } = req.body || {}
+    if (typeof mergeId !== 'string' || !mergeId || mergeId.length > 200 || mergeId.includes('/')) throw new MergeError('invalid_request', 400)
+    if (resolutions !== undefined && (typeof resolutions !== 'object' || resolutions === null || Array.isArray(resolutions))) {
+      throw new MergeError('invalid_request', 400)
+    }
+    const db = getFirestore()
+    const result = await executeMergeFlow(db, {
+      deleteAuthUser: (uid) => getAuth().deleteUser(uid).catch((e) => {
+        if (e.code !== 'auth/user-not-found') throw e
+      }),
+      createToken: (uid) => getAuth().createCustomToken(uid),
+    }, { mergeId, callerUid: caller.uid, userChoices: resolutions, runId: randomBytes(8).toString('hex') })
+    // 順便清掉過期的合併紀錄與備份（沒有排程時的備援，失敗不影響合併結果）
+    purgeExpired(db, Date.now(), 5).catch((e) => console.error('purgeExpired error', e))
+    return { ok: true, keepUid: result.keepUid, firebaseToken: result.firebaseToken, alreadyDone: result.alreadyDone, sessionReplaced: caller.uid !== result.keepUid }
+  })
+)
+
+// 解除一個登入方式。body：{ identityId }（listIdentities 回傳的 id）。至少要保留一種
+export const unbindIdentity = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5 },
+  authedPost(async ({ req, caller }) => {
+    const { identityId } = req.body || {}
+    if (typeof identityId !== 'string' || !identityId || identityId.length > 200 || identityId.includes('/')) throw new MergeError('invalid_request', 400)
+    const { mode } = await unbindIdentityFlow(getFirestore(), { callerUid: caller.uid, identityId, makeUid, nowMs: Date.now() })
+    return { ok: true, mode }
+  })
 )
 
 // ---------- 訪客：選名字登入 / LINE 認領訪客名字 ----------
@@ -550,6 +691,13 @@ export const detachMember = onRequest(
         } catch (e) {
           console.error('detachMember delete identities error', e)
           failed.push('identities')
+        }
+        // 牽涉到這個 uid 的合併紀錄與備份（備份裡有被併入帳號的資料）也一併刪除
+        try {
+          await deleteMergeDataOf(getFirestore(), caller.uid)
+        } catch (e) {
+          console.error('detachMember delete merge data error', e)
+          failed.push('merges')
         }
       }
     }

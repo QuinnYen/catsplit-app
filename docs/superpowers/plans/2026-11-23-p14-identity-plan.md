@@ -2,7 +2,7 @@
 
 日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：進行中
 
-**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 已部署（#7）；PR3 已部署（#8）；PR4（合併核心，純函式與資料搬移）進行中。
+**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 已部署（#7）；PR3 已部署（#8）；PR4 已部署（#9）；PR5（綁定與合併的 API）進行中。
 
 ## 0. 目標
 
@@ -63,7 +63,7 @@ D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 
 
 完成條件：現有 LINE 使用者登入、群組、記帳完全正常；`identities` 有資料；rules 測試通過。
 
-**PR5 備忘**：`resolveUidForLine` 目前在 transaction 失敗時退回 LINE userId（此時還沒有合併，對照項必然等於 LINE userId）。合併上線後必須移除這個退路，改成登入失敗。
+**PR5 備忘（已完成）**：`resolveUidForLine` 在 PR1 留的「transaction 失敗時退回 LINE userId」退路，已在 PR5 移除，改成登入失敗（對照項可能指向別的 uid，退回會登入到被併掉的舊帳號）。
 
 ### PR2：前端改以伺服器 uid 為準（S）
 
@@ -111,6 +111,14 @@ D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 
 - 安全：訪客不能呼叫；`executeMerge` 驗證發起人與 `previewed` 紀錄一致且未過期；同一對帳號同時只允許一個進行中的合併。
 
 完成條件：以兩個測試帳號（模擬器或測試專案）完整跑通「綁定」「合併」「失敗後從斷點重試」「備份可還原」。
+
+**實作結果**（與上面規劃的差異）：
+- **`previewMerge` 併入 `bindIdentity`**：LINE 授權碼只能用一次，驗證完沒有第二次機會，所以偵測到需要合併時直接產生預覽並回傳 `mergeId`；`executeMerge` 只需要 `mergeId`。端點共四個：`listIdentities`（新增，設定頁需要，對照表客戶端讀不到）、`bindIdentity`、`executeMerge`、`unbindIdentity`。
+- **備份清除不用排程函式**：改用 GitHub Actions 每天排程（`purge-merge-backups.yml`）加上 `executeMerge` 順便清的備援。Cloud Scheduler 需要額外啟用 API 與權限，部署失敗會連帶讓所有函式部署失敗。
+- **同一種登入方式可綁定多個**，不限制每種一個（合併時兩邊各有一個 Google 帳號也合理）。
+- **解除舊 LINE 使用者自己的 LINE**：改指向新的空帳號，否則下次 LINE 登入會把對照項懶建立回來。
+- 新增模組：`functions/bind.js`（純函式）、`functions/mergeFlow.js`（Firestore 流程）；測試：`bind.test.js`、`emulator-tests/mergeFlow.mjs`（19 項）、`emulator-e2e/identity-flow.mjs`（12 項，從 HTTP 端點走完整流程，`npm run test:e2e`）。
+- 驗證測試是否有效時，故意拿掉「備份只做一次」的保護，原本的測試**沒有**失敗；已補強（重試後備份 meta 不得改變），再次拿掉保護就會失敗。
 
 ### PR6：前端綁定與合併介面（L）
 

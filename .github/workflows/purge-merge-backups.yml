@@ -1,0 +1,47 @@
+# 每天清除過期的帳號合併紀錄與備份（見 docs/identity-and-guests.md、docs/operations.md）。
+# 也可以到 Actions 頁面手動執行：預設 dry-run，只列出會刪什麼；勾選 apply 才會真的刪。排程執行一律真的刪。
+# 不使用 Cloud Scheduler 排程函式：部署它需要額外啟用 API 與權限，部署失敗會連帶影響其他函式；
+# 這裡沿用已有的服務帳號，另外 executeMerge 每次也會順便清幾筆當備援。
+name: Purge merge backups
+
+on:
+  schedule:
+    - cron: '37 19 * * *'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: '勾選才會真的刪除（不勾選＝dry-run，只列出過期的紀錄）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  purge:
+    # 只允許在 main 上執行，避免從未合併的分支對正式資料庫寫入
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix functions
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CATSPLIT_APP }}
+      - name: Run purge
+        working-directory: functions
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+          APPLY: ${{ github.event_name == 'schedule' || inputs.apply }}
+        run: |
+          if [ "$APPLY" = "true" ]; then
+            echo '### 清除過期的合併紀錄與備份（實際刪除）' >> "$GITHUB_STEP_SUMMARY"
+            node scripts/purge-merge-backups.mjs --project catsplit-app --apply 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo '### 清除過期的合併紀錄與備份（dry-run，沒有刪除）' >> "$GITHUB_STEP_SUMMARY"
+            node scripts/purge-merge-backups.mjs --project catsplit-app 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          fi

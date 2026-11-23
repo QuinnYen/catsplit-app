@@ -7,7 +7,7 @@
 - **Firestore / Storage rules 是唯一的存取防線**（`firestore.rules`、`storage.rules`）。改 rules 後請用兩個帳號實測：加入、退出、建立者移除成員、改暱稱，以及訪客加入與認領。
 - 群組成員名單只能減少一人（本人退出，或建立者移除他人）；新增成員只能由本人加入，或由成員新增虛擬成員，上限 50 人。
 - 群組預算 `budget` 只有建立者（`createdBy`）能設定、修改或清除，寫入時驗證結構（`amount` 為 0 到 1e12 之間的數字、`period` 為含 `type` 字串的 map、沒有其他欄位）；其他成員的一般記帳更新不受影響。建立者離開時 `createdBy` 轉給繼任者，管理權跟著轉移。
-- **rules 自動化測試**：`npm run test:rules`（需要 Java）以 `--project demo-catsplit` 啟動 Firestore 模擬器並執行 `firestore-tests/*.mjs`，目前涵蓋預算權限與一般記帳、加入群組、新增虛擬成員。會使用 8080 埠，**執行前先關閉 `npm run emulators` 或其他模擬器**。兩個帳號的手動實測仍要做。**帳號合併的 Firestore 整合測試**用 `npm run test:merge`（同樣需要 Java 與模擬器，`functions/emulator-tests/`），涵蓋群組搬移、轉帳自付、個人資料搬移、重試安全與預覽；它與 `test:rules` 都用 8080 埠，不能同時執行。
+- **rules 自動化測試**：`npm run test:rules`（需要 Java）以 `--project demo-catsplit` 啟動 Firestore 模擬器並執行 `firestore-tests/*.mjs`，目前涵蓋預算權限與一般記帳、加入群組、新增虛擬成員。會使用 8080 埠，**執行前先關閉 `npm run emulators` 或其他模擬器**。兩個帳號的手動實測仍要做。**帳號合併的 Firestore 整合測試**用 `npm run test:merge`（同樣需要 Java 與模擬器，`functions/emulator-tests/`），涵蓋群組搬移、轉帳自付、個人資料搬移、重試安全與預覽；它與 `test:rules` 都用 8080 埠，不能同時執行。**身分綁定與合併的端到端測試**用 `npm run test:e2e`（`functions/emulator-e2e/`，從 HTTP 端點走完整流程），需要含 functions 的模擬器與假驗證預載檔，做法見下方「本機模擬器跑雲端函式」；它會先清空 Firestore 與 Auth 模擬器的資料。
 - **收款方式**（`users/{uid}/paymentMethods`）：本人可讀寫；其他登入者只能讀 `isPublic == true` 的，列表查詢必須帶 `where('isPublic', '==', true)`。訪客不能寫。可見範圍的取捨見[收款方式](payment-methods.md)。
 - **收據圖片受 rules 保護**：Firestore 只存 `receiptPath`（Storage 路徑），顯示時用 `getBlob()` 以登入身分下載。**不要改回 `getDownloadURL()` 並存進資料庫**，帶 token 的網址會繞過 rules，任何拿到網址的人都能看。群組封面仍使用帶 token 的網址（敏感度低）。
 
@@ -76,6 +76,17 @@ node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫
 
 對本機模擬器執行時，先 `$env:FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080"`。
 
+## 帳號綁定與合併（維運）
+
+端點與流程見[身分與訪客](identity-and-guests.md)。維運時要知道的事：
+
+- **進行中或卡住的合併**：Firestore Console 的 `merges/{id}`，`state` 不是 `done` 就是還沒完成。使用者用同一個 `mergeId` 再按一次確認就會從斷點繼續（`failedGroups` 有值代表哪些群組失敗）；`lease` 有值且 `untilMs` 在未來，代表上一次還在執行，約 6 分鐘後可重試。`error` 欄位是上一次失敗的原因。
+- **備份**：`mergeBackups/{mergeId}`，子集合 `groupDocs`（被併入帳號所在群組的改動前內容，含會被刪除的自付轉帳）、`personal`（個人資料）、`keepOverwritten`（被覆蓋的保留帳號文件）；meta 的 `dropIdentities`、`dropUserDoc` 是被併入帳號的對照項與 `users` 文件。保留 30 天。**沒有一鍵還原**，要還原就依內容用腳本寫回。
+- **自動清除**：`.github/workflows/purge-merge-backups.yml` 每天 19:37（UTC）執行，刪除過期的 `merges` 與 `mergeBackups`（含子集合）。到 Actions 頁面可手動執行，預設 dry-run，勾選 `apply` 才真的刪；腳本是 `functions/scripts/purge-merge-backups.mjs`。進行中的合併不會被刪。`executeMerge` 每次也會順便清幾筆當備援。
+- **為什麼不用 Cloud Scheduler 排程函式**：部署它需要額外啟用 API 與權限，部署失敗會連帶讓所有函式部署失敗；GitHub Actions 沿用已有的服務帳號，沒有額外風險。
+- **同時合併的限制**：同一對帳號固定同一份 `merges` 紀錄；任一帳號有進行中的其他合併時，新的預覽會被拒絕。這個檢查不是交易，兩個極短時間內同時開始的不同合併理論上可能都通過，因為兩個預覽都需要使用者本人通過兩邊驗證，風險很低。
+- **憑證驗證**：Google ID token 簽發 10 分鐘內才接受；呼叫者本身的 session 只要是有效的 Firebase ID token（不另外要求剛登入）。
+
 ## Google 登入設定
 
 Google 登入用 Google Identity Services 取得 ID token，由 `authExchange` 驗證，**不使用 Firebase Authentication 的 Google 提供者**，所以不需要在 Firebase Console 開啟 Google 登入，也不需要用戶端密鑰。
@@ -104,7 +115,7 @@ Google 登入用 Google Identity Services 取得 ID token，由 `authExchange` �
 - **身分對照表 `identities/{provider:subject}`**：`lineLogin`、`verifyLiffToken` 登入時用 transaction 查表並懶建立；`identities`、`merges`、`mergeBackups` 客戶端讀寫一律被拒（`firestore-tests/identities.rules.mjs`）。補齊現有使用者見下方「身分對照表補齊」。
 - **Google 登入 `authExchange`**：驗證 Google ID token（簽章與 audience）後，以 `identities/google:{sub}` 查表或建立內部 uid（`u_…`），發 custom token。查表與建立在 transaction 內，同一個 Google 帳號並行首次登入也只會有一個 uid；Google 沒有舊 uid 可沿用，所以查表失敗時直接回 500，不像 LINE 登入有退路。設定見下方「Google 登入設定」。
 - **刪除帳號時清除對照項**：`detachMember` 在 `deleteAccount` 成功後，依序刪 Auth、`users/{uid}`、`identities`（`uid` 等於自己的所有項目）。對照項放在最後，因為先刪對照項再刪 Auth 若中途失敗，Google 使用者下次登入會被配到新的 uid，舊資料就找不回來。
-- Cloud Functions（`lineLogin`、`verifyLiffToken`、`authExchange`、`guestLogin`、`claimMember`、`detachMember`、`exportCsv`、`sharePage`）為公開端點，已設 `maxInstances: 5`。
+- Cloud Functions（`lineLogin`、`verifyLiffToken`、`authExchange`、`listIdentities`、`bindIdentity`、`executeMerge`、`unbindIdentity`、`guestLogin`、`claimMember`、`detachMember`、`exportCsv`、`sharePage`）為公開端點，已設 `maxInstances: 5`。
 
 ## 分帳計算
 
