@@ -1,6 +1,8 @@
 # P14 獨立帳號：實作計畫
 
-日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：決策已確認，可從 PR1 開工
+日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：進行中
+
+**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 進行中。
 
 ## 0. 目標
 

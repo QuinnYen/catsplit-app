@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore'
 import { auth, db } from '../config/firebase'
 import { initLiff } from '../config/liff'
 import { useI18n } from '../i18n/I18nProvider'
+import { uidFromLoginResponse, buildSessionUser, canReuseCachedSession } from '../utils/authSession'
 
 const AppContext = createContext(null)
 
@@ -48,9 +49,10 @@ const requestClaim = async (idToken, groupId, placeholderId, avatar) => {
   if (!res.ok) throw new Error(`claim_failed: ${await res.text()}`)
 }
 
-// 以 LINE 身分登入 Firebase；若這個瀏覽器選過訪客名字，順便全部認領（綁定 LINE）。
+// 用雲端函式換發的 custom token 登入 Firebase（LINE、之後的 Google 共用）；
+// 若這個瀏覽器選過訪客名字，順便全部認領（綁定身分）。
 // 認領失敗不會遺失資料：訪客名字仍在群組裡，之後可再從群組頁認領
-const signInWithLineToken = async (firebaseToken, avatar) => {
+const signInWithExchangeToken = async (firebaseToken, avatar) => {
   const guestNames = readGuestNames()
   const cred = await signInWithCustomToken(auth, firebaseToken)
   localStorage.removeItem(GUEST_NAMES_KEY)
@@ -194,20 +196,22 @@ export const AppProvider = ({ children }) => {
           setLiffInstance(liff)
           applyAutoLanguage(liff.getAppLanguage?.() ?? liff.getLanguage?.())
           if (liff.isLoggedIn()) {
-            // 快速路徑：Firebase 已恢復同一個 LINE 使用者的登入（uid 即 LINE userId），
+            // 快速路徑：Firebase 已恢復同一個使用者的登入，
             // 就不用每次重跑 verifyLiffToken + signInWithCustomToken（約 1 秒以上）。
-            // getDecodedIDToken 是同步的，用來確認目前 LIFF 使用者沒被換掉；
+            // getDecodedIDToken 是同步的，用來確認目前 LIFF 使用者沒被換掉（比對快取記的 LINE userId）；
+            // uid 與 LINE userId 是兩回事，uid 以 Firebase 登入的為準（判斷見 utils/authSession.js）；
             // 有待認領的訪客名字時要走完整流程（認領在登入時進行）
             const cached = readCachedUser()
             await auth.authStateReady()
-            const lineUid = liff.getDecodedIDToken()?.sub
-            if (cached && lineUid && cached.uid === lineUid && auth.currentUser?.uid === lineUid
-              && readGuestNames().length === 0) {
+            const lineSub = liff.getDecodedIDToken()?.sub
+            if (canReuseCachedSession({
+              cached, firebaseUid: auth.currentUser?.uid, lineSub, hasPendingGuestNames: readGuestNames().length > 0,
+            })) {
               setUser(cached)
-              // 名字或頭像可能改過，背景更新即可
+              // 名字或頭像可能改過，背景更新即可；舊版快取沒有 lineUserId，順便補上
               liff.getProfile().then(p => {
-                if (p.displayName === cached.name && p.pictureUrl === cached.avatar) return
-                const u = { uid: p.userId, name: p.displayName, avatar: p.pictureUrl }
+                if (cached.lineUserId && p.displayName === cached.name && p.pictureUrl === cached.avatar) return
+                const u = buildSessionUser({ uid: cached.uid, lineUserId: p.userId, name: p.displayName, avatar: p.pictureUrl })
                 setUser(u)
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
               }).catch(() => {})
@@ -225,19 +229,23 @@ export const AppProvider = ({ children }) => {
                 })
               : null
             const [profile, res] = await Promise.all([liff.getProfile(), verifying])
+            // 登入成功時 uid 以伺服器回傳為準；失敗時（沒登入 Firebase）退回 LINE userId，與過去行為相同
+            let uid = profile.userId
             if (res) {
               if (res.ok) {
                 const data = await res.json()
-                await signInWithLineToken(data.firebaseToken, profile.pictureUrl)
+                uid = uidFromLoginResponse(data)
+                await signInWithExchangeToken(data.firebaseToken, profile.pictureUrl)
               } else {
                 console.error('verifyLiffToken failed', await res.text())
               }
             }
-            const u = {
-              uid: profile.userId,
+            const u = buildSessionUser({
+              uid,
+              lineUserId: profile.userId,
               name: profile.displayName,
               avatar: profile.pictureUrl,
-            }
+            })
             setUser(u)
             localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
             return
@@ -374,12 +382,13 @@ export const AppProvider = ({ children }) => {
     }
 
     const data = await res.json()
-    await signInWithLineToken(data.firebaseToken, data.pictureUrl)
-    const u = {
-      uid: data.userId,
+    await signInWithExchangeToken(data.firebaseToken, data.pictureUrl)
+    const u = buildSessionUser({
+      uid: uidFromLoginResponse(data),
+      lineUserId: data.userId,
       name: data.displayName,
       avatar: data.pictureUrl,
-    }
+    })
     setUser(u)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
     return u
