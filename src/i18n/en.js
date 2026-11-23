@@ -153,6 +153,7 @@ export default {
   'tab.settle': 'Settle up',
   'login.invited': 'You\'ve been invited to join an expense group!',
   'login.tagline': 'Let the cat split the bill and sort out who owes whom',
+  'login.about': 'About CatSplit',
   'login.howTo': 'How to get started',
   'login.step1': 'Sign in with your LINE account',
   'login.step2': 'Create or join an expense group',

@@ -49,7 +49,7 @@ const LoadingScreen = () => {
 }
 
 const LoginScreen = ({ onLogin, onGoogleLogin, guestGroupId }) => {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [googleError, setGoogleError] = useState(false)
   // LINE 內建瀏覽器常擋 Google 登入，不顯示按鈕（要用 Google 的話，之後可在外部瀏覽器登入）
   const showGoogle = !isLineUserAgent(navigator.userAgent)
@@ -114,6 +114,17 @@ const LoginScreen = ({ onLogin, onGoogleLogin, guestGroupId }) => {
         <GuestJoin groupId={guestGroupId} />
       </div>
     )}
+
+    {/* 介紹、使用條款與隱私權：英文版是另一份靜態頁；中文版維持原網址 */}
+    <div style={{ marginTop: 28, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '4px 16px', fontSize: 12 }}>
+      {[
+        [lang === 'en' ? '/about.en.html' : '/about.html', t('login.about')],
+        [lang === 'en' ? '/terms.en.html' : '/terms.html', t('home.menu.terms')],
+        [lang === 'en' ? '/privacy.en.html' : '/privacy.html', t('home.menu.privacy')],
+      ].map(([href, label]) => (
+        <a key={href} href={href} style={{ color: 'var(--cs-text-sub)' }}>{label}</a>
+      ))}
+    </div>
   </div>
   )
 }

@@ -151,6 +151,7 @@ export default {
   'tab.settle': '結算',
   'login.invited': '你被邀請加入分帳群組！',
   'login.tagline': '貓咪幫你分帳，輕鬆搞定朋友借錢',
+  'login.about': '關於貓咪分帳',
   'login.howTo': '如何開始使用',
   'login.step1': '使用 LINE 帳號登入',
   'login.step2': '建立或加入分帳群組',
