@@ -607,6 +607,7 @@ export default {
   'identity.viaBrowserHint': 'This creates a link that is valid for 5 minutes. Open it in your phone\'s browser and finish linking with your Google account. No need to sign in to LINE again. If the browser is not signed in to Google yet, you will need to sign in once.',
   'identity.linkReady': 'Link created. It is valid for 5 minutes and can be used once.',
   'identity.linkOpen': 'Open browser',
+  'identity.linkOpenAlt': 'Try another way to open',
   'identity.linkCopy': 'Copy link',
   'identity.linkCopied': 'Copied. Paste it into your phone\'s browser address bar.',
   'identity.linkManual': 'If "Open browser" does nothing, press "Copy link" and paste it into your phone\'s browser address bar. You can also long-press the link below to select and copy it.',

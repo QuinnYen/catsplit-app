@@ -33,7 +33,7 @@
   - 保留哪個 uid 由系統決定：群組較多者保留，一樣多保留第一個參數；訪客（`p_`）與相同 uid 不能合併。
   - 兩邊都在同一群組：金額、餘額相加；**筆數改由搬移後的支出文件重算**（兩個帳號可能參與同一筆支出，直接相加會重複）。只有被併入帳號在的群組：成員身分直接改成保留帳號。
   - 合併後變成「自己轉給自己」的轉帳會被刪除；轉帳對餘額是對沖，淨效果為 0，不影響任何餘額。
-  - 個人資料以 `listCollections` 遍歷 `users/{uid}` 底下所有子集合（不寫死集合名稱）。收款方式、付款方式、儲蓄目標都是自動 id，直接複製；只有固定 id 的文件（暱稱 `settings/profile`、`settings/oaPrompt`，以及 P12 的 `group_{groupId}`）會衝突：`settings/oaPrompt` 自動保留較新的，其他由使用者決定（預設較新的）。
+  - 個人資料以 `listCollections` 遍歷 `users/{uid}` 底下所有子集合（不寫死集合名稱）。收款方式、付款方式、儲蓄目標都是自動 id，直接複製；只有固定 id 的文件（暱稱 `settings/profile`、`settings/oaPrompt`，以及 P12 的 `group_{groupId}`）會衝突：`settings/oaPrompt` 自動保留較新的，其他由使用者決定（預設保留 keepUid 的；不用「較新」，因為剛建立的新帳號資料一定較新，會預設刪掉用了很久的帳號）。
   - 先全部複製、再刪來源，可以重試：已複製的文件在重試時視為「保留」，資料相同。`users/{uid}` 本身不搬，合併最後與 Auth 一起刪。
 - **刪除我的資料**會一併刪掉該 uid 的 `identities`（見 `docs/operations.md`）。
 - **補齊現有使用者**：`functions/scripts/backfill-identities.mjs` 掃描 `users/` 與群組 `members`，為缺對照項的 LINE 使用者補上。預設只列出（dry-run），加 `--apply` 才寫入，可重複執行。帳號綁定與合併上線前必須先跑過一次。
@@ -66,7 +66,7 @@
   - **綁定 Google**：外部瀏覽器用 Google 官方按鈕，取得 ID token 後呼叫 `bindIdentity`。**LINE 內建瀏覽器改走「帶著登入狀態到外部瀏覽器」**（見下方），因為 Google 不允許在內嵌 WebView 登入。
   - **綁定 LINE**：只在外部瀏覽器提供（LINE 內建瀏覽器登入的就是 LINE，沒有可綁的）。`startLineBind` 在 localStorage 記下用途 `bind` 後跳到 LINE 授權；回到 `/auth/callback` 時 `completeOAuthCallback` 看到用途是 `bind`，用目前的 Firebase 登入加授權碼呼叫 `bindIdentity`，不會換掉登入帳號。
   - 綁定的結果：`bound` 或 `already_bound` 就更新清單並顯示提示；`merge_required` 就把預覽存進 localStorage（`catsplit_merge_preview`，10 分鐘過期，因為 LINE 授權會整頁跳轉）並導向 `/merge`。
-- **合併確認頁**（`/merge`，`src/pages/MergePage.jsx`）：顯示合併內容（兩邊都在與只有一邊在的群組數、會更新的帳目筆數、會被刪除的自付轉帳、搬移的個人資料筆數）、需要使用者決定的衝突（目前只有暱稱，顯示兩邊各是什麼，預設選較新的那份）、無法復原的警告。使用者選的是「目前登入的帳號」或「另一個帳號」，送出前換成雲端函式要的 `keep` / `drop`（發起人被併入時，發起人對應 `drop`，見 `src/utils/mergeUi.js`）。
+- **合併確認頁**（`/merge`，`src/pages/MergePage.jsx`）：顯示合併內容（兩邊都在與只有一邊在的群組數、會更新的帳目筆數、會被刪除的自付轉帳、搬移的個人資料筆數）、需要使用者決定的衝突（目前只有暱稱，顯示兩邊各是什麼，預設選保留的帳號，也就是群組較多的那個）、無法復原的警告。使用者選的是「目前登入的帳號」或「另一個帳號」，送出前換成雲端函式要的 `keep` / `drop`（發起人被併入時，發起人對應 `drop`，見 `src/utils/mergeUi.js`）。
 - **合併完成後**（`completeMerge`）：若原本的登入帳號被併入而刪除（`sessionReplaced`），用回傳的 token 重新登入保留帳號，並以回傳的 `profile`（名稱、頭像、登入方式）重建本機的使用者資料，再整頁重新載入到 `/settings?merged=1`，讓暱稱、群組等狀態都以合併後的帳號為準。
 - **錯誤處理**：雲端函式的錯誤碼對到畫面訊息（`mergeErrorKey`）。部分群組失敗、上一次還在執行等情況保留預覽，使用者再按一次「確認合併」會從斷點繼續；預覽逾時或找不到才清掉預覽。
 - 純函式與 API 呼叫抽在 `src/utils/mergeUi.js`、`src/utils/identityApi.js`，都有單元測試。

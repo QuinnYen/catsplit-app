@@ -109,13 +109,14 @@ test('classifyPersonalConflicts：oaPrompt 自動處理，其他需要使用者�
   assert.deepEqual(AUTO_RESOLVED_PATHS, ['settings/oaPrompt'])
   const { auto, needsChoice } = classifyPersonalConflicts([profileConflict, promptConflict, ledgerConflict])
   assert.deepEqual(auto.map((c) => [c.path, c.suggested]), [['settings/oaPrompt', 'keep']])
-  assert.deepEqual(needsChoice.map((c) => [c.path, c.suggested]), [['settings/profile', 'drop'], ['transactions/group_g1', 'keep']])
+  // 要使用者決定的一律預設保留 keepUid，即使被併入帳號的資料比較新（profileConflict 的 drop 較新）
+  assert.deepEqual(needsChoice.map((c) => [c.path, c.suggested]), [['settings/profile', 'keep'], ['transactions/group_g1', 'keep']])
 })
 
 test('buildResolutions：沒指定就用預設建議，指定的以使用者為準，自動處理的一律用預設建議', () => {
   const all = [profileConflict, promptConflict, ledgerConflict]
   assert.deepEqual(buildResolutions(all), {
-    'settings/oaPrompt': 'keep', 'settings/profile': 'drop', 'transactions/group_g1': 'keep',
+    'settings/oaPrompt': 'keep', 'settings/profile': 'keep', 'transactions/group_g1': 'keep',
   })
   assert.deepEqual(buildResolutions(all, { 'settings/profile': 'keep', 'transactions/group_g1': 'drop' }), {
     'settings/oaPrompt': 'keep', 'settings/profile': 'keep', 'transactions/group_g1': 'drop',
