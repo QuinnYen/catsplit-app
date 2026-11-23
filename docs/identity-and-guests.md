@@ -28,6 +28,12 @@
 - **Google 登入（PR3）**：登入畫面（外部瀏覽器）顯示 Google 按鈕，前端用 Google Identity Services 取得 ID token，`authExchange` 驗證後以 `identities/google:{sub}` 查表；沒有就建立新的內部 uid 與對照項（transaction，並行首次登入只會有一個 uid）並建立 `users/{uid}`（`provider: 'google'`）。Google 帳號的 `user.provider` 為 `'google'`，LINE 使用者沒有這個欄位。
 - **首次設定暱稱**：Google 帳號沒有 LINE 名字可當預設，所以雲端還沒有暱稱時，登入後先進「設定顯示名稱」頁（預設帶 Google 名字，最多 20 字），完成才進首頁；設定頁的暱稱也不能清空。LINE 使用者不經過這一頁。
 - **頭像**：Google 帳號的頭像一律是 `null`（畫面顯示名字首字），不存 Google 頭像網址。預設貓咪頭像之後再調整。
-- **還沒做的**：LINE 與 Google 互相綁定、帳號合併（PR5、PR6）。目前同一個人用 LINE 與 Google 登入會是兩個獨立帳號。
+- **還沒做的**：LINE 與 Google 互相綁定、帳號合併的 API 與介面（PR5、PR6）。目前同一個人用 LINE 與 Google 登入會是兩個獨立帳號。
+- **合併核心（PR4，尚未開放，沒有任何端點）**：`functions/merge.js`（純函式）與 `functions/memberOps.js`（Firestore 操作）。重點：
+  - 保留哪個 uid 由系統決定：群組較多者保留，一樣多保留第一個參數；訪客（`p_`）與相同 uid 不能合併。
+  - 兩邊都在同一群組：金額、餘額相加；**筆數改由搬移後的支出文件重算**（兩個帳號可能參與同一筆支出，直接相加會重複）。只有被併入帳號在的群組：成員身分直接改成保留帳號。
+  - 合併後變成「自己轉給自己」的轉帳會被刪除；轉帳對餘額是對沖，淨效果為 0，不影響任何餘額。
+  - 個人資料以 `listCollections` 遍歷 `users/{uid}` 底下所有子集合（不寫死集合名稱）。收款方式、付款方式、儲蓄目標都是自動 id，直接複製；只有固定 id 的文件（暱稱 `settings/profile`、`settings/oaPrompt`，以及 P12 的 `group_{groupId}`）會衝突：`settings/oaPrompt` 自動保留較新的，其他由使用者決定（預設較新的）。
+  - 先全部複製、再刪來源，可以重試：已複製的文件在重試時視為「保留」，資料相同。`users/{uid}` 本身不搬，合併最後與 Auth 一起刪。
 - **刪除我的資料**會一併刪掉該 uid 的 `identities`（見 `docs/operations.md`）。
 - **補齊現有使用者**：`functions/scripts/backfill-identities.mjs` 掃描 `users/` 與群組 `members`，為缺對照項的 LINE 使用者補上。預設只列出（dry-run），加 `--apply` 才寫入，可重複執行。帳號綁定與合併上線前必須先跑過一次。

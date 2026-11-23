@@ -6,7 +6,7 @@ import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
-import { moveKey, swapId, MIGRATION_FIELDS, migrationPatch } from './migrate.js'
+import { migrateMember as migrateMemberOp } from './memberOps.js'
 import { OAuth2Client } from 'google-auth-library'
 import { identityKey, resolveLineUid, resolveGoogleUid, makeUid, exchangeGoogleLogin } from './identity.js'
 import { normalizeHl, previewText } from './sharePreview.js'
@@ -273,60 +273,9 @@ const verifyBearer = async (req) => {
   }
 }
 
-/**
- * 把群組內所有 fromId 的紀錄改成 toUid。先改子集合、最後才改群組文件，
- * 中途失敗時 fromId 仍留在 members，重試即可繼續（已改過的文件不會再被動到）。
- */
-const migrateMember = async (groupId, fromId, toUid, profileOverride = {}) => {
-  const db = getFirestore()
-  const groupRef = db.doc(`groups/${groupId}`)
-  const groupSnap = await groupRef.get()
-  if (!groupSnap.exists) return false
-  const group = groupSnap.data()
-  if (!group.members?.includes(fromId)) return false
-
-  const writer = db.bulkWriter()
-  const [expenses, settlements, incomes] = await Promise.all([
-    groupRef.collection('expenses').get(),
-    groupRef.collection('settlements').get(),
-    groupRef.collection('incomes').get(),
-  ])
-
-  expenses.docs.forEach((d) => {
-    const patch = migrationPatch(d.data(), MIGRATION_FIELDS.expenses, fromId, toUid)
-    if (patch) writer.update(d.ref, patch)
-  })
-
-  settlements.docs.forEach((d) => {
-    const patch = migrationPatch(d.data(), MIGRATION_FIELDS.settlements, fromId, toUid)
-    if (patch) writer.update(d.ref, patch)
-  })
-
-  incomes.docs.forEach((d) => {
-    const patch = migrationPatch(d.data(), MIGRATION_FIELDS.incomes, fromId, toUid)
-    if (patch) writer.update(d.ref, patch)
-  })
-
-  await writer.close()
-
-  const profiles = { ...(group.memberProfiles || {}) }
-  const fromProfile = { ...profiles[fromId] }
-  delete fromProfile.placeholder
-  delete profiles[fromId]
-  profiles[toUid] = profiles[toUid] || { ...fromProfile, ...profileOverride }
-
-  const groupPatch = {
-    members: [...new Set(group.members.map((m) => swapId(m, fromId, toUid)))],
-    memberProfiles: profiles,
-  }
-  const balances = moveKey(group.memberBalances, fromId, toUid)
-  if (balances) groupPatch.memberBalances = balances
-  const counts = moveKey(group.memberExpenseCounts, fromId, toUid)
-  if (counts) groupPatch.memberExpenseCounts = counts
-  if (group.createdBy === fromId) groupPatch.createdBy = toUid
-  await groupRef.update(groupPatch)
-  return true
-}
+// 把群組內 fromId 的紀錄與成員身分改成 toUid（實作在 memberOps.js，那邊接收 db 參數，方便在模擬器測試）
+const migrateMember = (groupId, fromId, toUid, profileOverride = {}) =>
+  migrateMemberOp(getFirestore(), groupId, fromId, toUid, profileOverride)
 
 // 虛擬成員（訪客名字）的 id 一律以 p_ 開頭；LINE userId 不含底線，不會撞號
 const isGuestId = (id) => typeof id === 'string' && /^p_[A-Za-z0-9]{1,40}$/.test(id)

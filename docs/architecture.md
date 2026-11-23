@@ -13,6 +13,8 @@ src/
 └── pages/                   # Home、Group、AddExpense、Settle、Transfer、EditGroup、PaymentMethods、NicknameSetup（Google 帳號首次設定暱稱）…
 functions/index.js           # lineLogin、verifyLiffToken、authExchange、guestLogin、claimMember、detachMember、exportCsv、sharePage
 functions/identity.js        # 身分對照純函式（identities 的 key、內部 uid、LINE／Google 查表決策、Google 登入換發流程），測試在 identity.test.js
+functions/merge.js           # 帳號合併純函式（保留哪個 uid、群組分類、轉帳自付、個人資料衝突與解決方案），測試在 merge.test.js
+functions/memberOps.js       # 成員搬移與合併的 Firestore 操作（migrateMember、反查群組、個人資料搬移、合併預覽），db 由呼叫端傳入；整合測試在 functions/emulator-tests/
 functions/scripts/           # 補齊 identities 的腳本、本機模擬器用的 LINE、Google 驗證攔截檔（見 operations.md）
 firestore.rules              # Firestore 存取規則
 firestore-tests/             # rules 測試（npm run test:rules，需模擬器）
