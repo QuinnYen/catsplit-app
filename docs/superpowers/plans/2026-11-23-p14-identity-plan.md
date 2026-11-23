@@ -2,7 +2,7 @@
 
 日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：進行中
 
-**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 已部署（#7）；PR3（Google 登入與首次暱稱頁）進行中。
+**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 已部署（#7）；PR3 已部署（#8）；PR4（合併核心，純函式與資料搬移）進行中。
 
 ## 0. 目標
 
@@ -93,6 +93,13 @@ D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 
 - 個人資料搬移：以 `listCollections` 遍歷 `users/{dropUid}` 的所有子集合（不寫死集合名稱，P12 的 `transactions` 會自動涵蓋），自動 id 的文件直接搬，固定 id 的文件依 `resolutions`。
 
 完成條件：純函式測試通過；用測試資料手動呼叫搬移函式，結果與預期一致。
+
+**實作結果**（與上面規劃的差異）：
+- `migrateMember` 搬到新模組 `functions/memberOps.js`（接收 `db` 參數，才能在模擬器直接測，`index.js` 只留一層呼叫），同一個模組放反查群組、整批搬移、個人資料搬移與預覽。
+- 實作時發現 `memberExpenseCounts` 直接相加會重複計算（兩個帳號參與同一筆支出），已改為目標已是成員時由搬移後的支出文件重算，並更正 spec。
+- 解決方案 `resolutions` 在預覽時就算出完整的一份（自動處理與預設建議都補上），PR5 要把它存進 `merges/{id}`，執行與重試都用同一份；`movePersonalData` 沒指定的路徑一律視為 `keep`。
+- 新增 Firestore 整合測試 `functions/emulator-tests/memberOps.mjs`（`npm run test:merge`，需要模擬器），不屬於 `npm test`。
+- PR4 只有函式，沒有任何 HTTP 端點，行為對使用者沒有差異；唯一會被既有功能碰到的改動是 `migrateMember` 現在會刪除「變成自己轉給自己」的轉帳與重算兩邊都在時的筆數，兩者在訪客認領與退出群組都不會發生。
 
 ### PR5：綁定與合併的 API（L）
 

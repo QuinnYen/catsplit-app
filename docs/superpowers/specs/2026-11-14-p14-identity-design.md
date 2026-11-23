@@ -83,9 +83,9 @@
 
 ### 重用 `migrateMember` 的現況確認（2026-11-14 讀碼）
 
-- 目標已是成員時，`moveKey` 以 `round2` **相加**金額，`memberBalances`、`memberExpenseCounts`、支出的 `payments`／`splits` 皆正確合併。
+- 目標已是成員時，`moveKey` 以 `round2` **相加**金額，`memberBalances`、支出的 `payments`／`splits` 皆正確合併。**`memberExpenseCounts` 不是**：它是「參與分攤的支出筆數」，兩個帳號可能參與同一筆支出，直接相加會重複計算（例如各參與 2 筆、其中 2 筆相同，應為 2 而不是 4）。2026-11-23 實作時發現並修正：目標已是成員時，筆數改由搬移後的支出文件重算。
 - 先改子集合、最後改群組文件，失敗後 `fromId` 仍在 `members`，可重試；`members` 以 Set 去重；`memberProfiles` 以目標原有為主。
-- **缺口（需補）**：轉帳合併後 `from === to`；`users/{uid}/…` 個人資料；以 uid 反查所屬群組。
+- **缺口（需補，PR4 已補）**：轉帳合併後 `from === to`（刪除，轉帳是對沖，淨效果為 0）；`users/{uid}/…` 個人資料（`memberOps.movePersonalData`）；以 uid 反查所屬群組（`memberOps.findGroupsOf`）；上述筆數重算。
 
 ## 3. 介面、刪除、rules、測試、上線
 
