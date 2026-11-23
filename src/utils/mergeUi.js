@@ -63,6 +63,7 @@ const ERROR_KEYS = {
   same_uid: 'merge.err.sameAccount',
   last_identity: 'merge.err.lastIdentity',
   network: 'merge.err.network',
+  timeout: 'merge.err.network',
   link_invalid: 'link.invalid',
   link_expired: 'link.expired',
 }

@@ -89,6 +89,7 @@ test('mergeErrorKey：已知錯誤碼對到訊息，其他一律是通用訊息'
   assert.equal(mergeErrorKey('other_merge_in_progress'), 'merge.err.inProgress')
   assert.equal(mergeErrorKey('last_identity'), 'merge.err.lastIdentity')
   assert.equal(mergeErrorKey('network'), 'merge.err.network')
+  assert.equal(mergeErrorKey('timeout'), 'merge.err.network')
   assert.equal(mergeErrorKey('link_invalid'), 'link.invalid')
   assert.equal(mergeErrorKey('link_expired'), 'link.expired')
   assert.equal(mergeErrorKey('something_new'), 'merge.err.generic')
