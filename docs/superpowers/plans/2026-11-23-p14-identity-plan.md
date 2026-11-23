@@ -55,9 +55,11 @@ D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 
 - 新增 `scripts/backfill-identities.mjs`：掃描 `users/` 與群組 `members`，為現有 LINE 使用者補對照項，預設 dry-run。
 - 修改 `firestore.rules`：`isLineUser()` 改名 `isMember()`；`identities`、`merges`、`mergeBackups` 明確註記全拒。
 - 修改 `firestore-tests/*.mjs`：配合改名；新增 `identities.rules.mjs`（客戶端讀寫皆被拒、訪客不能存取個人集合）。
-- **Spike**：評估用 `firebase emulators:start --only auth,firestore,functions` 在本機實跑 functions，結果寫進 `docs/operations.md`，決定後續端到端測試的做法。
+- **Spike（已完成）**：`firebase emulators:start --only auth,firestore,functions` 可在本機實跑 functions。LINE 驗證端點用預載檔 `functions/scripts/emulator-line-mock.mjs` 攔截，不改正式程式碼。已實測 `verifyLiffToken` 的查表（新使用者、重複登入、對照項指向別的 uid、並行 10 次只建一筆）、補齊腳本與 `guestLogin`，做法寫在 `docs/operations.md`。後續 PR 的端到端測試沿用這個方式。
 
 完成條件：現有 LINE 使用者登入、群組、記帳完全正常；`identities` 有資料；rules 測試通過。
+
+**PR5 備忘**：`resolveUidForLine` 目前在 transaction 失敗時退回 LINE userId（此時還沒有合併，對照項必然等於 LINE userId）。合併上線後必須移除這個退路，改成登入失敗。
 
 ### PR2：前端改以伺服器 uid 為準（S）
 

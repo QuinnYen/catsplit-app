@@ -2,7 +2,7 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // 群組成員：uid 為 LINE userId，存在 groups/{groupId}.members
+    // 群組成員：uid（現有 LINE 使用者即 LINE userId）存在 groups/{groupId}.members
     function isMember(groupId) {
       return request.auth != null
         && request.auth.uid in firestore.get(/databases/(default)/documents/groups/$(groupId)).data.members;

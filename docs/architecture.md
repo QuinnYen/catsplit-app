@@ -12,6 +12,8 @@ src/
 ├── components/              # Avatar、TabBar、ExpenseForm、CurrencySelect（選貨幣）、GuestJoin（訪客入口）、BankPicker、PaymentMethodModal…
 └── pages/                   # Home、Group、AddExpense、Settle、Transfer、EditGroup、PaymentMethods…
 functions/index.js           # lineLogin、verifyLiffToken、guestLogin、claimMember、detachMember、exportCsv、sharePage
+functions/identity.js        # 身分對照純函式（identities 的 key、內部 uid、LINE 查表決策），測試在 identity.test.js
+functions/scripts/           # 補齊 identities 的腳本、本機模擬器用的 LINE 驗證攔截檔（見 operations.md）
 firestore.rules              # Firestore 存取規則
 firestore-tests/             # rules 測試（npm run test:rules，需模擬器）
 storage.rules                # Storage 存取規則

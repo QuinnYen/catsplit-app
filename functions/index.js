@@ -7,6 +7,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
 import { moveKey, swapId, MIGRATION_FIELDS, migrationPatch } from './migrate.js'
+import { identityKey, resolveLineUid } from './identity.js'
 import { normalizeHl, previewText } from './sharePreview.js'
 
 initializeApp()
@@ -43,6 +44,28 @@ const syncUserProfile = async (uid, name, avatar) => {
     }, { merge: true })
   } catch (e) {
     console.error('syncUserProfile error', e)
+  }
+}
+
+// 查 identities/line:{userId} 決定這個 LINE 使用者的內部 uid；沒有對照項就沿用 LINE userId 並建立（懶建立）。
+// 在 transaction 內完成，避免並行登入建出兩筆。對照表只有 Admin SDK 讀寫得到（rules 全拒）。
+// 目前還沒有任何帳號合併，對照項必然等於 LINE userId，所以查表失敗時退回 LINE userId 讓登入照常；
+// 帳號合併上線（PR5）後，對照項可能指向別的 uid，那時必須移除這個退路，改成登入失敗。
+const resolveUidForLine = async (lineUserId) => {
+  try {
+    const db = getFirestore()
+    const ref = db.doc(`identities/${identityKey('line', lineUserId)}`)
+    return await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref)
+      const { uid, create } = resolveLineUid({ identity: snap.exists ? snap.data() : null, lineUserId })
+      if (create) {
+        tx.set(ref, { uid, provider: 'line', subject: lineUserId, createdAt: FieldValue.serverTimestamp() })
+      }
+      return uid
+    })
+  } catch (e) {
+    console.error('resolveUidForLine error', e)
+    return lineUserId
   }
 }
 
@@ -101,9 +124,11 @@ export const lineLogin = onRequest(
       }
 
       const profile = await profileRes.json()
-      await syncUserProfile(profile.userId, profile.displayName, profile.pictureUrl)
-      const firebaseToken = await getAuth().createCustomToken(profile.userId)
+      const uid = await resolveUidForLine(profile.userId)
+      await syncUserProfile(uid, profile.displayName, profile.pictureUrl)
+      const firebaseToken = await getAuth().createCustomToken(uid)
       res.json({
+        uid,
         userId: profile.userId,
         displayName: profile.displayName,
         pictureUrl: profile.pictureUrl,
@@ -154,9 +179,11 @@ export const verifyLiffToken = onRequest(
       }
 
       const claims = await verifyRes.json()
-      await syncUserProfile(claims.sub, claims.name, claims.picture)
-      const firebaseToken = await getAuth().createCustomToken(claims.sub)
+      const uid = await resolveUidForLine(claims.sub)
+      await syncUserProfile(uid, claims.name, claims.picture)
+      const firebaseToken = await getAuth().createCustomToken(uid)
       res.json({
+        uid,
         userId: claims.sub,
         displayName: claims.name,
         pictureUrl: claims.picture,
