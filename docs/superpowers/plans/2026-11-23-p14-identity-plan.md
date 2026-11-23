@@ -2,7 +2,7 @@
 
 日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：進行中
 
-**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 已部署（#7）；PR3 已部署（#8）；PR4 已部署（#9）；PR5 已部署（#10）；PR6 已部署（#11）；PR7 已部署（#12），Android 實測 `openWindow` 沒有開啟瀏覽器、畫面一直「處理中…」；PR8（修正：逾時、兩步流程、複製連結備援）進行中。
+**進度**：PR1 至 PR9 已部署並在正式環境驗證（#5 至 #15）：LINE 與 Google 雙向綁定、完整帳號合併、LINE 內以一次性連結碼綁定 Google（LINE 內無法自動開啟外部瀏覽器，最終只提供複製連結）。PR10（收尾：隱私權政策與使用條款、文件）進行中。
 
 ## 0. 目標
 
@@ -144,9 +144,11 @@ PR6 部署後實測發現（Android）：LINE 內建瀏覽器按 Google 按鈕�
 - 前端：設定頁在 LINE 內改成「用 Google 綁定」按鈕（**同時移除原本放在 Google 按鈕底下的「用外部瀏覽器開啟」與提示**）；新增 `/link` 頁兌換並登入；回到頁面時重新讀清單。
 - 測試：連結碼單元測試 5 項、整合測試 7 項、端到端 1 項、瀏覽器 6 項。
 
-**PR7 實測後的修正（PR8）**：Android（內建瀏覽器、沒有 Chrome）按下「用 Google 綁定」後，瀏覽器沒有開啟，畫面一直停在「處理中…」。改成：API 呼叫加 20 秒逾時；先顯示連結、再由使用者點「開啟瀏覽器」（點擊當下直接 `openWindow`）；`openWindow` 失敗有明確訊息；**一定提供「複製連結」備援**；提示文字不再假設有 Chrome 或已登入 Google。確切原因未確認（沙盒連不到 LINE 文件）。
+**PR7 實測後的修正（PR8、PR9）**：Android（內建瀏覽器、沒有 Chrome）按下「用 Google 綁定」後，瀏覽器沒有開啟，畫面一直停在「處理中…」。改成：API 呼叫加 20 秒逾時；先顯示連結、再由使用者點「開啟瀏覽器」（點擊當下直接 `openWindow`）；`openWindow` 失敗有明確訊息；**一定提供「複製連結」備援**；提示文字不再假設有 Chrome 或已登入 Google。確切原因未確認（沙盒連不到 LINE 文件）。
 
-### PR9：收尾與文件（S）
+### PR10：收尾與文件（S）
+
+> 實測結果：`liff.openWindow` 與 `openExternalBrowser=1` 在 Android 的 LINE 內都無效，PR9 移除自動開啟、只留複製連結；PR8 同時把合併衝突預設改為保留 keepUid（不再用「較新的」）。
 
 - 更新 `docs/identity-and-guests.md`、`docs/operations.md`（Google OAuth 用戶端、授權網域、環境變數、備份排程、測試方式）、`docs/architecture.md`、`README.md`。
 - 更新 `public/privacy.html`、`public/terms.html`（中英文）：新增 Google 登入、身分對照、合併備份保留 30 天的說明。

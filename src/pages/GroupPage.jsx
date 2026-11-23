@@ -222,7 +222,8 @@ const GroupPage = () => {
       return
     }
 
-    // LINE 內建瀏覽器無法下載 blob：請雲端函式存檔並回傳短效網址，在外部瀏覽器開啟下載
+    // LINE 內建瀏覽器無法下載 blob，也無法從網頁開啟外部瀏覽器：請雲端函式存檔並回傳 5 分鐘有效的下載網址，
+    // 自動複製並用彈窗提示，由使用者貼到手機瀏覽器的網址列下載
     if (liffInstance?.isInClient?.() && EXPORT_CSV_URL) {
       try {
         const idToken = await auth.currentUser.getIdToken()
@@ -233,7 +234,13 @@ const GroupPage = () => {
         })
         if (!res.ok) throw new Error(`exportCsv ${res.status}`)
         const { url } = await res.json()
-        liffInstance.openWindow({ url, external: true })
+        try {
+          await navigator.clipboard.writeText(url)
+          alert(t('group.exportLinkCopied'))
+        } catch {
+          // 無法自動複製時，用輸入框顯示網址，讓使用者自行選取複製
+          window.prompt(t('group.exportLinkManual'), url)
+        }
       } catch (e) {
         console.error('Export failed', e)
         alert(t('group.exportFailed'))

@@ -114,6 +114,8 @@ export default {
   'group.detail.by': 'Recorded by',
   'group.deleteSettlement': 'Delete this transfer',
   'group.exportFailed': 'Export failed. Please try again later',
+  'group.exportLinkCopied': 'Copied a download link that is valid for 5 minutes. Paste it into your phone\'s browser address bar to download the CSV.',
+  'group.exportLinkManual': 'Could not copy automatically. Please copy the download link below (valid for 5 minutes) and paste it into your phone\'s browser address bar.',
   'csv.type': 'Type',
   'csv.date': 'Date',
   'csv.time': 'Time',
