@@ -601,6 +601,7 @@ export default {
   'identity.viaBrowserHint': '會產生一個 5 分鐘內有效的連結，請在手機的瀏覽器開啟，並用 Google 帳號完成綁定，不需要重新登入 LINE。瀏覽器若還沒登入 Google，需要登入一次。',
   'identity.linkReady': '連結已產生，5 分鐘內有效，只能使用一次。',
   'identity.linkOpen': '開啟瀏覽器',
+  'identity.linkOpenAlt': '改用另一種方式開啟',
   'identity.linkCopy': '複製連結',
   'identity.linkCopied': '已複製，請貼到手機瀏覽器的網址列開啟。',
   'identity.linkManual': '如果按「開啟瀏覽器」沒有反應，請按「複製連結」，再貼到手機瀏覽器的網址列；也可以長按下方的連結選取後複製。',

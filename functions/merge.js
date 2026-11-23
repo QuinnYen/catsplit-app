@@ -80,9 +80,10 @@ export const classifyPersonalConflicts = (conflicts) => {
   const auto = []
   const needsChoice = []
   for (const c of conflicts) {
-    const item = { ...c, suggested: defaultResolution(c) }
-    if (AUTO_RESOLVED_PATHS.includes(c.path)) auto.push(item)
-    else needsChoice.push(item)
+    // 自動處理的用較新的那份；要使用者決定的預設保留 keepUid（群組較多、較常用的那個帳號）。
+    // 不能用「較新」：剛建立的新帳號資料一定比較新，會預設把用了很久的帳號刪掉
+    if (AUTO_RESOLVED_PATHS.includes(c.path)) auto.push({ ...c, suggested: defaultResolution(c) })
+    else needsChoice.push({ ...c, suggested: 'keep' })
   }
   return { auto, needsChoice }
 }

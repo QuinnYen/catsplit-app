@@ -107,14 +107,24 @@ const LoginMethodsCard = () => {
     setLink({ url: `${window.location.origin}/link#code=${code}`, expiresAtMs })
   })
 
-  // 在使用者點擊當下直接呼叫，不等任何非同步工作
+  const linkExpired = () => {
+    if (Date.now() < link.expiresAtMs) return false
+    setLink(null)
+    setErrorKey('identity.linkExpired')
+    return true
+  }
+
+  // 方式 A：LINE 看到網址帶 openExternalBrowser=1，會改用手機的預設瀏覽器開啟（碼在 # 後面，會保留）
   const openLink = () => {
     setErrorKey(null)
-    if (Date.now() >= link.expiresAtMs) {
-      setLink(null)
-      setErrorKey('identity.linkExpired')
-      return
-    }
+    if (linkExpired()) return
+    window.location.href = `${window.location.origin}/link?openExternalBrowser=1#${link.url.split('#')[1]}`
+  }
+
+  // 方式 B：liff.openWindow（部分機型沒反應，保留當備援）。在使用者點擊當下直接呼叫，不等任何非同步工作
+  const openLinkViaLiff = () => {
+    setErrorKey(null)
+    if (linkExpired()) return
     try {
       if (!liffInstance) throw new Error('liff_not_ready')
       liffInstance.openWindow({ url: link.url, external: true })
@@ -189,6 +199,7 @@ const LoginMethodsCard = () => {
               <>
                 <div style={{ fontSize: 12, color: 'var(--cs-text)', lineHeight: 1.6 }}>{t('identity.linkReady')}</div>
                 <button onClick={openLink} style={{ ...smallButton, padding: '11px 16px', fontSize: 14, fontWeight: 600, background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none' }}>{t('identity.linkOpen')}</button>
+                <button onClick={openLinkViaLiff} style={smallButton}>{t('identity.linkOpenAlt')}</button>
                 <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', lineHeight: 1.6 }}>{t('identity.linkManual')}</div>
                 <input
                   readOnly
