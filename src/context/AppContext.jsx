@@ -350,14 +350,15 @@ export const AppProvider = ({ children }) => {
   }
 
   // Google 登入：credential 是 Google Identity Services 給的 ID token，交給 authExchange 驗證並換成內部 uid 的 custom token。
-  // Google 帳號沒有頭像（avatar 為 null，畫面顯示名字首字）；名字只是預設，首次登入要先設定暱稱（見 needsNickname）
+  // 頭像由雲端函式決定（LINE 優先，沒有才用 Google，都沒有就是 null，畫面顯示名字首字）；名字只是預設，首次登入要先設定暱稱（見 needsNickname）
   const loginWithGoogle = async (credential) => {
     if (!AUTH_EXCHANGE_URL) throw new Error('token_exchange_url_not_configured')
     const res = await postJson(AUTH_EXCHANGE_URL, null, { provider: 'google', idToken: credential })
     if (!res.ok) throw new Error(`auth_exchange_failed_${res.status}`)
     const data = await res.json()
-    await signInWithExchangeToken(data.firebaseToken, null)
-    const u = buildSessionUser({ uid: data.uid, name: data.displayName, avatar: null, provider: 'google' })
+    const avatar = typeof data.avatar === 'string' ? data.avatar : null
+    await signInWithExchangeToken(data.firebaseToken, avatar)
+    const u = buildSessionUser({ uid: data.uid, name: data.displayName, avatar, provider: 'google' })
     setUser(u)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
     return u

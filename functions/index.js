@@ -16,6 +16,7 @@ import { createLinkCode as createLinkCodeFlow, redeemLinkCode as redeemLinkCodeF
 import { OAuth2Client } from 'google-auth-library'
 import { identityKey, resolveLineUid, resolveGoogleUid, makeUid, exchangeGoogleLogin, googleProfileFromPayload } from './identity.js'
 import { normalizeHl, previewText } from './sharePreview.js'
+import { nextAvatars } from './avatar.js'
 
 initializeApp()
 
@@ -45,16 +46,26 @@ const setCors = (req, res) => {
 // 把 LINE 名稱與頭像寫進 users/{uid}，方便在 Console 用 UID 反查是誰；失敗不影響登入。
 // rules 沒有開放 users/{uid} 本身（只開 paymentMethods 子集合），客戶端讀寫都會被拒，只有 Admin SDK 寫得進去。
 // 刪除我的資料時由 detachMember 一併刪除。
-const syncUserProfile = async (uid, name, avatar, extra = {}) => {
+// 每個登入方式的頭像各存一份（avatars.line / avatars.google），顯示用的 avatar 由 pickAvatar 決定（LINE 優先）；
+// 回傳目前顯示用的頭像（失敗時回 null）。見 avatar.js
+const syncUserProfile = async (uid, name, picture, { avatarProvider, ...extra } = {}) => {
   try {
-    await getFirestore().doc(`users/${uid}`).set({
-      name: typeof name === 'string' ? name : null,
-      avatar: typeof avatar === 'string' && avatar.startsWith('https://') ? avatar : null,
-      updatedAt: FieldValue.serverTimestamp(),
-      ...extra,
-    }, { merge: true })
+    const db = getFirestore()
+    const ref = db.doc(`users/${uid}`)
+    return await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref)
+      const next = nextAvatars(snap.exists ? snap.data() : null, avatarProvider, picture)
+      tx.set(ref, {
+        name: typeof name === 'string' ? name : null,
+        ...next,
+        updatedAt: FieldValue.serverTimestamp(),
+        ...extra,
+      }, { merge: true })
+      return next.avatar
+    })
   } catch (e) {
     console.error('syncUserProfile error', e)
+    return null
   }
 }
 
@@ -131,7 +142,7 @@ export const lineLogin = onRequest(
 
       const profile = await profileRes.json()
       const uid = await resolveUidForLine(profile.userId)
-      await syncUserProfile(uid, profile.displayName, profile.pictureUrl)
+      await syncUserProfile(uid, profile.displayName, profile.pictureUrl, { avatarProvider: 'line' })
       const firebaseToken = await getAuth().createCustomToken(uid)
       res.json({
         uid,
@@ -186,7 +197,7 @@ export const verifyLiffToken = onRequest(
 
       const claims = await verifyRes.json()
       const uid = await resolveUidForLine(claims.sub)
-      await syncUserProfile(uid, claims.name, claims.picture)
+      await syncUserProfile(uid, claims.name, claims.picture, { avatarProvider: 'line' })
       const firebaseToken = await getAuth().createCustomToken(uid)
       res.json({
         uid,
@@ -250,8 +261,8 @@ export const authExchange = onRequest(
           return ticket.getPayload()
         },
         resolveUid: resolveUidForGoogle,
-        // Google 帳號的頭像一律用預設，不把 Google 頭像網址存進去
-        syncProfile: (uid, name) => syncUserProfile(uid, name, null, { provider: 'google' }),
+        // Google 的頭像只存自己那一份，不蓋掉 LINE 的；顯示用的由 syncUserProfile 決定並回傳
+        syncProfile: (uid, name, picture) => syncUserProfile(uid, name, picture, { avatarProvider: 'google', provider: 'google' }),
         createToken: (uid) => getAuth().createCustomToken(uid),
       })
       res.status(status).json(body)

@@ -48,7 +48,7 @@ export const googleProfileFromPayload = (payload) => {
   if (!payload || typeof payload !== 'object') throw new Error('invalid_payload')
   if (!GOOGLE_ISSUERS.includes(payload.iss)) throw new Error('invalid_issuer')
   identityKey('google', payload.sub) // 順便檢查 sub 能安全當成文件 id
-  return { subject: payload.sub, name: cleanDisplayName(payload.name ?? payload.given_name) }
+  return { subject: payload.sub, name: cleanDisplayName(payload.name ?? payload.given_name), picture: typeof payload.picture === 'string' ? payload.picture : null }
 }
 
 /**
@@ -66,9 +66,10 @@ export const exchangeGoogleLogin = async ({ idToken, verifyGoogle, resolveUid, s
     return { status: 401, body: { error: 'id_token_invalid' } }
   }
   const { uid, isNew } = await resolveUid(profile.subject)
-  await syncProfile(uid, profile.name)
+  // syncProfile 回傳這個帳號目前顯示用的頭像（LINE 優先，其次 Google，見 avatar.js）
+  const avatar = (await syncProfile(uid, profile.name, profile.picture)) ?? null
   const firebaseToken = await createToken(uid)
-  return { status: 200, body: { uid, isNew, displayName: profile.name, firebaseToken } }
+  return { status: 200, body: { uid, isNew, displayName: profile.name, avatar, firebaseToken } }
 }
 
 /**

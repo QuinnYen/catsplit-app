@@ -38,6 +38,7 @@ OAuth2Client.prototype.verifyIdToken = async ({ idToken }) => {
       sub: String(idToken),
       iat: Math.floor(Date.now() / 1000) - ageSeconds,
       name: `Google ${idToken}`,
+      picture: 'https://example.com/google.png',
       email: `${idToken}@example.com`,
     }),
   }

@@ -73,9 +73,13 @@ test('resolveGoogleUid：已有對照項用該 uid；沒有就用新 uid 並要�
 })
 
 test('googleProfileFromPayload：取出 sub 與名字，名字缺少時退回 given_name 或空字串', () => {
-  assert.deepEqual(googleProfileFromPayload({ iss: 'https://accounts.google.com', sub: '1122', name: ' Amy ' }), { subject: '1122', name: 'Amy' })
-  assert.deepEqual(googleProfileFromPayload({ iss: 'accounts.google.com', sub: '1122', given_name: 'Amy' }), { subject: '1122', name: 'Amy' })
-  assert.deepEqual(googleProfileFromPayload({ iss: 'accounts.google.com', sub: '1122' }), { subject: '1122', name: '' })
+  assert.deepEqual(googleProfileFromPayload({ iss: 'https://accounts.google.com', sub: '1122', name: ' Amy ' }), { subject: '1122', name: 'Amy', picture: null })
+  assert.deepEqual(googleProfileFromPayload({ iss: 'accounts.google.com', sub: '1122', given_name: 'Amy' }), { subject: '1122', name: 'Amy', picture: null })
+  assert.deepEqual(googleProfileFromPayload({ iss: 'accounts.google.com', sub: '1122' }), { subject: '1122', name: '', picture: null })
+})
+
+test('googleProfileFromPayload：帶出 picture（是否可用由 avatar.js 檢查）', () => {
+  assert.equal(googleProfileFromPayload({ iss: 'accounts.google.com', sub: '1122', picture: 'https://lh3.googleusercontent.com/b' }).picture, 'https://lh3.googleusercontent.com/b')
 })
 
 test('googleProfileFromPayload：拒絕不明發行者、缺少或不安全的 sub、空 payload', () => {
@@ -92,7 +96,7 @@ const fakeDeps = (over = {}) => {
     deps: {
       verifyGoogle: async () => ({ iss: 'accounts.google.com', sub: '1122', name: 'Amy' }),
       resolveUid: async (subject) => { calls.push(['resolve', subject]); return { uid: 'u_00000000000000000001', isNew: true } },
-      syncProfile: async (uid, name) => { calls.push(['sync', uid, name]) },
+      syncProfile: async (uid, name, picture) => { calls.push(['sync', uid, name, picture]); return 'https://example.com/shown.png' },
       createToken: async (uid) => { calls.push(['token', uid]); return `token-${uid}` },
       ...over,
     },
@@ -103,8 +107,8 @@ test('exchangeGoogleLogin：成功時依序查表、同步資料、發 token', a
   const { deps, calls } = fakeDeps()
   const r = await exchangeGoogleLogin({ idToken: 'abc', ...deps })
   assert.equal(r.status, 200)
-  assert.deepEqual(r.body, { uid: 'u_00000000000000000001', isNew: true, displayName: 'Amy', firebaseToken: 'token-u_00000000000000000001' })
-  assert.deepEqual(calls, [['resolve', '1122'], ['sync', 'u_00000000000000000001', 'Amy'], ['token', 'u_00000000000000000001']])
+  assert.deepEqual(r.body, { uid: 'u_00000000000000000001', isNew: true, displayName: 'Amy', avatar: 'https://example.com/shown.png', firebaseToken: 'token-u_00000000000000000001' })
+  assert.deepEqual(calls, [['resolve', '1122'], ['sync', 'u_00000000000000000001', 'Amy', null], ['token', 'u_00000000000000000001']])
 })
 
 test('exchangeGoogleLogin：缺少或過長的 idToken 回 400，且不會驗證或寫入', async () => {

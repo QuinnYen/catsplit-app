@@ -281,3 +281,22 @@ test('刪除帳號：對照項、合併紀錄與備份一併清除', async () =>
   assert.equal((await db.collection('merges').where('uids', 'array-contains', S.L).get()).size, 0)
   assert.equal((await db.collection('mergeBackups').where('uids', 'array-contains', S.L).get()).size, 0)
 })
+
+// 頭像：每個登入方式各存一份，顯示用的 LINE 優先，不會因為最後登入的是誰而改變
+test('頭像：Google 單獨登入用 Google 頭像；綁上 LINE 後顯示 LINE 的，之後用 Google 登入也不會被蓋掉', async () => {
+  const onlyGoogle = await googleLogin('gavatar1')
+  assert.equal(onlyGoogle.avatar, 'https://example.com/google.png')
+
+  // LINE 舊使用者綁定 Google：登入 LINE 後 avatars.line 有值，Google 登入回傳的仍是 LINE 的頭像
+  const L = 'U' + '7'.repeat(32)
+  const line = await lineLogin(L)
+  assert.equal(line.pictureUrl, 'https://example.com/avatar.png')
+  const bind = await post('bindIdentity', { provider: 'google', idToken: 'gavatar2' }, line.idToken)
+  assert.deepEqual([bind.status, bind.body.status], [200, 'bound'])
+  const viaGoogle = await googleLogin('gavatar2')
+  assert.equal(viaGoogle.uid, L)
+  assert.equal(viaGoogle.avatar, 'https://example.com/avatar.png')
+  const doc = (await db.doc(`users/${L}`).get()).data()
+  assert.deepEqual(doc.avatars, { line: 'https://example.com/avatar.png', google: 'https://example.com/google.png' })
+  assert.equal(doc.avatar, 'https://example.com/avatar.png')
+})
