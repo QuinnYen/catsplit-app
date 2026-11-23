@@ -10,7 +10,7 @@
 
 | # | 項目 | 檔案 | 狀態 |
 |---|---|---|---|
-| P14 | 獨立帳號：多種登入方式與帳號綁定 | `2026-11-14-p14-identity-design.md` | spec 待審閱 |
+| P14 | 獨立帳號：多種登入方式與帳號綁定 | `2026-11-14-p14-identity-design.md`、計畫 `../plans/2026-11-23-p14-identity-plan.md` | spec 已審閱，計畫待確認決策 |
 | P12 | 個人記帳 | `2026-11-14-p12-personal-ledger-design.md` | spec 待審閱 |
 | — | 匯率頁（等使用者提供參考 App 截圖）與其他小功能 | `2026-11-14-fx-page-and-misc-backlog.md` | backlog |
 | P18 | 首頁大改版：四大功能整合 | `2026-11-14-p18-home-redesign-backlog.md` | backlog（最後做） |
