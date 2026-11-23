@@ -681,6 +681,24 @@ const detachFromGroup = async (groupId, uid) => {
 }
 
 /**
+ * 刪除整個群組（子集合、群組文件、Storage 檔案）。只有建立者能刪。body { groupId }。
+ * 用後端的 recursiveDelete，沒有客戶端單一 batch 最多 500 個操作的上限。
+ * 群組已經不存在視為成功（重試安全）。回傳 { ok: true }。
+ */
+export const deleteGroup = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5, timeoutSeconds: 300 },
+  authedPost(async ({ req, caller }) => {
+    const { groupId } = req.body || {}
+    if (typeof groupId !== 'string' || !/^[A-Za-z0-9]{1,40}$/.test(groupId)) throw new MergeError('invalid_request', 400)
+    const group = await readGroup(groupId)
+    if (!group) return { ok: true, alreadyGone: true }
+    if (group.createdBy !== caller.uid) throw new MergeError('forbidden', 403)
+    await deleteGroupCompletely(groupId)
+    return { ok: true }
+  })
+)
+
+/**
  * 退出多個群組並保留帳目（見 detachFromGroup）。需登入且不是訪客。body { groupIds: string[], deleteAccount?: boolean }。
  * deleteAccount 為 true 時，全部退出成功後再刪除這個人的 Auth 紀錄（此時群組清單可為空）；有任何失敗就不刪，讓使用者能重試。
  * 回傳 { results: { [groupId]: 結果 }, failed: string[], accountDeleted: boolean }。

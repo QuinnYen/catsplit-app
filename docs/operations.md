@@ -55,7 +55,7 @@ Set-Content functions/.secret.local "LINE_CHANNEL_SECRET=dummy"
 
 # 啟動（路徑改成你的專案絕對路徑）
 $env:NODE_OPTIONS = "--import file:///C:/path/to/catsplit-app/functions/scripts/emulator-mocks.mjs"
-firebase emulators:start --only auth,firestore,functions --project demo-catsplit
+firebase emulators:start --only auth,firestore,functions,storage --project demo-catsplit
 ```
 
 函式網址為 `http://127.0.0.1:5001/demo-catsplit/asia-east1/<函式名>`，例如 `verifyLiffToken`、`guestLogin`。Firestore 觸發器（訪客 Auth 清理）也會一併載入。需要 Java、Node 22，且 8080、9099、5001 埠不能被占用（執行 `npm run test:rules` 前要先關掉）。

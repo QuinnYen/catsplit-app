@@ -99,7 +99,7 @@
 - 列表查詢：只能列出 `members` 含自己的群組。
 - 建立：必須是非訪客，`members` 只有自己。
 - 更新：成員可更新（不能改 `createdBy`；`budget` 只有建立者能改；成員名單一次只能少一人，本人退出或建立者移除）；非成員只能把自己加進去；成員可新增一位虛擬成員（`p_…`）。
-- 刪除：只有建立者。刪除群組有兩條路：客戶端（`EditGroupPage`、`deleteMyData` 的 `deleteWholeGroup`）先刪 Storage 檔案，再用**單一 `writeBatch`** 刪掉三個子集合與群組文件；後端（`detachMember` 內的 `deleteGroupCompletely`）用 `recursiveDelete`。兩條路的差異見 6 的「刪除群組」。
+- 刪除：只有建立者。刪除群組一律由後端處理（`deleteGroup` 端點，建立者才能呼叫；`detachMember` 對只有自己的群組也走同一個 `deleteGroupCompletely`），用 `recursiveDelete` 刪子集合與群組文件，並刪 Storage 的收據與封面。rules 仍保留「建立者可刪」，只是為了新舊版本部署期間相容，客戶端已不再直接刪。
 
 ### 2.5 `groups/{id}/expenses`、`incomes`、`settlements`
 
@@ -166,7 +166,7 @@
 | `identities where uid == uid` | 後端（合併、刪除、列出） | 反查 |
 | `groups where members array-contains uid` | 後端（合併、退出） | 反查成員所在群組 |
 
-**目前 repo 裡沒有 `firestore.indexes.json`**：複合索引是在 Firebase 主控台建立的，沒有進版本控制。換專案或重建資料庫時會漏掉，查詢會直接報錯。見下方待決議。
+複合索引定義放在 `firestore.indexes.json`（2026-11-23 起進版本控制，目前只有首頁那一條）。**CI 的部署指令沒有包含 `firestore:indexes`**（避免部署帳號權限不足時連帶讓函式部署失敗），新增或修改索引要手動部署：`firebase deploy --only firestore:indexes --project catsplit-app`。部署只會建立檔案裡有的索引，不會刪掉主控台已存在的其他索引（非互動模式不會自動刪除，要刪需另外加 `--force`）。
 
 ## 6. 分析：資料量變大時會發生什麼（推論，未實測）
 
@@ -178,7 +178,7 @@
 | 群組頁 | 依月份範圍載入帳目 | 單月帳目多沒問題；選「全部」會載入整個群組歷史 |
 | 編輯、刪除帳目 | `recomputeGroupAggregates` 讀取三個子集合**全部**文件 | 單次成本與該群組歷史帳目數成正比；活躍的長期群組會越來越貴、越來越慢 |
 | 同步名稱頭像 | 每個人在登入時寫入自己所在的每個群組 | 寫入量與「自己的群組數」成正比，每次改暱稱都會觸發 |
-| 刪除群組 | 客戶端把三個子集合的全部文件放進**單一 `writeBatch`**（`EditGroupPage`、`deleteMyData`） | Firestore 一個 batch 最多 500 個操作：群組帳目加起來超過約 499 筆時，這個刪除會失敗，群組刪不掉（資料還在，沒有損壞）。後端的 `deleteGroupCompletely` 用 `recursiveDelete`，沒有這個限制。**這是已存在的上限，不是推論** |
+| 刪除群組 | 後端 `recursiveDelete`（2026-11-23 起；原本客戶端用單一 `writeBatch`，帳目超過約 499 筆會刪不掉） | 已沒有 500 筆上限。已用 600 筆帳目的群組在模擬器實測刪除成功 |
 | 帳號合併、刪除我的資料 | 後端掃 `groups where members array-contains` 再逐一搬移 | 與自己的群組數、帳目數成正比，有 Cloud Functions 逾時風險（合併已分階段可重試） |
 | 個人記帳（P12，未做） | 規劃 `users/{uid}/transactions`，一人一個集合 | **每個使用者都會產生無上限成長的集合**，且要與群組帳目互通（快照）。如果沿用「在父文件放彙總」的做法，會重複 3.2 的風險，而且個人帳目數遠大於群組帳目數 |
 
@@ -186,7 +186,7 @@
 
 依重要性排序，每項都可以獨立決定與執行。
 
-1. **把複合索引放進版本控制**（`firestore.indexes.json`，`firebase.json` 加上 `firestore.indexes`）。風險最低，建議先做。要先從主控台確認現有索引再匯出，避免部署時刪掉正在用的索引。
+1. ~~把複合索引放進版本控制~~ 已完成（2026-11-23）。檔案內容依程式裡的查詢寫成，尚未與主控台現有索引逐一比對；要比對可執行 `firebase firestore:indexes --project catsplit-app` 匯出現有索引。
 2. **彙總的後端修復手段**：提供一個只有建立者（或管理者）能觸發的後端函式，從帳目整批重算群組彙總，並加上檢查腳本，能找出「彙總與帳目對不上」的群組。解決「餘額對不上時沒有保險」的問題。
 3. **P12 資料結構先設計再動手**：決定
    - 個人帳目是否與群組帳目共用同一套欄位（`payments`、`splits` 是群組專用，個人帳目只需要單一金額）。
@@ -194,5 +194,5 @@
    - 與群組帳目互通用「快照」還是「參照」。
 4. **名稱的單一來源**：決定 `users/{uid}.name` 與 `settings/profile.nickname` 的分工，以及是否讓 `memberProfiles` 繼續由客戶端寫。
 5. **`memberProfiles` 的更新方式**：如果要降低「各人前端寫每個群組」的成本，可改成後端在名稱變更時觸發；代價是多一個後端函式。
-6. **刪除群組統一走後端**：把客戶端的單一 batch 刪除改成呼叫後端（`recursiveDelete`），解決 500 筆上限，也讓 Storage 與 Firestore 的清理在同一處。需要新增一個端點與對應的權限檢查（只有建立者）。
+6. ~~刪除群組統一走後端~~ 已完成（2026-11-23）。
 7. **統一 uid 格式**：不建議做。把 `U…` 舊 uid 換成 `u_…` 要搬所有群組與帳目，風險大、收益小；繼續靠 `identities` 對照即可。

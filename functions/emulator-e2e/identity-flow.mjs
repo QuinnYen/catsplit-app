@@ -320,3 +320,33 @@ test('合併後保留的是 Google 帳號：被併入的 LINE 帳號的名稱與
   assert.equal(done.body.keepUid, g.uid)
   assert.deepEqual([done.body.profile.name, done.body.profile.avatar, done.body.profile.provider], [`Mock ${L.slice(0, 6)}`, 'https://example.com/avatar.png', null])
 })
+
+// 刪除群組：後端 recursiveDelete，帳目超過 500 筆也刪得掉（客戶端單一 writeBatch 的上限）；只有建立者能刪
+test('deleteGroup：只有建立者能刪；帳目超過 500 筆也整個刪掉；重試安全；訪客與未登入被拒', async () => {
+  const owner = await googleLogin('gdel1')
+  const other = await googleLogin('gdel2')
+  const gid = 'delgroup1'
+  await seedGroup(gid, { members: [owner.uid, other.uid], createdBy: owner.uid })
+  for (let i = 0; i < 6; i++) {
+    const batch = db.batch()
+    for (let j = 0; j < 100; j++) batch.set(db.collection(`groups/${gid}/expenses`).doc(`x${i}_${j}`), { amount: 1, payments: { [owner.uid]: 1 }, splits: { [owner.uid]: 1 } })
+    await batch.commit()
+  }
+  await db.doc(`groups/${gid}/settlements/s1`).set({ from: owner.uid, to: other.uid, amount: 1 })
+  await db.doc(`groups/${gid}/incomes/i1`).set({ amount: 1 })
+  assert.equal((await db.collection(`groups/${gid}/expenses`).get()).size, 600)
+
+  assert.equal((await post('deleteGroup', { groupId: gid })).status, 401)
+  assert.equal((await post('deleteGroup', { groupId: gid }, other.idToken)).status, 403)
+  assert.equal((await post('deleteGroup', { groupId: 'bad/id' }, owner.idToken)).status, 400)
+  assert.equal((await db.doc(`groups/${gid}`).get()).exists, true)
+
+  const r = await post('deleteGroup', { groupId: gid }, owner.idToken)
+  assert.deepEqual([r.status, r.body.ok], [200, true], JSON.stringify(r.body))
+  assert.equal((await db.doc(`groups/${gid}`).get()).exists, false)
+  assert.equal((await db.collection(`groups/${gid}/expenses`).get()).size, 0)
+  assert.equal((await db.collection(`groups/${gid}/settlements`).get()).size, 0)
+  assert.equal((await db.collection(`groups/${gid}/incomes`).get()).size, 0)
+  // 已經不存在：視為成功
+  assert.equal((await post('deleteGroup', { groupId: gid }, owner.idToken)).status, 200)
+})

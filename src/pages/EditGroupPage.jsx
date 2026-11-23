@@ -1,7 +1,7 @@
 // /group/:id/edit — 群組設定：改名稱、圖示與封面、預算，以及退出、封存或刪除群組（成員管理在 MembersPage）。
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, getDoc, updateDoc, collection, getDocs, writeBatch, deleteField } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage } from '../config/firebase'
 import { getCurrency, PINNED_CURRENCIES } from '../config/currencies'
@@ -9,7 +9,7 @@ import CurrencySelect from '../components/CurrencySelect'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import GroupIconPicker from '../components/GroupIconPicker'
-import { deleteGroupFiles } from '../utils/storageCleanup'
+import { deleteGroup } from '../utils/deleteGroup'
 import { detachFromGroups } from '../utils/deleteMyData'
 
 // 裁圖元件（含 react-easy-crop）選了圖片才需要
@@ -170,18 +170,7 @@ const EditGroupPage = () => {
     if (!confirm(t('eg.confirmDelete', { name: group.name }))) return
     setDeleting(true)
     try {
-      await deleteGroupFiles(id)
-      const [expensesSnap, settlementsSnap, incomesSnap] = await Promise.all([
-        getDocs(collection(db, 'groups', id, 'expenses')),
-        getDocs(collection(db, 'groups', id, 'settlements')),
-        getDocs(collection(db, 'groups', id, 'incomes')),
-      ])
-      const batch = writeBatch(db)
-      expensesSnap.docs.forEach(d => batch.delete(d.ref))
-      settlementsSnap.docs.forEach(d => batch.delete(d.ref))
-      incomesSnap.docs.forEach(d => batch.delete(d.ref))
-      batch.delete(doc(db, 'groups', id))
-      await batch.commit()
+      await deleteGroup(id)
       navigate('/')
     } catch (error) {
       console.error('Failed to delete group', error)

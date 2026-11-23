@@ -1,6 +1,5 @@
 import { doc, collection, getDocs, writeBatch, deleteDoc } from 'firebase/firestore'
 import { db, auth } from '../config/firebase'
-import { deleteGroupFiles } from './storageCleanup'
 import { deleteAllSavings } from './savingsData'
 
 // 只有自己一人、且自己是建立者的群組會整個刪除（Firestore 規則只允許建立者刪群組）；其餘一律退出
@@ -18,21 +17,6 @@ export const planDeleteMyData = (groups, uid) => {
   const toDelete = groups.filter(g => isSoleOwnedGroup(g, uid))
   const toLeave = groups.filter(g => !isSoleOwnedGroup(g, uid))
   return { toDelete, toLeave, toDissolve: toLeave.filter(g => isDissolvedOnLeave(g, uid)) }
-}
-
-const deleteWholeGroup = async (groupId) => {
-  await deleteGroupFiles(groupId)
-  const [expensesSnap, settlementsSnap, incomesSnap] = await Promise.all([
-    getDocs(collection(db, 'groups', groupId, 'expenses')),
-    getDocs(collection(db, 'groups', groupId, 'settlements')),
-    getDocs(collection(db, 'groups', groupId, 'incomes')),
-  ])
-  const batch = writeBatch(db)
-  expensesSnap.docs.forEach(d => batch.delete(d.ref))
-  settlementsSnap.docs.forEach(d => batch.delete(d.ref))
-  incomesSnap.docs.forEach(d => batch.delete(d.ref))
-  batch.delete(doc(db, 'groups', groupId))
-  await batch.commit()
 }
 
 const DETACH_MEMBER_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/detachMember')
@@ -73,12 +57,13 @@ const deleteMyOaPrompt = (uid) => deleteDoc(doc(db, 'users', uid, 'settings', 'o
 // 依序處理；中途失敗會丟出錯誤，已處理的群組不會回復，重按一次即可繼續。
 // 登入紀錄必須最後刪（收款方式要用登入身分才刪得掉），前面失敗就不會刪，重試時仍能登入
 export const deleteMyData = async (groups, uid) => {
+  // 只有自己的群組（toDelete）自己是建立者、沒有其他成員，雲端函式的退出流程會把它整個刪除（detachMember），
+  // 所以和其他群組一起交給後端處理，不在客戶端用單一 batch 刪（帳目超過 500 筆會失敗）
   const { toDelete, toLeave } = planDeleteMyData(groups, uid)
-  for (const g of toDelete) await deleteWholeGroup(g.id)
   await deleteMyPaymentMethods(uid)
   await deleteMySpendMethods(uid)
   await deleteAllSavings(uid)
   await deleteMyNickname(uid)
   await deleteMyOaPrompt(uid)
-  await detachFromGroups(toLeave.map(g => g.id), { deleteAccount: true })
+  await detachFromGroups([...toDelete, ...toLeave].map(g => g.id), { deleteAccount: true })
 }
