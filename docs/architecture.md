@@ -44,3 +44,11 @@ scripts/storage/            # bucket CORS 與生命週期設定（需手動套�
 - 不要在 `#root` 或 `.cs-body` 加 `overflow`、`transform`、`contain`、`filter`，會破壞 `fixed` 的底部導覽列與浮層。
 - 新頁面照既有頁面加上 `cs-header`／`cs-body` 即可。
 
+## 加到主畫面（PWA）
+
+網站可以加到手機主畫面，從桌面圖示開啟是全螢幕（沒有網址列）：
+
+- `public/manifest.webmanifest`：名稱、`display: standalone`、起始網址 `/`、主題色（App 標題列的深藍 `#1b2a41`）、圖示。`index.html` 以 `<link rel="manifest">` 引用，另有 `theme-color`（淺色與深色各一）與 iOS 的 `apple-mobile-web-app-capable`。
+- 圖示：`public/icon-192.png`、`icon-512.png`（一般用）、`icon-maskable-512.png`（Android 會裁成圓形等形狀，貓咪縮小到安全範圍內）。都由 `docs/images/catsplit-logo-w.png`（600×600）產生，白底；iOS 用原有的 `apple-touch-icon.png`。
+- `public/sw.js`：**最小的 Service Worker**，只為了讓瀏覽器認定可安裝，不快取、不攔截任何請求，所以不會有「更新後還看到舊版」的問題。`src/main.jsx` 只在正式環境註冊，失敗不影響使用。要做離線快取時再擴充，並要處理版本更新。`firebase.json` 讓 `sw.js` 與 manifest 不被快取。
+- 已知限制：獨立視窗與瀏覽器分頁的儲存空間各自獨立，從桌面圖示第一次開啟可能要重新登入；LINE 登入與 Google 登入會跳轉到別的網址再回來，在獨立視窗裡的表現要用實機確認（尤其 iPhone）。LINE 內建瀏覽器沒有「加到主畫面」功能，不受影響。

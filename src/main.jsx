@@ -19,6 +19,13 @@ if (window.location.pathname === '/' && liffState?.startsWith('/') && !liffState
   window.history.replaceState(null, '', path + (qs ? `?${qs}` : '') + window.location.hash)
 }
 
+// 註冊最小的 Service Worker（public/sw.js），讓網站可以安裝到主畫面；只在正式環境，失敗不影響使用
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('service worker register failed', e))
+  })
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider>
