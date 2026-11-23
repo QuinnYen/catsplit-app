@@ -1,6 +1,6 @@
 # P14 獨立帳號：多種登入方式與帳號綁定（設計）
 
-日期：2026-11-14　修訂：2026-11-23（依實作計畫補修）　狀態：已審閱，待實作。實作順序見 `../plans/2026-11-23-p14-identity-plan.md`
+日期：2026-11-14　修訂：2026-11-23（依實作與實測結果補修）　狀態：已完成並上線（2026-11-23）。實作順序見 `../plans/2026-11-23-p14-identity-plan.md`
 
 ## 背景與整體決策（P18 首頁大改版的前提）
 
@@ -55,7 +55,7 @@
 2. **dry-run 內容**：回報受影響群組數、帳目筆數、自動處理的項目、需要使用者決定的衝突清單（具體項目，不只是數量），使用者確認後才執行。
 3. **`executeMerge(mergeId, resolutions)`**：只需要發起人的 Firebase session 與 `mergeId`，並檢查發起人與紀錄一致、未過期。先備份 `dropUid` 資料到 `mergeBackups/{id}`；備份保留 30 天，由 GitHub Actions 每天排程（`.github/workflows/purge-merge-backups.yml`）清除過期的合併紀錄與備份，`executeMerge` 每次也順便清幾筆當備援。不用 Cloud Scheduler 排程函式：部署它需要額外啟用 API 與權限，部署失敗會連帶影響其他函式。
 4. 查 `groups where members array-contains dropUid`，逐一呼叫 `migrateMember(group, dropUid, keepUid)`。
-5. 搬 `users/{dropUid}/…` 個人資料（收款方式、暱稱、儲蓄、**個人帳本 `transactions` 與 `spendMethods`**，見 P12 spec），同 id 衝突依 `resolutions` 處理；使用者未指定的項目以預設建議值（較新者）為準。
+5. 搬 `users/{dropUid}/…` 個人資料（收款方式、暱稱、儲蓄、**個人帳本 `transactions` 與 `spendMethods`**，見 P12 spec），同 id 衝突依 `resolutions` 處理；使用者未指定的項目以預設建議值為準（要使用者決定的項目預設保留 `keepUid`，不用「較新」：剛建立的新帳號資料一定較新，會預設刪掉用了很久的帳號；`settings/oaPrompt` 自動保留較新的）。
 6. 對照表 `dropUid` 的所有項目改指向 `keepUid`，最後才刪除 `dropUid` 帳號。
 
 進度存 `merges/{id}` 狀態機：`previewed → started → groups_done → profile_done → done`，中途失敗可從斷點重試。
@@ -79,7 +79,7 @@
 **由使用者決定**（`resolutions` 的內容）：
 - 暱稱與頭像：兩邊各有一組，選留哪一個。
 - 個人資料同 id 的項目：收款方式、付款方式、儲蓄目標（含存提款紀錄）都是自動產生 id，不會衝突，直接搬移；真正會衝突的只有固定 id 的文件，例如暱稱（`settings/profile`）、`settings/oaPrompt`，以及 P12 個人帳本群組匯入的 `group_{groupId}`。這些逐項選 A 或 B。個人資料以 `listCollections` 遍歷搬移，不寫死集合名稱，P12 的新集合自動涵蓋。
-- 每項預設帶建議值，使用者只需確認，有疑慮再改。
+- 每項預設帶建議值（保留 `keepUid`），使用者只需確認，有疑慮再改。
 
 **`keepUid` 由系統決定**，不讓使用者選：保留群組數較多者，需要搬動的資料最少。對使用者而言保留哪個 uid 沒有差別。
 
@@ -99,10 +99,10 @@
 
 **介面**
 - 登入畫面：LINE 內自動登入不變；外部瀏覽器顯示 LINE／Google 兩按鈕，LINE 內建瀏覽器的登入畫面不顯示 Google 按鈕；訪客入口維持。
-- 設定頁新增「登入方式」：列出已綁定 provider、解除綁定、綁定其他方式。**LINE 內建瀏覽器的設定頁不放 Google 按鈕**（Google 不允許在內嵌 WebView 登入，實測 Android 彈出視窗會停在 Google 的 `accounts.google.com/transform` 頁面）：改成「用 Google 綁定」，由 LINE 內已登入的帳號產生一次性連結碼，帶著登入狀態開啟手機的外部瀏覽器，在那裡用手機上已登入的 Google 帳號完成綁定（`createLinkCode`、`redeemLinkCode`、`/link` 頁，設計見 `docs/identity-and-guests.md`）。
+- 設定頁新增「登入方式」：列出已綁定 provider、解除綁定、綁定其他方式。**LINE 內建瀏覽器的設定頁不放 Google 按鈕**（Google 不允許在內嵌 WebView 登入，實測 Android 彈出視窗會停在 Google 的 `accounts.google.com/transform` 頁面）：改成「用 Google 綁定」，由 LINE 內已登入的帳號產生一次性連結碼，顯示連結讓使用者複製並貼到手機瀏覽器，在那裡用手機上已登入的 Google 帳號完成綁定（`createLinkCode`、`redeemLinkCode`、`/link` 頁，設計見 `docs/identity-and-guests.md`）。
 - 新增「合併確認頁」：顯示將搬動的群組數與帳目筆數、自動加總的群組、需要決定的衝突清單；每項帶預設建議值，使用者確認或修改後才執行。
 - LINE 專屬功能（`sendMessages`、`shareTargetPicker`）維持只在 LINE 內建瀏覽器出現；非 LINE 環境以複製邀請連結或 Web Share 替代。
-- LINE 內建瀏覽器常擋 Google OAuth，LINE 內綁定 Google 需導向外部瀏覽器完成，實作時要實測 LINE 內、外部瀏覽器、手機 PWA 三種環境。
+- LINE 內建瀏覽器無法登入 Google，也無法從網頁開啟外部瀏覽器（`liff.openWindow`、`openExternalBrowser=1` 實測無效），所以只提供「複製連結」，由使用者貼到手機瀏覽器的網址列；LINE 內匯出 CSV 同樣改為自動複製下載網址。
 
 **刪除我的資料**：`deleteMyData`、`detachMember` 一併刪除該 uid 的所有 `identities`、`merges`、`mergeBackups`，並排入既有刪除順序（只有自己的群組 → 收款方式 → 退出群組 → 刪對照表與合併紀錄 → 刪 Auth）。`mergeBackups` 內含另一帳號資料，不可漏刪；隱私權政策須說明備份保留 30 天。
 
