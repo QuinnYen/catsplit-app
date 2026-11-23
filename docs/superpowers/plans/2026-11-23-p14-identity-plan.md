@@ -156,6 +156,8 @@ PR6 部署後實測發現（Android）：LINE 內建瀏覽器按 Google 按鈕�
 - 更新 `docs/superpowers/specs/README.md` 的 P14 狀態。
 - 順帶：LINE 內匯出 CSV 同樣無法開外部瀏覽器，改成自動複製 5 分鐘有效的下載網址並彈窗提示（#16）。
 
+**P14 之後的資料庫整理（2026-11-23）**：索引進版本控制、刪除群組改走後端、群組彙總檢查與修復工具、舊 LINE uid 轉成內部 uid（全部已在正式環境完成並驗證），見 `docs/data-model.md`。
+
 **後續（不在 P14）**：Google 帳號沒有頭像時的預設貓咪頭像（Google 頭像已於登入時取得，LINE 優先，見 `docs/identity-and-guests.md`）、Apple 登入、一鍵還原合併、真正脫離 LINE（LINE 仍是主要登入）。
 
 ## 5. 風險與對策

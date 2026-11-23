@@ -101,7 +101,7 @@ node scripts/check-aggregates.mjs --project demo-catsplit
 
 ## 舊 LINE uid 轉成內部 uid
 
-舊 LINE 使用者的 uid 就是 LINE userId（`U` 加 32 位十六進位），這個工具把他們的資料轉成新的內部 uid（`u_` 開頭），讓全站只剩一種帳號 uid（訪客 `p_` 除外）。**自從這個功能上線，全新的 LINE 使用者已經直接拿到 `u_` 的 uid**，這個工具只處理還沒轉的舊使用者。
+舊 LINE 使用者的 uid 就是 LINE userId（`U` 加 32 位十六進位），這個工具把他們的資料轉成新的內部 uid（`u_` 開頭），讓全站只剩一種帳號 uid（訪客 `p_` 除外）。**自從這個功能上線，全新的 LINE 使用者已經直接拿到 `u_` 的 uid**，這個工具只處理還沒轉的舊使用者。**正式環境已於 2026-11-23 全部轉完並驗證**，工具保留給日後還原備份或匯入舊資料時使用，平常不需要再跑。
 
 **轉什麼：** 群組的 `members`、`memberProfiles`、`createdBy`；每筆帳目的 `payments`、`splits`、`shares`、`createdBy`；轉帳的 `from`、`to`、`settledBy`；餘額與筆數的 key；`users/{uid}` 底下所有個人資料與 `users/{uid}` 文件的名稱頭像；所有 `identities` 對照項改指向新 uid；舊 Auth 使用者刪除。做法是「把舊帳號併入一個全新的空帳號」，重用帳號合併的程式，新帳號沒有資料所以沒有衝突，不需要使用者決定任何事。金額與餘額不變。
 
