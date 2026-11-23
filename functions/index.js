@@ -64,24 +64,15 @@ const syncUserProfile = async (uid, loginProvider, { name, picture }) => {
   }
 }
 
-// 查 identities/line:{userId} 決定這個 LINE 使用者的內部 uid；沒有對照項時：舊使用者（有 users 文件或在某個群組裡）沿用 LINE userId，
-// 全新的 LINE 使用者用新的內部 uid（u_ 開頭），都建立對照項（懶建立）。
+// 查 identities/line:{userId} 決定這個 LINE 使用者的內部 uid；沒有對照項就是全新的使用者，用新的內部 uid（u_ 開頭）並建立對照項。
 // 在 transaction 內完成，避免並行登入建出兩筆。對照表只有 Admin SDK 讀寫得到（rules 全拒）。
-// 帳號合併之後，對照項可能指向別的 uid（不再等於 LINE userId），所以查表失敗時不能退回 LINE userId，
-// 否則會登入到已被併掉的舊帳號；失敗就讓登入失敗（呼叫端回 500），使用者重試即可。
+// 帳號合併之後，對照項可能指向別的 uid，查表失敗時不能另外給一個 uid，否則會登入到錯的帳號；失敗就讓登入失敗（呼叫端回 500），使用者重試即可。
 const resolveUidForLine = async (lineUserId) => {
   const db = getFirestore()
   const ref = db.doc(`identities/${identityKey('line', lineUserId)}`)
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref)
-    let legacyExists = true
-    if (!snap.exists) {
-      // 沒有對照項：是不是舊使用者（有 users 文件，或是某個群組的成員）？不是才是全新的 LINE 使用者
-      const userSnap = await tx.get(db.doc(`users/${lineUserId}`))
-      const memberOf = userSnap.exists ? null : await tx.get(db.collection('groups').where('members', 'array-contains', lineUserId).limit(1))
-      legacyExists = userSnap.exists || !memberOf.empty
-    }
-    const { uid, create } = resolveLineUid({ identity: snap.exists ? snap.data() : null, lineUserId, legacyExists, newUid: makeUid() })
+    const { uid, create } = resolveLineUid({ identity: snap.exists ? snap.data() : null, newUid: makeUid() })
     if (create) {
       tx.set(ref, { uid, provider: 'line', subject: lineUserId, createdAt: FieldValue.serverTimestamp() })
     }
@@ -428,8 +419,8 @@ export const unbindIdentity = onRequest(
   authedPost(async ({ req, caller }) => {
     const { identityId } = req.body || {}
     if (typeof identityId !== 'string' || !identityId || identityId.length > 200 || identityId.includes('/')) throw new MergeError('invalid_request', 400)
-    const { mode } = await unbindIdentityFlow(getFirestore(), { callerUid: caller.uid, identityId, makeUid, nowMs: Date.now() })
-    return { ok: true, mode }
+    await unbindIdentityFlow(getFirestore(), { callerUid: caller.uid, identityId })
+    return { ok: true }
   })
 )
 

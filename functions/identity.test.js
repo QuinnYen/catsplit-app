@@ -45,15 +45,16 @@ test('identityKey：拒絕未知 provider 與不安全的 subject', () => {
 
 test('resolveLineUid：對照表已有就用對照表的 uid，不重建', () => {
   assert.deepEqual(
-    resolveLineUid({ identity: { uid: 'u_00000000000000000001' }, lineUserId: 'Uabc' }),
+    resolveLineUid({ identity: { uid: 'u_00000000000000000001' }, newUid: 'u_00000000000000000009' }),
     { uid: 'u_00000000000000000001', create: false },
   )
 })
 
-test('resolveLineUid：對照表沒有就沿用 LINE userId 並要求建立', () => {
-  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: 'Uabc' }), { uid: 'Uabc', create: true })
-  assert.deepEqual(resolveLineUid({ identity: {}, lineUserId: 'Uabc' }), { uid: 'Uabc', create: true })
-  assert.deepEqual(resolveLineUid({ identity: { uid: '' }, lineUserId: 'Uabc' }), { uid: 'Uabc', create: true })
+test('resolveLineUid：對照表沒有（或沒有 uid）就是全新的使用者，用新的內部 uid 並要求建立', () => {
+  const NEW = 'u_00000000000000000009'
+  assert.deepEqual(resolveLineUid({ identity: null, newUid: NEW }), { uid: NEW, create: true })
+  assert.deepEqual(resolveLineUid({ identity: {}, newUid: NEW }), { uid: NEW, create: true })
+  assert.deepEqual(resolveLineUid({ identity: { uid: '' }, newUid: NEW }), { uid: NEW, create: true })
 })
 
 // ---------- Google ----------
@@ -131,15 +132,4 @@ test('exchangeGoogleLogin：驗證失敗或 payload 不合法回 401，不查表
 test('exchangeGoogleLogin：查表或發 token 失敗時丟出錯誤（由呼叫端轉成 500）', async () => {
   const { deps } = fakeDeps({ resolveUid: async () => { throw new Error('firestore down') } })
   await assert.rejects(() => exchangeGoogleLogin({ idToken: 'abc', ...deps }), /firestore down/)
-})
-
-test('resolveLineUid：沒有對照項時，舊使用者沿用 LINE userId，全新的使用者用新的內部 uid；對照項優先', () => {
-  const LINE = 'U' + 'a'.repeat(32)
-  const NEW = 'u_00000000000000000009'
-  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: LINE, legacyExists: true, newUid: NEW }), { uid: LINE, create: true })
-  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: LINE, legacyExists: false, newUid: NEW }), { uid: NEW, create: true })
-  assert.deepEqual(resolveLineUid({ identity: { uid: 'u_00000000000000000001' }, lineUserId: LINE, legacyExists: false, newUid: NEW }), { uid: 'u_00000000000000000001', create: false })
-  // 沒傳 legacyExists 視為舊使用者（維持舊行為）；是新使用者卻沒給 newUid 也不會產生空 uid
-  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: LINE }), { uid: LINE, create: true })
-  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: LINE, legacyExists: false }), { uid: LINE, create: true })
 })

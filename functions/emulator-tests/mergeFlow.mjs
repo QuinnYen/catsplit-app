@@ -8,7 +8,6 @@ import {
   bindIdentity, previewMerge, executeMerge, unbindIdentity, purgeExpired, deleteMergeDataOf, listIdentitiesOf,
 } from '../mergeFlow.js'
 import { MergeError, mergeDocId, MERGE_PREVIEW_TTL_MS } from '../bind.js'
-import { makeUid } from '../identity.js'
 import { computeGroupAggregates } from '../../src/utils/expenseHelpers.js'
 
 let db
@@ -40,7 +39,7 @@ const seedGroup = async (id, { members, createdBy, expenses = [], settlements = 
 
 /**
  * 一組測試帳號：
- *  L：舊 LINE 使用者（uid 就是 LINE userId，沒有對照項），在 gL1、gL2、gBoth（3 個群組）
+ *  L：LINE 帳號（有 LINE 對照項），在 gL1、gL2、gBoth（3 個群組）
  *  G：Google 帳號（內部 uid，有 Google 對照項），在 gG1、gBoth（2 個群組）→ 合併時 L 保留、G 被併入
  */
 const seed = async (s) => {
@@ -48,6 +47,7 @@ const seed = async (s) => {
   await db.doc(`users/${L}`).set({ name: 'L' })
   await db.doc(`users/${G}`).set({ name: 'G', provider: 'google' })
   await db.doc(`identities/google:${sub}`).set({ uid: G, provider: 'google', subject: sub })
+  await db.doc(`identities/line:${L}`).set({ uid: L, provider: 'line', subject: L })
   await seedGroup(`gL1${s}`, { members: [L, T], createdBy: L })
   await seedGroup(`gL2${s}`, { members: [L, T], createdBy: T })
   await seedGroup(`gG1${s}`, { members: [G, T], createdBy: G, expenses: [{ amount: 8, payments: { [G]: 8 }, splits: { [G]: 4, [T]: 4 }, createdBy: G }] })
@@ -88,14 +88,14 @@ test('bindIdentity：沒有對照項就新增一筆指向呼叫者，再綁一�
   assert.deepEqual(await bindIdentity(db, { callerUid: G, provider: 'google', subject: 'new-sub-a', nowMs: NOW }), { status: 'already_bound' })
 })
 
-test('bindIdentity：舊 LINE 使用者綁自己的 LINE（對照項還沒懶建立）會補建，不是合併', async () => {
+test('bindIdentity：綁自己已經有的 LINE 是 already_bound，不是合併', async () => {
   const { L } = await seed('b')
   const r = await bindIdentity(db, { callerUid: L, provider: 'line', subject: L, nowMs: NOW })
   assert.deepEqual(r, { status: 'already_bound' })
   assert.equal((await db.doc(`identities/line:${L}`).get()).data().uid, L)
 })
 
-test('bindIdentity：Google 帳號綁一個沒有對照項、但已是現有帳號的 LINE → 要求合併，預覽不改任何資料', async () => {
+test('bindIdentity：Google 帳號綁一個屬於另一個帳號的 LINE → 要求合併，預覽不改任何資料', async () => {
   const { L, G } = await seed('c')
   const gBefore = (await db.doc('groups/gBothc').get()).data()
   const r = await bindIdentity(db, { callerUid: G, provider: 'line', subject: L, nowMs: NOW })
@@ -112,17 +112,8 @@ test('bindIdentity：Google 帳號綁一個沒有對照項、但已是現有帳�
   const rec = (await db.doc(`merges/${r.mergeId}`).get()).data()
   assert.equal(rec.state, 'previewed')
   assert.equal(rec.initiatorUid, G)
-  assert.deepEqual(rec.bind, { provider: 'line', subject: L }) // 合併完成時補建 LINE 對照項
   assert.deepEqual((await db.doc('groups/gBothc').get()).data(), gBefore)
-  assert.equal((await db.doc(`identities/line:${L}`).get()).exists, false)
-})
-
-test('bindIdentity：對照表已有、屬於另一個帳號 → 合併，不需要補建對照項', async () => {
-  const { L, G } = await seed('d')
-  await db.doc(`identities/line:${L}`).set({ uid: L, provider: 'line', subject: L })
-  const r = await bindIdentity(db, { callerUid: G, provider: 'line', subject: L, nowMs: NOW })
-  assert.equal(r.status, 'merge_required')
-  assert.equal((await db.doc(`merges/${r.mergeId}`).get()).data().bind, null)
+  assert.equal((await db.doc(`identities/line:${L}`).get()).data().uid, L) // 預覽不動對照項
 })
 
 test('previewMerge：訪客與相同帳號不能合併；重新預覽會蓋掉舊的預覽', async () => {
@@ -308,26 +299,12 @@ test('unbindIdentity：一般情況刪除，最後一個不能刪，不是自己
   const { G, sub } = ids('q')
   await db.doc(`identities/google:${sub}`).set({ uid: G, provider: 'google', subject: sub })
   await db.doc(`identities/line:Uq${'0'.repeat(31)}`).set({ uid: G, provider: 'line', subject: `Uq${'0'.repeat(31)}` })
-  assert.deepEqual(await unbindIdentity(db, { callerUid: G, identityId: `google:${sub}`, makeUid, nowMs: NOW }), { mode: 'delete' })
+  assert.deepEqual(await unbindIdentity(db, { callerUid: G, identityId: `google:${sub}` }), undefined)
   assert.equal((await db.doc(`identities/google:${sub}`).get()).exists, false)
-  const last = await errorOf(unbindIdentity(db, { callerUid: G, identityId: `line:Uq${'0'.repeat(31)}`, makeUid, nowMs: NOW }))
+  const last = await errorOf(unbindIdentity(db, { callerUid: G, identityId: `line:Uq${'0'.repeat(31)}` }))
   assert.deepEqual([last.code, last.status], ['last_identity', 409])
-  const nf = await errorOf(unbindIdentity(db, { callerUid: 'u_other', identityId: `line:Uq${'0'.repeat(31)}`, makeUid, nowMs: NOW }))
+  const nf = await errorOf(unbindIdentity(db, { callerUid: 'u_other', identityId: `line:Uq${'0'.repeat(31)}` }))
   assert.equal(nf.code, 'identity_not_found')
-})
-
-test('unbindIdentity：舊 LINE 使用者自己的 LINE 改指向新的空帳號，LINE 之後登入的不再是這個帳號', async () => {
-  const { L, sub } = ids('r')
-  await db.doc(`identities/line:${L}`).set({ uid: L, provider: 'line', subject: L })
-  await db.doc(`identities/google:${sub}`).set({ uid: L, provider: 'google', subject: sub })
-  assert.deepEqual(await unbindIdentity(db, { callerUid: L, identityId: `line:${L}`, makeUid, nowMs: NOW }), { mode: 'repoint' })
-  const after = (await db.doc(`identities/line:${L}`).get()).data()
-  assert.match(after.uid, /^u_[0-9a-f]{20}$/)
-  assert.equal(after.unboundFrom, L)
-  assert.deepEqual((await listIdentitiesOf(db, L)).map((i) => i.id), [`google:${sub}`])
-  // 之後 LINE 再綁回來，會被視為另一個帳號而要求合併
-  const again = await bindIdentity(db, { callerUid: L, provider: 'line', subject: L, nowMs: NOW })
-  assert.equal(again.status, 'merge_required')
 })
 
 // ---------- 清除 ----------

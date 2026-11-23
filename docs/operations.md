@@ -60,22 +60,6 @@ firebase emulators:start --only auth,firestore,functions,storage --project demo-
 
 函式網址為 `http://127.0.0.1:5001/demo-catsplit/asia-east1/<函式名>`，例如 `verifyLiffToken`、`guestLogin`。Firestore 觸發器（訪客 Auth 清理）也會一併載入。需要 Java、Node 22，且 8080、9099、5001 埠不能被占用（執行 `npm run test:rules` 前要先關掉）。
 
-## 身分對照表補齊（`identities`）
-
-詳見[身分與訪客](identity-and-guests.md)。
-
-**方法一（建議）：GitHub Actions 按鈕。** 到 GitHub 的 Actions 頁面，左側選「Backfill identities」→ Run workflow（分支選 `main`）。預設是 dry-run，只會在執行紀錄與摘要裡列出「找到幾位 LINE 使用者、幾位缺對照項」；確認數字合理後，再執行一次並勾選 `apply` 才會真的寫入。設定檔是 `.github/workflows/backfill-identities.yml`，沿用部署用的服務帳號 secret（`FIREBASE_SERVICE_ACCOUNT_CATSPLIT_APP`），該帳號需要有 Firestore 讀寫權限；只允許在 `main` 上執行。
-
-**方法二：在自己的電腦或 Cloud Shell 執行。** 在 `functions` 資料夾內執行，需要有 Firestore 權限的服務帳號：
-
-```powershell
-$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\to\service-account.json"
-node scripts/backfill-identities.mjs --project catsplit-app          # 先 dry-run，確認數量合理
-node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫入
-```
-
-對本機模擬器執行時，先 `$env:FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080"`。
-
 ## 群組彙總檢查與修復
 
 群組文件上的彙總（`totalAmount`、`totalExpenses`、`totalIncome`、`incomeCount`、`memberBalances`、`memberExpenseCounts`）由客戶端新增帳目時用 `increment` 更新、編輯與刪除時整批重算，真正的來源是三個子集合的全部帳目（見 [`data-model.md`](data-model.md) 第 3 節）。**餘額對不上、或懷疑資料有問題時，用這個工具比對。**
@@ -99,27 +83,14 @@ node scripts/check-aggregates.mjs --project demo-catsplit
 
 測試：純函式 `functions/aggregates.test.js`（`npm test`）、Firestore 整合測試 `functions/emulator-tests/aggregateCheck.mjs`（`npm run test:merge`，含「寫入前被改過就跳過」）。
 
-## 舊 LINE uid 轉成內部 uid
+## 已完成的一次性遷移（歷史紀錄）
 
-舊 LINE 使用者的 uid 就是 LINE userId（`U` 加 32 位十六進位），這個工具把他們的資料轉成新的內部 uid（`u_` 開頭），讓全站只剩一種帳號 uid（訪客 `p_` 除外）。**自從這個功能上線，全新的 LINE 使用者已經直接拿到 `u_` 的 uid**，這個工具只處理還沒轉的舊使用者。**正式環境已於 2026-11-23 全部轉完並驗證**，工具保留給日後還原備份或匯入舊資料時使用，平常不需要再跑。
+2026-11-23 做過兩次一次性的資料遷移，**已全部完成並驗證，相關程式已移除**（需要時可從 git 歷史取回，commit `00e87f3` 有完整的腳本、工作流程與測試）：
 
-**轉什麼：** 群組的 `members`、`memberProfiles`、`createdBy`；每筆帳目的 `payments`、`splits`、`shares`、`createdBy`；轉帳的 `from`、`to`、`settledBy`；餘額與筆數的 key；`users/{uid}` 底下所有個人資料與 `users/{uid}` 文件的名稱頭像；所有 `identities` 對照項改指向新 uid；舊 Auth 使用者刪除。做法是「把舊帳號併入一個全新的空帳號」，重用帳號合併的程式，新帳號沒有資料所以沒有衝突，不需要使用者決定任何事。金額與餘額不變。
+- **補齊 `identities` 對照項**：為既有的 LINE 使用者補上對照項（當時 5 筆）。
+- **舊 LINE uid 轉成內部 uid**：6 位舊使用者（uid 就是 LINE userId）的群組、帳目、個人資料、對照項全部轉成 `u_` 開頭的內部 uid，轉移前有備份，轉完用群組彙總檢查驗證餘額沒變。
 
-**怎麼跑：** GitHub **Actions** → **Migrate legacy uids** → **Run workflow**（只能在 `main` 上執行）：
-
-1. **先跑 dry-run**（預設）：列出每位使用者有幾個群組、最多會檢查幾筆帳目、個人資料集合數、登入方式、目前進度。不寫入任何資料。
-2. 確認無誤後勾選 **apply** 再跑一次；**建議先在 `uid` 欄填一位（例如你自己的）試轉**，確認登入後資料都在，再清空 `uid` 欄跑其餘的。
-3. 轉完再跑一次 [群組彙總檢查](#群組彙總檢查與修復)（dry-run），應該仍然「全部一致」，這是驗證餘額沒有因為換 uid 而變。
-
-**安全機制：** 每位使用者轉移前先備份到 `mergeBackups/uidmig_{舊 uid}`（保留 30 天，與合併備份相同，還原靠腳本）；進度存在 `merges/uidmig_{舊 uid}`（`started` → `done`）；可重複執行，中途失敗重跑會沿用同一個新 uid、從中斷處繼續、備份不重做；該使用者有進行中的其他合併時拒絕。
-
-**使用者要知道的事：**
-
-- 轉完之後，**該使用者原本的登入狀態會失效**。已經開著的 App 可能還有最長約 1 小時的舊登入（資料會是空的），重新開啟 App（LINE 內關掉再開，其他瀏覽器登出再登入）就會拿到新的。請挑沒人在用的時間轉，轉完請他們重開。
-- 轉移後登入畫面、名稱、頭像、群組、帳目都和之前一樣。
-- 同一位使用者在別的裝置或瀏覽器（例如已綁定的 Google）也要重新登入。
-
-**對本機模擬器測試：** `functions/emulator-tests/uidMigration.mjs`（`npm run test:merge`）涵蓋資料搬移、對照項、備份、重試、已轉完不重做、已被處理掉的略過、進行中合併拒絕；`functions/emulator-e2e/identity-flow.mjs`（`npm run test:e2e`）涵蓋轉移前後的登入 uid。
+現在所有帳號 uid 都是 `u_` 開頭（訪客是 `p_`），沒有以 LINE userId 當 uid 的帳號，登入時對照表沒有項目就是全新的使用者。
 
 ## 帳號綁定與合併（維運）
 
@@ -172,7 +143,7 @@ Google 登入用 Google Identity Services 取得 ID token，由 `authExchange` �
 - Google Cloud 已設預算警示。
 - **訪客 Auth 紀錄自動清理**：Firestore 觸發器 `cleanupGuestsOnGroupDelete`（群組被刪；同時補刪留下的子集合與 Storage 收據、封面，所以在 Console 手動刪群組文件也會清乾淨）與 `cleanupGuestsOnMemberRemoved`（成員離開 `members`）會刪除 `p_` 開頭訪客的 Auth 紀錄；LINE 使用者的 Auth 不會被這兩個觸發器動到。觸發器 region 設為 `asia-east1`，**必須與 Firestore 資料庫位置相同**，否則部署會失敗。`cleanupGuestsOnMemberRemoved` 在每次群組文件更新（含每筆記帳）都會執行一次，只在 `members` 有人離開時才會刪除。
 - **UID 對照表 `users/{uid}`**：`lineLogin`、`verifyLiffToken` 每次登入會用 Admin SDK 寫入 `{ name, avatar, updatedAt }`，讓你在 Firestore Console 用 UID 反查是誰（Auth 的 Console 看不到 `displayName`）。rules 沒有開放這份文件（只開 `paymentMethods` 子集合），客戶端讀寫都被拒。`detachMember` 在 `deleteAccount` 成功後會一併刪除。App 快速登入路徑不會呼叫函式，所以要重新走完整登入才會更新。
-- **身分對照表 `identities/{provider:subject}`**：`lineLogin`、`verifyLiffToken` 登入時用 transaction 查表並懶建立；`identities`、`merges`、`mergeBackups` 客戶端讀寫一律被拒（`firestore-tests/identities.rules.mjs`）。補齊現有使用者見下方「身分對照表補齊」。
+- **身分對照表 `identities/{provider:subject}`**：`lineLogin`、`verifyLiffToken` 登入時用 transaction 查表，沒有項目就用新的內部 uid 建立；`identities`、`merges`、`mergeBackups` 客戶端讀寫一律被拒（`firestore-tests/identities.rules.mjs`）。補齊現有使用者見下方「身分對照表補齊」。
 - **Google 登入 `authExchange`**：驗證 Google ID token（簽章與 audience）後，以 `identities/google:{sub}` 查表或建立內部 uid（`u_…`），發 custom token。查表與建立在 transaction 內，同一個 Google 帳號並行首次登入也只會有一個 uid；Google 沒有舊 uid 可沿用，所以查表失敗時直接回 500，不像 LINE 登入有退路。設定見下方「Google 登入設定」。
 - **刪除帳號時清除對照項**：`detachMember` 在 `deleteAccount` 成功後，依序刪 Auth、`users/{uid}`、`identities`（`uid` 等於自己的所有項目）。對照項放在最後，因為先刪對照項再刪 Auth 若中途失敗，Google 使用者下次登入會被配到新的 uid，舊資料就找不回來。
 - Cloud Functions（`lineLogin`、`verifyLiffToken`、`authExchange`、`listIdentities`、`bindIdentity`、`executeMerge`、`unbindIdentity`、`guestLogin`、`claimMember`、`detachMember`、`exportCsv`、`sharePage`）為公開端點，已設 `maxInstances: 5`。

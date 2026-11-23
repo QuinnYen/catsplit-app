@@ -3,10 +3,10 @@
 // 背景（P14）：uid 不再等於 LINE userId。uid 一律以伺服器回傳為準；
 // LINE userId 另存成 lineUserId，只用來確認「目前的 LIFF 使用者沒被換掉」。
 
-// 登入回應裡的 uid。舊版後端（尚未部署）只回 userId，當時兩者相同
-export const uidFromLoginResponse = (data) => data.uid ?? data.userId
+// 登入回應裡的 uid（內部 uid，與 LINE userId 無關）
+export const uidFromLoginResponse = (data) => data.uid
 
-// provider 只有非 LINE 的登入方式才會帶（例如 'google'）；沒有就代表 LINE（或舊版快取）
+// provider 只有「沒有 LINE 名字可退回」的 Google 帳號才會帶（'google'）；沒有就代表有 LINE 名字
 export const buildSessionUser = ({ uid, lineUserId, name, avatar, provider }) => ({
   uid, lineUserId, name, avatar, ...(provider && { provider }),
 })
@@ -19,8 +19,8 @@ export const isLineUserAgent = (userAgent) => /Line/i.test(userAgent || '')
 export const needsNicknameSetup = ({ provider, isGuest, nicknameReady, nickname }) =>
   provider === 'google' && !isGuest && !!nicknameReady && !nickname
 
-// 快取使用者對應的 LINE userId。舊版快取沒有 lineUserId，當時 uid 就是 LINE userId
-export const cachedLineUserId = (cached) => cached?.lineUserId ?? cached?.uid ?? null
+// 快取使用者對應的 LINE userId；沒有（例如不是 LINE 登入的快取）就不能走快速路徑，會重新登入一次
+export const cachedLineUserId = (cached) => cached?.lineUserId ?? null
 
 /**
  * 啟動快速路徑能不能沿用快取使用者（不呼叫 verifyLiffToken、不重新換 token）：
@@ -42,7 +42,6 @@ export const canReuseCachedSession = ({ cached, firebaseUid, lineSub, hasPending
 // 合併完成換 session、外部瀏覽器兌換連結碼登入時用：users 文件客戶端讀不到，名稱與頭像要靠回應帶過來
 export const sessionUserFromProfile = (uid, profile) => buildSessionUser({
   uid,
-  lineUserId: /^U[0-9a-f]{32}$/.test(uid) ? uid : undefined, // 舊 LINE 使用者的 uid 就是 LINE userId
   name: profile?.name ?? '',
   avatar: typeof profile?.avatar === 'string' ? profile.avatar : null,
   provider: profile?.provider === 'google' ? 'google' : undefined,

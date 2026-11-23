@@ -4,7 +4,7 @@
 
 | | LINE 使用者 | 訪客 |
 |---|---|---|
-| uid | LINE userId | `p_` 開頭的成員 id |
+| uid | 內部 uid（`u_` 開頭，與 LINE userId 無關） | `p_` 開頭的成員 id |
 | 取得方式 | `lineLogin`（外部瀏覽器）或 `verifyLiffToken`（LINE 內）發 custom token | `guestLogin` 發 custom token，帶 `guest: true` claim |
 | 能做什麼 | 建立、加入、退出群組 | 只能使用自己那個名字所在的群組 |
 
@@ -23,8 +23,8 @@
 設計見 [P14 設計](superpowers/specs/2026-11-14-p14-identity-design.md)，實作順序見[實作計畫](superpowers/plans/2026-11-23-p14-identity-plan.md)。目的是讓 uid 不再等於 LINE userId，之後才能新增 Google 登入、帳號綁定與合併，並能脫離 LINE。
 
 - 集合 `identities/{provider:subject}` → `{ uid, provider, subject, createdAt }`，例如 `identities/line:U1234…`。只有雲端函式（Admin SDK）讀寫，rules 全拒（`merges`、`mergeBackups` 同）。
-- **目前**：`lineLogin`、`verifyLiffToken` 登入時在 transaction 內查表；沒有對照項時，舊使用者（有 `users` 文件或在某個群組裡）沿用 LINE userId 當 uid，全新的 LINE 使用者用新的內部 uid（`u_` 開頭），都建立對照項（懶建立）。**既有的 6 位舊使用者已於 2026-11-23 用一次性工具轉成 `u_`**（`migrateLegacyUid`，見 `operations.md`），正式環境已經沒有以 LINE userId 當 uid 的帳號；上面「沿用 LINE userId」的判斷只是保留的相容處理（例如還原備份、本機資料）。以下是 PR1 當時的設計：回應新增 `uid`，仍保留 `userId`（LINE userId）。前端（PR2）以回應的 `uid` 為準，本機快取的使用者另存 `lineUserId`，只用來確認目前的 LIFF 使用者沒被換掉（見 `src/utils/authSession.js`）；舊版快取沒有 `lineUserId` 時以 `uid` 代替，現有使用者不需重新登入。查表失敗時退回 LINE userId，讓登入照常；帳號合併上線後必須拿掉這個退路。
-- 內部 uid 格式為 `u_` 加 20 位十六進位（`functions/identity.js` 的 `makeUid`），Google 登入的新帳號使用。
+- **目前**：`lineLogin`、`verifyLiffToken` 登入時在 transaction 內查表；有對照項就用它的 uid，**沒有就是全新的使用者**，用新的內部 uid（`u_` 開頭）並建立對照項。**正式環境已經沒有以 LINE userId 當 uid 的帳號**：既有的 6 位舊使用者已於 2026-11-23 轉成 `u_`（一次性遷移，程式已移除，見 `operations.md`「已完成的一次性遷移」）。回應新增 `uid`，仍保留 `userId`（LINE userId）。前端以回應的 `uid` 為準，本機快取的使用者另存 `lineUserId`，只用來確認目前的 LIFF 使用者沒被換掉（見 `src/utils/authSession.js`）；快取沒有 `lineUserId` 時不走快速路徑，重新登入一次就會補上。
+- 內部 uid 格式為 `u_` 加 20 位十六進位（`functions/identity.js` 的 `makeUid`），所有新帳號（Google、LINE）使用。
 - **Google 登入（PR3）**：登入畫面（外部瀏覽器）顯示 Google 按鈕，前端用 Google Identity Services 取得 ID token，`authExchange` 驗證後以 `identities/google:{sub}` 查表；沒有就建立新的內部 uid 與對照項（transaction，並行首次登入只會有一個 uid）並建立 `users/{uid}`（`provider: 'google'`）。Google 帳號的 `user.provider` 為 `'google'`，LINE 使用者沒有這個欄位。
 - **首次設定暱稱**：Google 帳號沒有 LINE 名字可當預設，所以雲端還沒有暱稱時，登入後先進「設定顯示名稱」頁（預設帶 Google 名字，最多 20 字），完成才進首頁；設定頁的暱稱也不能清空。LINE 使用者不經過這一頁。
 - **名稱、頭像、provider**：每個登入方式各存一份（`users/{uid}.names`、`avatars` 的 `line`、`google`），登入時只更新自己那一份；顯示用的 `name`、`avatar` 由 `functions/profile.js` 決定：**LINE 優先，沒有才用 Google**，頭像都沒有就是 `null`（畫面顯示名字首字）。`provider` 只在「沒有 LINE 名字可退回」時才是 `'google'`（用來要求首次設定暱稱），有 LINE 名字就是 `null`，所以已綁定 LINE 的帳號用 Google 登入，不會被當成 Google 使用者、也不用重設暱稱。不讓「最後登入的方式」決定，否則同一個人換裝置登入，名稱與頭像（包含群組裡其他成員看到的）會一直跳。舊資料沒有 `names` / `avatars`，`provider` 不是 `google` 的既有 `name`、`avatar` 視為 LINE 的。Google 頭像只存網址，不另存圖片，網址失效時畫面退回名字首字。合併時兩邊各登入方式的資料取聯集寫回保留帳號（同一種以保留帳號為準）。`authExchange` 回應的 `displayName` 仍是 Google 上的名字（首次設定暱稱的預設），`name`、`avatar`、`provider` 才是帳號實際的。
@@ -36,7 +36,6 @@
   - 個人資料以 `listCollections` 遍歷 `users/{uid}` 底下所有子集合（不寫死集合名稱）。收款方式、付款方式、儲蓄目標都是自動 id，直接複製；只有固定 id 的文件（暱稱 `settings/profile`、`settings/oaPrompt`，以及 P12 的 `group_{groupId}`）會衝突：`settings/oaPrompt` 自動保留較新的，其他由使用者決定（預設保留 keepUid 的；不用「較新」，因為剛建立的新帳號資料一定較新，會預設刪掉用了很久的帳號）。
   - 先全部複製、再刪來源，可以重試：已複製的文件在重試時視為「保留」，資料相同。`users/{uid}` 本身不搬，合併最後與 Auth 一起刪。
 - **刪除我的資料**會一併刪掉該 uid 的 `identities`（見 `docs/operations.md`）。
-- **補齊現有使用者**：`functions/scripts/backfill-identities.mjs` 掃描 `users/` 與群組 `members`，為缺對照項的 LINE 使用者補上。預設只列出（dry-run），加 `--apply` 才寫入，可重複執行。帳號綁定與合併上線前必須先跑過一次。
 
 ### 綁定與合併的端點（PR5，前端入口在 PR6）
 
@@ -53,11 +52,11 @@
 
 - **`bindIdentity` 的結果**：`bound`（新增一筆對照項）、`already_bound`，或 `merge_required` 加預覽（`mergeId`、`initiatorIsDropped`、受影響的群組、帳目筆數、自己轉給自己的轉帳數、個人資料衝突與預設建議、`expiresAtMs`）。驗證與預覽在同一次呼叫完成（LINE 授權碼只能用一次）。
 - **憑證驗證**：Google ID token 簽發後 10 分鐘內才接受；LINE 授權碼的 `redirectUri` 必須是我們網域的 `/auth/callback`。LINE 內的 `liffIdToken` 沿用 LINE 驗證端點的有效期。
-- **判斷要不要合併**（`functions/bind.js` 的 `decideBind`）：對照表已有且是自己 → `already_bound`；已有但是別的帳號 → 合併；對照表沒有、但這個 LINE userId 已是現有帳號的 uid（有 `users` 文件、個人資料或是某群組成員，還沒懶建立對照項的舊使用者）→ 是自己就補建，是別人就合併並在完成時補建對照項；都沒有 → 新增一筆。
+- **判斷要不要合併**（`functions/bind.js` 的 `decideBind`）：對照表已有且是自己 → `already_bound`；已有但是別的帳號 → 合併；對照表沒有 → 新增一筆對照項指向呼叫者。
 - **保留哪個**：群組較多的帳號保留（一樣多保留發起人）。若發起人是被併入而刪除的那個帳號，`executeMerge` 回傳保留帳號的 `firebaseToken` 與 `sessionReplaced: true`，前端要用它重新登入。
 - **分階段與重試**：`previewed → started → groups_done → profile_done → done`，進度存 `merges/{id}`（同一對帳號固定同一份）。失敗時用同一個 `mergeId` 再呼叫即可從斷點繼續；同時執行兩次會被租約擋下（409）。
 - **備份**：動資料前先備份到 `mergeBackups/{mergeId}`（meta 加子集合 `groupDocs`、`personal`、`keepOverwritten`），保留 30 天，由 GitHub Actions 每天清除。**目前沒有一鍵還原**，要還原就依備份內容用腳本寫回（`groupDocs` 的每筆有 `groupId`、`col`、`docId`、`data`；`personal` 的每筆有 `path` 與 `data`；meta 的 `dropIdentities` 與 `dropUserDoc` 是被併入帳號的對照項與 `users` 文件）。
-- **登入**：`verifyLiffToken`、`lineLogin` 查對照表失敗時直接回 500，不再退回 LINE userId（合併後對照項可能指向別的 uid）。
+- **登入**：`verifyLiffToken`、`lineLogin` 查對照表失敗時直接回 500，不會另外給一個 uid（合併後對照項可能指向別的 uid，亂給會登入到錯的帳號）。
 - **刪除我的資料**（`detachMember` 的 `deleteAccount`）會一併刪掉該 uid 的對照項、牽涉到它的 `merges` 與 `mergeBackups`（備份裡有被併入帳號的資料）。
 
 ### 前端（PR6）

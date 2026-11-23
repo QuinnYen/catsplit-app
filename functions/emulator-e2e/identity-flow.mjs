@@ -46,11 +46,6 @@ const lineLogin = async (lineId) => {
 }
 
 const T = 'U' + '9'.repeat(32)
-// 舊 LINE 使用者（uid 就是 LINE userId）：先有 users 文件再登入；沒有的話會被當成全新的使用者，拿到 u_ 開頭的內部 uid
-const legacyLineLogin = async (lineId) => {
-  await db.doc(`users/${lineId}`).set({ name: 'old', avatar: null })
-  return lineLogin(lineId)
-}
 const seedGroup = async (id, { members, createdBy, expenses = [], settlements = [] }) => {
   const ref = db.doc(`groups/${id}`)
   const toDocs = (list) => list.map((d) => ({ data: () => d }))
@@ -67,15 +62,15 @@ const seedGroup = async (id, { members, createdBy, expenses = [], settlements = 
 // 在整個檔案共用的狀態
 const S = {}
 
-test('Google 先登入、LINE 舊使用者有資料：兩邊各自登入', async () => {
-  S.L = 'U' + 'e'.repeat(32)
-  // 舊使用者：有 users 文件（沒有的話會被當成全新的 LINE 使用者，拿到內部 uid）
-  await db.doc(`users/${S.L}`).set({ name: 'old', avatar: null })
+test('Google 先登入、LINE 帳號有資料：兩邊各自登入，uid 都是內部 uid', async () => {
+  S.L = 'U' + 'e'.repeat(32) // LINE userId（不是 uid）
   S.G = await googleLogin('ge2e')
   S.Lg = await lineLogin(S.L)
+  S.Lu = S.Lg.uid // LINE 帳號的內部 uid
   assert.match(S.G.uid, /^u_[0-9a-f]{20}$/)
-  assert.equal(S.Lg.uid, S.L)
-  const { L } = S
+  assert.match(S.Lu, /^u_[0-9a-f]{20}$/)
+  assert.equal(S.Lg.userId, S.L) // 回應仍帶 LINE userId
+  const L = S.Lu
   const G = S.G.uid
   await seedGroup('e1', { members: [L, T], createdBy: L })
   await seedGroup('e2', { members: [L, T], createdBy: T })
@@ -97,7 +92,7 @@ test('listIdentities：只列自己的；未登入與訪客被擋', async () => 
   assert.deepEqual(r.body.identities.map((i) => i.provider), ['google'])
   assert.equal((await post('listIdentities', {})).status, 401)
   // 訪客
-  await seedGroup('eGuest', { members: [S.L], createdBy: S.L })
+  await seedGroup('eGuest', { members: [S.Lu], createdBy: S.Lu })
   const g = await post('guestLogin', { groupId: 'eGuest', name: 'Amy' })
   const guestToken = await signIn(g.body.firebaseToken)
   for (const name of ['listIdentities', 'bindIdentity', 'executeMerge', 'unbindIdentity']) {
@@ -142,7 +137,7 @@ test('bindIdentity：綁定一個已是現有帳號的 LINE → 要求合併，�
 })
 
 test('executeMerge：不是發起人 403、找不到 404、不合法的選擇 400', async () => {
-  const other = await legacyLineLogin('U' + 'd'.repeat(32))
+  const other = await lineLogin('U' + 'd'.repeat(32))
   assert.equal((await post('executeMerge', { mergeId: S.mergeId }, other.idToken)).status, 403)
   assert.equal((await post('executeMerge', { mergeId: 'nope' }, S.G.idToken)).status, 404)
   const badChoice = await post('executeMerge', { mergeId: S.mergeId, resolutions: { 'settings/nope': 'keep' } }, S.G.idToken)
@@ -154,20 +149,20 @@ test('executeMerge：不是發起人 403、找不到 404、不合法的選擇 40
 test('executeMerge：合併成功，回傳保留帳號的 token；被刪除帳號的 session 失效', async () => {
   const r = await post('executeMerge', { mergeId: S.mergeId, resolutions: { 'settings/profile': 'keep' } }, S.G.idToken)
   assert.equal(r.status, 200, JSON.stringify(r.body))
-  assert.deepEqual([r.body.ok, r.body.keepUid, r.body.sessionReplaced, r.body.alreadyDone], [true, S.L, true, false])
+  assert.deepEqual([r.body.ok, r.body.keepUid, r.body.sessionReplaced, r.body.alreadyDone], [true, S.Lu, true, false])
   // 保留帳號（LINE 舊使用者）的名稱與頭像，前端用來重建登入狀態
   assert.equal(r.body.profile.name, `Mock ${S.L.slice(0, 6)}`)
   assert.equal(r.body.profile.avatar, 'https://example.com/avatar.png')
   assert.equal(r.body.profile.provider, null)
   const newToken = await signIn(r.body.firebaseToken)
-  assert.equal(uidOfToken(newToken), S.L)
+  assert.equal(uidOfToken(newToken), S.Lu)
   S.Lnew = newToken
 
   // 舊的 Google 帳號（被併入）已從 Auth 刪除
   const lookup = await fetch(`${AUTH}/accounts:lookup?key=fake`, { method: 'POST', headers: J, body: JSON.stringify({ idToken: S.G.idToken }) })
   assert.notEqual(lookup.status, 200)
 
-  const { L } = S
+  const L = S.Lu
   const G = S.G.uid
   const both = (await db.doc('groups/eBoth').get()).data()
   assert.deepEqual([...both.members].sort(), [L, T].sort())
@@ -177,7 +172,7 @@ test('executeMerge：合併成功，回傳保留帳號的 token；被刪除帳�
   assert.equal((await db.doc(`users/${L}/settings/profile`).get()).data().nickname, 'LNick')
   assert.equal((await db.doc(`users/${G}`).get()).exists, false)
   assert.equal((await db.doc('identities/google:ge2e').get()).data().uid, L)
-  assert.equal((await db.doc(`identities/line:${L}`).get()).data().uid, L)
+  assert.equal((await db.doc(`identities/line:${S.L}`).get()).data().uid, L)
   assert.equal((await db.doc(`mergeBackups/${S.mergeId}`).get()).data().counts.groupDocs > 0, true)
 
   // 重複呼叫（例如網路重送）直接回結果
@@ -189,9 +184,9 @@ test('executeMerge：合併成功，回傳保留帳號的 token；被刪除帳�
 
 test('合併後兩種方式登入都進同一個帳號，不是新帳號', async () => {
   const g = await post('authExchange', { provider: 'google', idToken: 'ge2e' })
-  assert.deepEqual([g.body.uid, g.body.isNew], [S.L, false])
+  assert.deepEqual([g.body.uid, g.body.isNew], [S.Lu, false])
   const l = await post('verifyLiffToken', { idToken: S.L })
-  assert.equal(l.body.uid, S.L)
+  assert.equal(l.body.uid, S.Lu)
 })
 
 test('listIdentities 與 unbindIdentity：解除 Google 後，這個 Google 再登入會是新的帳號', async () => {
@@ -199,10 +194,10 @@ test('listIdentities 與 unbindIdentity：解除 Google 後，這個 Google 再�
   assert.deepEqual(list.body.identities.map((i) => i.provider).sort(), ['google', 'line'])
   const google = list.body.identities.find((i) => i.provider === 'google')
   const un = await post('unbindIdentity', { identityId: google.id }, S.Lnew)
-  assert.deepEqual([un.status, un.body], [200, { ok: true, mode: 'delete' }])
+  assert.deepEqual([un.status, un.body], [200, { ok: true }])
   const fresh = await post('authExchange', { provider: 'google', idToken: 'ge2e' })
   assert.equal(fresh.body.isNew, true)
-  assert.notEqual(fresh.body.uid, S.L)
+  assert.notEqual(fresh.body.uid, S.Lu)
   S.fresh = fresh.body.uid
 
   // 剩下最後一種（LINE）不能解除
@@ -219,16 +214,16 @@ test('再綁定回來：那個 Google 現在是另一個帳號，要合併；發
   assert.equal(r.body.status, 'merge_required')
   assert.equal(r.body.initiatorIsDropped, false)
   const done = await post('executeMerge', { mergeId: r.body.mergeId }, S.Lnew)
-  assert.deepEqual([done.status, done.body.keepUid, done.body.sessionReplaced], [200, S.L, false])
-  assert.equal((await db.doc('identities/google:ge2e').get()).data().uid, S.L)
+  assert.deepEqual([done.status, done.body.keepUid, done.body.sessionReplaced], [200, S.Lu, false])
+  assert.equal((await db.doc('identities/google:ge2e').get()).data().uid, S.Lu)
   assert.equal((await db.doc(`users/${S.fresh}`).get()).exists, false)
 })
 
 test('同一個合併同時執行兩次：只有一次真的執行，另一次被擋（租約）', async () => {
   const G2 = await googleLogin('ge2e-race')
   const L2 = 'U' + 'c'.repeat(32)
-  await legacyLineLogin(L2)
-  await seedGroup('r1', { members: [L2, T], createdBy: L2 })
+  const l2 = await lineLogin(L2)
+  await seedGroup('r1', { members: [l2.uid, T], createdBy: l2.uid })
   await seedGroup('r2', { members: [G2.uid, T], createdBy: G2.uid })
   const p = await post('bindIdentity', { provider: 'line', liffIdToken: L2 }, G2.idToken)
   assert.equal(p.body.status, 'merge_required')
@@ -250,7 +245,7 @@ test('同一個合併同時執行兩次：只有一次真的執行，另一次�
 
 test('LINE 內綁定 Google：產生一次性連結碼 → 外部瀏覽器兌換成同一個帳號的登入 → 用外部瀏覽器的 Google 綁定', async () => {
   const L3 = 'U' + '3'.repeat(32)
-  const line = await legacyLineLogin(L3)
+  const line = await lineLogin(L3)
   assert.equal((await post('createLinkCode', {})).status, 401) // 未登入不能產生
 
   const first = await post('createLinkCode', {}, line.idToken)
@@ -262,10 +257,10 @@ test('LINE 內綁定 Google：產生一次性連結碼 → 外部瀏覽器兌換
   // 兌換不需要登入（外部瀏覽器還沒登入）
   const redeemed = await post('redeemLinkCode', { code: made.body.code })
   assert.equal(redeemed.status, 200, JSON.stringify(redeemed.body))
-  assert.equal(redeemed.body.uid, L3)
+  assert.equal(redeemed.body.uid, line.uid)
   assert.equal(redeemed.body.profile.name, `Mock ${L3.slice(0, 6)}`)
   const extToken = await signIn(redeemed.body.firebaseToken)
-  assert.equal(uidOfToken(extToken), L3)
+  assert.equal(uidOfToken(extToken), line.uid)
 
   // 只能用一次；格式不對也是無效
   const again = await post('redeemLinkCode', { code: made.body.code })
@@ -276,17 +271,17 @@ test('LINE 內綁定 Google：產生一次性連結碼 → 外部瀏覽器兌換
   // 用兌換得到的登入狀態，在外部瀏覽器以 Google 綁定，綁到同一個帳號
   const bound = await post('bindIdentity', { provider: 'google', idToken: 'g-link' }, extToken)
   assert.deepEqual([bound.status, bound.body], [200, { status: 'bound' }])
-  assert.equal((await db.doc('identities/google:g-link').get()).data().uid, L3)
-  assert.equal((await googleLogin('g-link')).uid, L3) // 之後用 Google 登入進的也是這個 LINE 帳號
+  assert.equal((await db.doc('identities/google:g-link').get()).data().uid, line.uid)
+  assert.equal((await googleLogin('g-link')).uid, line.uid) // 之後用 Google 登入進的也是這個 LINE 帳號
 })
 
 test('刪除帳號：對照項、合併紀錄與備份一併清除', async () => {
   const del = await post('detachMember', { groupIds: [], deleteAccount: true }, S.Lnew)
   assert.equal(del.status, 200, JSON.stringify(del.body))
   assert.deepEqual([del.body.accountDeleted, del.body.failed], [true, []])
-  assert.equal((await db.collection('identities').where('uid', '==', S.L).get()).size, 0)
-  assert.equal((await db.collection('merges').where('uids', 'array-contains', S.L).get()).size, 0)
-  assert.equal((await db.collection('mergeBackups').where('uids', 'array-contains', S.L).get()).size, 0)
+  assert.equal((await db.collection('identities').where('uid', '==', S.Lu).get()).size, 0)
+  assert.equal((await db.collection('merges').where('uids', 'array-contains', S.Lu).get()).size, 0)
+  assert.equal((await db.collection('mergeBackups').where('uids', 'array-contains', S.Lu).get()).size, 0)
 })
 
 // 名稱、頭像、provider：每個登入方式各存一份，顯示用的 LINE 優先，不會因為最後登入的是誰而改變
@@ -295,17 +290,17 @@ test('Google 單獨登入：用 Google 的名稱與頭像，provider 是 google�
   assert.deepEqual([g.name, g.avatar, g.provider], ['Google gavatar1', 'https://example.com/google.png', 'google'])
 })
 
-test('LINE 舊使用者綁定 Google 後用 Google 登入：仍是 LINE 的名稱與頭像，provider 清空，users 文件各存一份', async () => {
+test('LINE 帳號綁定 Google 後用 Google 登入：仍是 LINE 的名稱與頭像，provider 清空，users 文件各存一份', async () => {
   const L = 'U' + '7'.repeat(32)
-  const line = await legacyLineLogin(L)
+  const line = await lineLogin(L)
   assert.equal(line.pictureUrl, 'https://example.com/avatar.png')
   const bind = await post('bindIdentity', { provider: 'google', idToken: 'gavatar2' }, line.idToken)
   assert.deepEqual([bind.status, bind.body.status], [200, 'bound'])
   const viaGoogle = await googleLogin('gavatar2')
-  assert.equal(viaGoogle.uid, L)
+  assert.equal(viaGoogle.uid, line.uid)
   assert.deepEqual([viaGoogle.name, viaGoogle.avatar, viaGoogle.provider], [`Mock ${L.slice(0, 6)}`, 'https://example.com/avatar.png', null])
   assert.equal(viaGoogle.displayName, 'Google gavatar2') // Google 上的名字另外保留
-  const doc = (await db.doc(`users/${L}`).get()).data()
+  const doc = (await db.doc(`users/${line.uid}`).get()).data()
   assert.deepEqual(doc.names, { line: `Mock ${L.slice(0, 6)}`, google: 'Google gavatar2' })
   assert.deepEqual(doc.avatars, { line: 'https://example.com/avatar.png', google: 'https://example.com/google.png' })
   assert.deepEqual([doc.name, doc.avatar, doc.provider], [`Mock ${L.slice(0, 6)}`, 'https://example.com/avatar.png', null])
@@ -313,12 +308,12 @@ test('LINE 舊使用者綁定 Google 後用 Google 登入：仍是 LINE 的名�
 
 test('合併後保留的是 Google 帳號：被併入的 LINE 帳號的名稱與頭像併進來，provider 清空', async () => {
   const L = 'U' + '6'.repeat(32)
-  await legacyLineLogin(L)
+  const lineLogged = await lineLogin(L)
   const g = await googleLogin('gavatar3')
   assert.equal(g.provider, 'google')
   await seedGroup('av1', { members: [g.uid, T], createdBy: g.uid })
   await seedGroup('av2', { members: [g.uid, T], createdBy: g.uid })
-  await seedGroup('av3', { members: [L, T], createdBy: T })
+  await seedGroup('av3', { members: [lineLogged.uid, T], createdBy: T })
   const bind = await post('bindIdentity', { provider: 'line', liffIdToken: L }, g.idToken)
   assert.equal(bind.body.status, 'merge_required', JSON.stringify(bind.body))
   assert.equal(bind.body.keepUid ?? g.uid, g.uid)
@@ -359,27 +354,9 @@ test('deleteGroup：只有建立者能刪；帳目超過 500 筆也整個刪掉�
 })
 
 // 新 LINE 使用者用內部 uid；舊使用者沿用 LINE userId；舊使用者轉移之後再登入拿到新 uid
-test('LINE 登入的 uid：全新的使用者是 u_，舊使用者是 LINE userId，轉移之後再登入是轉移後的 uid', async () => {
+test('LINE 登入的 uid：全新的使用者拿到內部 uid（u_），回應仍帶 LINE userId，再登入還是同一個', async () => {
   const fresh = await lineLogin('U' + '5'.repeat(32))
   assert.match(fresh.uid, /^u_[0-9a-f]{20}$/)
   assert.equal(fresh.userId, 'U' + '5'.repeat(32)) // 回應仍帶 LINE userId
   assert.equal((await lineLogin('U' + '5'.repeat(32))).uid, fresh.uid) // 同一個人再登入還是同一個
-
-  const OLD = 'U' + '4'.repeat(32)
-  await db.doc(`users/${OLD}`).set({ name: 'old', avatar: null })
-  const legacy = await lineLogin(OLD)
-  assert.equal(legacy.uid, OLD)
-  await seedGroup('mig1', { members: [OLD, T], createdBy: OLD, expenses: [{ amount: 10, payments: { [OLD]: 10 }, splits: { [OLD]: 5, [T]: 5 }, createdBy: OLD }] })
-
-  const { migrateLegacyUid } = await import('../mergeFlow.js')
-  const { makeUid } = await import('../identity.js')
-  const r = await migrateLegacyUid(db, { makeUid, deleteAuthUser: async () => {} }, { oldUid: OLD })
-  assert.equal(r.status, 'migrated')
-  const again = await lineLogin(OLD)
-  assert.equal(again.uid, r.newUid)
-  assert.equal(again.userId, OLD)
-  const group = (await db.doc('groups/mig1').get()).data()
-  assert.deepEqual(group.members, [r.newUid, T])
-  // 轉移之後用新 uid 登入的人，在 users 文件裡看得到原本的名稱
-  assert.equal((await db.doc(`users/${r.newUid}`).get()).data().names.line.startsWith('Mock'), true)
 })

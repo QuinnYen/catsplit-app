@@ -19,7 +19,7 @@ functions/bind.js            # 綁定與合併的純函式（請求解析、綁�
 functions/mergeFlow.js       # 綁定、預覽、備份、分階段執行合併、解除綁定、清除過期紀錄（Firestore 操作，db 由呼叫端傳入）
 functions/linkCode.js、linkFlow.js  # LINE 內帶著登入狀態到外部瀏覽器的一次性連結碼（純函式與 Firestore 流程），測試在 linkCode.test.js 與 emulator-tests/linkFlow.mjs
 functions/emulator-e2e/      # 從 HTTP 端點走完整身分流程的端到端測試（npm run test:e2e，需要含 functions 的模擬器）
-functions/scripts/           # 補齊 identities 的腳本、本機模擬器用的 LINE、Google 驗證攔截檔（見 operations.md）
+functions/scripts/           # 維運腳本（群組彙總檢查、合併備份清除）與本機模擬器用的 LINE、Google 驗證攔截檔（見 operations.md）
 firestore.rules              # Firestore 存取規則
 firestore-tests/             # rules 測試（npm run test:rules，需模擬器）
 storage.rules                # Storage 存取規則

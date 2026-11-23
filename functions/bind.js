@@ -50,32 +50,24 @@ export const isFreshProof = (iatSeconds, nowMs, maxAgeMs = PROOF_MAX_AGE_MS) => 
 /**
  * 呼叫者（callerUid）要綁定身分 provider:subject，依對照表現況決定怎麼做：
  * - 對照表已有：同一個 uid → already_bound；別的 uid → merge（兩個帳號都有資料，要合併）
- * - 對照表沒有、但是 LINE 而且這個 LINE userId 已是現有帳號的 uid（還沒懶建立對照項的舊使用者）：
- *   就是呼叫者自己 → create_self（補建對照項）；是別人 → merge，並要求合併完成時補建對照項
- * - 其他：create（新增一筆對照項指向呼叫者）
+ * - 對照表沒有：create（新增一筆對照項指向呼叫者）
  */
-export const decideBind = ({ callerUid, provider, subject, identity, legacyLineExists }) => {
+export const decideBind = ({ callerUid, identity }) => {
   if (identity && typeof identity.uid === 'string' && identity.uid) {
-    return identity.uid === callerUid ? { action: 'already_bound' } : { action: 'merge', otherUid: identity.uid, createIdentity: false }
-  }
-  if (provider === 'line' && legacyLineExists) {
-    return subject === callerUid ? { action: 'create_self' } : { action: 'merge', otherUid: subject, createIdentity: true }
+    return identity.uid === callerUid ? { action: 'already_bound' } : { action: 'merge', otherUid: identity.uid }
   }
   return { action: 'create' }
 }
 
 /**
  * 解除綁定的規劃。identities 是呼叫者目前所有的對照項 [{ id, uid, provider, subject }]。
- * - 至少保留一種登入方式
- * - 舊 LINE 使用者的 uid 就是 LINE userId：直接刪對照項，下次 LINE 登入會被懶建立回來（等於沒解除），
- *   所以改成把它指向一個新的空帳號（repoint），LINE 之後登入的是那個新帳號
+ * - 至少保留一種登入方式；解除就是刪除那個對照項，之後用這個登入方式登入的是新帳號
  */
 export const planUnbind = ({ callerUid, identities, targetId }) => {
   const target = identities.find((i) => i.id === targetId)
   if (!target || target.uid !== callerUid) return { ok: false, error: 'identity_not_found' }
   if (identities.length <= 1) return { ok: false, error: 'last_identity' }
-  const legacySelf = target.provider === 'line' && target.subject === callerUid
-  return { ok: true, mode: legacySelf ? 'repoint' : 'delete' }
+  return { ok: true }
 }
 
 // ---------- 合併紀錄與狀態 ----------
@@ -95,15 +87,13 @@ export const mergeDocId = (uidA, uidB) => {
 
 /**
  * 預覽通過後存進 merges/{id} 的紀錄。
- * bind 是這次綁定要補建的對照項（舊 LINE 使用者還沒有對照項時才有），合併完成時一併建立。
  */
-export const buildMergeRecord = ({ callerUid, otherUid, preview, bind, nowMs }) => ({
+export const buildMergeRecord = ({ callerUid, otherUid, preview, nowMs }) => ({
   uids: [callerUid, otherUid],
   initiatorUid: callerUid,
   keepUid: preview.keepUid,
   dropUid: preview.dropUid,
   state: 'previewed',
-  bind: bind ?? null,
   preview: { groups: preview.groups, impact: preview.impact, personal: preview.personal },
   resolutions: null,
   backupDone: false,

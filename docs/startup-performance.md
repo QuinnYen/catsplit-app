@@ -2,7 +2,7 @@
 
 從 LINE 開啟時，畫面要等登入完成才會出現，所以啟動流程是效能重點（實機約 2.6 秒 → 重複開啟約 0.5 秒、完整流程約 1.2 秒）：
 
-- **快速路徑**（`AppContext.jsx`）：`liff.init` 之後，若 Firebase 已恢復登入且它的 uid 與快取使用者 uid 相同、快取記的 LINE userId（`lineUserId`，舊版快取沒有這個欄位時以 uid 代替）與 `liff.getDecodedIDToken().sub` 相同，且沒有待認領的訪客名字，就直接沿用快取使用者，**不呼叫 `verifyLiffToken`、不重新 `signInWithCustomToken`**，名字與頭像改在背景更新。任何條件不符就走完整流程。
+- **快速路徑**（`AppContext.jsx`）：`liff.init` 之後，若 Firebase 已恢復登入且它的 uid 與快取使用者 uid 相同、快取記的 LINE userId（`lineUserId`；快取沒有這個欄位就不走快速路徑，重新登入一次會補上）與 `liff.getDecodedIDToken().sub` 相同，且沒有待認領的訪客名字，就直接沿用快取使用者，**不呼叫 `verifyLiffToken`、不重新 `signInWithCustomToken`**，名字與頭像改在背景更新。任何條件不符就走完整流程。
 - **不要拿掉 `auth.authStateReady()`**：Firestore 查詢必須等 Firebase Auth 恢復，否則 `request.auth` 是 null，`onSnapshot` 會被 rules 拒絕且不會重試。
 - **有待認領的訪客名字時一定要走完整流程**，認領是在 `signInWithExchangeToken` 裡做的。判斷條件抽成純函式 `canReuseCachedSession`（`src/utils/authSession.js`，有單元測試）。
 - 完整流程中 `getProfile` 與 `verifyLiffToken` 是平行發出的，因為 `liff.getIDToken()` 是同步的。

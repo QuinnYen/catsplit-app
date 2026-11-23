@@ -8,9 +8,9 @@ import {
 const LINE = 'U' + 'a'.repeat(32)
 const INTERNAL = 'u_00000000000000000001'
 
-test('uidFromLoginResponse：優先用伺服器回傳的 uid，舊版後端只回 userId 時退回 userId', () => {
+test('uidFromLoginResponse：用伺服器回傳的 uid，不拿 LINE userId 當 uid', () => {
   assert.equal(uidFromLoginResponse({ uid: INTERNAL, userId: LINE }), INTERNAL)
-  assert.equal(uidFromLoginResponse({ userId: LINE }), LINE)
+  assert.equal(uidFromLoginResponse({ userId: LINE }), undefined)
 })
 
 test('buildSessionUser：uid 與 lineUserId 分開存', () => {
@@ -20,24 +20,20 @@ test('buildSessionUser：uid 與 lineUserId 分開存', () => {
   )
 })
 
-test('cachedLineUserId：舊版快取沒有 lineUserId，uid 就是 LINE userId', () => {
-  assert.equal(cachedLineUserId({ uid: LINE }), LINE)
+test('cachedLineUserId：只認快取裡記的 lineUserId，沒有就是 null（不再拿 uid 代替）', () => {
   assert.equal(cachedLineUserId({ uid: INTERNAL, lineUserId: LINE }), LINE)
+  assert.equal(cachedLineUserId({ uid: INTERNAL }), null)
   assert.equal(cachedLineUserId(null), null)
 })
 
-const base = () => ({ cached: { uid: LINE, lineUserId: LINE }, firebaseUid: LINE, lineSub: LINE, hasPendingGuestNames: false })
+const base = () => ({ cached: { uid: INTERNAL, lineUserId: LINE }, firebaseUid: INTERNAL, lineSub: LINE, hasPendingGuestNames: false })
 
-test('快速路徑：現有使用者（uid 即 LINE userId，快取是舊格式）仍可沿用', () => {
-  const args = base()
-  args.cached = { uid: LINE }
-  assert.equal(canReuseCachedSession(args), true)
+test('快速路徑：uid 與 LINE userId 分別比對，都相符才沿用', () => {
+  assert.equal(canReuseCachedSession(base()), true)
 })
 
-test('快速路徑：uid 與 LINE userId 不同（帳號合併後）時，以 uid 與 lineUserId 分別比對', () => {
-  assert.equal(canReuseCachedSession({
-    cached: { uid: INTERNAL, lineUserId: LINE }, firebaseUid: INTERNAL, lineSub: LINE, hasPendingGuestNames: false,
-  }), true)
+test('快速路徑：快取沒有記 lineUserId 就不沿用（重新登入一次後會補上）', () => {
+  assert.equal(canReuseCachedSession({ ...base(), cached: { uid: INTERNAL } }), false)
 })
 
 test('快速路徑：LIFF 使用者被換掉就不沿用', () => {
@@ -46,7 +42,7 @@ test('快速路徑：LIFF 使用者被換掉就不沿用', () => {
 
 test('快速路徑：Firebase 沒恢復登入或 uid 不同就不沿用', () => {
   assert.equal(canReuseCachedSession({ ...base(), firebaseUid: undefined }), false)
-  assert.equal(canReuseCachedSession({ ...base(), firebaseUid: INTERNAL }), false)
+  assert.equal(canReuseCachedSession({ ...base(), firebaseUid: 'u_00000000000000000002' }), false)
 })
 
 test('快速路徑：有待認領的訪客名字、沒有快取、快取是訪客、沒有 LIFF 使用者都不沿用', () => {
@@ -84,10 +80,10 @@ test('needsNicknameSetup：只有讀完雲端暱稱、仍沒有暱稱的 Google 
   assert.equal(needsNicknameSetup({ ...base, isGuest: true }), false)
 })
 
-test('sessionUserFromProfile：舊 LINE 使用者帶 lineUserId，Google 帳號帶 provider，缺欄位有預設', () => {
+test('sessionUserFromProfile：Google 帳號帶 provider，其他沒有 provider，缺欄位有預設', () => {
   assert.deepEqual(
-    sessionUserFromProfile(LINE, { name: 'Amy', avatar: 'https://a/b.png', provider: null }),
-    { uid: LINE, lineUserId: LINE, name: 'Amy', avatar: 'https://a/b.png' },
+    sessionUserFromProfile(INTERNAL, { name: 'Amy', avatar: 'https://a/b.png', provider: null }),
+    { uid: INTERNAL, lineUserId: undefined, name: 'Amy', avatar: 'https://a/b.png' },
   )
   const g = sessionUserFromProfile(INTERNAL, { name: 'Bob', avatar: null, provider: 'google' })
   assert.deepEqual([g.uid, g.provider, g.lineUserId, g.avatar], [INTERNAL, 'google', undefined, null])

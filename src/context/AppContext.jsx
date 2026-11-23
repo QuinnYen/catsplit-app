@@ -225,7 +225,7 @@ export const AppProvider = ({ children }) => {
               cached, firebaseUid: auth.currentUser?.uid, lineSub, hasPendingGuestNames: readGuestNames().length > 0,
             })) {
               setUser(cached)
-              // 名字或頭像可能改過，背景更新即可；舊版快取沒有 lineUserId，順便補上
+              // 名字或頭像可能改過，背景更新即可
               liff.getProfile().then(p => {
                 if (cached.lineUserId && p.displayName === cached.name && p.pictureUrl === cached.avatar) return
                 const u = buildSessionUser({ uid: cached.uid, lineUserId: p.userId, name: p.displayName, avatar: p.pictureUrl })
@@ -246,17 +246,15 @@ export const AppProvider = ({ children }) => {
                 })
               : null
             const [profile, res] = await Promise.all([liff.getProfile(), verifying])
-            // 登入成功時 uid 以伺服器回傳為準；失敗時（沒登入 Firebase）退回 LINE userId，與過去行為相同
-            let uid = profile.userId
-            if (res) {
-              if (res.ok) {
-                const data = await res.json()
-                uid = uidFromLoginResponse(data)
-                await signInWithExchangeToken(data.firebaseToken, profile.pictureUrl)
-              } else {
-                console.error('verifyLiffToken failed', await res.text())
-              }
+            // uid 以伺服器回傳為準。沒登入 Firebase 就沒有可用的 uid（不能拿 LINE userId 當 uid），
+            // 丟錯讓外層走備援流程（登入畫面），不會進到一個讀不到任何資料的空 App
+            if (!res?.ok) {
+              console.error('verifyLiffToken failed', res ? await res.text() : 'no request')
+              throw new Error('verify_liff_token_failed')
             }
+            const data = await res.json()
+            const uid = uidFromLoginResponse(data)
+            await signInWithExchangeToken(data.firebaseToken, profile.pictureUrl)
             const u = buildSessionUser({
               uid,
               lineUserId: profile.userId,

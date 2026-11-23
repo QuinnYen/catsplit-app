@@ -51,28 +51,13 @@ test('isFreshProof：十分鐘內有效，太舊、沒有 iat、來自未來太�
 // ---------- 綁定決策 ----------
 
 test('decideBind：對照表已有，同一個 uid 是 already_bound，別的 uid 要合併', () => {
-  assert.deepEqual(decideBind({ callerUid: G_UID, provider: 'line', subject: LINE, identity: { uid: G_UID } }), { action: 'already_bound' })
-  assert.deepEqual(
-    decideBind({ callerUid: G_UID, provider: 'line', subject: LINE, identity: { uid: LINE } }),
-    { action: 'merge', otherUid: LINE, createIdentity: false },
-  )
+  assert.deepEqual(decideBind({ callerUid: G_UID, identity: { uid: G_UID } }), { action: 'already_bound' })
+  assert.deepEqual(decideBind({ callerUid: G_UID, identity: { uid: LINE } }), { action: 'merge', otherUid: LINE })
 })
 
-test('decideBind：對照表沒有、LINE 已是現有帳號的 uid（舊使用者）', () => {
-  assert.deepEqual(
-    decideBind({ callerUid: G_UID, provider: 'line', subject: LINE, identity: null, legacyLineExists: true }),
-    { action: 'merge', otherUid: LINE, createIdentity: true },
-  )
-  assert.deepEqual(
-    decideBind({ callerUid: LINE, provider: 'line', subject: LINE, identity: null, legacyLineExists: true }),
-    { action: 'create_self' },
-  )
-})
-
-test('decideBind：什麼都沒有就新增一筆；Google 沒有舊 uid 的概念，不看 legacyLineExists', () => {
-  assert.deepEqual(decideBind({ callerUid: G_UID, provider: 'line', subject: LINE, identity: null, legacyLineExists: false }), { action: 'create' })
-  assert.deepEqual(decideBind({ callerUid: LINE, provider: 'google', subject: '1122', identity: null, legacyLineExists: true }), { action: 'create' })
-  assert.deepEqual(decideBind({ callerUid: LINE, provider: 'google', subject: '1122', identity: {} }), { action: 'create' })
+test('decideBind：對照表沒有（或沒有 uid）就新增一筆指向呼叫者', () => {
+  assert.deepEqual(decideBind({ callerUid: G_UID, identity: null }), { action: 'create' })
+  assert.deepEqual(decideBind({ callerUid: G_UID, identity: {} }), { action: 'create' })
 })
 
 // ---------- 解除綁定 ----------
@@ -90,13 +75,10 @@ test('planUnbind：找不到或不是自己的對照項', () => {
   assert.deepEqual(planUnbind({ callerUid: G_UID2, identities: mine, targetId: 'google:1' }), { ok: false, error: 'identity_not_found' })
 })
 
-test('planUnbind：一般情況刪除；舊 LINE 使用者自己的 LINE 要改指向新帳號，避免下次登入被懶建立回來', () => {
+test('planUnbind：一般情況就是刪除對照項（不論登入方式）', () => {
   const mine = ids(['google:1', G_UID, 'google', '1'], ['line:' + OTHER_LINE, G_UID, 'line', OTHER_LINE])
-  assert.deepEqual(planUnbind({ callerUid: G_UID, identities: mine, targetId: 'google:1' }), { ok: true, mode: 'delete' })
-  assert.deepEqual(planUnbind({ callerUid: G_UID, identities: mine, targetId: 'line:' + OTHER_LINE }), { ok: true, mode: 'delete' })
-  const legacy = ids(['line:' + LINE, LINE, 'line', LINE], ['google:1', LINE, 'google', '1'])
-  assert.deepEqual(planUnbind({ callerUid: LINE, identities: legacy, targetId: 'line:' + LINE }), { ok: true, mode: 'repoint' })
-  assert.deepEqual(planUnbind({ callerUid: LINE, identities: legacy, targetId: 'google:1' }), { ok: true, mode: 'delete' })
+  assert.deepEqual(planUnbind({ callerUid: G_UID, identities: mine, targetId: 'google:1' }), { ok: true })
+  assert.deepEqual(planUnbind({ callerUid: G_UID, identities: mine, targetId: 'line:' + OTHER_LINE }), { ok: true })
 })
 
 // ---------- 合併紀錄 ----------
@@ -125,7 +107,7 @@ const preview = {
 }
 
 test('buildMergeRecord：預覽紀錄的欄位與到期時間', () => {
-  const r = buildMergeRecord({ callerUid: G_UID, otherUid: LINE, preview, bind: { provider: 'line', subject: LINE }, nowMs: 1000 })
+  const r = buildMergeRecord({ callerUid: G_UID, otherUid: LINE, preview, nowMs: 1000 })
   assert.deepEqual(r.uids, [G_UID, LINE])
   assert.equal(r.initiatorUid, G_UID)
   assert.equal(r.keepUid, LINE)
@@ -135,8 +117,6 @@ test('buildMergeRecord：預覽紀錄的欄位與到期時間', () => {
   assert.equal(r.backupDone, false)
   assert.equal(r.expiresAtMs, 1000 + MERGE_PREVIEW_TTL_MS)
   assert.equal(r.expireAtMs, 1000 + MERGE_PREVIEW_RECORD_TTL_MS)
-  assert.deepEqual(r.bind, { provider: 'line', subject: LINE })
-  assert.equal(buildMergeRecord({ callerUid: G_UID, otherUid: LINE, preview, nowMs: 1 }).bind, null)
 })
 
 test('conflictsOf：自動處理與需要決定的衝突合併成一份清單', () => {
