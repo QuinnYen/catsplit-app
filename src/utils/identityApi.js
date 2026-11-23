@@ -13,23 +13,33 @@ export class ApiError extends Error {
 export const apiUrl = (name, base) => (base ? base.replace('/lineLogin', `/${name}`) : null)
 
 // baseUrl、fetchFn 可注入，測試用；預設是環境變數與瀏覽器的 fetch
-export const createIdentityApi = ({ baseUrl = import.meta.env?.VITE_TOKEN_EXCHANGE_URL, fetchFn = (...a) => fetch(...a) } = {}) => {
+// timeoutMs：請求（含讀取回應）超過這個時間就放棄並丟出 timeout，避免畫面永遠停在「處理中」
+export const createIdentityApi = ({ baseUrl = import.meta.env?.VITE_TOKEN_EXCHANGE_URL, fetchFn = (...a) => fetch(...a), timeoutMs = 20000 } = {}) => {
   const call = async (name, idToken, body = {}) => {
     const url = apiUrl(name, baseUrl)
     if (!url) throw new ApiError('not_configured', 0, null)
-    let res
+    const controller = new AbortController()
+    let timedOut = false
+    const timer = setTimeout(() => { timedOut = true; controller.abort() }, timeoutMs)
     try {
-      res = await fetchFn(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(idToken && { Authorization: `Bearer ${idToken}` }) },
-        body: JSON.stringify(body),
-      })
-    } catch {
-      throw new ApiError('network', 0, null)
+      let res
+      try {
+        res = await fetchFn(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(idToken && { Authorization: `Bearer ${idToken}` }) },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        })
+      } catch {
+        throw new ApiError(timedOut ? 'timeout' : 'network', 0, null)
+      }
+      const data = await res.json().catch(() => null)
+      if (timedOut) throw new ApiError('timeout', 0, null)
+      if (!res.ok) throw new ApiError(data?.error ?? `http_${res.status}`, res.status, data)
+      return data
+    } finally {
+      clearTimeout(timer)
     }
-    const data = await res.json().catch(() => null)
-    if (!res.ok) throw new ApiError(data?.error ?? `http_${res.status}`, res.status, data)
-    return data
   }
   return {
     listIdentities: (idToken) => call('listIdentities', idToken),

@@ -57,6 +57,20 @@ test('失敗時丟 ApiError，帶雲端函式的錯誤碼、狀態與其他欄�
   assert.deepEqual([err.code, err.status, err.data.mergeId], ['merge_in_progress', 409, 'x'])
 })
 
+test('請求超過 timeoutMs 就中止並丟 timeout，不會永遠等下去；正常回應不受影響', async () => {
+  // 一個會一直等、直到被中止才失敗的 fetch
+  const hanging = (url, init) => new Promise((_, reject) => {
+    init.signal.addEventListener('abort', () => reject(new Error('aborted')))
+  })
+  const slow = createIdentityApi({ baseUrl: BASE, fetchFn: hanging, timeoutMs: 20 })
+  const err = await slow.createLinkCode('tok').catch((e) => e)
+  assert.ok(err instanceof ApiError)
+  assert.deepEqual([err.code, err.status], ['timeout', 0])
+
+  const { fn } = fakeFetch({ status: 200, body: { ok: true } })
+  assert.deepEqual(await createIdentityApi({ baseUrl: BASE, fetchFn: fn, timeoutMs: 20 }).listIdentities('t'), { ok: true })
+})
+
 test('回應不是 JSON 時用 http 狀態當錯誤碼；網路失敗是 network；沒設定網址是 not_configured', async () => {
   const noJson = { ok: false, status: 502, json: async () => { throw new Error('not json') } }
   const err1 = await createIdentityApi({ baseUrl: BASE, fetchFn: async () => noJson }).listIdentities('t').catch((e) => e)

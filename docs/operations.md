@@ -99,7 +99,7 @@ node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫
    - 兩邊的群組、帳目、收款方式、儲蓄目標都在；兩個帳號互相的轉帳不見了，餘額沒變。
    - 被併入的帳號用原本的登入方式再登入，進的是合併後的帳號。
 5. **備份**：Firestore Console 的 `mergeBackups/{id}` 有資料、`merges/{id}` 的 `state` 是 `done`。
-5b. **LINE 內綁定 Google**：在 LINE 內的設定頁按「用 Google 綁定」，應開啟手機的外部瀏覽器（Chrome），短暫顯示「正在登入…」後進到設定頁並提示「已用你的 LINE 帳號登入」，按 Google 按鈕用手機上已登入的 Google 帳號完成綁定；切回 LINE 後清單應出現 Google。同一個連結第二次開啟應顯示「無效或已經使用過」。
+5b. **LINE 內綁定 Google**：在 LINE 內的設定頁按「用 Google 綁定」，畫面應顯示「連結已產生」、「開啟瀏覽器」與「複製連結」。按「開啟瀏覽器」應開啟手機的瀏覽器（不限 Chrome），顯示「正在登入…」後進入設定頁並提示「已用你的 LINE 帳號登入」，按 Google 按鈕完成綁定（瀏覽器沒登入 Google 就登入一次）；切回 LINE 後清單應出現 Google。**如果按「開啟瀏覽器」沒反應，用「複製連結」貼到瀏覽器網址列也要能走通**。同一個連結第二次開啟應顯示「無效或已經使用過」。
 6. **刪除我的資料**：合併後的帳號刪除資料，`identities`、`merges`、`mergeBackups` 都應清空。
 
 ## Google 登入設定
