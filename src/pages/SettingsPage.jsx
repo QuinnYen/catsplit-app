@@ -1,6 +1,7 @@
-// /settings — 設定：顯示自己的頭像與名稱，可切換語言；LINE 使用者可在最下方的危險區刪除自己的資料。
+// /settings — 設定：上方顯示自己的頭像與名稱，下方分兩個分頁：外觀（顯示名稱、語言、外觀）與帳號（登入方式、危險區）；
+// 條款與隱私權連結固定在最下面。
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore'
 import { Trash2 } from 'lucide-react'
 import { db } from '../config/firebase'
@@ -15,14 +16,24 @@ import { isBalanceSettled } from '../utils/balanceStatus'
 
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
 
+const tabButton = (active) => ({
+  flex: 1, padding: '10px 0', border: 'none', borderBottom: `2px solid ${active ? 'var(--cs-rc-stamp)' : 'transparent'}`, background: 'none',
+  fontSize: 14, fontWeight: active ? 600 : 400, color: active ? 'var(--cs-text)' : 'var(--cs-text-sub)', cursor: 'pointer',
+})
+
 const SettingsPage = () => {
   const { user, logout, saveNickname } = useApp()
   const { t, lang, setLang } = useI18n()
   const { mode, setMode } = useTheme()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [groups, setGroups] = useState(null)
   const [deletingData, setDeletingData] = useState(false)
   const canDelete = !!user && !user.guest
+  // 綁定、合併、連結登入完成後會帶 ?bound= / ?merged= / ?link= 回到設定頁，結果顯示在登入方式，所以直接開帳號分頁
+  const [tab, setTab] = useState(() => (params.has('bound') || params.has('merged') || params.has('link') ? 'account' : 'appearance'))
+  // 訪客沒有帳號可管理，只有外觀分頁
+  const activeTab = canDelete ? tab : 'appearance'
   // 有暱稱時 user.lineName 才有值；輸入框沒動過就顯示目前暱稱
   const currentNickname = user?.lineName ? user.name : ''
   const [nicknameInput, setNicknameInput] = useState(null)
@@ -102,6 +113,18 @@ const SettingsPage = () => {
           </div>
         </div>
 
+        {/* 分頁：兩個面板都保持掛載、只切換顯示，產生到一半的連結與輸入中的暱稱不會因為切換分頁而消失 */}
+        {canDelete && (
+          <div role="tablist" style={{ display: 'flex', borderBottom: '0.5px solid var(--cs-border)' }}>
+            {['appearance', 'account'].map((key) => (
+              <button key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)} style={tabButton(tab === key)}>
+                {t(`settings.tab.${key}`)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div role="tabpanel" style={{ display: activeTab === 'appearance' ? 'flex' : 'none', flexDirection: 'column', gap: 12 }}>
         {/* 顯示名稱（全域暱稱）：訪客的名字屬於群組，不能在這裡改 */}
         {canDelete && (
           <div style={card}>
@@ -129,9 +152,6 @@ const SettingsPage = () => {
           </div>
         )}
 
-        {/* 登入方式：綁定 LINE／Google、解除綁定；訪客沒有帳號可綁，不顯示 */}
-        {canDelete && <LoginMethodsCard />}
-
         {/* 語言：所有人都能手動切換；EN_READY 只影響「沒選過語言時」是否依瀏覽器語言自動判定 */}
         <div style={card}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('settings.language')}</div>
@@ -158,12 +178,12 @@ const SettingsPage = () => {
               <option value="dark">{t('settings.theme.dark')}</option>
             </select>
         </div>
-
-        {/* 條款與隱私權：英文版是另一份靜態頁；中文版維持原網址 */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12 }}>
-          <a href={lang === 'en' ? '/terms.en.html' : '/terms.html'} style={{ color: 'var(--cs-text-sub)' }}>{t('home.menu.terms')}</a>
-          <a href={lang === 'en' ? '/privacy.en.html' : '/privacy.html'} style={{ color: 'var(--cs-text-sub)' }}>{t('home.menu.privacy')}</a>
         </div>
+
+        {canDelete && (
+          <div role="tabpanel" style={{ display: activeTab === 'account' ? 'flex' : 'none', flexDirection: 'column', gap: 12 }}>
+        {/* 登入方式：綁定 LINE／Google、解除綁定；訪客沒有帳號可綁，不顯示 */}
+        {canDelete && <LoginMethodsCard />}
 
         {/* 危險區：訪客名字屬於群組，不能自行刪除；由群組建立者移除 */}
         {canDelete && (
@@ -181,6 +201,14 @@ const SettingsPage = () => {
             </div>
           </div>
         )}
+          </div>
+        )}
+
+        {/* 條款與隱私權：英文版是另一份靜態頁；中文版維持原網址 */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12 }}>
+          <a href={lang === 'en' ? '/terms.en.html' : '/terms.html'} style={{ color: 'var(--cs-text-sub)' }}>{t('home.menu.terms')}</a>
+          <a href={lang === 'en' ? '/privacy.en.html' : '/privacy.html'} style={{ color: 'var(--cs-text-sub)' }}>{t('home.menu.privacy')}</a>
+        </div>
       </div>
 
       <TabBar context="create" />

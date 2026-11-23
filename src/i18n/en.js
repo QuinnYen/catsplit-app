@@ -697,6 +697,8 @@ export default {
   'savings.confirmDeleteEntry': 'Delete this entry?',
   'savings.saveFailed': 'Could not save. Please try again later.',
   'savings.deleteFailed': 'Could not delete. Please try again later.',
+  'settings.tab.appearance': 'Appearance',
+  'settings.tab.account': 'Account',
   'settings.theme': 'Appearance',
   'settings.theme.system': 'Follow system',
   'settings.theme.light': 'Light',
