@@ -9,6 +9,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { useTheme } from '../theme/ThemeProvider'
 import Avatar from '../components/Avatar'
 import TabBar from '../components/TabBar'
+import LoginMethodsCard from '../components/LoginMethodsCard'
 import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 import { isBalanceSettled } from '../utils/balanceStatus'
 
@@ -127,6 +128,9 @@ const SettingsPage = () => {
             </div>
           </div>
         )}
+
+        {/* 登入方式：綁定 LINE／Google、解除綁定；訪客沒有帳號可綁，不顯示 */}
+        {canDelete && <LoginMethodsCard />}
 
         {/* 語言：所有人都能手動切換；EN_READY 只影響「沒選過語言時」是否依瀏覽器語言自動判定 */}
         <div style={card}>

@@ -148,6 +148,10 @@ test('executeMerge：合併成功，回傳保留帳號的 token；被刪除帳�
   const r = await post('executeMerge', { mergeId: S.mergeId, resolutions: { 'settings/profile': 'keep' } }, S.G.idToken)
   assert.equal(r.status, 200, JSON.stringify(r.body))
   assert.deepEqual([r.body.ok, r.body.keepUid, r.body.sessionReplaced, r.body.alreadyDone], [true, S.L, true, false])
+  // 保留帳號（LINE 舊使用者）的名稱與頭像，前端用來重建登入狀態
+  assert.equal(r.body.profile.name, `Mock ${S.L.slice(0, 6)}`)
+  assert.equal(r.body.profile.avatar, 'https://example.com/avatar.png')
+  assert.equal(r.body.profile.provider, null)
   const newToken = await signIn(r.body.firebaseToken)
   assert.equal(uidOfToken(newToken), S.L)
   S.Lnew = newToken

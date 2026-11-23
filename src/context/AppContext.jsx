@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import {
   uidFromLoginResponse, buildSessionUser, canReuseCachedSession, isLineUserAgent, needsNicknameSetup,
 } from '../utils/authSession'
+import identityApi from '../utils/identityApi'
 
 const AppContext = createContext(null)
 
@@ -29,6 +30,8 @@ const readGuestNames = () => {
 }
 const writeGuestNames = (list) => localStorage.setItem(GUEST_NAMES_KEY, JSON.stringify(list))
 const OAUTH_STATE_KEY = 'catsplit_oauth_state'
+// LINE 授權的用途：'bind' 代表是在設定頁綁定 LINE（回來後呼叫 bindIdentity），沒有就是一般登入
+const OAUTH_PURPOSE_KEY = 'catsplit_oauth_purpose'
 // localStorage 跨 redirect 保留，sessionStorage 在 LINE OAuth 跳轉後可能遺失
 const stateStore = {
   set: (v) => localStorage.setItem(OAUTH_STATE_KEY, v),
@@ -311,7 +314,38 @@ export const AppProvider = ({ children }) => {
     // 外部瀏覽器：走標準 OAuth flow
     const state = generateState()
     stateStore.set(state)
+    localStorage.removeItem(OAUTH_PURPOSE_KEY)
     window.location.href = buildAuthorizeUrl(state)
+  }
+
+  // 設定頁綁定 LINE（只在外部瀏覽器：LINE 內建瀏覽器登入的就是 LINE，沒有可綁的）。
+  // 跳到 LINE 授權後回到 /auth/callback，由 completeOAuthCallback 依用途呼叫 bindIdentity
+  const startLineBind = () => {
+    const state = generateState()
+    stateStore.set(state)
+    localStorage.setItem(OAUTH_PURPOSE_KEY, 'bind')
+    window.location.href = buildAuthorizeUrl(state)
+  }
+
+  const getIdToken = () => auth.currentUser?.getIdToken()
+
+  // 合併完成後：若原本的登入帳號被併入而刪除（sessionReplaced），用回傳的 token 重新登入保留帳號並重建本機的使用者資料，
+  // 再整頁重新載入，讓所有狀態（暱稱、群組…）都以合併後的帳號為準
+  const completeMerge = async ({ sessionReplaced, firebaseToken, profile }) => {
+    if (sessionReplaced) {
+      await signInWithCustomToken(auth, firebaseToken)
+      const uid = auth.currentUser.uid
+      const isGoogle = profile?.provider === 'google'
+      const u = buildSessionUser({
+        uid,
+        lineUserId: /^U[0-9a-f]{32}$/.test(uid) ? uid : undefined,
+        name: profile?.name ?? '',
+        avatar: typeof profile?.avatar === 'string' ? profile.avatar : null,
+        provider: isGoogle ? 'google' : undefined,
+      })
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
+    }
+    window.location.assign('/settings?merged=1')
   }
 
   // Google 登入：credential 是 Google Identity Services 給的 ID token，交給 authExchange 驗證並換成內部 uid 的 custom token。
@@ -390,11 +424,26 @@ export const AppProvider = ({ children }) => {
   const completeOAuthCallback = async ({ code, state }) => {
     const savedState = stateStore.get()
     stateStore.remove()
+    const purpose = localStorage.getItem(OAUTH_PURPOSE_KEY)
+    localStorage.removeItem(OAUTH_PURPOSE_KEY)
     if (!savedState || savedState !== state) {
       throw new Error(`state_mismatch: saved="${savedState}", received="${state}"`)
     }
     if (!TOKEN_EXCHANGE_URL) {
       throw new Error('token_exchange_url_not_configured')
+    }
+
+    // 綁定 LINE：這個頁面一開始就跳過了使用者初始化（見 init），所以要自己確認目前有登入，
+    // 用目前的 Firebase 登入加上這次的 LINE 授權碼呼叫 bindIdentity，並把原本的使用者放回狀態
+    if (purpose === 'bind') {
+      await auth.authStateReady()
+      const cached = readCachedUser()
+      if (!auth.currentUser || !cached || cached.guest) throw new Error('bind_session_missing')
+      const result = await identityApi.bindIdentity(await auth.currentUser.getIdToken(), {
+        provider: 'line', code, redirectUri: buildRedirectUri(),
+      })
+      setUser(cached)
+      return { purpose: 'bind', result }
     }
 
     const res = await fetch(TOKEN_EXCHANGE_URL, {
@@ -422,7 +471,7 @@ export const AppProvider = ({ children }) => {
   }
 
   return (
-    <AppContext.Provider value={{ user, setUser, nicknameReady, needsNickname, nicknameLoading, saveNickname, loading, loginWithLine, loginWithGoogle, loginAsGuest, joinAsGuest, forgetGuestName, switchGuestGroup, guestNames: user?.guest ? readGuestNames() : [], claimMember, logout, completeOAuthCallback, liffInstance }}>
+    <AppContext.Provider value={{ user, setUser, nicknameReady, needsNickname, nicknameLoading, saveNickname, loading, loginWithLine, loginWithGoogle, startLineBind, getIdToken, completeMerge, loginAsGuest, joinAsGuest, forgetGuestName, switchGuestGroup, guestNames: user?.guest ? readGuestNames() : [], claimMember, logout, completeOAuthCallback, liffInstance }}>
       {children}
     </AppContext.Provider>
   )

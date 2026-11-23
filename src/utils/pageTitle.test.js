@@ -4,6 +4,7 @@ import { pageTitleKey } from './pageTitle.js'
 
 test('pageTitleKey：各頁路徑對到頁面名稱 key', () => {
   assert.equal(pageTitleKey('/'), 'tab.home')
+  assert.equal(pageTitleKey('/merge'), 'merge.title')
   assert.equal(pageTitleKey('/group/abc'), 'tab.group')
   assert.equal(pageTitleKey('/group/abc/'), 'tab.group')
   assert.equal(pageTitleKey('/group/abc/settle'), 'settle.title')
