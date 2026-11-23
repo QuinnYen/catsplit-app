@@ -14,13 +14,13 @@ const labelStyle = { fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)',
 const smallButton = { padding: '8px 12px', borderRadius: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', color: 'var(--cs-text)', fontSize: 13, cursor: 'pointer', flexShrink: 0 }
 
 const LoginMethodsCard = () => {
-  const { getIdToken, startLineBind, liffInstance } = useApp()
+  const { getIdToken, startLineBind } = useApp()
   const { t, fmt } = useI18n()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [identities, setIdentities] = useState(null)
   const [loadFailed, setLoadFailed] = useState(false)
-  // LINE 內產生的一次性連結 { url, expiresAtMs }：先顯示出來，再由使用者點「開啟瀏覽器」（或複製貼到瀏覽器）
+  // LINE 內產生的一次性連結 { url, expiresAtMs }：先顯示出來，由使用者複製貼到手機瀏覽器
   const [link, setLink] = useState(null)
   const [linkCopied, setLinkCopied] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -100,42 +100,22 @@ const LoginMethodsCard = () => {
 
   // LINE 內建瀏覽器無法用 Google 登入（Google 不允許在內嵌 WebView 登入）：產生一次性連結碼，
   // 在手機的瀏覽器開啟後用同一個帳號的登入狀態綁定 Google（見 LinkPage）。碼放在 # 後面，不會被送到伺服器。
-  // 分兩步：先產生並顯示連結，再由使用者點「開啟瀏覽器」；自動開啟不一定成功（機型、LINE 版本），所以一定提供複製連結的備援
+  // 分兩步：產生並顯示連結，由使用者複製（LINE 內無法自動開啟外部瀏覽器）
   const createLink = () => run(async () => {
     const { code, expiresAtMs } = await identityApi.createLinkCode(await tokenRef.current())
     setLinkCopied(false)
     setLink({ url: `${window.location.origin}/link#code=${code}`, expiresAtMs })
   })
 
-  const linkExpired = () => {
-    if (Date.now() < link.expiresAtMs) return false
-    setLink(null)
-    setErrorKey('identity.linkExpired')
-    return true
-  }
-
-  // 方式 A：LINE 看到網址帶 openExternalBrowser=1，會改用手機的預設瀏覽器開啟（碼在 # 後面，會保留）
-  const openLink = () => {
-    setErrorKey(null)
-    if (linkExpired()) return
-    window.location.href = `${window.location.origin}/link?openExternalBrowser=1#${link.url.split('#')[1]}`
-  }
-
-  // 方式 B：liff.openWindow（部分機型沒反應，保留當備援）。在使用者點擊當下直接呼叫，不等任何非同步工作
-  const openLinkViaLiff = () => {
-    setErrorKey(null)
-    if (linkExpired()) return
-    try {
-      if (!liffInstance) throw new Error('liff_not_ready')
-      liffInstance.openWindow({ url: link.url, external: true })
-    } catch (e) {
-      console.error('open link failed', e?.message || e)
-      setErrorKey('identity.openFailed')
-    }
-  }
-
+  // LINE 內無法從網頁開啟外部瀏覽器（liff.openWindow、openExternalBrowser 在部分機型都沒反應，匯出 CSV 也一樣），
+  // 所以只提供複製連結，由使用者貼到手機瀏覽器的網址列
   const copyLink = async () => {
     setErrorKey(null)
+    if (Date.now() >= link.expiresAtMs) {
+      setLink(null)
+      setErrorKey('identity.linkExpired')
+      return
+    }
     try {
       await navigator.clipboard.writeText(link.url)
       setLinkCopied(true)
@@ -198,8 +178,6 @@ const LoginMethodsCard = () => {
             {canAddGoogle && inLine && link && (
               <>
                 <div style={{ fontSize: 12, color: 'var(--cs-text)', lineHeight: 1.6 }}>{t('identity.linkReady')}</div>
-                <button onClick={openLink} style={{ ...smallButton, padding: '11px 16px', fontSize: 14, fontWeight: 600, background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none' }}>{t('identity.linkOpen')}</button>
-                <button onClick={openLinkViaLiff} style={smallButton}>{t('identity.linkOpenAlt')}</button>
                 <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', lineHeight: 1.6 }}>{t('identity.linkManual')}</div>
                 <input
                   readOnly

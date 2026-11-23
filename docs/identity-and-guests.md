@@ -75,7 +75,7 @@
 
 LINE 內建瀏覽器是內嵌 WebView：有獨立的儲存空間，看不到手機瀏覽器或系統已登入的 Google 帳號；Google 也不允許在內嵌 WebView 登入（標準授權會直接 `403: disallowed_useragent`，Google 登入按鈕的彈出視窗則停在 Google 的 `accounts.google.com/transform` 頁面，憑證傳不回我們的頁面，實測 Android 就是這樣）。所以 LINE 內的設定頁不放 Google 按鈕，改成：
 
-1. 在 LINE 內按「用 Google 綁定」→ `createLinkCode` 產生一次性連結碼，**畫面上先顯示連結**（`/link#code=…`）→ 使用者再點「開啟瀏覽器」，才在點擊當下呼叫 `liff.openWindow({ external: true })`。另外**一定提供「複製連結」**與可長按選取的連結欄位：自動開啟不一定成功（見下方實測），複製貼到手機的任何瀏覽器（不限 Chrome）就一定走得通。
+1. 在 LINE 內按「用 Google 綁定」→ `createLinkCode` 產生一次性連結碼，**畫面上先顯示連結**（`/link#code=…`）→ 使用者按「複製連結」（或長按連結欄位選取），貼到手機的任何瀏覽器（不限 Chrome）網址列開啟。**不提供自動開啟**：實測 `liff.openWindow({ external: true })` 與 `openExternalBrowser=1` 在 Android 的 LINE 內都沒反應，連匯出 CSV 的外部開啟也一樣。
 2. 外部瀏覽器的 `/link` 頁（`src/pages/LinkPage.jsx`）呼叫 `redeemLinkCode`（**不需要登入**，碼本身就是憑證）兌換成同一個帳號的 custom token，登入後立刻把碼從網址與瀏覽紀錄移除，導到 `/settings?link=1`。
 3. 設定頁提示「已用你的 LINE 帳號登入，請按下方的 Google 按鈕」，用 Google 帳號完成綁定（瀏覽器若已登入 Google 按一下即可，沒登入就登入一次；之後與一般的 `bindIdentity`、合併流程相同，都在外部瀏覽器完成）。
 4. 切回 LINE 時，設定頁會在頁面重新可見時重新讀取清單，看到新綁定的 Google。
@@ -91,6 +91,6 @@ LINE 內建瀏覽器是內嵌 WebView：有獨立的儲存空間，看不到手�
 
 **實測結果與修正**：第一版（PR7）按下按鈕後直接 `openWindow`，在 Android 實測**瀏覽器沒有開啟，畫面一直停在「處理中…」**，而且看不出卡在哪一步；`liff.openWindow` 的 `external` 行為依 LINE 版本、機型而異（專案裡也已有註解提到三星雙開 LINE 會被導回主 LINE），沙盒連不到 LINE 文件，沒能確認確切原因。所以改成：
 - 所有身分相關的 API 呼叫加上 20 秒逾時（`src/utils/identityApi.js`），不會永遠等待，逾時顯示網路錯誤並可重試。
-- 流程分兩步，每一步畫面都看得到；「開啟瀏覽器」在使用者點擊當下才呼叫 `openWindow`（不等任何非同步工作）；`openWindow` 丟錯有明確訊息；連結逾時 5 分鐘會提示並回到第一步。
-- 一定提供「複製連結」備援，不依賴 `openWindow` 一定成功。
+- 流程分兩步，每一步畫面都看得到；連結逾時 5 分鐘會提示並回到第一步。
+- 最後移除所有自動開啟的按鈕，只留「複製連結」，不依賴 LINE 能開外部瀏覽器。
 
