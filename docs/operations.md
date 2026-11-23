@@ -43,6 +43,35 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 
 `storage.rules` 沒有 `exports/` 的規則，所以前端無法直接讀寫，只有函式（Admin SDK）能存取。
 
+## 本機模擬器跑雲端函式
+
+`npm run emulators` 只啟動 auth、firestore、storage，不含 functions。要實測登入、訪客、認領等雲端函式，另外啟動含 functions 的模擬器。LINE 驗證端點需要連外，所以預載 `functions/scripts/emulator-line-mock.mjs` 攔截那個請求（假的 `idToken` 直接當成 LINE userId，例如 `U` 加 32 位十六進位）。這個檔案只在本機以 `NODE_OPTIONS` 預載，不會被部署使用。
+
+PowerShell，在專案根目錄：
+
+```powershell
+# 一次性：建立假的 secret（已被 .gitignore 的 *.local 排除，不會提交）
+Set-Content functions/.secret.local "LINE_CHANNEL_SECRET=dummy"
+
+# 啟動（路徑改成你的專案絕對路徑）
+$env:NODE_OPTIONS = "--import file:///C:/path/to/catsplit-app/functions/scripts/emulator-line-mock.mjs"
+firebase emulators:start --only auth,firestore,functions --project demo-catsplit
+```
+
+函式網址為 `http://127.0.0.1:5001/demo-catsplit/asia-east1/<函式名>`，例如 `verifyLiffToken`、`guestLogin`。Firestore 觸發器（訪客 Auth 清理）也會一併載入。需要 Java、Node 22，且 8080、9099、5001 埠不能被占用（執行 `npm run test:rules` 前要先關掉）。
+
+## 身分對照表補齊（`identities`）
+
+詳見[身分與訪客](identity-and-guests.md)。在 `functions` 資料夾內執行，需要有 Firestore 權限的服務帳號：
+
+```powershell
+$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\to\service-account.json"
+node scripts/backfill-identities.mjs --project catsplit-app          # 先 dry-run，確認數量合理
+node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫入
+```
+
+對本機模擬器執行時，先 `$env:FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080"`。
+
 ## 綁定正式網域時要一起改
 
 漏改會導致登入或收據載入失敗。
@@ -57,6 +86,7 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 - Google Cloud 已設預算警示。
 - **訪客 Auth 紀錄自動清理**：Firestore 觸發器 `cleanupGuestsOnGroupDelete`（群組被刪；同時補刪留下的子集合與 Storage 收據、封面，所以在 Console 手動刪群組文件也會清乾淨）與 `cleanupGuestsOnMemberRemoved`（成員離開 `members`）會刪除 `p_` 開頭訪客的 Auth 紀錄；LINE 使用者的 Auth 不會被這兩個觸發器動到。觸發器 region 設為 `asia-east1`，**必須與 Firestore 資料庫位置相同**，否則部署會失敗。`cleanupGuestsOnMemberRemoved` 在每次群組文件更新（含每筆記帳）都會執行一次，只在 `members` 有人離開時才會刪除。
 - **UID 對照表 `users/{uid}`**：`lineLogin`、`verifyLiffToken` 每次登入會用 Admin SDK 寫入 `{ name, avatar, updatedAt }`，讓你在 Firestore Console 用 UID 反查是誰（Auth 的 Console 看不到 `displayName`）。rules 沒有開放這份文件（只開 `paymentMethods` 子集合），客戶端讀寫都被拒。`detachMember` 在 `deleteAccount` 成功後會一併刪除。App 快速登入路徑不會呼叫函式，所以要重新走完整登入才會更新。
+- **身分對照表 `identities/{provider:subject}`**：`lineLogin`、`verifyLiffToken` 登入時用 transaction 查表並懶建立；`identities`、`merges`、`mergeBackups` 客戶端讀寫一律被拒（`firestore-tests/identities.rules.mjs`）。補齊現有使用者見下方「身分對照表補齊」。
 - Cloud Functions（`lineLogin`、`verifyLiffToken`、`guestLogin`、`claimMember`、`detachMember`、`exportCsv`、`sharePage`）為公開端點，已設 `maxInstances: 5`。
 
 ## 分帳計算
@@ -83,7 +113,7 @@ LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 
 - 刪除群組（App 內的 `handleDeleteGroup` 與雲端函式的整群刪除）用單一 `writeBatch`，群組內文件超過 500 筆會失敗。
 - 轉帳建議依基準幣的小數位數取整（日圓整數、美元到分），日圓這類沒有小數的貨幣，餘額帶不到 1 圓的零頭時照建議轉帳後會剩下這點殘差，不會再列成建議。
 - `firebase.json` 的 `Cache-Control` 只比對 `/index.html`，`/` 與 `/group/*` 實際是 `max-age=3600`，舊版 bundle 最多會存活約 1 小時。
-- 訪客相關的 rules 無法在本機測：模擬器不啟動 functions，產生不了訪客身分，只能在正式環境實測。
+- 訪客與雲端函式的流程可以在本機模擬器實測，做法見下方「本機模擬器跑雲端函式」；但仍要在正式環境用真實 LINE 帳號驗證一次。
 
 **尚未完成**
 

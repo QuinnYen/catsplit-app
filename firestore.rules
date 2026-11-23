@@ -7,9 +7,23 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
     }
 
-    // 訪客（guestLogin 發的 token 帶 guest claim）只能使用自己那個名字，不能建立、加入或退出群組
-    function isLineUser() {
+    // 一般使用者（LINE、Google…任一種登入）＝非訪客。
+    // 訪客（guestLogin 發的 token 帶 guest claim）只能使用自己那個名字，不能建立、加入或退出群組。
+    // 原名 isLineUser()，P14 之後登入方式不只 LINE，語意不變、改名
+    function isMember() {
       return request.auth != null && request.auth.token.get('guest', false) != true;
+    }
+
+    // 身分對照表與帳號合併紀錄只給雲端函式（Admin SDK）讀寫，客戶端一律拒絕。
+    // 沒有 match 到的路徑本來就預設拒絕，這裡明寫是為了讓意圖清楚，也方便測試
+    match /identities/{id} {
+      allow read, write: if false;
+    }
+    match /merges/{id} {
+      allow read, write: if false;
+    }
+    match /mergeBackups/{id} {
+      allow read, write: if false;
     }
 
     // 成員新增一位虛擬成員：members 只多一人（arrayUnion 會加在最後），id 以 p_ 開頭
@@ -49,7 +63,7 @@ service cloud.firestore {
     match /users/{userId}/paymentMethods/{methodId} {
       allow read: if request.auth != null
         && (request.auth.uid == userId || resource.data.isPublic == true);
-      allow create, update: if isLineUser()
+      allow create, update: if isMember()
         && request.auth.uid == userId
         && request.resource.data.providerId is string
         && request.resource.data.value is string
@@ -57,25 +71,25 @@ service cloud.firestore {
         // 上限對齊自訂欄位 maxLength=200（size() 與 maxLength 同以 UTF-16 code unit 計數，已在模擬器實測）；App 類儲存的是 parse 後的短值
         && request.resource.data.value.size() <= 200
         && request.resource.data.isPublic is bool;
-      allow delete: if isLineUser() && request.auth.uid == userId;
+      allow delete: if isMember() && request.auth.uid == userId;
     }
 
     // 個人付款方式（記帳時選用的信用卡等）：只有本人能讀寫（訪客不能寫）
     match /users/{userId}/spendMethods/{methodId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if isLineUser()
+      allow create, update: if isMember()
         && request.auth.uid == userId
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1
         && request.resource.data.name.size() <= 20
         && request.resource.data.type in ['cash', 'credit', 'mobile', 'debit', 'emoney', 'transit'];
-      allow delete: if isLineUser() && request.auth.uid == userId;
+      allow delete: if isMember() && request.auth.uid == userId;
     }
 
     // 個人儲蓄目標與其存提款紀錄：只有本人能讀寫（訪客不能寫）
     match /users/{userId}/savingsGoals/{goalId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if isLineUser()
+      allow create, update: if isMember()
         && request.auth.uid == userId
         && request.resource.data.title is string
         && request.resource.data.title.size() >= 1
@@ -85,11 +99,11 @@ service cloud.firestore {
         && request.resource.data.targetAmount < 1000000000000
         && request.resource.data.currency is string
         && (request.resource.data.targetDate == null || request.resource.data.targetDate is string);
-      allow delete: if isLineUser() && request.auth.uid == userId;
+      allow delete: if isMember() && request.auth.uid == userId;
 
       match /entries/{entryId} {
         allow read: if request.auth != null && request.auth.uid == userId;
-        allow create, update: if isLineUser()
+        allow create, update: if isMember()
           && request.auth.uid == userId
           && request.resource.data.type in ['save', 'withdraw']
           && request.resource.data.amount is number
@@ -98,30 +112,30 @@ service cloud.firestore {
           && request.resource.data.title is string
           && request.resource.data.title.size() <= 100
           && request.resource.data.date is string;
-        allow delete: if isLineUser() && request.auth.uid == userId;
+        allow delete: if isMember() && request.auth.uid == userId;
       }
     }
 
     // 個人設定（全域暱稱）：只有本人能讀寫，暱稱 1~20 字
     match /users/{userId}/settings/profile {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if isLineUser()
+      allow create, update: if isMember()
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly(['nickname'])
         && request.resource.data.nickname is string
         && request.resource.data.nickname.size() >= 1
         && request.resource.data.nickname.size() <= 20;
-      allow delete: if isLineUser() && request.auth.uid == userId;
+      allow delete: if isMember() && request.auth.uid == userId;
     }
 
     // 官方帳號加好友提示旗標：只記「已提示過」的時間，換裝置或清掉瀏覽器資料後也不會再跳
     match /users/{userId}/settings/oaPrompt {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if isLineUser()
+      allow create, update: if isMember()
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly(['promptedAt'])
         && request.resource.data.promptedAt is timestamp;
-      allow delete: if isLineUser() && request.auth.uid == userId;
+      allow delete: if isMember() && request.auth.uid == userId;
     }
 
     match /groups/{groupId} {
@@ -133,7 +147,7 @@ service cloud.firestore {
         && request.auth.uid in resource.data.members;
 
       // 建立：建立者必須是自己，且成員只有自己；群組名稱 1~50 字
-      allow create: if isLineUser()
+      allow create: if isMember()
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.members == [request.auth.uid]
         && request.resource.data.name is string
@@ -154,7 +168,7 @@ service cloud.firestore {
           && (
             !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members'])
             || (
-              isLineUser()
+              isMember()
               && request.resource.data.members.toSet().difference(resource.data.members.toSet()).size() == 0
               && request.resource.data.members.size() == resource.data.members.size() - 1
               && (
@@ -166,7 +180,7 @@ service cloud.firestore {
         )
         ||
         (
-          isLineUser()
+          isMember()
           && !(request.auth.uid in resource.data.members)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'memberProfiles'])
           && request.resource.data.members.hasAll(resource.data.members)
