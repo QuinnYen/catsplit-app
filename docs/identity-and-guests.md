@@ -23,6 +23,6 @@
 設計見 [P14 設計](superpowers/specs/2026-11-14-p14-identity-design.md)，實作順序見[實作計畫](superpowers/plans/2026-11-23-p14-identity-plan.md)。目的是讓 uid 不再等於 LINE userId，之後才能新增 Google 登入、帳號綁定與合併，並能脫離 LINE。
 
 - 集合 `identities/{provider:subject}` → `{ uid, provider, subject, createdAt }`，例如 `identities/line:U1234…`。只有雲端函式（Admin SDK）讀寫，rules 全拒（`merges`、`mergeBackups` 同）。
-- **目前（PR1）**：`lineLogin`、`verifyLiffToken` 登入時在 transaction 內查表；沒有對照項就沿用 LINE userId 當 uid 並建立對照項（懶建立）。所以現有與新的 LINE 使用者的 uid 都仍是 LINE userId，資料不用搬。回應新增 `uid`，仍保留 `userId`（LINE userId）。查表失敗時退回 LINE userId，讓登入照常；帳號合併上線後必須拿掉這個退路。
+- **目前（PR1）**：`lineLogin`、`verifyLiffToken` 登入時在 transaction 內查表；沒有對照項就沿用 LINE userId 當 uid 並建立對照項（懶建立）。所以現有與新的 LINE 使用者的 uid 都仍是 LINE userId，資料不用搬。回應新增 `uid`，仍保留 `userId`（LINE userId）。前端（PR2）以回應的 `uid` 為準，本機快取的使用者另存 `lineUserId`，只用來確認目前的 LIFF 使用者沒被換掉（見 `src/utils/authSession.js`）；舊版快取沒有 `lineUserId` 時以 `uid` 代替，現有使用者不需重新登入。查表失敗時退回 LINE userId，讓登入照常；帳號合併上線後必須拿掉這個退路。
 - 內部 uid 格式為 `u_` 加 20 位十六進位（`functions/identity.js` 的 `makeUid`），尚未有程式使用，留給 Google 登入。
 - **補齊現有使用者**：`functions/scripts/backfill-identities.mjs` 掃描 `users/` 與群組 `members`，為缺對照項的 LINE 使用者補上。預設只列出（dry-run），加 `--apply` 才寫入，可重複執行。帳號綁定與合併上線前必須先跑過一次。

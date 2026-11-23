@@ -8,7 +8,7 @@ src/
 ├── context/AppContext.jsx   # 全域 user 狀態、LINE / 訪客登入、認領、訪客名字記錄
 ├── theme/                   # 暗黑模式：ThemeProvider、useTheme、主題判斷（theme.js）
 ├── hooks/                   # 匯率（useExchangeRate）、Storage 圖片（以登入身分下載）、我的群組（useMyGroups）
-├── utils/                   # 分帳計算、結算建議（settleSuggestions.js）、轉帳金額換算（transferAmounts.js）、頁面標題對照（pageTitle.js）、群組彙總重算、預算狀態（budget.js）、刪除我的資料、Storage 清理、封面裁切
+├── utils/                   # 登入工作階段判斷（authSession.js）、分帳計算、結算建議（settleSuggestions.js）、轉帳金額換算（transferAmounts.js）、頁面標題對照（pageTitle.js）、群組彙總重算、預算狀態（budget.js）、刪除我的資料、Storage 清理、封面裁切
 ├── components/              # Avatar、TabBar、ExpenseForm、CurrencySelect（選貨幣）、GuestJoin（訪客入口）、BankPicker、PaymentMethodModal…
 └── pages/                   # Home、Group、AddExpense、Settle、Transfer、EditGroup、PaymentMethods…
 functions/index.js           # lineLogin、verifyLiffToken、guestLogin、claimMember、detachMember、exportCsv、sharePage
