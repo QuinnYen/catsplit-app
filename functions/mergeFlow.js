@@ -309,3 +309,82 @@ export const deleteMergeDataOf = async (db, uid) => {
     for (const d of snap.docs) await db.recursiveDelete(d.ref)
   }
 }
+
+// ---------- 舊 LINE uid 轉成內部 uid ----------
+
+// LINE userId：U 加 32 位十六進位。舊 LINE 使用者的 uid 就是它
+export const LEGACY_UID_RE = /^U[0-9a-f]{32}$/
+export const legacyMigrationId = (oldUid) => `uidmig_${oldUid}`
+
+/**
+ * 把一位舊 LINE 使用者（uid 就是 LINE userId）的所有資料轉成新的內部 uid（u_ 開頭）。
+ * 做法是「把舊帳號併入一個全新的空帳號」，直接重用帳號合併的零件：備份、群組搬移（帳目的 uid 欄位、成員、餘額、建立者）、
+ * 個人資料搬移、對照項改指向、刪 users/{舊} 與 Auth；新帳號沒有任何資料，所以不會有衝突，不需要使用者做任何選擇。
+ * 進度存在 merges/uidmig_{舊 uid}（kind: 'uid_migration'，state: started → done），所以：
+ * - 可重複執行、可從中斷處繼續：新 uid 第一次決定後就存起來，之後一律用同一個；已搬完的群組、已備份的資料不會重做
+ * - 這個 uid 有進行中的其他合併時拒絕，反過來這段期間也沒有人能對這個 uid 發起合併
+ * 備份存在 mergeBackups/uidmig_{舊 uid}（保留 30 天，與合併備份相同）。
+ * deps：{ makeUid(), deleteAuthUser(uid), nowMs?(), hook?(stage) }；hook 只給測試注入失敗用。
+ * 回傳 { status: 'migrated' | 'already_done' | 'already_migrated', oldUid, newUid }。
+ */
+export const migrateLegacyUid = async (db, deps, { oldUid }) => {
+  if (typeof oldUid !== 'string' || !LEGACY_UID_RE.test(oldUid)) throw new MergeError('not_legacy_uid', 400)
+  const now = () => (deps.nowMs ? deps.nowMs() : Date.now())
+  const mergeId = legacyMigrationId(oldUid)
+  const ref = db.doc(`merges/${mergeId}`)
+  const lineIdentity = await getIdentity(db, 'line', oldUid)
+
+  const existing = await ref.get()
+  if (existing.exists && existing.data().state === 'done') {
+    return { status: 'already_done', oldUid, newUid: existing.data().keepUid }
+  }
+  // 對照項已經指向別的 uid、也沒有進行中的轉移紀錄：這個舊 uid 在別處（例如帳號合併）已經被處理掉了
+  if (!existing.exists && lineIdentity && lineIdentity.uid !== oldUid) {
+    return { status: 'already_migrated', oldUid, newUid: lineIdentity.uid }
+  }
+  if (!existing.exists) {
+    const busy = await findInProgressMerges(db, [oldUid], mergeId)
+    if (busy.length > 0) throw new MergeError('other_merge_in_progress', 409, { mergeId: busy[0] })
+    const newUid = deps.makeUid()
+    assertMergeable(newUid, oldUid)
+    // create：同時有兩個程序第一次執行時，只有一個會成功，另一個讀到先建好的紀錄，新 uid 才不會有兩個
+    try {
+      await ref.create({
+        kind: 'uid_migration', mergeId, uids: [oldUid, newUid], keepUid: newUid, dropUid: oldUid, initiatorUid: null,
+        state: 'started', resolutions: {}, backupDone: false, startedAtMs: now(), expireAtMs: null,
+        bind: { provider: 'line', subject: oldUid },
+      })
+    } catch (e) {
+      if (e.code !== ALREADY_EXISTS) throw e
+    }
+  }
+
+  const m = (await ref.get()).data()
+  const { keepUid: newUid } = m
+  try {
+    await deps.hook?.('start')
+    if (!m.backupDone) {
+      await backupBeforeMerge(db, mergeId, m, now())
+      await ref.update({ backupDone: true })
+    }
+    await deps.hook?.('backup_done')
+
+    const result = await migrateAllGroups(db, newUid, oldUid)
+    if (result.failed.length > 0) {
+      await ref.update({ failedGroups: result.failed })
+      throw new MergeError('groups_failed', 500, { failed: result.failed })
+    }
+    await deps.hook?.('groups_done')
+
+    await movePersonalData(db, newUid, oldUid, {})
+    await deps.hook?.('profile_done')
+
+    await finalizeMerge(db, deps, m)
+    const doneMs = now()
+    await ref.update({ state: 'done', finishedAtMs: doneMs, expireAtMs: doneMs + MERGE_DONE_TTL_MS, failedGroups: [], error: null })
+  } catch (e) {
+    await ref.update({ error: e.code ?? e.message ?? 'unknown' }).catch(() => {})
+    throw e
+  }
+  return { status: 'migrated', oldUid, newUid }
+}

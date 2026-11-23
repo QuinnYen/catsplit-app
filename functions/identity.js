@@ -76,11 +76,14 @@ export const exchangeGoogleLogin = async ({ idToken, verifyGoogle, resolveUid, s
 /**
  * LINE 登入要用哪個 uid：
  * - 對照表已有 → 用對照表的 uid（日後帳號合併後，LINE 身分可能指向別的 uid）
- * - 對照表沒有 → 沿用 LINE userId 當 uid（現有與新的 LINE 使用者都一樣，資料不用搬），並要求建立對照項
+ * - 對照表沒有、但已經是舊使用者（legacyExists：有 users 文件或是某個群組的成員）→ 沿用 LINE userId 當 uid，並要求建立對照項
+ * - 對照表沒有、也不是舊使用者 → 全新的 LINE 使用者，用新的內部 uid（newUid，u_ 開頭）並要求建立對照項，不再產生以 LINE userId 當 uid 的帳號
+ * legacyExists 沒傳時視為 true（維持舊行為）。舊使用者另有一次性腳本轉成內部 uid（見 uidMigration.js）
  */
-export const resolveLineUid = ({ identity, lineUserId }) => {
+export const resolveLineUid = ({ identity, lineUserId, legacyExists = true, newUid }) => {
   if (identity && typeof identity.uid === 'string' && identity.uid) {
     return { uid: identity.uid, create: false }
   }
+  if (!legacyExists && newUid) return { uid: newUid, create: true }
   return { uid: lineUserId, create: true }
 }

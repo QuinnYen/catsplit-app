@@ -132,3 +132,14 @@ test('exchangeGoogleLogin：查表或發 token 失敗時丟出錯誤（由呼叫
   const { deps } = fakeDeps({ resolveUid: async () => { throw new Error('firestore down') } })
   await assert.rejects(() => exchangeGoogleLogin({ idToken: 'abc', ...deps }), /firestore down/)
 })
+
+test('resolveLineUid：沒有對照項時，舊使用者沿用 LINE userId，全新的使用者用新的內部 uid；對照項優先', () => {
+  const LINE = 'U' + 'a'.repeat(32)
+  const NEW = 'u_00000000000000000009'
+  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: LINE, legacyExists: true, newUid: NEW }), { uid: LINE, create: true })
+  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: LINE, legacyExists: false, newUid: NEW }), { uid: NEW, create: true })
+  assert.deepEqual(resolveLineUid({ identity: { uid: 'u_00000000000000000001' }, lineUserId: LINE, legacyExists: false, newUid: NEW }), { uid: 'u_00000000000000000001', create: false })
+  // 沒傳 legacyExists 視為舊使用者（維持舊行為）；是新使用者卻沒給 newUid 也不會產生空 uid
+  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: LINE }), { uid: LINE, create: true })
+  assert.deepEqual(resolveLineUid({ identity: null, lineUserId: LINE, legacyExists: false }), { uid: LINE, create: true })
+})

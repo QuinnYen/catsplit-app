@@ -99,6 +99,28 @@ node scripts/check-aggregates.mjs --project demo-catsplit
 
 測試：純函式 `functions/aggregates.test.js`（`npm test`）、Firestore 整合測試 `functions/emulator-tests/aggregateCheck.mjs`（`npm run test:merge`，含「寫入前被改過就跳過」）。
 
+## 舊 LINE uid 轉成內部 uid
+
+舊 LINE 使用者的 uid 就是 LINE userId（`U` 加 32 位十六進位），這個工具把他們的資料轉成新的內部 uid（`u_` 開頭），讓全站只剩一種帳號 uid（訪客 `p_` 除外）。**自從這個功能上線，全新的 LINE 使用者已經直接拿到 `u_` 的 uid**，這個工具只處理還沒轉的舊使用者。
+
+**轉什麼：** 群組的 `members`、`memberProfiles`、`createdBy`；每筆帳目的 `payments`、`splits`、`shares`、`createdBy`；轉帳的 `from`、`to`、`settledBy`；餘額與筆數的 key；`users/{uid}` 底下所有個人資料與 `users/{uid}` 文件的名稱頭像；所有 `identities` 對照項改指向新 uid；舊 Auth 使用者刪除。做法是「把舊帳號併入一個全新的空帳號」，重用帳號合併的程式，新帳號沒有資料所以沒有衝突，不需要使用者決定任何事。金額與餘額不變。
+
+**怎麼跑：** GitHub **Actions** → **Migrate legacy uids** → **Run workflow**（只能在 `main` 上執行）：
+
+1. **先跑 dry-run**（預設）：列出每位使用者有幾個群組、最多會檢查幾筆帳目、個人資料集合數、登入方式、目前進度。不寫入任何資料。
+2. 確認無誤後勾選 **apply** 再跑一次；**建議先在 `uid` 欄填一位（例如你自己的）試轉**，確認登入後資料都在，再清空 `uid` 欄跑其餘的。
+3. 轉完再跑一次 [群組彙總檢查](#群組彙總檢查與修復)（dry-run），應該仍然「全部一致」，這是驗證餘額沒有因為換 uid 而變。
+
+**安全機制：** 每位使用者轉移前先備份到 `mergeBackups/uidmig_{舊 uid}`（保留 30 天，與合併備份相同，還原靠腳本）；進度存在 `merges/uidmig_{舊 uid}`（`started` → `done`）；可重複執行，中途失敗重跑會沿用同一個新 uid、從中斷處繼續、備份不重做；該使用者有進行中的其他合併時拒絕。
+
+**使用者要知道的事：**
+
+- 轉完之後，**該使用者原本的登入狀態會失效**。已經開著的 App 可能還有最長約 1 小時的舊登入（資料會是空的），重新開啟 App（LINE 內關掉再開，其他瀏覽器登出再登入）就會拿到新的。請挑沒人在用的時間轉，轉完請他們重開。
+- 轉移後登入畫面、名稱、頭像、群組、帳目都和之前一樣。
+- 同一位使用者在別的裝置或瀏覽器（例如已綁定的 Google）也要重新登入。
+
+**對本機模擬器測試：** `functions/emulator-tests/uidMigration.mjs`（`npm run test:merge`）涵蓋資料搬移、對照項、備份、重試、已轉完不重做、已被處理掉的略過、進行中合併拒絕；`functions/emulator-e2e/identity-flow.mjs`（`npm run test:e2e`）涵蓋轉移前後的登入 uid。
+
 ## 帳號綁定與合併（維運）
 
 端點與流程見[身分與訪客](identity-and-guests.md)。維運時要知道的事：
