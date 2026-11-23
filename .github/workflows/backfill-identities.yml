@@ -1,0 +1,44 @@
+# 手動觸發：為現有 LINE 使用者補齊 identities 對照項（見 docs/identity-and-guests.md、docs/operations.md）。
+# 到 GitHub 的 Actions 頁面選「Backfill identities」→ Run workflow。
+# 預設只列出會新增什麼（dry-run）；勾選 apply 才會真的寫入。可重複執行，已存在的對照項不會被動到。
+name: Backfill identities
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: '勾選才會真的寫入（不勾選＝dry-run，只列出數量）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    # 只允許在 main 上執行，避免從未合併的分支對正式資料庫寫入
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix functions
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CATSPLIT_APP }}
+      - name: Run backfill
+        working-directory: functions
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          if [ "$APPLY" = "true" ]; then
+            echo '### 補齊 identities（實際寫入）' >> "$GITHUB_STEP_SUMMARY"
+            node scripts/backfill-identities.mjs --project catsplit-app --apply 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo '### 補齊 identities（dry-run，沒有寫入）' >> "$GITHUB_STEP_SUMMARY"
+            node scripts/backfill-identities.mjs --project catsplit-app 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
