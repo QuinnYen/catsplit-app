@@ -40,7 +40,7 @@
 
 ### 綁定與合併的端點（PR5，前端入口在 PR6）
 
-全部要求登入且不是訪客（訪客一律 401），失敗回 `{ error }` 與對應的 HTTP 狀態。
+除了 `redeemLinkCode` 之外，全部要求登入且不是訪客（訪客一律 401），失敗回 `{ error }` 與對應的 HTTP 狀態。
 
 | 端點 | 用途 |
 |---|---|
@@ -48,6 +48,8 @@
 | `bindIdentity` | 綁定第二種登入方式；`{ provider: 'google', idToken }`、`{ provider: 'line', code, redirectUri }`（外部瀏覽器）或 `{ provider: 'line', liffIdToken }`（LINE 內） |
 | `executeMerge` | 確認並執行合併，`{ mergeId, resolutions? }`，可重試 |
 | `unbindIdentity` | 解除一個登入方式，`{ identityId }` |
+| `createLinkCode` | 在 LINE 內產生一次性連結碼（5 分鐘、單次），回傳 `{ code, expiresAtMs }` |
+| `redeemLinkCode` | 在外部瀏覽器兌換連結碼，**不需要登入**，`{ code }`，回傳該帳號的 `firebaseToken` 與 `profile` |
 
 - **`bindIdentity` 的結果**：`bound`（新增一筆對照項）、`already_bound`，或 `merge_required` 加預覽（`mergeId`、`initiatorIsDropped`、受影響的群組、帳目筆數、自己轉給自己的轉帳數、個人資料衝突與預設建議、`expiresAtMs`）。驗證與預覽在同一次呼叫完成（LINE 授權碼只能用一次）。
 - **憑證驗證**：Google ID token 簽發後 10 分鐘內才接受；LINE 授權碼的 `redirectUri` 必須是我們網域的 `/auth/callback`。LINE 內的 `liffIdToken` 沿用 LINE 驗證端點的有效期。
@@ -61,10 +63,28 @@
 ### 前端（PR6）
 
 - **設定頁「登入方式」**（`src/components/LoginMethodsCard.jsx`，訪客不顯示）：列出已綁定的登入方式與綁定日期；兩種以上才顯示「解除綁定」（至少保留一種）；還沒綁的才提供新增。
-  - **綁定 Google**：Google 官方按鈕，取得 ID token 後呼叫 `bindIdentity`。在 LINE 內建瀏覽器可能被擋，所以另外提示並提供「用外部瀏覽器開啟」（外部瀏覽器是另一個 session，要先登入再綁定）。
+  - **綁定 Google**：外部瀏覽器用 Google 官方按鈕，取得 ID token 後呼叫 `bindIdentity`。**LINE 內建瀏覽器改走「帶著登入狀態到外部瀏覽器」**（見下方），因為 Google 不允許在內嵌 WebView 登入。
   - **綁定 LINE**：只在外部瀏覽器提供（LINE 內建瀏覽器登入的就是 LINE，沒有可綁的）。`startLineBind` 在 localStorage 記下用途 `bind` 後跳到 LINE 授權；回到 `/auth/callback` 時 `completeOAuthCallback` 看到用途是 `bind`，用目前的 Firebase 登入加授權碼呼叫 `bindIdentity`，不會換掉登入帳號。
   - 綁定的結果：`bound` 或 `already_bound` 就更新清單並顯示提示；`merge_required` 就把預覽存進 localStorage（`catsplit_merge_preview`，10 分鐘過期，因為 LINE 授權會整頁跳轉）並導向 `/merge`。
 - **合併確認頁**（`/merge`，`src/pages/MergePage.jsx`）：顯示合併內容（兩邊都在與只有一邊在的群組數、會更新的帳目筆數、會被刪除的自付轉帳、搬移的個人資料筆數）、需要使用者決定的衝突（目前只有暱稱，顯示兩邊各是什麼，預設選較新的那份）、無法復原的警告。使用者選的是「目前登入的帳號」或「另一個帳號」，送出前換成雲端函式要的 `keep` / `drop`（發起人被併入時，發起人對應 `drop`，見 `src/utils/mergeUi.js`）。
 - **合併完成後**（`completeMerge`）：若原本的登入帳號被併入而刪除（`sessionReplaced`），用回傳的 token 重新登入保留帳號，並以回傳的 `profile`（名稱、頭像、登入方式）重建本機的使用者資料，再整頁重新載入到 `/settings?merged=1`，讓暱稱、群組等狀態都以合併後的帳號為準。
 - **錯誤處理**：雲端函式的錯誤碼對到畫面訊息（`mergeErrorKey`）。部分群組失敗、上一次還在執行等情況保留預覽，使用者再按一次「確認合併」會從斷點繼續；預覽逾時或找不到才清掉預覽。
 - 純函式與 API 呼叫抽在 `src/utils/mergeUi.js`、`src/utils/identityApi.js`，都有單元測試。
+
+### LINE 內綁定 Google：帶著登入狀態到外部瀏覽器
+
+LINE 內建瀏覽器是內嵌 WebView：有獨立的儲存空間，看不到手機瀏覽器或系統已登入的 Google 帳號；Google 也不允許在內嵌 WebView 登入（標準授權會直接 `403: disallowed_useragent`，Google 登入按鈕的彈出視窗則停在 Google 的 `accounts.google.com/transform` 頁面，憑證傳不回我們的頁面，實測 Android 就是這樣）。所以 LINE 內的設定頁不放 Google 按鈕，改成：
+
+1. 在 LINE 內按「用 Google 綁定」→ `createLinkCode` 產生一次性連結碼 → 用 `liff.openWindow({ external: true })` 開啟手機的外部瀏覽器 `/link#code=…`。
+2. 外部瀏覽器的 `/link` 頁（`src/pages/LinkPage.jsx`）呼叫 `redeemLinkCode`（**不需要登入**，碼本身就是憑證）兌換成同一個帳號的 custom token，登入後立刻把碼從網址與瀏覽紀錄移除，導到 `/settings?link=1`。
+3. 設定頁提示「已用你的 LINE 帳號登入，請按下方的 Google 按鈕」，用手機瀏覽器上已登入的 Google 帳號按一下完成綁定（之後與一般的 `bindIdentity`、合併流程相同，都在外部瀏覽器完成）。
+4. 切回 LINE 時，設定頁會在頁面重新可見時重新讀取清單，看到新綁定的 Google。
+
+連結碼的設計（`functions/linkCode.js`、`functions/linkFlow.js`）：
+- 256 位元隨機（43 個 base64url 字元），資料庫 `linkCodes/{sha256(碼)}` **只存雜湊**，只有雲端函式能讀寫（rules 全拒）。
+- **5 分鐘內有效、只能兌換一次**（兌換時在 transaction 內刪除紀錄；同時兌換多次只有一次成功）。同一個帳號同時只留一個有效的碼，產生新的舊的就失效。
+- 碼放在網址的 `#` 後面：不會被送到伺服器，也不會出現在 Referer；`/link` 頁讀完立刻用 `replaceState` 移除。若 `#` 被某些瀏覽器丟掉，頁面也接受 `?code=` 當備援。
+- 兌換時若帳號已不存在（`users` 文件被刪，例如剛被合併掉）一律當作無效，不會用這個 uid 建出空帳號。
+- 錯誤：`link_invalid`（不存在、已兌換、格式不對，404）、`link_expired`（逾時，410）。
+- 這等於「把已登入的狀態交給外部瀏覽器」。風險是連結在 5 分鐘內被別人先用掉；因為連結是在使用者自己的手機上直接開啟、單次有效，視為可接受。
+- 刪除我的資料會一併刪掉該帳號未兌換的連結碼；清除排程（`purge-merge-backups.yml`）也涵蓋過期的連結碼。

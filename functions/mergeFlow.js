@@ -281,12 +281,12 @@ export const unbindIdentity = async (db, { callerUid, identityId, makeUid, nowMs
 // ---------- 清除 ----------
 
 /**
- * 刪掉過期的合併紀錄與備份（expireAtMs 小於現在）：沒人確認的預覽一天後、完成的合併與備份 30 天後。
+ * 刪掉過期的合併紀錄、備份與一次性連結碼（expireAtMs 小於現在）：沒人確認的預覽一天後、完成的合併與備份 30 天後、連結碼過期一小時後。
  * 進行中的合併 expireAtMs 為 null，不會被刪。每次最多處理 limit 筆，回傳刪掉的路徑。
  */
 export const purgeExpired = async (db, nowMs, limit = 20) => {
   const deleted = []
-  for (const col of ['merges', 'mergeBackups']) {
+  for (const col of ['merges', 'mergeBackups', 'linkCodes']) {
     const snap = await db.collection(col).where('expireAtMs', '<', nowMs).limit(limit).get()
     for (const d of snap.docs) {
       await db.recursiveDelete(d.ref)

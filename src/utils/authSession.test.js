@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   uidFromLoginResponse, buildSessionUser, cachedLineUserId, canReuseCachedSession, isLineUserAgent, needsNicknameSetup,
+  sessionUserFromProfile, readLinkCode,
 } from './authSession.js'
 
 const LINE = 'U' + 'a'.repeat(32)
@@ -81,4 +82,23 @@ test('needsNicknameSetup：只有讀完雲端暱稱、仍沒有暱稱的 Google 
   assert.equal(needsNicknameSetup({ ...base, nickname: '小明' }), false)
   assert.equal(needsNicknameSetup({ ...base, provider: undefined }), false) // LINE 使用者有 LINE 名字可用
   assert.equal(needsNicknameSetup({ ...base, isGuest: true }), false)
+})
+
+test('sessionUserFromProfile：舊 LINE 使用者帶 lineUserId，Google 帳號帶 provider，缺欄位有預設', () => {
+  assert.deepEqual(
+    sessionUserFromProfile(LINE, { name: 'Amy', avatar: 'https://a/b.png', provider: null }),
+    { uid: LINE, lineUserId: LINE, name: 'Amy', avatar: 'https://a/b.png' },
+  )
+  const g = sessionUserFromProfile(INTERNAL, { name: 'Bob', avatar: null, provider: 'google' })
+  assert.deepEqual([g.uid, g.provider, g.lineUserId, g.avatar], [INTERNAL, 'google', undefined, null])
+  assert.deepEqual(sessionUserFromProfile(INTERNAL, undefined), { uid: INTERNAL, lineUserId: undefined, name: '', avatar: null })
+  assert.equal(sessionUserFromProfile(INTERNAL, { avatar: 123 }).avatar, null)
+})
+
+test('readLinkCode：優先讀 # 後面，其次 ?code=，都沒有回 null', () => {
+  assert.equal(readLinkCode({ hash: '#code=abc_-' }), 'abc_-')
+  assert.equal(readLinkCode({ hash: '#code=fromHash', search: '?code=fromQuery' }), 'fromHash')
+  assert.equal(readLinkCode({ hash: '', search: '?code=fromQuery' }), 'fromQuery')
+  assert.equal(readLinkCode({ hash: '#other=1', search: '?x=1' }), null)
+  assert.equal(readLinkCode({}), null)
 })

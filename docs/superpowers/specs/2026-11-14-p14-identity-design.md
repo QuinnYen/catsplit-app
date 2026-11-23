@@ -99,7 +99,7 @@
 
 **介面**
 - 登入畫面：LINE 內自動登入不變；外部瀏覽器顯示 LINE／Google 兩按鈕，LINE 內建瀏覽器的登入畫面不顯示 Google 按鈕；訪客入口維持。
-- 設定頁新增「登入方式」：列出已綁定 provider、解除綁定、綁定其他方式。**LINE 內建瀏覽器的設定頁仍可綁定 Google**；若偵測到 Google 授權被擋，提示並提供「在外部瀏覽器開啟」。
+- 設定頁新增「登入方式」：列出已綁定 provider、解除綁定、綁定其他方式。**LINE 內建瀏覽器的設定頁不放 Google 按鈕**（Google 不允許在內嵌 WebView 登入，實測 Android 彈出視窗會停在 Google 的 `accounts.google.com/transform` 頁面）：改成「用 Google 綁定」，由 LINE 內已登入的帳號產生一次性連結碼，帶著登入狀態開啟手機的外部瀏覽器，在那裡用手機上已登入的 Google 帳號完成綁定（`createLinkCode`、`redeemLinkCode`、`/link` 頁，設計見 `docs/identity-and-guests.md`）。
 - 新增「合併確認頁」：顯示將搬動的群組數與帳目筆數、自動加總的群組、需要決定的衝突清單；每項帶預設建議值，使用者確認或修改後才執行。
 - LINE 專屬功能（`sendMessages`、`shareTargetPicker`）維持只在 LINE 內建瀏覽器出現；非 LINE 環境以複製邀請連結或 Web Share 替代。
 - LINE 內建瀏覽器常擋 Google OAuth，LINE 內綁定 Google 需導向外部瀏覽器完成，實作時要實測 LINE 內、外部瀏覽器、手機 PWA 三種環境。

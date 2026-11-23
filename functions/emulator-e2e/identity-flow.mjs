@@ -241,6 +241,38 @@ test('同一個合併同時執行兩次：只有一次真的執行，另一次�
   assert.equal(lineAfter.body.uid, G2.uid) // 被併入的 LINE 之後登入的是保留的帳號
 })
 
+test('LINE 內綁定 Google：產生一次性連結碼 → 外部瀏覽器兌換成同一個帳號的登入 → 用外部瀏覽器的 Google 綁定', async () => {
+  const L3 = 'U' + '3'.repeat(32)
+  const line = await lineLogin(L3)
+  assert.equal((await post('createLinkCode', {})).status, 401) // 未登入不能產生
+
+  const first = await post('createLinkCode', {}, line.idToken)
+  assert.equal(first.status, 200, JSON.stringify(first.body))
+  assert.match(first.body.code, /^[A-Za-z0-9_-]{43}$/)
+  const made = await post('createLinkCode', {}, line.idToken) // 再產生一個，前一個失效
+  assert.equal((await post('redeemLinkCode', { code: first.body.code })).status, 404)
+
+  // 兌換不需要登入（外部瀏覽器還沒登入）
+  const redeemed = await post('redeemLinkCode', { code: made.body.code })
+  assert.equal(redeemed.status, 200, JSON.stringify(redeemed.body))
+  assert.equal(redeemed.body.uid, L3)
+  assert.equal(redeemed.body.profile.name, `Mock ${L3.slice(0, 6)}`)
+  const extToken = await signIn(redeemed.body.firebaseToken)
+  assert.equal(uidOfToken(extToken), L3)
+
+  // 只能用一次；格式不對也是無效
+  const again = await post('redeemLinkCode', { code: made.body.code })
+  assert.deepEqual([again.status, again.body.error], [404, 'link_invalid'])
+  assert.equal((await post('redeemLinkCode', { code: 'x' })).status, 404)
+  assert.equal((await post('redeemLinkCode', {})).status, 404)
+
+  // 用兌換得到的登入狀態，在外部瀏覽器以 Google 綁定，綁到同一個帳號
+  const bound = await post('bindIdentity', { provider: 'google', idToken: 'g-link' }, extToken)
+  assert.deepEqual([bound.status, bound.body], [200, { status: 'bound' }])
+  assert.equal((await db.doc('identities/google:g-link').get()).data().uid, L3)
+  assert.equal((await googleLogin('g-link')).uid, L3) // 之後用 Google 登入進的也是這個 LINE 帳號
+})
+
 test('刪除帳號：對照項、合併紀錄與備份一併清除', async () => {
   const del = await post('detachMember', { groupIds: [], deleteAccount: true }, S.Lnew)
   assert.equal(del.status, 200, JSON.stringify(del.body))

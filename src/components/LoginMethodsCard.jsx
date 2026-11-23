@@ -22,11 +22,13 @@ const LoginMethodsCard = () => {
   const [loadFailed, setLoadFailed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [errorKey, setErrorKey] = useState(null)
-  // 合併完成後整頁重新載入會帶 ?merged=1；LINE 授權綁定完成跳回來會帶 ?bound=1（新增）或 ?bound=already（原本就綁了）
+  // 合併完成後整頁重新載入會帶 ?merged=1；LINE 授權綁定完成跳回來會帶 ?bound=1（新增）或 ?bound=already（原本就綁了）；
+  // 從 LINE 內帶到外部瀏覽器登入完成會帶 ?link=1（提示接著按 Google 按鈕）
   const [noticeKey, setNoticeKey] = useState(() => {
     if (params.get('merged') === '1') return 'identity.mergedDone'
     if (params.get('bound') === '1') return 'identity.bound'
     if (params.get('bound') === 'already') return 'identity.alreadyBound'
+    if (params.get('link') === '1') return 'identity.linkedFromLine'
     return null
   })
   // context 的函式每次渲染都是新的，放進 ref，避免讀取清單的 effect 跟著重跑
@@ -45,6 +47,12 @@ const LoginMethodsCard = () => {
     }
   }, [])
   useEffect(() => { load() }, [load])
+  // 回到這個頁面時重新讀清單：在外部瀏覽器綁完 Google 再切回 LINE，這裡才會看到
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [load])
 
   const providerName = (provider) => t(`identity.provider.${provider}`)
 
@@ -87,7 +95,13 @@ const LoginMethodsCard = () => {
     })
   }
 
-  const openExternal = () => liffInstance?.openWindow({ url: `${window.location.origin}/settings`, external: true })
+  // LINE 內建瀏覽器無法用 Google 登入：產生一次性連結碼，帶著登入狀態開啟手機的外部瀏覽器，
+  // 在那裡用手機上已登入的 Google 帳號完成綁定（見 LinkPage）。碼放在 # 後面，不會被送到伺服器
+  const startGoogleViaBrowser = () => run(async () => {
+    if (!liffInstance) throw new Error('liff_not_ready')
+    const { code } = await identityApi.createLinkCode(await tokenRef.current())
+    liffInstance.openWindow({ url: `${window.location.origin}/link#code=${code}`, external: true })
+  })
 
   if (identities === null) {
     return <div style={{ ...card, fontSize: 13, color: 'var(--cs-text-sub)' }}>{t('identity.loading')}</div>
@@ -133,11 +147,11 @@ const LoginMethodsCard = () => {
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: '0.5px solid var(--cs-border)' }}>
           <div style={labelStyle}>{t('identity.addTitle')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'stretch', opacity: busy ? 0.5 : 1, pointerEvents: busy ? 'none' : 'auto' }}>
-            {canAddGoogle && <GoogleSignInButton onCredential={handleGoogleCredential} width={280} />}
+            {canAddGoogle && !inLine && <GoogleSignInButton onCredential={handleGoogleCredential} width={280} />}
             {canAddGoogle && inLine && (
               <>
-                <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', lineHeight: 1.6 }}>{t('identity.inLineHint')}</div>
-                {liffInstance && <button onClick={openExternal} style={smallButton}>{t('identity.openExternal')}</button>}
+                <button onClick={startGoogleViaBrowser} style={{ ...smallButton, padding: '11px 16px', fontSize: 14, fontWeight: 600 }}>{t('identity.addGoogleViaBrowser')}</button>
+                <div style={{ fontSize: 11, color: 'var(--cs-text-sub)', lineHeight: 1.6 }}>{t('identity.viaBrowserHint')}</div>
               </>
             )}
             {canAddLine && (

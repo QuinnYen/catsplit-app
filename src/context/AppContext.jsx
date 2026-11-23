@@ -5,7 +5,7 @@ import { auth, db } from '../config/firebase'
 import { initLiff } from '../config/liff'
 import { useI18n } from '../i18n/I18nProvider'
 import {
-  uidFromLoginResponse, buildSessionUser, canReuseCachedSession, isLineUserAgent, needsNicknameSetup,
+  uidFromLoginResponse, buildSessionUser, canReuseCachedSession, isLineUserAgent, needsNicknameSetup, sessionUserFromProfile,
 } from '../utils/authSession'
 import identityApi from '../utils/identityApi'
 
@@ -196,7 +196,8 @@ export const AppProvider = ({ children }) => {
 
         // 在 /auth/callback 路徑時，交給 callback 頁處理，不在這裡初始化
         // callback 頁會呼叫 completeOAuthCallback 設定 user，再 navigate 到 /
-        if (window.location.pathname === '/auth/callback') {
+        // /link（LINE 內帶過來的一次性連結）同理，由 LinkPage 兌換後呼叫 completeLinkLogin 設定 user
+        if (window.location.pathname === '/auth/callback' || window.location.pathname === '/link') {
           return  // finally 仍會執行，setLoading(false) 正常運作
         }
 
@@ -334,18 +335,18 @@ export const AppProvider = ({ children }) => {
   const completeMerge = async ({ sessionReplaced, firebaseToken, profile }) => {
     if (sessionReplaced) {
       await signInWithCustomToken(auth, firebaseToken)
-      const uid = auth.currentUser.uid
-      const isGoogle = profile?.provider === 'google'
-      const u = buildSessionUser({
-        uid,
-        lineUserId: /^U[0-9a-f]{32}$/.test(uid) ? uid : undefined,
-        name: profile?.name ?? '',
-        avatar: typeof profile?.avatar === 'string' ? profile.avatar : null,
-        provider: isGoogle ? 'google' : undefined,
-      })
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionUserFromProfile(auth.currentUser.uid, profile)))
     }
     window.location.assign('/settings?merged=1')
+  }
+
+  // 外部瀏覽器兌換 LINE 內產生的一次性連結碼後，用回傳的 token 登入同一個帳號（見 LinkPage）。
+  // 不整頁重新載入：直接把使用者放進狀態，交給呼叫端導向設定頁
+  const completeLinkLogin = async ({ firebaseToken, profile }) => {
+    await signInWithCustomToken(auth, firebaseToken)
+    const u = sessionUserFromProfile(auth.currentUser.uid, profile)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
+    setUser(u)
   }
 
   // Google 登入：credential 是 Google Identity Services 給的 ID token，交給 authExchange 驗證並換成內部 uid 的 custom token。
@@ -471,7 +472,7 @@ export const AppProvider = ({ children }) => {
   }
 
   return (
-    <AppContext.Provider value={{ user, setUser, nicknameReady, needsNickname, nicknameLoading, saveNickname, loading, loginWithLine, loginWithGoogle, startLineBind, getIdToken, completeMerge, loginAsGuest, joinAsGuest, forgetGuestName, switchGuestGroup, guestNames: user?.guest ? readGuestNames() : [], claimMember, logout, completeOAuthCallback, liffInstance }}>
+    <AppContext.Provider value={{ user, setUser, nicknameReady, needsNickname, nicknameLoading, saveNickname, loading, loginWithLine, loginWithGoogle, startLineBind, getIdToken, completeMerge, completeLinkLogin, loginAsGuest, joinAsGuest, forgetGuestName, switchGuestGroup, guestNames: user?.guest ? readGuestNames() : [], claimMember, logout, completeOAuthCallback, liffInstance }}>
       {children}
     </AppContext.Provider>
   )

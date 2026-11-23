@@ -82,7 +82,7 @@ node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫
 
 - **進行中或卡住的合併**：Firestore Console 的 `merges/{id}`，`state` 不是 `done` 就是還沒完成。使用者用同一個 `mergeId` 再按一次確認就會從斷點繼續（`failedGroups` 有值代表哪些群組失敗）；`lease` 有值且 `untilMs` 在未來，代表上一次還在執行，約 6 分鐘後可重試。`error` 欄位是上一次失敗的原因。
 - **備份**：`mergeBackups/{mergeId}`，子集合 `groupDocs`（被併入帳號所在群組的改動前內容，含會被刪除的自付轉帳）、`personal`（個人資料）、`keepOverwritten`（被覆蓋的保留帳號文件）；meta 的 `dropIdentities`、`dropUserDoc` 是被併入帳號的對照項與 `users` 文件。保留 30 天。**沒有一鍵還原**，要還原就依內容用腳本寫回。
-- **自動清除**：`.github/workflows/purge-merge-backups.yml` 每天 19:37（UTC）執行，刪除過期的 `merges` 與 `mergeBackups`（含子集合）。到 Actions 頁面可手動執行，預設 dry-run，勾選 `apply` 才真的刪；腳本是 `functions/scripts/purge-merge-backups.mjs`。進行中的合併不會被刪。`executeMerge` 每次也會順便清幾筆當備援。
+- **自動清除**：`.github/workflows/purge-merge-backups.yml` 每天 19:37（UTC）執行，刪除過期的 `merges`、`mergeBackups`（含子集合）與一次性連結碼 `linkCodes`。到 Actions 頁面可手動執行，預設 dry-run，勾選 `apply` 才真的刪；腳本是 `functions/scripts/purge-merge-backups.mjs`。進行中的合併不會被刪。`executeMerge` 每次也會順便清幾筆當備援。
 - **為什麼不用 Cloud Scheduler 排程函式**：部署它需要額外啟用 API 與權限，部署失敗會連帶讓所有函式部署失敗；GitHub Actions 沿用已有的服務帳號，沒有額外風險。
 - **同時合併的限制**：同一對帳號固定同一份 `merges` 紀錄；任一帳號有進行中的其他合併時，新的預覽會被拒絕。這個檢查不是交易，兩個極短時間內同時開始的不同合併理論上可能都通過，因為兩個預覽都需要使用者本人通過兩邊驗證，風險很低。
 - **憑證驗證**：Google ID token 簽發 10 分鐘內才接受；呼叫者本身的 session 只要是有效的 Firebase ID token（不另外要求剛登入）。
@@ -99,6 +99,7 @@ node scripts/backfill-identities.mjs --project catsplit-app --apply  # 實際寫
    - 兩邊的群組、帳目、收款方式、儲蓄目標都在；兩個帳號互相的轉帳不見了，餘額沒變。
    - 被併入的帳號用原本的登入方式再登入，進的是合併後的帳號。
 5. **備份**：Firestore Console 的 `mergeBackups/{id}` 有資料、`merges/{id}` 的 `state` 是 `done`。
+5b. **LINE 內綁定 Google**：在 LINE 內的設定頁按「用 Google 綁定」，應開啟手機的外部瀏覽器（Chrome），短暫顯示「正在登入…」後進到設定頁並提示「已用你的 LINE 帳號登入」，按 Google 按鈕用手機上已登入的 Google 帳號完成綁定；切回 LINE 後清單應出現 Google。同一個連結第二次開啟應顯示「無效或已經使用過」。
 6. **刪除我的資料**：合併後的帳號刪除資料，`identities`、`merges`、`mergeBackups` 都應清空。
 
 ## Google 登入設定

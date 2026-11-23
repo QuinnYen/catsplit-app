@@ -34,6 +34,17 @@ test('每個呼叫都帶 Bearer、JSON body，打到對應的函式網址', asyn
   assert.deepEqual(JSON.parse(calls[3].init.body), { identityId: 'google:1' })
 })
 
+test('createLinkCode 帶 Bearer；redeemLinkCode 不需要登入，沒有 Authorization 標頭，只送碼', async () => {
+  const { fn, calls } = fakeFetch({ status: 200, body: { ok: true } })
+  const api = createIdentityApi({ baseUrl: BASE, fetchFn: fn })
+  await api.createLinkCode('tok')
+  await api.redeemLinkCode('the-code')
+  assert.deepEqual(calls.map((c) => c.url.split('/').pop()), ['createLinkCode', 'redeemLinkCode'])
+  assert.equal(calls[0].init.headers.Authorization, 'Bearer tok')
+  assert.equal('Authorization' in calls[1].init.headers, false)
+  assert.deepEqual(JSON.parse(calls[1].init.body), { code: 'the-code' })
+})
+
 test('成功時回傳 JSON', async () => {
   const { fn } = fakeFetch({ status: 200, body: { status: 'bound' } })
   assert.deepEqual(await createIdentityApi({ baseUrl: BASE, fetchFn: fn }).bindIdentity('t', {}), { status: 'bound' })
