@@ -37,7 +37,7 @@
 
 ### 綁定判斷
 
-`bindIdentity`：已登入使用者再通過第二種身分驗證（兩邊 token 都由 Function 驗證）。依第二身分的狀態分三種結果：
+`bindIdentity`：已登入（非訪客）使用者再通過第二種身分驗證（兩邊 token 都由 Function 驗證；Google ID token 簽發後 10 分鐘內才接受，LINE 授權碼只能用一次）。**驗證與預覽在同一次呼叫完成**：偵測到需要合併時直接建立預覽並回傳 `mergeId`，不另設 `previewMerge` 端點（LINE 授權碼只能用一次，驗證完就沒有第二次機會）。另有 `listIdentities`（設定頁列出已綁定的登入方式，對照表客戶端讀不到）、`executeMerge`、`unbindIdentity` 三個端點。依第二身分的狀態分三種結果：
 
 1. 第二身分不在對照表，且 `users/{subject}` 也不存在 → 新增一筆對照項即結束。
 2. 第二身分已屬於同一個 uid → 已綁定，不做事。
@@ -51,14 +51,21 @@
 
 合併分兩步，中間以伺服器端的 `merges/{id}` 紀錄串接（LINE OAuth `code` 只能使用一次，不能讓兩步都要求第二身分的憑證）：
 
-1. **`previewMerge`**：兩邊須在同一次操作內通過驗證（發起人的 Firebase session 加第二身分的憑證）；訪客身分不能發起。驗證通過後建立 `merges/{id}`，狀態 `previewed`，存雙方 uid、`initiatorUid`、10 分鐘到期時間與衝突清單快照，回傳 `mergeId`。同一對帳號同時只允許一個進行中的合併。
+1. **預覽（由 `bindIdentity` 偵測到需要合併時一併完成）**：兩邊須在同一次操作內通過驗證（發起人的 Firebase session 加第二身分的憑證）；訪客身分不能發起。驗證通過後建立 `merges/{id}`，狀態 `previewed`，存雙方 uid、`initiatorUid`、10 分鐘到期時間與衝突清單快照，回傳 `mergeId`。同一對帳號同時只允許一個進行中的合併。
 2. **dry-run 內容**：回報受影響群組數、帳目筆數、自動處理的項目、需要使用者決定的衝突清單（具體項目，不只是數量），使用者確認後才執行。
-3. **`executeMerge(mergeId, resolutions)`**：只需要發起人的 Firebase session 與 `mergeId`，並檢查發起人與紀錄一致、未過期。先備份 `dropUid` 資料到 `mergeBackups/{id}`；備份保留 30 天，由排程函式定期清除過期備份。
+3. **`executeMerge(mergeId, resolutions)`**：只需要發起人的 Firebase session 與 `mergeId`，並檢查發起人與紀錄一致、未過期。先備份 `dropUid` 資料到 `mergeBackups/{id}`；備份保留 30 天，由 GitHub Actions 每天排程（`.github/workflows/purge-merge-backups.yml`）清除過期的合併紀錄與備份，`executeMerge` 每次也順便清幾筆當備援。不用 Cloud Scheduler 排程函式：部署它需要額外啟用 API 與權限，部署失敗會連帶影響其他函式。
 4. 查 `groups where members array-contains dropUid`，逐一呼叫 `migrateMember(group, dropUid, keepUid)`。
 5. 搬 `users/{dropUid}/…` 個人資料（收款方式、暱稱、儲蓄、**個人帳本 `transactions` 與 `spendMethods`**，見 P12 spec），同 id 衝突依 `resolutions` 處理；使用者未指定的項目以預設建議值（較新者）為準。
 6. 對照表 `dropUid` 的所有項目改指向 `keepUid`，最後才刪除 `dropUid` 帳號。
 
 進度存 `merges/{id}` 狀態機：`previewed → started → groups_done → profile_done → done`，中途失敗可從斷點重試。
+
+**執行規則（實作）**：
+- 只有發起人能執行；預覽 10 分鐘內要確認，逾時需重新驗證（沒人確認的預覽紀錄一天後清除）。
+- 用租約避免同時執行兩次：進行中且租約未過期（6 分鐘）時，再呼叫回 409；失敗時釋放租約，可立即重試。另外，任一帳號有進行中的其他合併，或這一對已在執行，新的預覽會被拒絕。
+- 第一次執行時，用預覽存下的衝突清單加上使用者的選擇，定出完整的解決方案並存起來，之後重試一律用同一份，不受重試時傳入的選擇影響。
+- 動資料之前先備份被併入帳號會被改動的資料（群組文件與會被改動的帳目、個人資料、被覆蓋的保留帳號文件、被併入帳號的對照項與 users 文件）；備份只做一次（`backupDone`），重試不重做，否則會備份到搬移後的資料。
+- 收尾依序：被併入帳號的對照項改指向保留帳號（舊 LINE 使用者還沒有對照項時補建）→ 刪 `users/{drop}` → 刪 Auth → 標記完成。每一步都可重複執行。
 
 **完成後換 token**：`executeMerge` 結束時回傳 `keepUid` 的 custom token，前端用它重新登入。若發起人是被刪除的那一邊（`dropUid`），他原本的 session 會失效，必須靠這個 token 接續。
 
@@ -78,7 +85,8 @@
 
 ### 解除綁定
 
-- 至少保留一種登入方式。
+- 至少保留一種登入方式；同一種登入方式可以綁定多個（例如兩個 Google 帳號），不限制每種一個。
+- **舊 LINE 使用者自己的 LINE 不能直接刪對照項**：他的 uid 就是 LINE userId，下次 LINE 登入會把對照項懶建立回來，等於沒解除。改成把該對照項指向一個新的空帳號，之後用這個 LINE 登入的是新帳號；日後再綁定回來會被視為另一個帳號而要求合併。
 - 解除 LINE 綁定後 uid 不變（uid 只是字串，與 LINE 無關）；LINE 專屬功能自然不再可用。
 
 ### 重用 `migrateMember` 的現況確認（2026-11-14 讀碼）

@@ -121,6 +121,16 @@ const collectTree = async (docRef, prefix = '') => {
   return out
 }
 
+// 讀出 users/{uid} 底下所有存在的文件 [{ path, data }]（備份用）
+export const readPersonalTree = async (db, uid) => {
+  const out = []
+  for (const { path, ref } of await collectTree(db.doc(`users/${uid}`))) {
+    const snap = await ref.get()
+    if (snap.exists) out.push({ path, data: snap.data() })
+  }
+  return out
+}
+
 /**
  * 列出被併入帳號的個人資料，以及哪些文件在保留帳號那邊也有同路徑（衝突）。
  * 收款方式、付款方式、儲蓄目標（含存提款紀錄）都是自動產生的 id，幾乎不會衝突；
