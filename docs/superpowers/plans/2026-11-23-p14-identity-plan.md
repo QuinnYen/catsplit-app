@@ -1,8 +1,8 @@
 # P14 獨立帳號：實作計畫
 
-日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：進行中
+日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：已完成（2026-11-23）
 
-**進度**：PR1 至 PR9 已部署並在正式環境驗證（#5 至 #15）：LINE 與 Google 雙向綁定、完整帳號合併、LINE 內以一次性連結碼綁定 Google（LINE 內無法自動開啟外部瀏覽器，最終只提供複製連結）。PR10（收尾：隱私權政策與使用條款、文件）進行中。
+**進度**：全部完成並在正式環境驗證（GitHub PR #5 至 #16）：LINE 與 Google 雙向綁定、完整帳號合併、LINE 內以一次性連結碼綁定 Google（LINE 內無法自動開啟外部瀏覽器，只提供複製連結）、隱私權政策與使用條款更新。實測後多出的修正不另編號，見 PR7 與 PR10 的備註。
 
 ## 0. 目標
 
@@ -37,7 +37,7 @@ LINE 維持主要登入，新增 Google 登入；LINE 與 Google 可互相綁定
 | D2 | 內部 uid 格式 | **`u_` + 20 位隨機十六進位** | 不能以 `p_` 開頭（rules 與 `isGuestId` 依賴），LINE userId 不含底線，不會撞號 |
 | D3 | 合併後 `from === to` 的轉帳 | **刪除該筆轉帳** | 自己轉給自己對餘額沒有影響。實作前要先讀 `SettlePage` 的結算計算，確認轉帳確實只是對沖 |
 | D4 | 測試環境與上線 | **已決定：個人側專案，直接部署上線，不另建測試專案** | 端到端測試靠模擬器（PR1 的 spike）；仍維持每個 PR 向下相容，並保留備份與 dry-run，因為正式資料就是唯一一份 |
-| D5 | LINE 內建瀏覽器的 Google 登入 | **已決定：登入畫面不顯示 Google 按鈕，但設定頁仍可綁定** | 若 Google 授權被 LINE 內建瀏覽器擋住，提示並提供「在外部瀏覽器開啟」 |
+| D5 | LINE 內建瀏覽器的 Google 登入 | **已決定：登入畫面不顯示 Google 按鈕，但設定頁仍可綁定** | 實測 Google 在 LINE 內建瀏覽器確實無法登入，最後改成帶著登入狀態到外部瀏覽器（PR7），而 LINE 內無法自動開啟外部瀏覽器，只提供複製連結 |
 
 D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 spec。
 
@@ -144,15 +144,19 @@ PR6 部署後實測發現（Android）：LINE 內建瀏覽器按 Google 按鈕�
 - 前端：設定頁在 LINE 內改成「用 Google 綁定」按鈕（**同時移除原本放在 Google 按鈕底下的「用外部瀏覽器開啟」與提示**）；新增 `/link` 頁兌換並登入；回到頁面時重新讀清單。
 - 測試：連結碼單元測試 5 項、整合測試 7 項、端到端 1 項、瀏覽器 6 項。
 
-**PR7 實測後的修正（PR8、PR9）**：Android（內建瀏覽器、沒有 Chrome）按下「用 Google 綁定」後，瀏覽器沒有開啟，畫面一直停在「處理中…」。改成：API 呼叫加 20 秒逾時；先顯示連結、再由使用者點「開啟瀏覽器」（點擊當下直接 `openWindow`）；`openWindow` 失敗有明確訊息；**一定提供「複製連結」備援**；提示文字不再假設有 Chrome 或已登入 Google。確切原因未確認（沙盒連不到 LINE 文件）。
+**PR7 實測後的修正（GitHub #13 至 #15）**：Android（內建瀏覽器、沒有 Chrome）按下「用 Google 綁定」後，瀏覽器沒有開啟，畫面一直停在「處理中…」。
+- #13：API 呼叫加 20 秒逾時；先顯示連結再由使用者操作；提供「複製連結」備援。
+- #14：試了 `openExternalBrowser=1` 參數，仍無效；同時把合併衝突的預設改成保留 `keepUid`（原本用「較新的」，剛建立的新帳號資料一定較新，會預設刪掉用了很久的帳號）。
+- #15：`liff.openWindow({ external: true })` 與 `openExternalBrowser=1` 在實測的 Android LINE 內都無效（確切原因未確認，沙盒連不到 LINE 文件），移除所有自動開啟的按鈕，只留「複製連結」。
 
 ### PR10：收尾與文件（S）
 
-> 實測結果：`liff.openWindow` 與 `openExternalBrowser=1` 在 Android 的 LINE 內都無效，PR9 移除自動開啟、只留複製連結；PR8 同時把合併衝突預設改為保留 keepUid（不再用「較新的」）。
-
 - 更新 `docs/identity-and-guests.md`、`docs/operations.md`（Google OAuth 用戶端、授權網域、環境變數、備份排程、測試方式）、`docs/architecture.md`、`README.md`。
-- 更新 `public/privacy.html`、`public/terms.html`（中英文）：新增 Google 登入、身分對照、合併備份保留 30 天的說明。
+- 更新 `public/privacy.html`、`public/terms.html`（中英文）：新增 Google 登入、身分對照、合併備份保留 30 天、一次性連結碼的說明。
 - 更新 `docs/superpowers/specs/README.md` 的 P14 狀態。
+- 順帶：LINE 內匯出 CSV 同樣無法開外部瀏覽器，改成自動複製 5 分鐘有效的下載網址並彈窗提示（#16）。
+
+**後續（不在 P14）**：Google 帳號的預設貓咪頭像（目前顯示姓名首字母）、Apple 登入、一鍵還原合併、真正脫離 LINE（LINE 仍是主要登入）。
 
 ## 5. 風險與對策
 
@@ -162,9 +166,9 @@ PR6 部署後實測發現（Android）：LINE 內建瀏覽器按 Google 按鈕�
 | `main` 一合併就上線 | 每個 PR 向下相容；PR1 保留 `userId` 欄位；rules 與前端同 PR |
 | 舊 LINE 使用者對照項尚未建立 | 登入時懶建立加上線前補齊腳本；綁定判斷以「`users/{sub}` 是否存在」兜底 |
 | 同一個 Google 帳號兩裝置同時首次登入 | `authExchange` 查表與建立放在 transaction，並加並行測試 |
-| LINE 內建瀏覽器無法 Google 登入 | 登入畫面不顯示；設定頁仍可綁定，被擋時提示並提供「在外部瀏覽器開啟」（D5） |
+| LINE 內建瀏覽器無法 Google 登入 | 登入畫面不顯示；設定頁產生一次性連結碼，由使用者複製貼到手機瀏覽器完成綁定（PR7） |
 | 合併途中使用者被登出 | `executeMerge` 回傳 `keepUid` 的 token，前端自動重新登入 |
 
-## 6. 開工前我需要的確認
+## 6. 開工前的確認（已結案）
 
-D1 到 D5 與 spec 補修皆已確認。唯一待辦：Google OAuth 用戶端 ID 建好後告訴我（PR3 才用到，不急）。可以從 PR1 開工。
+D1 到 D5 與 spec 補修皆已確認，Google OAuth 用戶端 ID 已建立並設定。
