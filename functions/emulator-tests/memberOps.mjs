@@ -221,6 +221,9 @@ test('列出個人資料與衝突：只有固定 id 的文件會衝突，自動 
   assert.deepEqual(conflicts.map((c) => c.path).sort(), ['settings/oaPrompt', 'settings/profile'])
   const byPath = Object.fromEntries(conflicts.map((c) => [c.path, c]))
   assert.ok(byPath['settings/profile'].dropUpdatedMs > byPath['settings/profile'].keepUpdatedMs)
+  // 暱稱衝突帶雙方暱稱，其他路徑不帶內容
+  assert.deepEqual([byPath['settings/profile'].keepNickname, byPath['settings/profile'].dropNickname], ['KeepNick', 'DropNick'])
+  assert.ok(!('keepNickname' in byPath['settings/oaPrompt']))
   assert.ok(byPath['settings/oaPrompt'].keepUpdatedMs > byPath['settings/oaPrompt'].dropUpdatedMs)
 
   const resolutions = buildResolutions(conflicts)

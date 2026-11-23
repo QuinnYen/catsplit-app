@@ -107,6 +107,7 @@ test('bindIdentity：Google 帳號綁一個沒有對照項、但已是現有帳�
   assert.equal(r.expiresAtMs, NOW + MERGE_PREVIEW_TTL_MS)
   assert.deepEqual(r.personal.needsChoice.map((c) => c.path), ['settings/profile'])
   assert.equal(r.personal.needsChoice[0].suggested, 'drop') // G 的暱稱較新
+  assert.deepEqual([r.personal.needsChoice[0].keepNickname, r.personal.needsChoice[0].dropNickname], ['LNick', 'GNick'])
 
   const rec = (await db.doc(`merges/${r.mergeId}`).get()).data()
   assert.equal(rec.state, 'previewed')

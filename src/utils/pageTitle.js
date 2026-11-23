@@ -3,6 +3,7 @@ const ROUTES = [
   [/^\/$/, 'tab.home'],
   [/^\/create$/, 'cg.title'],
   [/^\/settings$/, 'group.settings'],
+  [/^\/merge$/, 'merge.title'],
   [/^\/payment-methods$/, 'pay.title'],
   [/^\/spend-methods$/, 'spend.title'],
   [/^\/savings$/, 'savings.title'],

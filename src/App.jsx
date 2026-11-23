@@ -32,6 +32,7 @@ const SavingsGoalFormPage = lazy(() => import('./pages/SavingsGoalFormPage'))
 const SavingsGoalPage = lazy(() => import('./pages/SavingsGoalPage'))
 const StatsPage = lazy(() => import('./pages/StatsPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const MergePage = lazy(() => import('./pages/MergePage'))
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
 
 const LoadingScreen = () => {
@@ -157,6 +158,7 @@ const ProtectedRoutes = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/merge" element={user.guest ? <Navigate to="/" /> : <MergePage />} />
       <Route path="/payment-methods" element={user.guest ? <Navigate to="/" /> : <PaymentMethodsPage />} />
       <Route path="/spend-methods" element={user.guest ? <Navigate to="/" /> : <SpendMethodsPage />} />
       <Route path="/savings" element={user.guest ? <Navigate to="/" /> : <SavingsListPage />} />

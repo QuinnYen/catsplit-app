@@ -387,7 +387,16 @@ export const executeMerge = onRequest(
     }, { mergeId, callerUid: caller.uid, userChoices: resolutions, runId: randomBytes(8).toString('hex') })
     // 順便清掉過期的合併紀錄與備份（沒有排程時的備援，失敗不影響合併結果）
     purgeExpired(db, Date.now(), 5).catch((e) => console.error('purgeExpired error', e))
-    return { ok: true, keepUid: result.keepUid, firebaseToken: result.firebaseToken, alreadyDone: result.alreadyDone, sessionReplaced: caller.uid !== result.keepUid }
+    // 保留帳號的名稱與頭像：被併入的帳號是發起人時，原本的 session 失效，前端要用它重建登入狀態（users 文件客戶端讀不到）
+    const keepProfile = (await db.doc(`users/${result.keepUid}`).get()).data() ?? {}
+    return {
+      ok: true,
+      keepUid: result.keepUid,
+      firebaseToken: result.firebaseToken,
+      alreadyDone: result.alreadyDone,
+      sessionReplaced: caller.uid !== result.keepUid,
+      profile: { name: keepProfile.name ?? null, avatar: keepProfile.avatar ?? null, provider: keepProfile.provider ?? null },
+    }
   })
 )
 

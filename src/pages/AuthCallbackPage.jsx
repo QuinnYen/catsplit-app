@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import GroupIcon from '../components/GroupIcon'
+import { mergeErrorKey, savePreview } from '../utils/mergeUi'
 
 const AuthCallbackPage = () => {
   const [params] = useSearchParams()
@@ -26,7 +27,17 @@ const AuthCallbackPage = () => {
     ranRef.current = true
 
     completeOAuthCallback({ code, state })
-      .then(() => {
+      .then((r) => {
+        // 在設定頁綁定 LINE 回來：對方是有資料的帳號就到合併確認頁，否則回設定頁
+        if (r?.purpose === 'bind') {
+          if (r.result.status === 'merge_required') {
+            savePreview(window.localStorage, r.result, 'line')
+            navigate('/merge', { replace: true })
+          } else {
+            navigate(`/settings?bound=${r.result.status === 'bound' ? '1' : 'already'}`, { replace: true })
+          }
+          return
+        }
         const redirect = localStorage.getItem('catsplit_redirect')
         localStorage.removeItem('catsplit_redirect')
         // 只接受站內路徑，避免被塞入奇怪的值
@@ -34,7 +45,8 @@ const AuthCallbackPage = () => {
       })
       .catch((e) => {
         console.error(e)
-        setError(t('auth.processFailed', { message: e.message }))
+        // 綁定時雲端函式的錯誤（例如驗證逾時）有對應的說明；其他維持原本的訊息
+        setError(e?.code ? t(mergeErrorKey(e.code)) : t('auth.processFailed', { message: e.message }))
       })
   }, [code, state, paramError, completeOAuthCallback, navigate, t])
 

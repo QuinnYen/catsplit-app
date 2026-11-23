@@ -135,7 +135,7 @@ export const readPersonalTree = async (db, uid) => {
  * 列出被併入帳號的個人資料，以及哪些文件在保留帳號那邊也有同路徑（衝突）。
  * 收款方式、付款方式、儲蓄目標（含存提款紀錄）都是自動產生的 id，幾乎不會衝突；
  * 真正會衝突的是固定 id 的文件，例如 settings/profile（暱稱）、settings/oaPrompt。
- * 回傳 { docCount, conflicts: [{ path, keepUpdatedMs, dropUpdatedMs }] }。
+ * 回傳 { docCount, conflicts: [{ path, keepUpdatedMs, dropUpdatedMs }] }；settings/profile 另帶 keepNickname、dropNickname。
  */
 export const listPersonalConflicts = async (db, keepUid, dropUid) => {
   assertMergeable(keepUid, dropUid)
@@ -147,7 +147,13 @@ export const listPersonalConflicts = async (db, keepUid, dropUid) => {
     docCount += 1
     const target = await db.doc(`users/${keepUid}/${path}`).get()
     if (target.exists) {
-      conflicts.push({ path, keepUpdatedMs: target.updateTime.toMillis(), dropUpdatedMs: snap.updateTime.toMillis() })
+      const conflict = { path, keepUpdatedMs: target.updateTime.toMillis(), dropUpdatedMs: snap.updateTime.toMillis() }
+      // 暱稱衝突把雙方的暱稱一併帶上，確認頁才能讓使用者看懂要選哪個（其他路徑的內容不外傳）
+      if (path === 'settings/profile') {
+        conflict.keepNickname = target.data().nickname ?? null
+        conflict.dropNickname = snap.data().nickname ?? null
+      }
+      conflicts.push(conflict)
     }
   }
   return { docCount, conflicts }
