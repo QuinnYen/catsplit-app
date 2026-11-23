@@ -1,6 +1,6 @@
 # P14 獨立帳號：多種登入方式與帳號綁定（設計）
 
-日期：2026-11-14　修訂：2026-11-23　狀態：已審閱，待實作
+日期：2026-11-14　修訂：2026-11-23（依實作計畫補修）　狀態：已審閱，待實作。實作順序見 `../plans/2026-11-23-p14-identity-plan.md`
 
 ## 背景與整體決策（P18 首頁大改版的前提）
 
@@ -17,7 +17,9 @@
 | 新增登入方式 | 第一版只做 Google（LINE 維持）；Apple 移出第一版，列於「後續」 |
 | 身分模型 | A：內部 uid + `identities` 對照表，所有登入經 Cloud Function 發 custom token |
 | 訪客 | 保留；認領（`claimMember`）支援任一登入方式；訪客不能用個人功能，也不能發起綁定或合併 |
-| 名字與頭像 | 首次登入必填暱稱（預設帶 provider 名字），頭像用預設貓咪（之後再調整） |
+| 名字與頭像 | 新建立的 Google 帳號首次登入必填暱稱（預設帶 Google 名字），頭像用預設貓咪（之後再調整）；LINE 使用者（現有與新的）沿用 LINE 名字，不強迫填 |
+| Google 憑證驗證 | 前端以 Google Identity Services 取得 ID token，後端用 `google-auth-library` 驗證；不用 Firebase 內建 `signInWithPopup`（會替換目前 session，綁定與合併無法保留原帳號） |
+| 內部 uid 格式 | `u_` + 20 位隨機十六進位；不可以 `p_` 開頭（訪客 id 與 rules 依賴），LINE userId 不含底線，不會撞號 |
 | 帳號合併 | 第一版就做完整合併。重疊的群組自動加總；暱稱頭像與個人資料的衝突由使用者逐項決定；含 dry-run、備份、斷點續跑 |
 | 綁定方向 | LINE 先、Google 後，與 Google 先、LINE 後皆支援，統一走同一套綁定與合併流程 |
 
@@ -28,7 +30,7 @@
 - 新增 `authExchange`：前端取得 Google ID token，Function 驗證後以 `provider:subject` 查表；有則發該 uid 的 custom token，無則產生新內部 uid、建立 `users/{uid}` 與對照項再發 token。LINE 沿用 `verifyLiffToken`／`lineLogin`，加上查表。
 - **查表與建立必須在 Firestore transaction 內完成**，避免同一個 Google 帳號從兩個裝置同時首次登入而建出兩個 uid。
 - `request.auth.uid` 恆為內部 uid，`groups`、`expenses` 等資料與 rules 不變；`isLineUser()` 改名 `isMember()`（語意為「非訪客」）。
-- 首次登入導向必填暱稱頁，之後才進首頁。
+- 新建立的 Google 帳號（`authExchange` 回傳 `isNew`）且尚未設暱稱時，導向必填暱稱頁，之後才進首頁；LINE 使用者不經過此頁。
 - `claimMember` 的呼叫端放寬為任一已登入的非訪客身分，邏輯不變。
 
 ## 2. 綁定與合併
@@ -47,25 +49,29 @@
 
 `mergeAccounts(keepUid, dropUid, resolutions)`：
 
-1. 兩邊須在同一 session 內通過驗證才能啟動，驗證有效時間有限（逾時重新驗證）；訪客身分不能發起。
-2. **dry-run**：回報受影響群組數、帳目筆數、自動處理的項目、需要使用者決定的衝突清單（具體項目，不只是數量），使用者確認後才執行。
-3. 備份 `dropUid` 資料到 `mergeBackups/{id}`，保留 30 天。
+合併分兩步，中間以伺服器端的 `merges/{id}` 紀錄串接（LINE OAuth `code` 只能使用一次，不能讓兩步都要求第二身分的憑證）：
+
+1. **`previewMerge`**：兩邊須在同一次操作內通過驗證（發起人的 Firebase session 加第二身分的憑證）；訪客身分不能發起。驗證通過後建立 `merges/{id}`，狀態 `previewed`，存雙方 uid、`initiatorUid`、10 分鐘到期時間與衝突清單快照，回傳 `mergeId`。同一對帳號同時只允許一個進行中的合併。
+2. **dry-run 內容**：回報受影響群組數、帳目筆數、自動處理的項目、需要使用者決定的衝突清單（具體項目，不只是數量），使用者確認後才執行。
+3. **`executeMerge(mergeId, resolutions)`**：只需要發起人的 Firebase session 與 `mergeId`，並檢查發起人與紀錄一致、未過期。先備份 `dropUid` 資料到 `mergeBackups/{id}`；備份保留 30 天，由排程函式定期清除過期備份。
 4. 查 `groups where members array-contains dropUid`，逐一呼叫 `migrateMember(group, dropUid, keepUid)`。
 5. 搬 `users/{dropUid}/…` 個人資料（收款方式、暱稱、儲蓄、**個人帳本 `transactions` 與 `spendMethods`**，見 P12 spec），同 id 衝突依 `resolutions` 處理；使用者未指定的項目以預設建議值（較新者）為準。
 6. 對照表 `dropUid` 的所有項目改指向 `keepUid`，最後才刪除 `dropUid` 帳號。
 
-進度存 `merges/{id}` 狀態機：`started → groups_done → profile_done → done`，中途失敗可從斷點重試。
+進度存 `merges/{id}` 狀態機：`previewed → started → groups_done → profile_done → done`，中途失敗可從斷點重試。
+
+**完成後換 token**：`executeMerge` 結束時回傳 `keepUid` 的 custom token，前端用它重新登入。若發起人是被刪除的那一邊（`dropUid`），他原本的 session 會失效，必須靠這個 token 接續。
 
 ### 衝突的分類
 
 **自動處理，不讓使用者選**（兩邊都有真實帳目，留一邊會弄丟資料）：
 - 兩邊都在同一個群組：金額、餘額、筆數相加（`migrateMember` 現有行為）。
 - 只有一邊在的群組：直接把成員身分改到合併後的 uid。
-- 合併後出現的轉帳 `from === to`：自動轉為自付或移除，不讓使用者選。
+- 合併後出現的轉帳 `from === to`：直接刪除該筆轉帳（自己轉給自己，對餘額沒有影響；實作前需讀結算計算確認轉帳只是對沖），不讓使用者選。
 
 **由使用者決定**（`resolutions` 的內容）：
 - 暱稱與頭像：兩邊各有一組，選留哪一個。
-- 個人資料同 id 的項目（收款方式、儲蓄目標、個人帳本，例如群組匯入的固定 id `group_{groupId}`）：逐項或逐類選 A 或 B。
+- 個人資料同 id 的項目：收款方式、付款方式、儲蓄目標（含存提款紀錄）都是自動產生 id，不會衝突，直接搬移；真正會衝突的只有固定 id 的文件，例如暱稱（`settings/profile`）、`settings/oaPrompt`，以及 P12 個人帳本群組匯入的 `group_{groupId}`。這些逐項選 A 或 B。個人資料以 `listCollections` 遍歷搬移，不寫死集合名稱，P12 的新集合自動涵蓋。
 - 每項預設帶建議值，使用者只需確認，有疑慮再改。
 
 **`keepUid` 由系統決定**，不讓使用者選：保留群組數較多者，需要搬動的資料最少。對使用者而言保留哪個 uid 沒有差別。
@@ -84,8 +90,8 @@
 ## 3. 介面、刪除、rules、測試、上線
 
 **介面**
-- 登入畫面：LINE 內自動登入不變；外部瀏覽器顯示 LINE／Google 兩按鈕，訪客入口維持。
-- 設定頁新增「登入方式」：列出已綁定 provider、解除綁定、綁定其他方式。
+- 登入畫面：LINE 內自動登入不變；外部瀏覽器顯示 LINE／Google 兩按鈕，LINE 內建瀏覽器的登入畫面不顯示 Google 按鈕；訪客入口維持。
+- 設定頁新增「登入方式」：列出已綁定 provider、解除綁定、綁定其他方式。**LINE 內建瀏覽器的設定頁仍可綁定 Google**；若偵測到 Google 授權被擋，提示並提供「在外部瀏覽器開啟」。
 - 新增「合併確認頁」：顯示將搬動的群組數與帳目筆數、自動加總的群組、需要決定的衝突清單；每項帶預設建議值，使用者確認或修改後才執行。
 - LINE 專屬功能（`sendMessages`、`shareTargetPicker`）維持只在 LINE 內建瀏覽器出現；非 LINE 環境以複製邀請連結或 Web Share 替代。
 - LINE 內建瀏覽器常擋 Google OAuth，LINE 內綁定 Google 需導向外部瀏覽器完成，實作時要實測 LINE 內、外部瀏覽器、手機 PWA 三種環境。

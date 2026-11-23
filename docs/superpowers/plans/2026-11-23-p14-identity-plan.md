@@ -1,6 +1,6 @@
 # P14 獨立帳號：實作計畫
 
-日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：待確認決策後開工
+日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：決策已確認，可從 PR1 開工
 
 ## 0. 目標
 
@@ -34,8 +34,10 @@ LINE 維持主要登入，新增 Google 登入；LINE 與 Google 可互相綁定
 | D1 | Google 憑證怎麼驗證 | **Google Identity Services 取 ID token，後端用 `google-auth-library` 驗證** | 不碰 Firebase 目前的登入狀態。用 Firebase 內建的 `signInWithPopup` 會直接替換掉目前的 session，綁定與合併流程無法保留原帳號，還會產生多餘的 Auth 使用者要清理 |
 | D2 | 內部 uid 格式 | **`u_` + 20 位隨機十六進位** | 不能以 `p_` 開頭（rules 與 `isGuestId` 依賴），LINE userId 不含底線，不會撞號 |
 | D3 | 合併後 `from === to` 的轉帳 | **刪除該筆轉帳** | 自己轉給自己對餘額沒有影響。實作前要先讀 `SettlePage` 的結算計算，確認轉帳確實只是對沖 |
-| D4 | 有沒有測試用的 Firebase 專案 | 需要你告訴我 | 若只有正式專案，端到端測試就要靠模擬器（PR1 的 spike），或另建一個測試專案 |
-| D5 | LINE 內建瀏覽器要不要顯示 Google 按鈕 | **不顯示，改在設定頁提示「請在外部瀏覽器綁定」** | LINE 內建瀏覽器常擋 Google OAuth，第一版不去對抗，先確保外部瀏覽器可用 |
+| D4 | 測試環境與上線 | **已決定：個人側專案，直接部署上線，不另建測試專案** | 端到端測試靠模擬器（PR1 的 spike）；仍維持每個 PR 向下相容，並保留備份與 dry-run，因為正式資料就是唯一一份 |
+| D5 | LINE 內建瀏覽器的 Google 登入 | **已決定：登入畫面不顯示 Google 按鈕，但設定頁仍可綁定** | 若 Google 授權被 LINE 內建瀏覽器擋住，提示並提供「在外部瀏覽器開啟」 |
+
+D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 spec。
 
 另外，**你需要自己做的事**：在 Google Cloud Console 建立 OAuth 用戶端 ID（網頁應用程式），授權網域加入 `catsplit-app.web.app`、`catsplit-app.firebaseapp.com`、`http://localhost:5173`。完成後把 Client ID 給我（它不是機密）。
 
@@ -120,12 +122,9 @@ LINE 維持主要登入，新增 Google 登入；LINE 與 Google 可互相綁定
 | `main` 一合併就上線 | 每個 PR 向下相容；PR1 保留 `userId` 欄位；rules 與前端同 PR |
 | 舊 LINE 使用者對照項尚未建立 | 登入時懶建立加上線前補齊腳本；綁定判斷以「`users/{sub}` 是否存在」兜底 |
 | 同一個 Google 帳號兩裝置同時首次登入 | `authExchange` 查表與建立放在 transaction，並加並行測試 |
-| LINE 內建瀏覽器無法 Google 登入 | 第一版不顯示，設定頁提示改用外部瀏覽器（D5） |
+| LINE 內建瀏覽器無法 Google 登入 | 登入畫面不顯示；設定頁仍可綁定，被擋時提示並提供「在外部瀏覽器開啟」（D5） |
 | 合併途中使用者被登出 | `executeMerge` 回傳 `keepUid` 的 token，前端自動重新登入 |
 
 ## 6. 開工前我需要的確認
 
-1. D1 到 D5 是否照建議？
-2. 有沒有測試用 Firebase 專案（D4）？
-3. 你是否同意把第 2 節的四項補修寫回 P14 spec？
-4. Google OAuth 用戶端 ID 建好後告訴我（PR3 才用到，不急）。
+D1 到 D5 與 spec 補修皆已確認。唯一待辦：Google OAuth 用戶端 ID 建好後告訴我（PR3 才用到，不急）。可以從 PR1 開工。
