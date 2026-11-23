@@ -1,6 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { uidFromLoginResponse, buildSessionUser, cachedLineUserId, canReuseCachedSession } from './authSession.js'
+import {
+  uidFromLoginResponse, buildSessionUser, cachedLineUserId, canReuseCachedSession, isLineUserAgent, needsNicknameSetup,
+} from './authSession.js'
 
 const LINE = 'U' + 'a'.repeat(32)
 const INTERNAL = 'u_00000000000000000001'
@@ -51,4 +53,32 @@ test('快速路徑：有待認領的訪客名字、沒有快取、快取是訪�
   assert.equal(canReuseCachedSession({ ...base(), cached: null }), false)
   assert.equal(canReuseCachedSession({ ...base(), cached: { uid: 'p_abc', guest: true } , firebaseUid: 'p_abc' }), false)
   assert.equal(canReuseCachedSession({ ...base(), lineSub: undefined }), false)
+})
+
+test('buildSessionUser：Google 使用者帶 provider，沒有 LINE userId', () => {
+  const u = buildSessionUser({ uid: INTERNAL, name: 'Amy', avatar: null, provider: 'google' })
+  assert.equal(u.provider, 'google')
+  assert.equal(u.lineUserId, undefined)
+  assert.equal('provider' in buildSessionUser({ uid: LINE, lineUserId: LINE, name: 'A', avatar: null }), false)
+})
+
+test('快速路徑：Google 使用者的快取在 LINE 內不會被當成同一個 LINE 使用者', () => {
+  assert.equal(canReuseCachedSession({
+    cached: { uid: INTERNAL, provider: 'google' }, firebaseUid: INTERNAL, lineSub: LINE, hasPendingGuestNames: false,
+  }), false)
+})
+
+test('isLineUserAgent：LINE 內建瀏覽器與一般瀏覽器', () => {
+  assert.equal(isLineUserAgent('Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 Line/14.0.0'), true)
+  assert.equal(isLineUserAgent('Mozilla/5.0 (Windows NT 10.0) Chrome/120 Safari/537.36'), false)
+  assert.equal(isLineUserAgent(undefined), false)
+})
+
+test('needsNicknameSetup：只有讀完雲端暱稱、仍沒有暱稱的 Google 使用者才需要設定', () => {
+  const base = { provider: 'google', isGuest: false, nicknameReady: true, nickname: null }
+  assert.equal(needsNicknameSetup(base), true)
+  assert.equal(needsNicknameSetup({ ...base, nicknameReady: false }), false) // 還沒讀完，不能先判定
+  assert.equal(needsNicknameSetup({ ...base, nickname: '小明' }), false)
+  assert.equal(needsNicknameSetup({ ...base, provider: undefined }), false) // LINE 使用者有 LINE 名字可用
+  assert.equal(needsNicknameSetup({ ...base, isGuest: true }), false)
 })

@@ -2,7 +2,7 @@
 
 日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：進行中
 
-**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 進行中。
+**進度**：PR1 已部署（#5）；identities 補齊工作流程已部署（#6），現有 LINE 使用者已補齊（5 筆）；PR2 已部署（#7）；PR3（Google 登入與首次暱稱頁）進行中。
 
 ## 0. 目標
 
@@ -59,7 +59,7 @@ D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 
 - 新增 `scripts/backfill-identities.mjs`：掃描 `users/` 與群組 `members`，為現有 LINE 使用者補對照項，預設 dry-run。
 - 修改 `firestore.rules`：`isLineUser()` 改名 `isMember()`；`identities`、`merges`、`mergeBackups` 明確註記全拒。
 - 修改 `firestore-tests/*.mjs`：配合改名；新增 `identities.rules.mjs`（客戶端讀寫皆被拒、訪客不能存取個人集合）。
-- **Spike（已完成）**：`firebase emulators:start --only auth,firestore,functions` 可在本機實跑 functions。LINE 驗證端點用預載檔 `functions/scripts/emulator-line-mock.mjs` 攔截，不改正式程式碼。已實測 `verifyLiffToken` 的查表（新使用者、重複登入、對照項指向別的 uid、並行 10 次只建一筆）、補齊腳本與 `guestLogin`，做法寫在 `docs/operations.md`。後續 PR 的端到端測試沿用這個方式。
+- **Spike（已完成）**：`firebase emulators:start --only auth,firestore,functions` 可在本機實跑 functions。LINE 驗證端點用預載檔 `functions/scripts/emulator-mocks.mjs` 攔截，不改正式程式碼。已實測 `verifyLiffToken` 的查表（新使用者、重複登入、對照項指向別的 uid、並行 10 次只建一筆）、補齊腳本與 `guestLogin`，做法寫在 `docs/operations.md`。後續 PR 的端到端測試沿用這個方式。
 
 完成條件：現有 LINE 使用者登入、群組、記帳完全正常；`identities` 有資料；rules 測試通過。
 

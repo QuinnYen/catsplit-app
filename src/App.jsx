@@ -1,7 +1,10 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useApp } from './context/AppContext'
 import GuestJoin from './components/GuestJoin'
+import GoogleSignInButton from './components/GoogleSignInButton'
+import NicknameSetupPage from './pages/NicknameSetupPage'
+import { isLineUserAgent } from './utils/authSession'
 import { useI18n } from './i18n/I18nProvider'
 import catLogo from './assets/cat-logo.webp'
 import { PawPrint, Wallet } from 'lucide-react'
@@ -43,8 +46,20 @@ const LoadingScreen = () => {
   )
 }
 
-const LoginScreen = ({ onLogin, guestGroupId }) => {
+const LoginScreen = ({ onLogin, onGoogleLogin, guestGroupId }) => {
   const { t } = useI18n()
+  const [googleError, setGoogleError] = useState(false)
+  // LINE 內建瀏覽器常擋 Google 登入，不顯示按鈕（要用 Google 的話，之後可在外部瀏覽器登入）
+  const showGoogle = !isLineUserAgent(navigator.userAgent)
+  const handleGoogleCredential = async (credential) => {
+    setGoogleError(false)
+    try {
+      await onGoogleLogin(credential)
+    } catch (e) {
+      console.error('Google login failed', e)
+      setGoogleError(true)
+    }
+  }
   return (
   <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, var(--cs-bg) 0%, var(--cs-soft-2) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
     <img src={catLogo} alt={t('app.title')} style={{ width: 120, height: 120, marginBottom: 16 }} />
@@ -84,6 +99,14 @@ const LoginScreen = ({ onLogin, guestGroupId }) => {
       </svg>
       {t('login.button')}
     </button>
+    {showGoogle && (
+      <div style={{ marginTop: 12, width: '100%', maxWidth: 320 }}>
+        <GoogleSignInButton onCredential={handleGoogleCredential} />
+        {googleError && (
+          <div role="alert" style={{ marginTop: 8, fontSize: 12, color: 'var(--cs-danger)', textAlign: 'center', lineHeight: 1.6 }}>{t('login.googleFailed')}</div>
+        )}
+      </div>
+    )}
     {guestGroupId && (
       <div style={{ marginTop: 20, width: '100%', display: 'flex', justifyContent: 'center' }}>
         <GuestJoin groupId={guestGroupId} />
@@ -107,7 +130,7 @@ const OfficialAccountPrompt = () => {
 }
 
 const ProtectedRoutes = () => {
-  const { user, loading, loginWithLine, switchGuestGroup, guestNames } = useApp()
+  const { user, loading, loginWithLine, loginWithGoogle, switchGuestGroup, guestNames, needsNickname, nicknameLoading } = useApp()
   const location = useLocation()
   // 訪客進入另一個選過名字的群組時，先自動切換成該群組的名字再顯示頁面
   const pathGroupId = location.pathname.match(/^\/group\/([^/]+)/)?.[1]
@@ -121,7 +144,10 @@ const ProtectedRoutes = () => {
   // 登入後要回到原本開啟的頁面（例如邀請連結的群組頁）
   // 只有邀請連結（群組頁）提供訪客名字；訪客不能建立群組
   const inviteGroupId = location.pathname.match(/^\/group\/([^/]+)(?:\/add)?\/?$/)?.[1]
-  if (!user) return <LoginScreen onLogin={() => loginWithLine(location.pathname + location.search)} guestGroupId={inviteGroupId} />
+  if (!user) return <LoginScreen onLogin={() => loginWithLine(location.pathname + location.search)} onGoogleLogin={loginWithGoogle} guestGroupId={inviteGroupId} />
+  // Google 帳號：先等雲端暱稱讀完；還沒有暱稱就先設定（LINE 使用者與訪客不經過這裡）
+  if (nicknameLoading) return <LoadingScreen />
+  if (needsNickname) return <NicknameSetupPage />
 
   return (
     <>

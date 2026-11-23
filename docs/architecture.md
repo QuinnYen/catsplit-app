@@ -4,16 +4,16 @@
 src/
 ├── main.jsx                 # 入口；把 liff.state 換回真正路徑，包上 AppProvider
 ├── App.jsx                  # 路由（多數頁面 lazy）、登入畫面、訪客自動切換群組
-├── config/                  # firebase、liff、貨幣與匯率（currencies.js，見 currency.md）、記帳表單常數、群組圖示、收款方式清單與銀行代碼表
+├── config/                  # firebase、liff、google（OAuth 用戶端 ID）、貨幣與匯率（currencies.js，見 currency.md）、記帳表單常數、群組圖示、收款方式清單與銀行代碼表
 ├── context/AppContext.jsx   # 全域 user 狀態、LINE / 訪客登入、認領、訪客名字記錄
 ├── theme/                   # 暗黑模式：ThemeProvider、useTheme、主題判斷（theme.js）
 ├── hooks/                   # 匯率（useExchangeRate）、Storage 圖片（以登入身分下載）、我的群組（useMyGroups）
 ├── utils/                   # 登入工作階段判斷（authSession.js）、分帳計算、結算建議（settleSuggestions.js）、轉帳金額換算（transferAmounts.js）、頁面標題對照（pageTitle.js）、群組彙總重算、預算狀態（budget.js）、刪除我的資料、Storage 清理、封面裁切
-├── components/              # Avatar、TabBar、ExpenseForm、CurrencySelect（選貨幣）、GuestJoin（訪客入口）、BankPicker、PaymentMethodModal…
-└── pages/                   # Home、Group、AddExpense、Settle、Transfer、EditGroup、PaymentMethods…
-functions/index.js           # lineLogin、verifyLiffToken、guestLogin、claimMember、detachMember、exportCsv、sharePage
-functions/identity.js        # 身分對照純函式（identities 的 key、內部 uid、LINE 查表決策），測試在 identity.test.js
-functions/scripts/           # 補齊 identities 的腳本、本機模擬器用的 LINE 驗證攔截檔（見 operations.md）
+├── components/              # Avatar、TabBar、ExpenseForm、CurrencySelect（選貨幣）、GuestJoin（訪客入口）、GoogleSignInButton（Google 登入按鈕）、BankPicker、PaymentMethodModal…
+└── pages/                   # Home、Group、AddExpense、Settle、Transfer、EditGroup、PaymentMethods、NicknameSetup（Google 帳號首次設定暱稱）…
+functions/index.js           # lineLogin、verifyLiffToken、authExchange、guestLogin、claimMember、detachMember、exportCsv、sharePage
+functions/identity.js        # 身分對照純函式（identities 的 key、內部 uid、LINE／Google 查表決策、Google 登入換發流程），測試在 identity.test.js
+functions/scripts/           # 補齊 identities 的腳本、本機模擬器用的 LINE、Google 驗證攔截檔（見 operations.md）
 firestore.rules              # Firestore 存取規則
 firestore-tests/             # rules 測試（npm run test:rules，需模擬器）
 storage.rules                # Storage 存取規則
@@ -24,7 +24,7 @@ scripts/storage/            # bucket CORS 與生命週期設定（需手動套�
 
 - **Frontend** — React 19 + Vite + Tailwind CSS
 - **Database / Storage** — Firebase Firestore、Firebase Storage
-- **Auth** — LINE LIFF SDK / LINE Login，由 Cloud Functions 換發 Firebase custom token（見[身分與訪客](identity-and-guests.md)）
+- **Auth** — LINE LIFF SDK / LINE Login、Google（Google Identity Services），由 Cloud Functions 驗證後換發 Firebase custom token（見[身分與訪客](identity-and-guests.md)）
 - **Backend** — Firebase Cloud Functions（`asia-east1`）
 - **Hosting** — Firebase Hosting
 

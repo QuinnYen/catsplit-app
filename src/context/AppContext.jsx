@@ -4,7 +4,9 @@ import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore'
 import { auth, db } from '../config/firebase'
 import { initLiff } from '../config/liff'
 import { useI18n } from '../i18n/I18nProvider'
-import { uidFromLoginResponse, buildSessionUser, canReuseCachedSession } from '../utils/authSession'
+import {
+  uidFromLoginResponse, buildSessionUser, canReuseCachedSession, isLineUserAgent, needsNicknameSetup,
+} from '../utils/authSession'
 
 const AppContext = createContext(null)
 
@@ -37,6 +39,7 @@ const TOKEN_EXCHANGE_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL
 const VERIFY_LIFF_TOKEN_URL = TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/verifyLiffToken')
 const CLAIM_MEMBER_URL = TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/claimMember')
 const GUEST_LOGIN_URL = TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/guestLogin')
+const AUTH_EXCHANGE_URL = TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/authExchange')
 
 const postJson = (url, idToken, body) => fetch(url, {
   method: 'POST',
@@ -95,7 +98,7 @@ const generateState = () => {
   return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('')
 }
 
-const isInLineApp = () => /Line/i.test(navigator.userAgent)
+const isInLineApp = () => isLineUserAgent(navigator.userAgent)
 
 // 邀請連結（群組首頁）；liff.state 已在 main.jsx 換成真正的路徑
 const isInvitePath = () => /^\/group\/[^/]+(?:\/add)?\/?$/.test(window.location.pathname)
@@ -112,6 +115,8 @@ export const AppProvider = ({ children }) => {
   const [baseUser, setUser] = useState(null)
   // 雲端讀到的暱稱 { uid, value }；讀到之前先用 localStorage 快取
   const [fetchedNickname, setFetchedNickname] = useState(null)
+  // 讀取暱稱失敗（例如離線）的 uid；Google 使用者等暱稱時用它避免永遠停在載入畫面
+  const [nicknameFailedUid, setNicknameFailedUid] = useState(null)
   const [loading, setLoading] = useState(true)
   const [liffInstance, setLiffInstance] = useState(null)
   const { applyAutoLanguage } = useI18n()
@@ -126,6 +131,10 @@ export const AppProvider = ({ children }) => {
   const nickname = !baseUid || baseIsGuest ? null : (fetchedForMe ? fetchedNickname.value : cachedNickname)
   // 暱稱已從雲端確認過（成功讀到）才為 true；同步名字到群組前要等它，否則會先用 LINE 名字蓋掉暱稱
   const nicknameReady = fetchedForMe
+  // Google 帳號沒有 LINE 名字可當預設：還沒有暱稱時要先到設定暱稱頁；雲端暱稱還沒讀完時先等（不能先進首頁）
+  const needsNickname = needsNicknameSetup({ provider: baseUser?.provider, isGuest: baseIsGuest, nicknameReady, nickname })
+  const nicknameLoading = !!baseUid && !baseIsGuest && baseUser?.provider === 'google'
+    && !nicknameReady && nicknameFailedUid !== baseUid
 
   // 對外的 user：有暱稱就以暱稱當 name（LINE 原名在 lineName）
   const user = useMemo(
@@ -148,13 +157,17 @@ export const AppProvider = ({ children }) => {
         writeNicknameCache(baseUid, value)
         setFetchedNickname({ uid: baseUid, value })
       })
-      .catch((e) => console.warn('load nickname failed', e?.code || e))
+      .catch((e) => {
+        console.warn('load nickname failed', e?.code || e)
+        if (!cancelled) setNicknameFailedUid(baseUid)
+      })
     return () => { cancelled = true }
   }, [baseUid, baseIsGuest])
 
-  // 空字串代表清除暱稱、回到 LINE 名字
+  // 空字串代表清除暱稱、回到 LINE 名字；Google 帳號沒有 LINE 名字可退回，暱稱不能留空
   const saveNickname = async (value) => {
     const trimmed = value.trim().slice(0, NICKNAME_MAX_LENGTH)
+    if (!trimmed && baseUser?.provider === 'google') throw new Error('nickname_required')
     if (trimmed) await setDoc(nicknameRef(baseUid), { nickname: trimmed })
     else await deleteDoc(nicknameRef(baseUid))
     writeNicknameCache(baseUid, trimmed || null)
@@ -301,6 +314,20 @@ export const AppProvider = ({ children }) => {
     window.location.href = buildAuthorizeUrl(state)
   }
 
+  // Google 登入：credential 是 Google Identity Services 給的 ID token，交給 authExchange 驗證並換成內部 uid 的 custom token。
+  // Google 帳號沒有頭像（avatar 為 null，畫面顯示名字首字）；名字只是預設，首次登入要先設定暱稱（見 needsNickname）
+  const loginWithGoogle = async (credential) => {
+    if (!AUTH_EXCHANGE_URL) throw new Error('token_exchange_url_not_configured')
+    const res = await postJson(AUTH_EXCHANGE_URL, null, { provider: 'google', idToken: credential })
+    if (!res.ok) throw new Error(`auth_exchange_failed_${res.status}`)
+    const data = await res.json()
+    await signInWithExchangeToken(data.firebaseToken, null)
+    const u = buildSessionUser({ uid: data.uid, name: data.displayName, avatar: null, provider: 'google' })
+    setUser(u)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
+    return u
+  }
+
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(GUEST_NAMES_KEY)
@@ -395,7 +422,7 @@ export const AppProvider = ({ children }) => {
   }
 
   return (
-    <AppContext.Provider value={{ user, setUser, nicknameReady, saveNickname, loading, loginWithLine, loginAsGuest, joinAsGuest, forgetGuestName, switchGuestGroup, guestNames: user?.guest ? readGuestNames() : [], claimMember, logout, completeOAuthCallback, liffInstance }}>
+    <AppContext.Provider value={{ user, setUser, nicknameReady, needsNickname, nicknameLoading, saveNickname, loading, loginWithLine, loginWithGoogle, loginAsGuest, joinAsGuest, forgetGuestName, switchGuestGroup, guestNames: user?.guest ? readGuestNames() : [], claimMember, logout, completeOAuthCallback, liffInstance }}>
       {children}
     </AppContext.Provider>
   )
