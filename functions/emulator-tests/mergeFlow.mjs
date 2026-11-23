@@ -106,7 +106,7 @@ test('bindIdentity：Google 帳號綁一個沒有對照項、但已是現有帳�
   assert.deepEqual(r.groups.dropOnly.map((g) => g.id), ['gG1c'])
   assert.equal(r.expiresAtMs, NOW + MERGE_PREVIEW_TTL_MS)
   assert.deepEqual(r.personal.needsChoice.map((c) => c.path), ['settings/profile'])
-  assert.equal(r.personal.needsChoice[0].suggested, 'drop') // G 的暱稱較新
+  assert.equal(r.personal.needsChoice[0].suggested, 'keep') // G 的暱稱較新，但預設仍保留 keepUid 的
   assert.deepEqual([r.personal.needsChoice[0].keepNickname, r.personal.needsChoice[0].dropNickname], ['LNick', 'GNick'])
 
   const rec = (await db.doc(`merges/${r.mergeId}`).get()).data()
@@ -212,10 +212,10 @@ test('executeMerge：使用者選保留自己的暱稱，不覆蓋，備份也�
   assert.equal((await db.collection(`mergeBackups/${mergeId}/keepOverwritten`).get()).size, 0)
 })
 
-test('executeMerge：沒指定選擇就用預設建議（較新的）', async () => {
+test('executeMerge：沒指定選擇就用預設建議（保留 keepUid 的暱稱，不論誰較新）', async () => {
   const { L, G, u, mergeId } = await doPreview('h')
   await executeMerge(db, makeDeps(), { mergeId, callerUid: G, runId: 'r' })
-  assert.equal((await u(L, 'settings/profile').get()).data().nickname, 'GNick')
+  assert.equal((await u(L, 'settings/profile').get()).data().nickname, 'LNick')
 })
 
 test('executeMerge：發起人是保留的那一邊時，被刪除的是另一個帳號', async () => {

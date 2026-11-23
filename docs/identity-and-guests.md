@@ -27,7 +27,7 @@
 - 內部 uid 格式為 `u_` 加 20 位十六進位（`functions/identity.js` 的 `makeUid`），Google 登入的新帳號使用。
 - **Google 登入（PR3）**：登入畫面（外部瀏覽器）顯示 Google 按鈕，前端用 Google Identity Services 取得 ID token，`authExchange` 驗證後以 `identities/google:{sub}` 查表；沒有就建立新的內部 uid 與對照項（transaction，並行首次登入只會有一個 uid）並建立 `users/{uid}`（`provider: 'google'`）。Google 帳號的 `user.provider` 為 `'google'`，LINE 使用者沒有這個欄位。
 - **首次設定暱稱**：Google 帳號沒有 LINE 名字可當預設，所以雲端還沒有暱稱時，登入後先進「設定顯示名稱」頁（預設帶 Google 名字，最多 20 字），完成才進首頁；設定頁的暱稱也不能清空。LINE 使用者不經過這一頁。
-- **頭像**：每個登入方式各存一份（`users/{uid}.avatars.line`、`avatars.google`），登入時只更新自己那一份；顯示用的 `avatar` 由 `functions/avatar.js` 的 `pickAvatar` 決定：**LINE 優先，沒有才用 Google，都沒有就是 `null`**（畫面顯示名字首字）。不讓「最後登入的方式」決定，否則同一個人換裝置登入，頭像（包含群組裡其他成員看到的）會一直跳。舊資料沒有 `avatars` 欄位，既有的 `avatar` 視為 LINE 的（當時只有 LINE 會存頭像）。Google 頭像只存網址，不另存圖片，網址失效時畫面退回名字首字。合併時被併入帳號的頭像不搬，該登入方式下次登入會補上。
+- **名稱、頭像、provider**：每個登入方式各存一份（`users/{uid}.names`、`avatars` 的 `line`、`google`），登入時只更新自己那一份；顯示用的 `name`、`avatar` 由 `functions/profile.js` 決定：**LINE 優先，沒有才用 Google**，頭像都沒有就是 `null`（畫面顯示名字首字）。`provider` 只在「沒有 LINE 名字可退回」時才是 `'google'`（用來要求首次設定暱稱），有 LINE 名字就是 `null`，所以已綁定 LINE 的帳號用 Google 登入，不會被當成 Google 使用者、也不用重設暱稱。不讓「最後登入的方式」決定，否則同一個人換裝置登入，名稱與頭像（包含群組裡其他成員看到的）會一直跳。舊資料沒有 `names` / `avatars`，`provider` 不是 `google` 的既有 `name`、`avatar` 視為 LINE 的。Google 頭像只存網址，不另存圖片，網址失效時畫面退回名字首字。合併時兩邊各登入方式的資料取聯集寫回保留帳號（同一種以保留帳號為準）。`authExchange` 回應的 `displayName` 仍是 Google 上的名字（首次設定暱稱的預設），`name`、`avatar`、`provider` 才是帳號實際的。
 - **還沒做的**：隱私權政策與服務條款補上 Google 登入、身分對照與合併備份的說明，以及 Apple 登入（PR7 與後續）。
 - **合併核心（PR4，尚未開放，沒有任何端點）**：`functions/merge.js`（純函式）與 `functions/memberOps.js`（Firestore 操作）。重點：
   - 保留哪個 uid 由系統決定：群組較多者保留，一樣多保留第一個參數；訪客（`p_`）與相同 uid 不能合併。

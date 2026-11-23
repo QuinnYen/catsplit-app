@@ -227,7 +227,8 @@ test('列出個人資料與衝突：只有固定 id 的文件會衝突，自動 
   assert.ok(byPath['settings/oaPrompt'].keepUpdatedMs > byPath['settings/oaPrompt'].dropUpdatedMs)
 
   const resolutions = buildResolutions(conflicts)
-  assert.deepEqual(resolutions, { 'settings/profile': 'drop', 'settings/oaPrompt': 'keep' })
+  // 暱稱要使用者決定，預設保留 keepUid（即使被併入帳號的較新）；oaPrompt 自動保留較新的
+  assert.deepEqual(resolutions, { 'settings/profile': 'keep', 'settings/oaPrompt': 'keep' })
 })
 
 test('搬移個人資料：複製沒有衝突的文件，依選擇處理衝突，來源清空', async () => {
@@ -258,7 +259,7 @@ test('搬移個人資料：複製沒有衝突的文件，依選擇處理衝突�
 test('搬移個人資料：使用者選保留自己的，被併入帳號的暱稱不會覆蓋', async () => {
   const { keep, drop, u } = await seedPersonal('d', { keepProfileFirst: false })
   const { conflicts } = await listPersonalConflicts(db, keep, drop)
-  // 預設建議是較新的（這組是 keep 較新），使用者明確選 drop 也要照做
+  // 預設建議是保留 keepUid 的，這裡使用者也明確選 keep
   assert.equal(buildResolutions(conflicts)['settings/profile'], 'keep')
   const stats = await movePersonalData(db, keep, drop, buildResolutions(conflicts, { 'settings/profile': 'keep' }))
   assert.deepEqual(stats, { copied: 6, overwritten: 0, skipped: 2 })
@@ -273,7 +274,7 @@ test('搬移個人資料：重複執行與中途失敗後重試都安全', async
   assert.deepEqual(conflicts.map((c) => c.path).sort(), ['paymentMethods/pmD', 'settings/oaPrompt', 'settings/profile'])
   const resolutions = buildResolutions(conflicts.filter((c) => c.path.startsWith('settings/')), {})
   const first = await movePersonalData(db, keep, drop, resolutions)
-  assert.deepEqual(first, { copied: 5, overwritten: 1, skipped: 2 })
+  assert.deepEqual(first, { copied: 5, overwritten: 0, skipped: 3 }) // 暱稱預設保留 keepUid 的，不覆蓋
   assert.equal((await u(keep, 'paymentMethods/pmD').get()).data().value, '222')
 
   const second = await movePersonalData(db, keep, drop, resolutions)

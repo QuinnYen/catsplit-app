@@ -96,7 +96,7 @@ const fakeDeps = (over = {}) => {
     deps: {
       verifyGoogle: async () => ({ iss: 'accounts.google.com', sub: '1122', name: 'Amy' }),
       resolveUid: async (subject) => { calls.push(['resolve', subject]); return { uid: 'u_00000000000000000001', isNew: true } },
-      syncProfile: async (uid, name, picture) => { calls.push(['sync', uid, name, picture]); return 'https://example.com/shown.png' },
+      syncProfile: async (uid, name, picture) => { calls.push(['sync', uid, name, picture]); return { name: 'Shown', avatar: 'https://example.com/shown.png', provider: null } },
       createToken: async (uid) => { calls.push(['token', uid]); return `token-${uid}` },
       ...over,
     },
@@ -107,7 +107,7 @@ test('exchangeGoogleLogin：成功時依序查表、同步資料、發 token', a
   const { deps, calls } = fakeDeps()
   const r = await exchangeGoogleLogin({ idToken: 'abc', ...deps })
   assert.equal(r.status, 200)
-  assert.deepEqual(r.body, { uid: 'u_00000000000000000001', isNew: true, displayName: 'Amy', avatar: 'https://example.com/shown.png', firebaseToken: 'token-u_00000000000000000001' })
+  assert.deepEqual(r.body, { uid: 'u_00000000000000000001', isNew: true, displayName: 'Amy', name: 'Shown', avatar: 'https://example.com/shown.png', provider: null, firebaseToken: 'token-u_00000000000000000001' })
   assert.deepEqual(calls, [['resolve', '1122'], ['sync', 'u_00000000000000000001', 'Amy', null], ['token', 'u_00000000000000000001']])
 })
 

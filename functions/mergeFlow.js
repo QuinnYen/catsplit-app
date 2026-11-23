@@ -7,6 +7,7 @@ import {
 import { assertMergeable, buildResolutions } from './merge.js'
 import { buildMergePreview, migrateAllGroups, movePersonalData, readPersonalTree } from './memberOps.js'
 import { identityKey } from './identity.js'
+import { mergeProfiles } from './profile.js'
 import { MIGRATION_FIELDS, migrationPatch } from './migrate.js'
 
 const ALREADY_EXISTS = 6
@@ -175,6 +176,11 @@ const finalizeMerge = async (db, deps, merge) => {
       { uid: keepUid, provider: bind.provider, subject: bind.subject, createdAt: new Date(), createdByMerge: true },
       { merge: true },
     )
+  }
+  // 兩邊各登入方式的名稱與頭像取聯集寫回保留帳號，被併入帳號的 users 文件刪掉後才不會遺失（見 profile.js）
+  const [keepDoc, dropDoc] = await Promise.all([db.doc(`users/${keepUid}`).get(), db.doc(`users/${dropUid}`).get()])
+  if (dropDoc.exists) {
+    await db.doc(`users/${keepUid}`).set(mergeProfiles(keepDoc.exists ? keepDoc.data() : null, dropDoc.data()), { merge: true })
   }
   await db.doc(`users/${dropUid}`).delete()
   await deps.deleteAuthUser(dropUid)

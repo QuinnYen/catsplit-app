@@ -282,12 +282,13 @@ test('刪除帳號：對照項、合併紀錄與備份一併清除', async () =>
   assert.equal((await db.collection('mergeBackups').where('uids', 'array-contains', S.L).get()).size, 0)
 })
 
-// 頭像：每個登入方式各存一份，顯示用的 LINE 優先，不會因為最後登入的是誰而改變
-test('頭像：Google 單獨登入用 Google 頭像；綁上 LINE 後顯示 LINE 的，之後用 Google 登入也不會被蓋掉', async () => {
-  const onlyGoogle = await googleLogin('gavatar1')
-  assert.equal(onlyGoogle.avatar, 'https://example.com/google.png')
+// 名稱、頭像、provider：每個登入方式各存一份，顯示用的 LINE 優先，不會因為最後登入的是誰而改變
+test('Google 單獨登入：用 Google 的名稱與頭像，provider 是 google（要先設定暱稱）', async () => {
+  const g = await googleLogin('gavatar1')
+  assert.deepEqual([g.name, g.avatar, g.provider], ['Google gavatar1', 'https://example.com/google.png', 'google'])
+})
 
-  // LINE 舊使用者綁定 Google：登入 LINE 後 avatars.line 有值，Google 登入回傳的仍是 LINE 的頭像
+test('LINE 舊使用者綁定 Google 後用 Google 登入：仍是 LINE 的名稱與頭像，provider 清空，users 文件各存一份', async () => {
   const L = 'U' + '7'.repeat(32)
   const line = await lineLogin(L)
   assert.equal(line.pictureUrl, 'https://example.com/avatar.png')
@@ -295,8 +296,27 @@ test('頭像：Google 單獨登入用 Google 頭像；綁上 LINE 後顯示 LINE
   assert.deepEqual([bind.status, bind.body.status], [200, 'bound'])
   const viaGoogle = await googleLogin('gavatar2')
   assert.equal(viaGoogle.uid, L)
-  assert.equal(viaGoogle.avatar, 'https://example.com/avatar.png')
+  assert.deepEqual([viaGoogle.name, viaGoogle.avatar, viaGoogle.provider], [`Mock ${L.slice(0, 6)}`, 'https://example.com/avatar.png', null])
+  assert.equal(viaGoogle.displayName, 'Google gavatar2') // Google 上的名字另外保留
   const doc = (await db.doc(`users/${L}`).get()).data()
+  assert.deepEqual(doc.names, { line: `Mock ${L.slice(0, 6)}`, google: 'Google gavatar2' })
   assert.deepEqual(doc.avatars, { line: 'https://example.com/avatar.png', google: 'https://example.com/google.png' })
-  assert.equal(doc.avatar, 'https://example.com/avatar.png')
+  assert.deepEqual([doc.name, doc.avatar, doc.provider], [`Mock ${L.slice(0, 6)}`, 'https://example.com/avatar.png', null])
+})
+
+test('合併後保留的是 Google 帳號：被併入的 LINE 帳號的名稱與頭像併進來，provider 清空', async () => {
+  const L = 'U' + '6'.repeat(32)
+  await lineLogin(L)
+  const g = await googleLogin('gavatar3')
+  assert.equal(g.provider, 'google')
+  await seedGroup('av1', { members: [g.uid, T], createdBy: g.uid })
+  await seedGroup('av2', { members: [g.uid, T], createdBy: g.uid })
+  await seedGroup('av3', { members: [L, T], createdBy: T })
+  const bind = await post('bindIdentity', { provider: 'line', liffIdToken: L }, g.idToken)
+  assert.equal(bind.body.status, 'merge_required', JSON.stringify(bind.body))
+  assert.equal(bind.body.keepUid ?? g.uid, g.uid)
+  const done = await post('executeMerge', { mergeId: bind.body.mergeId, resolutions: {} }, g.idToken)
+  assert.equal(done.status, 200, JSON.stringify(done.body))
+  assert.equal(done.body.keepUid, g.uid)
+  assert.deepEqual([done.body.profile.name, done.body.profile.avatar, done.body.profile.provider], [`Mock ${L.slice(0, 6)}`, 'https://example.com/avatar.png', null])
 })

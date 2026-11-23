@@ -66,10 +66,11 @@ export const exchangeGoogleLogin = async ({ idToken, verifyGoogle, resolveUid, s
     return { status: 401, body: { error: 'id_token_invalid' } }
   }
   const { uid, isNew } = await resolveUid(profile.subject)
-  // syncProfile 回傳這個帳號目前顯示用的頭像（LINE 優先，其次 Google，見 avatar.js）
-  const avatar = (await syncProfile(uid, profile.name, profile.picture)) ?? null
+  // syncProfile 回傳這個帳號目前顯示用的 { name, avatar, provider }（LINE 優先，見 profile.js）；
+  // displayName 仍是 Google 上的名字（首次設定暱稱的預設），name、avatar、provider 才是帳號實際的
+  const shown = (await syncProfile(uid, profile.name, profile.picture)) ?? {}
   const firebaseToken = await createToken(uid)
-  return { status: 200, body: { uid, isNew, displayName: profile.name, avatar, firebaseToken } }
+  return { status: 200, body: { uid, isNew, displayName: profile.name, name: shown.name ?? profile.name, avatar: shown.avatar ?? null, provider: shown.provider ?? null, firebaseToken } }
 }
 
 /**
