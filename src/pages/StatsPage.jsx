@@ -1,4 +1,4 @@
-// /group/:id/stats — 群組統計：總覽、類別佔比、每月趨勢與每人付款。
+// /group/:id/stats — 群組統計：總覽，下方分「圖表」（類別佔比、每月趨勢）與「帳戶」（付款方式、每人付款總額）兩個分頁。
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
@@ -14,6 +14,11 @@ import { sumBySpendMethod, spendTypeLabel } from '../utils/spendMethods'
 const CATEGORY_COLORS = ['#E8651A', '#3B7DD8', '#2F9E7A', '#D4A017', '#8A63C9', '#D4577A', '#5B8A9A', '#8B95A5'] // cs-color-ok
 const TREND_MONTHS = 12
 
+const tabButton = (active) => ({
+  flex: 1, padding: '10px 0', border: 'none', borderBottom: `2px solid ${active ? 'var(--cs-rc-stamp)' : 'transparent'}`, background: 'none',
+  fontSize: 14, fontWeight: active ? 600 : 400, color: active ? 'var(--cs-text)' : 'var(--cs-text-sub)', cursor: 'pointer',
+})
+
 const cardStyle = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 16 }
 const titleStyle = { fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 12 }
 
@@ -26,6 +31,7 @@ const StatsPage = () => {
   const [group, setGroup] = useState(null)
   const [expenses, setExpenses] = useState(null)
   const [incomes, setIncomes] = useState([])
+  const [tab, setTab] = useState('charts')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -167,6 +173,16 @@ const StatsPage = () => {
               { label: t('stats.count'), value: count },
             ])}
 
+            {/* 分頁：圖表（類別佔比、每月趨勢）／帳戶（付款方式、每人付款總額）；兩個面板都保持掛載、只切換顯示 */}
+            <div role="tablist" style={{ display: 'flex', borderBottom: '0.5px solid var(--cs-border)' }}>
+              {['charts', 'accounts'].map((key) => (
+                <button key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)} style={tabButton(tab === key)}>
+                  {t(`stats.tab.${key}`)}
+                </button>
+              ))}
+            </div>
+
+            <div role="tabpanel" style={{ display: tab === 'charts' ? 'flex' : 'none', flexDirection: 'column', gap: 12 }}>
             {/* 類別佔比 */}
             <div style={cardStyle}>
               <div style={titleStyle}>{t('stats.byCategory')}</div>
@@ -196,20 +212,6 @@ const StatsPage = () => {
               </div>
             </div>
 
-            {/* 付款方式 */}
-            <div style={cardStyle}>
-              <div style={titleStyle}>{t('stats.byMethod')}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {stats.methods.map(m => (
-                  <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                    <span style={{ flex: 1, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{spendTypeLabel(m.name, t)}</span>
-                    <span style={{ color: 'var(--cs-text-sub)', flexShrink: 0 }}>{stats.total > 0 ? ((m.amount / stats.total) * 100).toFixed(1) : '0.0'}%</span>
-                    <span style={{ color: 'var(--cs-text)', fontWeight: 500, minWidth: 80, textAlign: 'right', flexShrink: 0 }}>{fmt(m.amount)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* 每月趨勢 */}
             <div style={cardStyle}>
               <div style={titleStyle}>{t('stats.trend')}</div>
@@ -226,6 +228,23 @@ const StatsPage = () => {
               <div style={{ display: 'flex', gap: 8, borderTop: '0.5px solid var(--cs-border)', paddingTop: 6, marginTop: 0 }}>
                 {stats.months.map(m => (
                   <div key={m.key} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: 'var(--cs-text-sub)' }}>{t(m.label)}</div>
+                ))}
+              </div>
+            </div>
+
+            </div>
+
+            <div role="tabpanel" style={{ display: tab === 'accounts' ? 'flex' : 'none', flexDirection: 'column', gap: 12 }}>
+            {/* 付款方式 */}
+            <div style={cardStyle}>
+              <div style={titleStyle}>{t('stats.byMethod')}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {stats.methods.map(m => (
+                  <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                    <span style={{ flex: 1, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{spendTypeLabel(m.name, t)}</span>
+                    <span style={{ color: 'var(--cs-text-sub)', flexShrink: 0 }}>{stats.total > 0 ? ((m.amount / stats.total) * 100).toFixed(1) : '0.0'}%</span>
+                    <span style={{ color: 'var(--cs-text)', fontWeight: 500, minWidth: 80, textAlign: 'right', flexShrink: 0 }}>{fmt(m.amount)}</span>
+                  </div>
                 ))}
               </div>
             </div>
@@ -252,6 +271,7 @@ const StatsPage = () => {
                   )
                 })}
               </div>
+            </div>
             </div>
           </>
         )}

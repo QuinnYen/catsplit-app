@@ -570,8 +570,14 @@ const GroupPage = () => {
           onTouchEnd={e => e.currentTarget.style.opacity = '1'}
         >
           <div style={{ flex: 1 }}>
-            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4 }}>
-              {t('group.totalExpense')} · {t('group.expenseCount', { n: group.totalExpenses ?? 0 })}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+              <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }}>
+                {t('group.totalExpense')} · {t('group.expenseCount', { n: group.totalExpenses ?? 0 })}
+              </span>
+              {/* 提示整張卡片可點、會進統計頁 */}
+              <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: 500, display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                {t('group.statsLink')}<ChevronRight size={14} />
+              </span>
             </div>
             {/* 收入只列出金額，不下結論（可能是起始金，也可能是退款）；差額看統計頁的結餘 */}
             {(group.incomeCount ?? 0) > 0 && (
@@ -602,7 +608,6 @@ const GroupPage = () => {
               </div>
             )}
           </div>
-          <ChevronRight size={22} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />
         </div>
       </div>
 
