@@ -31,7 +31,7 @@
 
 - `firestore.rules`：新增 `users/{uid}/ledgers/{id}` 與其下的 `accounts`、`transactions`、`groupLinks`，僅本人、非訪客；驗證 `type`、`currency`、`amount`、`baseAmount`（> 0 且 < 1e12）、名稱長度、`date` 為字串、`source.type` 在允許清單內。
 - `firestore-tests/ledger.rules.mjs`：本人可寫、他人不可讀寫、訪客拒絕、欄位驗證。
-- `src/features/ledger/` 純函式與測試：換算（原幣 → 統計幣別、原幣 → 帳戶幣別，含手動覆寫扣款金額）、餘額增量（含跨幣別帳目與轉帳）、月份與當日加總、依分類加總、同步計畫（見 PR5）、匯入計畫。資料讀寫集中在 `src/features/ledger/` 的資料存取層，畫面不直接呼叫 Firestore。
+- `src/features/ledger/` 純函式與測試：算式解析（記帳鍵盤，不用 `eval`）、換算（原幣 → 統計幣別、原幣 → 帳戶幣別，含手動覆寫扣款金額）、餘額增量（含跨幣別帳目與轉帳）、月份與當日加總、依分類加總、同步計畫（見 PR5）、匯入計畫。資料讀寫集中在 `src/features/ledger/` 的資料存取層，畫面不直接呼叫 Firestore。
 - 沒有任何 UI 使用，合併後行為不變，風險最低。
 
 ### PR2：帳本骨架與記帳（支出、收入）
@@ -39,8 +39,8 @@
 - 帳本專用導覽列 `LedgerTabBar`（首頁／帳本／記帳／帳戶／設定，中間凸起）；`/ledger/*` 下不顯示 `MainTabBar`，「首頁」回到 `/`。帳戶、圖表、設定先放佔位頁。
 - 帳本切換與新增：header 左上圓鈕的選單；新增帳本（名稱、圖示、統計幣別，先說明建立後不可改）；第一次進入自動建立「我的帳本」（TWD）與「現金」帳戶；最近使用的帳本 id 存 `localStorage`。
 - 帳本主頁：月份切換、支出／收入／結餘三欄、上半月曆（有帳目的日期標點）、下半當日明細。
-- **先做記帳體驗的設計討論再實作**：spec 已記錄記帳 UI 預計大改，互動線稿 v3 不作為依據。
-- 記帳面板（依討論結果）：支出／收入、金額、幣別、分類、帳戶、日期、備註；幣別與帳戶或統計幣別不同時顯示換算與可改的匯率及「扣款金額」；儲存並再記一筆；編輯與刪除，餘額在同一個 batch 用 `increment`（增量是 `accountAmount`）。匯率用 `useExchangeRate`，失敗時手動輸入。
+- 記帳體驗已確定，依 spec 3.1 實作：底部彈出面板 `LedgerEntrySheet`、常駐數字鍵盤 `NumberPad`（先看 `CalculatorModal` 有沒有可抽出的算式邏輯）、類別圖示格狀（支出 7 類與收入 5 類各一組 lucide 圖示加自訂）。
+- 記帳面板：金額先、日期預設選取日、帳戶與類別預設上次用的（存本機）、幣別 chip 與換算、扣款金額（可覆寫）、儲存與再記一筆；編輯與刪除，餘額在同一個 batch 用 `increment`（增量是 `accountAmount`）。匯率用 `useExchangeRate`，失敗時手動輸入。
 - 讀 `?amount=&currency=&rate=&source=fx` 預填（匯率頁預留介面）。
 - 刪除：新增後端函式 `deleteLedger`（`recursiveDelete`，比照 `deleteGroup`，建立者驗證 ID token）；「刪除我的資料」改由後端刪 `users/{uid}/ledgers` 子樹；更新 `public/privacy.html` 與 `public/privacy.en.html`。
 - 帳號合併：確認帳本子樹隨 `movePersonalData` 搬移，補單元測試並量測大量帳目的耗時。
@@ -96,8 +96,8 @@
 
 ## 5. 開工前待確認
 
-1. 個人收入分類的最終清單（薪資、獎金、投資、退款、其他）與圖示。
-2. 統計圖表要沿用 `StatsPage` 的哪些元件。
-3. 新增帳本的圖示選擇器：沿用群組的 `GroupIconPicker`，還是先只用顏色。
-4. 記帳體驗的設計討論（PR2 前）。
-5. 資料庫來源（建議維持 Firestore，見 spec「待決議」）。
+1. 統計圖表要沿用 `StatsPage` 的哪些元件，以及讀取量方案（見 PR4）。
+2. 新增帳本的圖示選擇器：沿用群組的 `GroupIconPicker`，還是先只用顏色。
+3. 分類圖示的具體圖示（lucide）。
+
+已確認：個人收入分類用 spec 的清單；記帳體驗見 spec 3.1；資料庫維持 Firestore。
