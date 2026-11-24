@@ -39,8 +39,8 @@
 - 帳本專用導覽列 `LedgerTabBar`（首頁／帳本／記帳／帳戶／設定，中間凸起）；`/ledger/*` 下不顯示 `MainTabBar`，「首頁」回到 `/`。帳戶、圖表、設定先放佔位頁。
 - 帳本切換與新增：header 左上圓鈕的選單；新增帳本（名稱、圖示、統計幣別，先說明建立後不可改）；第一次進入自動建立「我的帳本」（TWD）與「現金」帳戶；最近使用的帳本 id 存 `localStorage`。
 - 帳本主頁：月份切換、支出／收入／結餘三欄、上半月曆（有帳目的日期標點）、下半當日明細。
-- 記帳體驗已確定，依 spec 3.1 實作：底部彈出面板 `LedgerEntrySheet`、常駐數字鍵盤 `NumberPad`（先看 `CalculatorModal` 有沒有可抽出的算式邏輯）、類別圖示格狀（支出 7 類與收入 5 類各一組 lucide 圖示加自訂）。
-- 記帳面板：金額先、日期預設選取日、帳戶與類別預設上次用的（存本機）、幣別 chip 與換算、扣款金額（可覆寫）、儲存與再記一筆；編輯與刪除，餘額在同一個 batch 用 `increment`（增量是 `accountAmount`）。匯率用 `useExchangeRate`，失敗時手動輸入。
+- 記帳體驗已確定，依 spec 3.1 實作：底部彈出面板 `LedgerEntrySheet`、常駐數字鍵盤 `NumberPad`（先看 `CalculatorModal` 有沒有可抽出的算式邏輯）、日期整行、類別與帳戶下拉（預設清單，不帶圖示）、備註區塊。
+- 記帳面板：金額先、日期預設選取日、帳戶與類別預設上次用的（存本機）、完整幣別選單（`CurrencySelect`）與換算、扣款金額（可覆寫）、儲存與再記一筆；編輯與刪除，餘額在同一個 batch 用 `increment`（增量是 `accountAmount`）。匯率用 `useExchangeRate`，失敗時手動輸入。
 - 讀 `?amount=&currency=&rate=&source=fx` 預填（匯率頁預留介面）。
 - 刪除：新增後端函式 `deleteLedger`（`recursiveDelete`，比照 `deleteGroup`，建立者驗證 ID token）；「刪除我的資料」改由後端刪 `users/{uid}/ledgers` 子樹；更新 `public/privacy.html` 與 `public/privacy.en.html`。
 - 帳號合併：確認帳本子樹隨 `movePersonalData` 搬移，補單元測試並量測大量帳目的耗時。
@@ -92,12 +92,11 @@
 
 ## 4. 不在本計畫範圍
 
-預算（等 P8）、CSV 匯出、重複性記帳、匯率換算頁本身、首頁摘要卡片、本地快取（`persistentLocalCache`）、跨帳本總覽與帳目在帳本間移動、一個帳戶同時持有多幣別餘額（錢包式外幣帳戶）。
+預算（等 P8）、CSV 匯出、重複性記帳、匯率換算頁本身、首頁摘要卡片、本地快取（`persistentLocalCache`）、跨帳本總覽與帳目在帳本間移動、一個帳戶同時持有多幣別餘額（錢包式外幣帳戶）、使用者自訂分類（設定頁，之後）、分類圖示（之後單獨處理）。
 
 ## 5. 開工前待確認
 
 1. 統計圖表要沿用 `StatsPage` 的哪些元件，以及讀取量方案（見 PR4）。
 2. 新增帳本的圖示選擇器：沿用群組的 `GroupIconPicker`，還是先只用顏色。
-3. 分類圖示的具體圖示（lucide）。
 
 已確認：個人收入分類用 spec 的清單；記帳體驗見 spec 3.1；資料庫維持 Firestore。
