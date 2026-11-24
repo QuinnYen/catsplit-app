@@ -82,6 +82,17 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  群組連結
 - **餘額**：記帳、編輯、刪除時在同一個 batch 用 `increment` 更新帳戶 `balance`（增量是 `accountAmount`，沒有時用 `amount`；轉帳更新兩個帳戶，分別用 `amount` 與 `toAmount`）。**同步中的快照帳目不碰任何 `balance`**，所以同步不會造成餘額漂移。提供「重新計算」按鈕，讀該帳戶全部帳目重算 `balance` 作為修復。
 - `groupLinks` 不需要全域唯一：同一個群組可以連結到不同帳本（各自獨立）。
 
+### 1.5 rules 的實作細節（PR1 已上線）
+
+與上面欄位表一致，另有幾點比 spec 文字更嚴或有取捨：
+
+- 貨幣欄位只驗證「3 碼字串」，清單比對（`CURRENCIES`）在前端，避免新增貨幣時 rules 也要同步部署。
+- **客戶端不能刪帳本文件**（只能由後端 `recursiveDelete`）；帳戶、帳目、群組連結本人可刪。「有帳目的帳戶不能刪」只能在前端擋。
+- 帳本的 `baseCurrency`、帳戶的 `currency` 與 `kind`、帳目的 `createdAt` 在 rules 層級**建立後一律不可改**（即使還沒有帳目）。
+- 快照帳戶的 `kind` 與 `type` 必須同為 `group`；`source` 為必填（手動帳目寫 `{ type: 'manual' }`）。
+- 收入與支出必須有 `exchangeRate` 與 `baseAmount`，不能有轉帳欄位；轉帳必須有 `toAccountId`（不可等於 `accountId`）與 `toAmount`，不能有匯率、統計金額與扣款金額。
+- 所有欄位都有白名單（`hasOnly`），之後新增欄位要同步改 rules。
+
 ### 1.4 `groupLinks/{groupId}`
 
 `{ linkedAt, groupName }`。`linkedAt` 是「不帶歷史」的分界；`groupName` 是快取，群組失效後設定頁仍能顯示。

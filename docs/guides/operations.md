@@ -7,7 +7,7 @@
 - **Firestore / Storage rules 是唯一的存取防線**（`firestore.rules`、`storage.rules`）。改 rules 後請用兩個帳號實測：加入、退出、建立者移除成員、改暱稱，以及訪客加入與認領。
 - 群組成員名單只能減少一人（本人退出，或建立者移除他人）；新增成員只能由本人加入，或由成員新增虛擬成員，上限 50 人。
 - 群組預算 `budget` 只有建立者（`createdBy`）能設定、修改或清除，寫入時驗證結構（`amount` 為 0 到 1e12 之間的數字、`period` 為含 `type` 字串的 map、沒有其他欄位）；其他成員的一般記帳更新不受影響。建立者離開時 `createdBy` 轉給繼任者，管理權跟著轉移。
-- **rules 自動化測試**：`npm run test:rules`（需要 Java）以 `--project demo-catsplit` 啟動 Firestore 模擬器並執行 `firestore-tests/*.mjs`，目前涵蓋預算權限與一般記帳、加入群組、新增虛擬成員。會使用 8080 埠，**執行前先關閉 `npm run emulators` 或其他模擬器**。兩個帳號的手動實測仍要做。**帳號合併的 Firestore 整合測試**用 `npm run test:merge`（同樣需要 Java 與模擬器，`functions/emulator-tests/`），涵蓋群組搬移、轉帳自付、個人資料搬移、重試安全與預覽；它與 `test:rules` 都用 8080 埠，不能同時執行。**身分綁定與合併的端到端測試**用 `npm run test:e2e`（`functions/emulator-e2e/`，從 HTTP 端點走完整流程），需要含 functions 的模擬器與假驗證預載檔，做法見下方「本機模擬器跑雲端函式」；它會先清空 Firestore 與 Auth 模擬器的資料。
+- **rules 自動化測試**：`npm run test:rules`（需要 Java）以 `--project demo-catsplit` 啟動 Firestore 模擬器並執行 `firestore-tests/*.mjs`，目前涵蓋預算權限與一般記帳、加入群組、新增虛擬成員、儲蓄目標、個人帳本（`ledger.rules.mjs`）。會使用 8080 埠，**執行前先關閉 `npm run emulators` 或其他模擬器**。兩個帳號的手動實測仍要做。**帳號合併的 Firestore 整合測試**用 `npm run test:merge`（同樣需要 Java 與模擬器，`functions/emulator-tests/`），涵蓋群組搬移、轉帳自付、個人資料搬移、重試安全與預覽；它與 `test:rules` 都用 8080 埠，不能同時執行。**身分綁定與合併的端到端測試**用 `npm run test:e2e`（`functions/emulator-e2e/`，從 HTTP 端點走完整流程），需要含 functions 的模擬器與假驗證預載檔，做法見下方「本機模擬器跑雲端函式」；它會先清空 Firestore 與 Auth 模擬器的資料。
 - **收款方式**（`users/{uid}/paymentMethods`）：本人可讀寫；其他登入者只能讀 `isPublic == true` 的，列表查詢必須帶 `where('isPublic', '==', true)`。訪客不能寫。可見範圍的取捨見[收款方式](payment-methods.md)。
 - **收據圖片受 rules 保護**：Firestore 只存 `receiptPath`（Storage 路徑），顯示時用 `getBlob()` 以登入身分下載。**不要改回 `getDownloadURL()` 並存進資料庫**，帶 token 的網址會繞過 rules，任何拿到網址的人都能看。群組封面仍使用帶 token 的網址（敏感度低）。
 

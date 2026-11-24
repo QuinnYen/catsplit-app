@@ -120,6 +120,139 @@ service cloud.firestore {
       }
     }
 
+    // ===== 個人帳本（P12）=====
+    // 結構與欄位見 docs/superpowers/specs/2026-11-14-p12-personal-ledger-design.md。
+    // 只有本人能讀寫，訪客不能寫。貨幣只驗證是 3 碼字串：清單比對在前端，避免新增貨幣時 rules 也要同步部署。
+    // 帳本文件的刪除一律由後端處理（recursiveDelete，連同子集合），客戶端不能刪，避免留下孤兒子集合。
+    function isLedgerOwner(userId) {
+      return isMember() && request.auth.uid == userId;
+    }
+    function validCurrencyCode(c) {
+      return c is string && c.size() == 3;
+    }
+    function validMoney(v) {
+      return v is number && v > 0 && v < 1000000000000;
+    }
+    function validBalance(v) {
+      return v is number && v > -1000000000000 && v < 1000000000000;
+    }
+
+    function validLedger(d) {
+      return d.keys().hasOnly(['name', 'baseCurrency', 'icon', 'color', 'archived', 'createdAt'])
+        && d.keys().hasAll(['name', 'baseCurrency', 'createdAt'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
+        && validCurrencyCode(d.baseCurrency)
+        && (!('icon' in d) || (d.icon is string && d.icon.size() <= 40))
+        && (!('color' in d) || (d.color is string && d.color.size() <= 20))
+        && (!('archived' in d) || d.archived is bool)
+        && d.createdAt is timestamp;
+    }
+
+    function validAccount(d) {
+      return d.keys().hasOnly(['name', 'type', 'currency', 'initialBalance', 'balance', 'kind', 'syncedCount', 'syncedNet', 'archived', 'createdAt'])
+        && d.keys().hasAll(['name', 'type', 'currency', 'initialBalance', 'balance', 'kind', 'createdAt'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
+        && d.type in ['cash', 'bank', 'credit', 'emoney', 'other', 'group']
+        && validCurrencyCode(d.currency)
+        && validBalance(d.initialBalance)
+        && validBalance(d.balance)
+        && d.kind in ['normal', 'group']
+        && ((d.kind == 'group') == (d.type == 'group'))
+        && (!('syncedCount' in d) || (d.syncedCount is int && d.syncedCount >= 0))
+        && (!('syncedNet' in d) || validBalance(d.syncedNet))
+        && (!('archived' in d) || d.archived is bool)
+        && d.createdAt is timestamp;
+    }
+
+    function validSource(s) {
+      return s is map
+        && s.keys().hasOnly(['type', 'groupId', 'kind', 'itemId', 'detached', 'edited'])
+        && s.type in ['manual', 'fx', 'group']
+        && (s.type != 'group' || s.keys().hasAll(['groupId', 'kind', 'itemId']))
+        && (!('groupId' in s) || (s.groupId is string && s.groupId.size() >= 1 && s.groupId.size() <= 100))
+        && (!('kind' in s) || s.kind in ['expense', 'income'])
+        && (!('itemId' in s) || (s.itemId is string && s.itemId.size() >= 1 && s.itemId.size() <= 100))
+        && (!('detached' in s) || s.detached is bool)
+        && (!('edited' in s) || s.edited is map);
+    }
+
+    // 收入與支出：帶匯率與換成帳本統計幣別的金額；跨幣別時帶扣款金額（對帳戶餘額的影響，帳戶幣別）
+    function validEntryFields(d) {
+      return d.keys().hasAll(['exchangeRate', 'baseAmount'])
+        && validMoney(d.exchangeRate)
+        && validMoney(d.baseAmount)
+        && !d.keys().hasAny(['toAccountId', 'toAmount'])
+        && (!('accountAmount' in d) || validMoney(d.accountAmount))
+        && (!('accountRate' in d) || validMoney(d.accountRate));
+    }
+
+    // 轉帳：轉出金額在 amount（轉出帳戶幣別），轉入金額在 toAmount（轉入帳戶幣別），不計入收支所以沒有匯率與統計金額
+    function validTransferFields(d) {
+      return d.keys().hasAll(['toAccountId', 'toAmount'])
+        && d.toAccountId is string && d.toAccountId.size() >= 1 && d.toAccountId.size() <= 120
+        && d.toAccountId != d.accountId
+        && validMoney(d.toAmount)
+        && !d.keys().hasAny(['exchangeRate', 'baseAmount', 'accountAmount', 'accountRate']);
+    }
+
+    function validTransaction(d) {
+      return d.keys().hasOnly(['type', 'accountId', 'amount', 'currency', 'exchangeRate', 'baseAmount', 'accountAmount', 'accountRate', 'toAccountId', 'toAmount', 'title', 'category', 'note', 'date', 'source', 'createdAt'])
+        && d.keys().hasAll(['type', 'accountId', 'amount', 'currency', 'date', 'source', 'createdAt'])
+        && d.type in ['income', 'expense', 'transfer']
+        && d.accountId is string && d.accountId.size() >= 1 && d.accountId.size() <= 120
+        && validMoney(d.amount)
+        && validCurrencyCode(d.currency)
+        && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && (!('title' in d) || (d.title is string && d.title.size() <= 50))
+        && (!('category' in d) || (d.category is string && d.category.size() <= 30))
+        && (!('note' in d) || (d.note is string && d.note.size() <= 50))
+        && validSource(d.source)
+        && d.createdAt is timestamp
+        && (d.type == 'transfer' ? validTransferFields(d) : validEntryFields(d));
+    }
+
+    match /users/{userId}/ledgers/{ledgerId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if isLedgerOwner(userId) && validLedger(request.resource.data);
+      // 統計幣別建立後不可改（歷史帳目的 baseAmount 以它為單位）
+      allow update: if isLedgerOwner(userId) && validLedger(request.resource.data)
+        && request.resource.data.baseCurrency == resource.data.baseCurrency
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+
+      match /accounts/{accountId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if isLedgerOwner(userId) && validAccount(request.resource.data);
+        // 帳戶幣別與種類建立後不可改（餘額以帳戶幣別計算）
+        allow update: if isLedgerOwner(userId) && validAccount(request.resource.data)
+          && request.resource.data.currency == resource.data.currency
+          && request.resource.data.kind == resource.data.kind
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isLedgerOwner(userId);
+      }
+
+      match /transactions/{txId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if isLedgerOwner(userId) && validTransaction(request.resource.data);
+        allow update: if isLedgerOwner(userId) && validTransaction(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isLedgerOwner(userId);
+      }
+
+      // 群組連結：文件 id 就是群組 id；linkedAt 是「不帶歷史」的分界
+      match /groupLinks/{groupId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if isLedgerOwner(userId)
+          && request.resource.data.keys().hasOnly(['linkedAt', 'groupName'])
+          && request.resource.data.keys().hasAll(['linkedAt', 'groupName'])
+          && request.resource.data.linkedAt is timestamp
+          && request.resource.data.groupName is string
+          && request.resource.data.groupName.size() >= 1
+          && request.resource.data.groupName.size() <= 50;
+        allow delete: if isLedgerOwner(userId);
+      }
+    }
+
     // 個人設定（全域暱稱）：只有本人能讀寫，暱稱 1~20 字
     match /users/{userId}/settings/profile {
       allow read: if request.auth != null && request.auth.uid == userId;

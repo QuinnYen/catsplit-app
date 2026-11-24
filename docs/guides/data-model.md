@@ -30,6 +30,10 @@
 | `users/{uid}/spendMethods/{auto}` | 付款方式（信用卡等，記帳時選用） | 本人 | 本人（非訪客） | — |
 | `users/{uid}/savingsGoals/{auto}` | 儲蓄目標 | 本人 | 本人（非訪客） | — |
 | `users/{uid}/savingsGoals/{id}/entries/{auto}` | 存提款紀錄 | 本人 | 本人（非訪客） | — |
+| `users/{uid}/ledgers/{id}` | 個人帳本（P12，**rules 已上線、尚未使用**） | 本人 | 本人（非訪客）；客戶端不能刪，由後端刪 | 合併時搬移 |
+| `users/{uid}/ledgers/{id}/accounts/{id}` | 帳本內的帳戶（含群組快照帳戶） | 本人 | 本人（非訪客） | 隨帳本搬移 |
+| `users/{uid}/ledgers/{id}/transactions/{id}` | 帳目（收入、支出、轉帳） | 本人 | 本人（非訪客） | 隨帳本搬移 |
+| `users/{uid}/ledgers/{id}/groupLinks/{groupId}` | 帳本連結的分帳群組 | 本人 | 本人（非訪客） | 隨帳本搬移（同群組衝突要另外處理） |
 | `groups/{auto}` | 群組 | 見下 | 見下 | 搬移成員、刪除成員 |
 | `groups/{id}/expenses/{auto}` | 支出 | 群組成員 | 群組成員 | 搬移成員 |
 | `groups/{id}/incomes/{auto}` | 收入與贊助 | 群組成員 | 群組成員 | 搬移成員 |

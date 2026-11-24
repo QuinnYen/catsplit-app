@@ -27,12 +27,13 @@
 
 ## 2. 實作順序
 
-### PR1：rules 與資料層（沒有 UI，可獨立上線）
+### PR1：rules 與資料層（沒有 UI，可獨立上線）— 已完成（2026-11-24）
 
 - `firestore.rules`：新增 `users/{uid}/ledgers/{id}` 與其下的 `accounts`、`transactions`、`groupLinks`，僅本人、非訪客；驗證 `type`、`currency`、`amount`、`baseAmount`（> 0 且 < 1e12）、名稱長度、`date` 為字串、`source.type` 在允許清單內。
 - `firestore-tests/ledger.rules.mjs`：本人可寫、他人不可讀寫、訪客拒絕、欄位驗證。
 - `src/features/ledger/` 純函式與測試：算式解析（記帳鍵盤，不用 `eval`）、換算（原幣 → 統計幣別、原幣 → 帳戶幣別，含手動覆寫扣款金額）、餘額增量（含跨幣別帳目與轉帳）、月份與當日加總、依分類加總、同步計畫（見 PR5）、匯入計畫。資料讀寫集中在 `src/features/ledger/` 的資料存取層，畫面不直接呼叫 Firestore。
 - 沒有任何 UI 使用，合併後行為不變，風險最低。
+- **實作結果**：`firestore.rules` 新增帳本、帳戶、帳目、群組連結的規則（細節見 spec 1.5）；`firestore-tests/ledger.rules.mjs` 16 個測試；`src/features/ledger/` 的 `constants`、`paths`、`source`、`expression`、`money`、`balance`、`summary`、`syncPlan`、`importPlan` 與各自的測試（共 74 個）。實際呼叫 Firestore 的資料存取層（hooks）留到 PR2，要和畫面一起設計。
 
 ### PR2：帳本骨架與記帳（支出、收入）
 
