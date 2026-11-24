@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { Fragment, lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useApp } from './context/AppContext'
 import GuestJoin from './components/GuestJoin'
@@ -7,8 +7,6 @@ import NicknameSetupPage from './pages/NicknameSetupPage'
 import { isLineUserAgent } from './utils/authSession'
 import { useI18n } from './i18n/I18nProvider'
 import catLogo from './assets/cat-logo.webp'
-import { PawPrint, Wallet } from 'lucide-react'
-import LineIcon from './components/LineIcon'
 import useMyGroups from './hooks/useMyGroups'
 import useSyncMemberProfile from './hooks/useSyncMemberProfile'
 import useOfficialAccountPrompt from './hooks/useOfficialAccountPrompt'
@@ -63,29 +61,26 @@ const LoginScreen = ({ onLogin, onGoogleLogin, guestGroupId }) => {
     }
   }
   return (
-  <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, var(--cs-bg) 0%, var(--cs-soft-2) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
-    <img src={catLogo} alt={t('app.title')} style={{ width: 120, height: 120, marginBottom: 16 }} />
-    <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--cs-text)', marginBottom: 8 }}>{t('app.title')}</div>
-    <div style={{ fontSize: 14, color: 'var(--cs-text-sub)', marginBottom: 24, textAlign: 'center', lineHeight: 1.6 }}>
+  <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, var(--cs-bg) 0%, var(--cs-soft-2) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    {/* 中間：標誌、名稱、流程與登入按鈕，內容少的時候垂直置中 */}
+    <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px 16px' }}>
+    <img src={catLogo} alt={t('app.title')} style={{ width: 96, height: 96, marginBottom: 10 }} />
+    <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--cs-text)', marginBottom: 6 }}>{t('app.title')}</div>
+    <div style={{ fontSize: 14, color: 'var(--cs-text-sub)', marginBottom: guestGroupId ? 24 : 16, textAlign: 'center', lineHeight: 1.6 }}>
       {guestGroupId ? t('login.invited') : t('login.tagline')}
     </div>
 
-    {/* 邀請連結頁省略說明卡，讓訪客入口不用捲動就看得到 */}
-    {!guestGroupId && <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: '24px 20px', width: '100%', maxWidth: 320, marginBottom: 32 }}>
-      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 16, textAlign: 'center' }}>{t('login.howTo')}</div>
-      {[
-        { Icon: LineIcon, text: t('login.step1') },
-        { Icon: PawPrint, text: t('login.step2') },
-        { Icon: Wallet, text: t('login.step3') },
-      ].map(({ Icon, text }, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: i < 2 ? 14 : 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 6, background: 'var(--cs-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Icon size={18} color="var(--cs-rc-stamp)" strokeWidth={2} />
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--cs-text)' }}>{text}</div>
-        </div>
-      ))}
-    </div>}
+    {/* 三個步驟用一行小標籤帶過；邀請連結頁省略，讓訪客入口不用捲動就看得到 */}
+    {!guestGroupId && (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 22 }}>
+        {['login.flow1', 'login.flow2', 'login.flow3'].map((key, i) => (
+          <Fragment key={key}>
+            {i > 0 && <span aria-hidden="true" style={{ color: 'var(--cs-text-sub)' }}>›</span>}
+            <span style={{ background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 999, padding: '5px 12px', fontSize: 12.5, color: 'var(--cs-text)' }}>{t(key)}</span>
+          </Fragment>
+        ))}
+      </div>
+    )}
 
     <button
       onClick={onLogin}
@@ -115,8 +110,10 @@ const LoginScreen = ({ onLogin, onGoogleLogin, guestGroupId }) => {
       </div>
     )}
 
-    {/* 介紹、使用條款與隱私權：英文版是另一份靜態頁；中文版維持原網址 */}
-    <div style={{ marginTop: 28, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '4px 16px', fontSize: 12 }}>
+    </div>
+
+    {/* 說明、使用條款與隱私權固定在畫面最下面：英文版是另一份靜態頁；中文版維持原網址。底部留出 iPhone 的安全區域 */}
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '4px 16px', fontSize: 12, padding: '12px 24px calc(16px + env(safe-area-inset-bottom))' }}>
       {[
         [lang === 'en' ? '/about.en.html' : '/about.html', t('login.about')],
         [lang === 'en' ? '/terms.en.html' : '/terms.html', t('home.menu.terms')],
