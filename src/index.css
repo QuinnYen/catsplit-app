@@ -25,7 +25,7 @@
 :root {
   /* TabBar 不含啟用圓點、不含 safe-area 的基準高度。實際高度依頁面為 50.5／54.5／56.5，
      StickyFooter 沿用 50 是既有行為 */
-  --tabbar-h: 50px;
+  --tabbar-h: 54px;
 
   /* 主題色（淺色）。顏色一律用 var(--cs-…)，不要寫死色碼（npm run check:colors 會檢查）；
      深色值在下方 :root[data-theme="dark"]，說明見 docs/theme.md */

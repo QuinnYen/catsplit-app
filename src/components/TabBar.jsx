@@ -57,7 +57,7 @@ const TabBar = ({ context = 'home', groupId }) => {
       background: 'var(--cs-card)',
       borderTop: '0.5px solid var(--cs-border)',
       display: 'flex',
-      padding: '8px 0 calc(8px + env(safe-area-inset-bottom, 0px))',
+      padding: '6px 0 calc(6px + env(safe-area-inset-bottom, 0px))',
       position: 'fixed',
       bottom: 0,
       left: 0,
@@ -78,25 +78,23 @@ const TabBar = ({ context = 'home', groupId }) => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
+              gap: 2,
               background: 'none',
               border: 'none',
               cursor: isActive ? 'default' : 'pointer',
-              padding: '4px 0',
+              padding: '2px 0',
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <Icon size={context === 'group' ? 30 : 26} color={color} strokeWidth={isActive ? 2.4 : 1.8} />
-            {isActive && (
-              <span style={{
-                width: 4,
-                height: 4,
-                borderRadius: '50%',
-                background: 'var(--cs-rc-stamp)',
-                display: 'block',
-                marginTop: -1,
-              }} />
-            )}
+            <Icon size={22} color={color} strokeWidth={isActive ? 2.4 : 1.8} />
+            <span style={{
+              fontSize: 11,
+              lineHeight: '14px',
+              fontWeight: isActive ? 700 : 500,
+              color,
+            }}>
+              {t(label)}
+            </span>
           </button>
         )
       })}
