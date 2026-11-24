@@ -105,3 +105,9 @@ firebase deploy
 - [啟動速度](docs/startup-performance.md)：登入快速路徑與載入策略，改啟動流程前請先看
 - [安全與維運](docs/operations.md)：rules、CORS、換網域、備份、已知取捨與待辦
 - [專案結構](docs/architecture.md)：目錄說明與技術棧
+
+## 授權
+
+Copyright (C) 2026 Quinn Yen
+
+本專案以 [GNU Affero General Public License v3.0](LICENSE)（AGPL-3.0-only）授權。你可以自由閱讀、使用與修改；若修改後架設成網路服務供他人使用，必須依授權條款向使用者公開修改後的完整原始碼。

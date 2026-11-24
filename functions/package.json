@@ -16,5 +16,6 @@
     "firebase-functions": "^6.0.0",
     "google-auth-library": "^10.9.1"
   },
-  "private": true
+  "private": true,
+  "license": "AGPL-3.0-only"
 }
