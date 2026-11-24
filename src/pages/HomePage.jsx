@@ -1,7 +1,7 @@
 // / — 首頁：未登入顯示登入畫面；已登入顯示使用者資訊、消費總覽與我的群組列表，頭像可開啟選單（設定、收款方式、條款、登出）。
 import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, LogOut, QrCode, PiggyBank, CreditCard } from 'lucide-react'
+import { Settings, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, LogOut, QrCode, PiggyBank, CreditCard, ChevronDown } from 'lucide-react'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
@@ -121,26 +121,30 @@ const HomePage = () => {
 
         {/* 使用者資訊 */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              onClick={() => setShowSettings(true)}
-              aria-label={t('group.settings')}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', borderRadius: '50%' }}
-            >
-              <Avatar
-                src={user?.avatar}
-                name={user?.name}
-                size={38}
-                style={{ background: 'var(--cs-soft-2)', border: '2px solid var(--cs-rc-stamp)' }}
-              />
-            </button>
+          {/* 頭像、問候與名字整塊是一個按鈕，名字後面的箭頭提示可以展開選單 */}
+          <button
+            onClick={() => setShowSettings(v => !v)}
+            aria-label={t('group.settings')}
+            aria-haspopup="menu"
+            aria-expanded={showSettings}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', WebkitTapHighlightColor: 'transparent' }}
+          >
+            <Avatar
+              src={user?.avatar}
+              name={user?.name}
+              size={38}
+              style={{ background: 'var(--cs-soft-2)', border: '2px solid var(--cs-rc-stamp)' }}
+            />
             <div>
               <div style={{ color: 'var(--cs-rc-head-text)', opacity: 0.75, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <GreetingIcon size={12} color="var(--cs-rc-stamp)" />{t(greetingKey)}
               </div>
-              <div style={{ color: 'var(--cs-rc-head-text)', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
+              <div style={{ color: 'var(--cs-rc-head-text)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 2 }}>
+                {user?.name}
+                <ChevronDown size={16} color="var(--cs-rc-head-text)" style={{ opacity: 0.8, flexShrink: 0, transform: showSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+              </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
