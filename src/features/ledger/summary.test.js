@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { monthGrid, monthDateBounds, summarizeEntries, datesWithEntries, entriesOfDate, sumByCategory, isCounted } from './summary.js'
+import { monthGrid, monthDateBounds, summarizeEntries, datesWithEntries, entriesOfDate, sumByCategory, isCounted, lastMonths, trendByMonth } from './summary.js'
 
 const tx = (o) => ({ type: 'expense', baseAmount: 100, date: '2026-11-24', category: 'food', ...o })
 
@@ -73,4 +73,19 @@ test('monthGrid：月初前的空格數與每一天', () => {
   assert.equal(jan.dates.length, 31)
   assert.equal(monthGrid('2024-02').dates.length, 29) // 閏年
   assert.equal(monthGrid('2026-02').dates.length, 28)
+})
+
+test('lastMonths：往前 n 個月（含），跨年由舊到新', () => {
+  assert.deepEqual(lastMonths('2026-02', 4), ['2025-11', '2025-12', '2026-01', '2026-02'])
+  assert.deepEqual(lastMonths('2026-11', 1), ['2026-11'])
+})
+
+test('trendByMonth：每月支出與收入，轉帳不計，沒載入的月份是 0', () => {
+  const r = trendByMonth({
+    '2026-10': [tx({ baseAmount: 300 }), tx({ type: 'income', baseAmount: 1000 }), tx({ type: 'transfer', baseAmount: 999 })],
+  }, ['2026-09', '2026-10'])
+  assert.deepEqual(r, [
+    { key: '2026-09', expense: 0, income: 0, balance: 0 },
+    { key: '2026-10', expense: 300, income: 1000, balance: 700 },
+  ])
 })

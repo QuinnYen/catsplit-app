@@ -55,3 +55,16 @@ export const monthGrid = (monthKey) => {
     dates: Array.from({ length: days }, (_, i) => `${y}-${pad(m)}-${pad(i + 1)}`),
   }
 }
+
+// 以 monthKey（'YYYY-MM'）為最後一個月，往前 n 個月（含），由舊到新
+export const lastMonths = (monthKey, n) => {
+  const [y, m] = monthKey.split('-').map(Number)
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(y, m - 1 - (n - 1 - i), 1)
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+  })
+}
+
+// 趨勢：每個月的支出與收入（統計幣別）。txsByMonth 是 { [monthKey]: 帳目[] }，沒載入的月份當作 0
+export const trendByMonth = (txsByMonth, monthKeys) =>
+  monthKeys.map((key) => ({ key, ...summarizeEntries(txsByMonth[key] ?? []) }))

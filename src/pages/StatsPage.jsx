@@ -8,10 +8,10 @@ import Avatar from '../components/Avatar'
 import TabBar from '../components/TabBar'
 import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory, categoryLabel } from '../i18n/codes'
+import DonutChart from '../components/DonutChart'
+import { CATEGORY_COLORS } from '../config/chartColors'
 import { sumBySpendMethod, spendTypeLabel } from '../utils/spendMethods'
 
-// 圖表色盤是資料色，兩種底色上都要分得清楚，所以固定不跟主題
-const CATEGORY_COLORS = ['#E8651A', '#3B7DD8', '#2F9E7A', '#D4A017', '#8A63C9', '#D4577A', '#5B8A9A', '#8B95A5'] // cs-color-ok
 const TREND_MONTHS = 12
 
 const tabButton = (active) => ({
@@ -187,18 +187,7 @@ const StatsPage = () => {
             <div style={cardStyle}>
               <div style={titleStyle}>{t('stats.byCategory')}</div>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-                <svg width="160" height="160" viewBox="0 0 42 42" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--cs-soft)" strokeWidth="6" />
-                  {segments.map(s => (
-                    <circle
-                      key={s.name}
-                      cx="21" cy="21" r="15.915" fill="none"
-                      stroke={s.color} strokeWidth="6" pathLength="100"
-                      strokeDasharray={`${s.pct} ${100 - s.pct}`}
-                      strokeDashoffset={-s.offset}
-                    />
-                  ))}
-                </svg>
+                <DonutChart segments={segments.map(s => ({ key: s.name, color: s.color, pct: s.pct }))} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {segments.map(s => (

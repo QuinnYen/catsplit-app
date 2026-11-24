@@ -11,7 +11,7 @@ import LedgerTabBar from './LedgerTabBar'
 import LedgerBookPage from './LedgerBookPage'
 import LedgerSettingsPage from './LedgerSettingsPage'
 import LedgerAccountsPage from './LedgerAccountsPage'
-import LedgerPlaceholderPage from './LedgerPlaceholderPage'
+import LedgerStatsPage from './LedgerStatsPage'
 import LedgerEntrySheet from './LedgerEntrySheet'
 
 const LedgerShell = () => {
@@ -50,7 +50,7 @@ const LedgerShell = () => {
       <Routes>
         <Route index element={<LedgerBookPage />} />
         <Route path="accounts" element={<LedgerAccountsPage />} />
-        <Route path="stats" element={<LedgerPlaceholderPage titleKey="ledger.chart" descKey="ledger.soon.stats" back />} />
+        <Route path="stats" element={<LedgerStatsPage />} />
         <Route path="settings" element={<LedgerSettingsPage />} />
         <Route path="*" element={<Navigate to="/ledger" replace />} />
       </Routes>

@@ -1,6 +1,6 @@
 // 個人帳本的即時訂閱與本機偏好。資料在載入完成前是 null，畫面要自己處理載入中。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { ledgersPath, accountsPath, transactionsPath } from './paths.js'
 import { monthDateBounds } from './summary.js'
@@ -56,6 +56,33 @@ export const useMonthTransactions = (uid, ledgerId, monthKey) => {
     })
   }, [uid, ledgerId, monthKey, key])
   return state.key === key ? state.list : null
+}
+
+// 趨勢圖用：把 monthKeys 各讀一次（getDocs，不訂閱），結果留在這個元件的記憶體，切換月份只補讀新的月份。
+// skipKey 是已由 useMonthTransactions 即時訂閱的月份，不重複讀。回傳 { [monthKey]: 帳目[] }（尚未載入的月份沒有這個 key）
+export const useMonthsOnce = (uid, ledgerId, monthKeys, skipKey) => {
+  const scope = `${uid}/${ledgerId}`
+  const [state, setState] = useState({ scope, months: {} })
+  const requested = useRef({ scope, keys: new Set() })
+  const wanted = monthKeys.filter((k) => k !== skipKey).join(',')
+  useEffect(() => {
+    if (!ledgerId) return
+    if (requested.current.scope !== scope) requested.current = { scope, keys: new Set() }
+    for (const key of wanted ? wanted.split(',') : []) {
+      if (requested.current.keys.has(key)) continue
+      requested.current.keys.add(key)
+      const { start, end } = monthDateBounds(key)
+      const q = query(collection(db, ...transactionsPath(uid, ledgerId)), where('date', '>=', start), where('date', '<', end))
+      getDocs(q).then((snap) => {
+        const docs = snap.docs.map(withId)
+        setState((prev) => ({ scope, months: { ...(prev.scope === scope ? prev.months : {}), [key]: docs } }))
+      }).catch((err) => {
+        console.error('Failed to load month transactions', err)
+        requested.current.keys.delete(key)
+      })
+    }
+  }, [uid, ledgerId, scope, wanted])
+  return state.scope === scope ? state.months : {}
 }
 
 // 沒有任何帳本時建立預設帳本（名稱由呼叫端依語言傳入）；失敗只記錄，下次進入會再試
