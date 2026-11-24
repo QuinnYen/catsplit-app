@@ -2,7 +2,7 @@
 
 底部導覽列「記帳」進入個人帳本：多個帳本、帳戶與多幣別帳目、月曆主頁。只有本人看得到；訪客不能使用（導覽列灰色並提示）。設計見 [P12 spec](../superpowers/specs/2026-11-14-p12-personal-ledger-design.md)，實作順序見[計畫](../superpowers/plans/2026-11-24-p12-ledger-plan.md)。
 
-**目前已完成（PR2）**：帳本切換與新增、月曆主頁、記帳面板（支出、收入、轉帳）、編輯與刪除、刪除帳本。帳戶管理（PR3）、圖表（PR4）、連結分帳群組（PR5）還在開發，頁面先放「即將推出」。
+**目前已完成（PR3）**：帳本切換與新增、月曆主頁、記帳面板（支出、收入、轉帳）、編輯與刪除、刪除帳本、帳戶管理與淨資產、重新計算餘額。圖表（PR4）、連結分帳群組（PR5）還在開發，頁面先放「即將推出」。
 
 ## 結構
 
@@ -23,6 +23,7 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組（PR5
 | `LedgerShell.jsx` | `/ledger/*` 的殼層：載入帳本與帳戶、導覽列、記帳面板、提示 |
 | `LedgerBookPage.jsx`、`LedgerMenu.jsx` | 帳本主頁（月曆與當日明細）、帳本切換與新增 |
 | `LedgerEntrySheet.jsx`、`NumberPad.jsx` | 記帳面板與常駐數字鍵盤 |
+| `LedgerAccountsPage.jsx`、`AccountSheet.jsx`、`netWorth.js` | 帳戶頁（淨資產、清單、封存區、重新計算餘額）、新增與編輯帳戶、淨資產計算（純函式） |
 | `LedgerSettingsPage.jsx` | 帳本設定（目前只有資訊與刪除帳本） |
 | `data.js`、`hooks.js` | Firestore 讀寫與即時訂閱（畫面不直接組路徑或寫 batch） |
 | `entryDraft.js`、`money.js`、`balance.js`、`summary.js` | 草稿轉帳目、換算、餘額增量、月彙總（純函式，有單元測試） |
@@ -35,7 +36,7 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組（PR5
 - 每筆收入與支出記**實際花的幣別與金額**（`currency`、`amount`）、當下匯率與換成帳本統計幣別的金額（`exchangeRate`、`baseAmount`）。統計只加總 `baseAmount`，之後不重算。
 - 帳戶幣別與帳目幣別不同時，另記對帳戶餘額的影響 `accountAmount`（由 `accountRate` 估算，可手動改成實際扣款金額）。帳戶幣別等於統計幣別時，扣款匯率直接沿用統計匯率，不用輸入第二次。
 - 轉帳記轉出金額 `amount` 與轉入金額 `toAmount`，不計入收支，跨幣別時兩者不同。
-- 帳戶 `balance` 在記帳、編輯、刪除時於同一個 batch 用 `increment` 更新（增量由 `balance.js` 算）。帳戶管理上線後會提供「重新計算」修復。
+- 帳戶 `balance` 在記帳、編輯、刪除時於同一個 batch 用 `increment` 更新（增量由 `balance.js` 算）。帳戶頁的「重新計算餘額」會讀取整個帳本的帳目，依「期初餘額＋帳目」重算每個帳戶並寫回（快照帳戶不處理）。
 - 匯率用 `useExchangeRate`（open.er-api.com），抓取失敗時要手動輸入。
 
 ## 記帳面板
@@ -46,6 +47,13 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組（PR5
 - 日期預設帶月曆選取的那天；帳戶與類別預設帶最近用的（存在本機，每個帳本各一份）。
 - 手動帳目沒有標題欄位：列表顯示備註，沒有備註就顯示類別。
 - 編輯舊帳時沿用當時存的匯率；刪除會把對餘額的影響退回去。
+
+## 帳戶管理
+
+- 帳戶頁右上「＋」新增：名稱、種類、幣別（建立後不可改）、期初餘額（信用卡欠款填負數）。點帳戶可編輯名稱、種類、期初餘額；改期初餘額時目前餘額跟著加上差額（`increment`）。
+- **封存**：不能再記帳，帳目與餘額保留，淨資產仍計入；**刪除**只限沒有帳目的帳戶（查 `accountId` 與 `toAccountId`，rules 無法擋，只在前端）。最後一個可用帳戶不能封存或刪除；最多 30 個帳戶（前端限制）。
+- **淨資產**：外幣帳戶以 `open.er-api.com` 的目前匯率換成統計幣別，取不到匯率的幣別不計入並提示；快照帳戶不計入。
+- **重新計算餘額**：讀整個帳本的帳目，與記錄的餘額不同的帳戶才寫回。
 
 ## 刪除
 
@@ -63,4 +71,4 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組（PR5
 
 `movePersonalData` 遞迴搬移整棵 `users/{uid}`，帳本子樹連同 id 一起搬，帳目裡的 `accountId` 不會失效。
 
-**已知限制**：兩個帳號都開過帳本時，雙方的預設帳本（`default`）與現金帳戶（`cash`）是固定 id，會落入衝突處理，預設保留「保留帳號」那一份；被併入帳號的帳目仍會搬進來，但**帳戶 `balance` 不會相加**，餘額可能與帳目不符。處理方式：PR3 的帳戶頁會提供「重新計算餘額」讓使用者修復，PR5 評估在合併時自動重算並處理 `groupLinks` 的聯集。
+**已知限制**：兩個帳號都開過帳本時，雙方的預設帳本（`default`）與現金帳戶（`cash`）是固定 id，會落入衝突處理，預設保留「保留帳號」那一份；被併入帳號的帳目仍會搬進來，但**帳戶 `balance` 不會相加**，餘額可能與帳目不符。處理方式：到帳戶頁按「重新計算餘額」修復，PR5 評估在合併時自動重算並處理 `groupLinks` 的聯集。

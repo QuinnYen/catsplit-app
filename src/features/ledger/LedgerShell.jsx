@@ -10,6 +10,7 @@ import { todayStr } from './dates'
 import LedgerTabBar from './LedgerTabBar'
 import LedgerBookPage from './LedgerBookPage'
 import LedgerSettingsPage from './LedgerSettingsPage'
+import LedgerAccountsPage from './LedgerAccountsPage'
 import LedgerPlaceholderPage from './LedgerPlaceholderPage'
 import LedgerEntrySheet from './LedgerEntrySheet'
 
@@ -48,7 +49,7 @@ const LedgerShell = () => {
     <LedgerContext.Provider value={ctx}>
       <Routes>
         <Route index element={<LedgerBookPage />} />
-        <Route path="accounts" element={<LedgerPlaceholderPage titleKey="ledger.tab.accounts" descKey="ledger.soon.accounts" />} />
+        <Route path="accounts" element={<LedgerAccountsPage />} />
         <Route path="stats" element={<LedgerPlaceholderPage titleKey="ledger.chart" descKey="ledger.soon.stats" back />} />
         <Route path="settings" element={<LedgerSettingsPage />} />
         <Route path="*" element={<Navigate to="/ledger" replace />} />

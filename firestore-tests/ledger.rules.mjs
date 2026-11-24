@@ -154,6 +154,17 @@ test('帳戶幣別與種類建立後不可改', async () => {
   await assertSucceeds(updateDoc(accountRef(db, 'u1'), { name: '日圓現金', balance: 12345, archived: true }))
 })
 
+test('帳戶管理：期初餘額與餘額可一起調整、封存與取消封存、可刪除', async () => {
+  const db = dbAs('u1')
+  await assertSucceeds(setDoc(accountRef(db, 'u1'), account({ initialBalance: 1000, balance: 1000 })))
+  await assertSucceeds(updateDoc(accountRef(db, 'u1'), { initialBalance: 1500, balance: 1500, name: '日圓現金', type: 'bank' }))
+  await assertSucceeds(updateDoc(accountRef(db, 'u1'), { archived: true }))
+  await assertSucceeds(updateDoc(accountRef(db, 'u1'), { archived: false }))
+  await assertFails(updateDoc(accountRef(db, 'u1'), { archived: 'yes' }))
+  await assertFails(updateDoc(accountRef(db, 'u1'), { type: 'crypto' }))
+  await assertSucceeds(deleteDoc(accountRef(db, 'u1')))
+})
+
 // ---------- 帳目 ----------
 
 test('收入與支出驗證：種類、金額、幣別、日期、匯率與統計金額', async () => {

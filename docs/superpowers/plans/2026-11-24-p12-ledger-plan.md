@@ -47,7 +47,9 @@
 - 帳號合併：確認帳本子樹隨 `movePersonalData` 搬移，補單元測試並量測大量帳目的耗時。
 - i18n（中英文）、`docs/guides/personal-ledger.md` 第一版、`README.md`。
 
-### PR3：帳戶與轉帳
+### PR3：帳戶與轉帳 — 已完成（2026-11-24）
+
+- **實作結果**：`/ledger/accounts` 帳戶頁（淨資產、清單、快照區、已封存區）、`AccountSheet` 新增與編輯、`balance.js` 的 `planBalanceRepair`、`netWorth.js`、`data.js` 的帳戶管理函式（`createAccount`、`updateAccount`、`setAccountArchived`、`deleteAccount`、`accountHasTransactions`、`repairBalances`）。重新計算是手動按鈕，帳號合併後的自動重算留給 PR5。前端限制：最多 30 個帳戶、不能封存或刪除最後一個可用帳戶。
 
 - 帳戶頁：淨資產（外幣依匯率估算並標註）、帳戶清單與餘額；新增、編輯（幣別不可改）、封存帳戶；有帳目的帳戶不能刪除。
 - 「重新計算餘額」修復按鈕（讀該帳戶全部帳目重算 `balance`）。也用來修復**帳號合併後的餘額**：雙方的預設帳本與現金帳戶是固定 id，合併時衝突、保留一份，帳目會搬過來但 `balance` 不會相加（PR2 發現的已知限制）。

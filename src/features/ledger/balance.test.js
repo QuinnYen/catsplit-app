@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { balanceDeltas, deltasForChange, computeBalance } from './balance.js'
+import { balanceDeltas, deltasForChange, computeBalance, planBalanceRepair } from './balance.js'
 
 const expense = (o = {}) => ({ type: 'expense', accountId: 'a', amount: 100, currency: 'TWD', source: { type: 'manual' }, ...o })
 const income = (o = {}) => ({ type: 'income', accountId: 'a', amount: 500, currency: 'TWD', source: { type: 'manual' }, ...o })
@@ -67,4 +67,21 @@ test('computeBalance：小數不累積誤差、信用卡可為負', () => {
   const card = { id: 'a', initialBalance: -7590 }
   assert.equal(computeBalance(card, [expense({ amount: 0.1 }), expense({ amount: 0.2 })]), -7590.3)
   assert.equal(computeBalance({ id: 'a', initialBalance: 0 }, [expense({ amount: 0.1 }), income({ amount: 0.1 })]), 0)
+})
+
+test('planBalanceRepair：只回傳餘額不一致的一般帳戶，快照帳戶略過', () => {
+  const accounts = [
+    { id: 'cash', kind: 'normal', initialBalance: 100, balance: 100 },
+    { id: 'bank', kind: 'normal', initialBalance: 0, balance: 999 },
+    { id: 'snap_g', kind: 'group', initialBalance: 0, balance: 5 },
+  ]
+  const txs = [
+    { id: '1', type: 'expense', accountId: 'cash', amount: 30 },
+    { id: '2', type: 'income', accountId: 'bank', amount: 500 },
+    { id: '3', type: 'transfer', accountId: 'cash', toAccountId: 'bank', amount: 20, toAmount: 20 },
+  ]
+  assert.deepEqual(planBalanceRepair(accounts, txs), [
+    { id: 'cash', from: 100, to: 50 },
+    { id: 'bank', from: 999, to: 520 },
+  ])
 })

@@ -1,4 +1,4 @@
-// 帳戶、圖表：還在開發的頁面佔位（PR3 帳戶、PR4 圖表）
+// 圖表：還在開發的頁面佔位（PR4）
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from '../../i18n/I18nProvider'
 

@@ -34,3 +34,10 @@ export const deltasForChange = (oldTx, newTx) => {
 // 「重新計算」：初始餘額加上該帳戶所有帳目的增量
 export const computeBalance = (account, transactions) =>
   roundMoney(transactions.reduce((sum, tx) => addMoney(sum, balanceDeltas(tx)[account.id] ?? 0), account.initialBalance ?? 0))
+
+// 「重新計算全部帳戶」：回傳餘額與帳目加總不一致的一般帳戶 [{ id, from, to }]；快照帳戶不看
+export const planBalanceRepair = (accounts, transactions) =>
+  accounts
+    .filter((a) => a.kind !== 'group')
+    .map((a) => ({ id: a.id, from: a.balance ?? 0, to: computeBalance(a, transactions) }))
+    .filter((r) => r.from !== r.to)

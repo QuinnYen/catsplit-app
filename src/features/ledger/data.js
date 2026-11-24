@@ -1,10 +1,11 @@
 // 個人帳本的 Firestore 讀寫（資料存取層）：畫面與 hooks 不直接組路徑或寫 batch，一律經過這裡。
 // 餘額（accounts.balance）在記帳、編輯、刪除時於同一個 batch 用 increment 更新，增量由 balance.js 算。
-import { collection, doc, writeBatch, increment, serverTimestamp, getDoc } from 'firebase/firestore'
+import { collection, doc, writeBatch, increment, serverTimestamp, getDoc, setDoc, getDocs, query, where, limit } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { ledgersPath, ledgerPath, accountsPath, transactionsPath } from './paths.js'
-import { deltasForChange } from './balance.js'
-import { LEDGER_NAME_MAX } from './constants.js'
+import { deltasForChange, planBalanceRepair } from './balance.js'
+import { roundMoney } from './money.js'
+import { LEDGER_NAME_MAX, ACCOUNT_NAME_MAX } from './constants.js'
 
 export const DEFAULT_LEDGER_ID = 'default'
 export const DEFAULT_ACCOUNT_ID = 'cash'
@@ -67,4 +68,72 @@ export const deleteTransaction = async (uid, ledgerId, tx) => {
     batch.update(doc(db, ...accountsPath(uid, ledgerId), accountId), { balance: increment(delta) })
   }
   await batch.commit()
+}
+
+// ---------- 帳戶管理 ----------
+
+const accountRefOf = (uid, ledgerId, accountId) => doc(db, ...accountsPath(uid, ledgerId), accountId)
+
+// 新增帳戶：幣別建立後不可改；餘額從期初餘額開始
+export const createAccount = async (uid, ledgerId, { name, type, currency, initialBalance }) => {
+  const ref = doc(collection(db, ...accountsPath(uid, ledgerId)))
+  await setDoc(ref, {
+    name: name.trim().slice(0, ACCOUNT_NAME_MAX),
+    type,
+    currency,
+    initialBalance,
+    balance: initialBalance,
+    kind: 'normal',
+    createdAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+// 編輯名稱、種類、期初餘額（餘額跟著差額調整）。account 是目前的帳戶文件
+export const updateAccount = (uid, ledgerId, account, { name, type, initialBalance }) => {
+  const patch = { name: name.trim().slice(0, ACCOUNT_NAME_MAX), type }
+  if (initialBalance !== account.initialBalance) {
+    patch.initialBalance = initialBalance
+    patch.balance = increment(roundMoney(initialBalance - (account.initialBalance ?? 0)))
+  }
+  const batch = writeBatch(db)
+  batch.update(accountRefOf(uid, ledgerId, account.id), patch)
+  return batch.commit()
+}
+
+export const setAccountArchived = (uid, ledgerId, accountId, archived) => {
+  const batch = writeBatch(db)
+  batch.update(accountRefOf(uid, ledgerId, accountId), { archived })
+  return batch.commit()
+}
+
+// 帳戶是否有帳目（記在這個帳戶，或轉帳轉入這個帳戶）；有帳目的帳戶不能刪除，只能封存
+export const accountHasTransactions = async (uid, ledgerId, accountId) => {
+  const col = collection(db, ...transactionsPath(uid, ledgerId))
+  for (const field of ['accountId', 'toAccountId']) {
+    const snap = await getDocs(query(col, where(field, '==', accountId), limit(1)))
+    if (!snap.empty) return true
+  }
+  return false
+}
+
+export const deleteAccount = (uid, ledgerId, accountId) => {
+  const batch = writeBatch(db)
+  batch.delete(accountRefOf(uid, ledgerId, accountId))
+  return batch.commit()
+}
+
+/**
+ * 重新計算這個帳本所有帳戶的餘額（讀全部帳目，修復漂移或帳號合併後的餘額）。
+ * 回傳被修正的帳戶 [{ id, from, to }]。用 update 直接寫入計算出的餘額。
+ */
+export const repairBalances = async (uid, ledgerId, accounts) => {
+  const snap = await getDocs(collection(db, ...transactionsPath(uid, ledgerId)))
+  const txs = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  const fixes = planBalanceRepair(accounts, txs)
+  if (fixes.length === 0) return fixes
+  const batch = writeBatch(db)
+  for (const f of fixes) batch.update(accountRefOf(uid, ledgerId, f.id), { balance: f.to })
+  await batch.commit()
+  return fixes
 }

@@ -2,6 +2,7 @@
 import { DEFAULT_CATEGORIES } from '../../config/expenseForm.js'
 
 export const MAX_LEDGERS = 20 // 前端限制，rules 無法計數
+export const MAX_ACCOUNTS = 30 // 前端限制，rules 無法計數
 export const LEDGER_NAME_MAX = 20
 export const ACCOUNT_NAME_MAX = 20
 export const TITLE_MAX = 50
