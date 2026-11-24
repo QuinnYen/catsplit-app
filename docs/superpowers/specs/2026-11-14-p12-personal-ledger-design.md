@@ -73,7 +73,7 @@
 
 - 日期、標題、分類沿用群組帳目；`source = { type: 'group', groupId, kind, itemId }`。
 - **幣別**：群組基準幣與主要幣別相同則匯率 1；不同時，若帳目的 `homeCurrency` 等於主要幣別就用它的 `homeRate`，否則用**首次同步當下**的匯率。已同步帳目的匯率與 `baseAmount` 凍結，只有分攤金額改變時才重算。
-- 實作前要先確認 `incomes` 的欄位是否也有 `splits`（資料模型文件寫「同支出，但付款欄位叫 `received`」），沒有的話收入改用 `received[uid]`。
+- 群組 `incomes` 與支出一樣有 `splits`（已確認），收入取 `splits[uid]`。
 
 ### 2.2 唯讀規則
 
