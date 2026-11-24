@@ -32,37 +32,42 @@
 - `src/features/ledger/`：月份加總、依分類加總、依付款方式加總等純函式與測試；主要幣別換算（沿用 `applyExchangeRate` 思路）。
 - 因為沒有任何 UI 使用，合併後行為不變，風險最低。
 
-### PR2：手動記帳 MVP
+### PR2：帳本骨架與手動記帳（支出、收入）
 
-- 把 `/ledger` 換成正式頁面：月份切換（`MonthPicker`）、收入／支出／結餘合計、依日期分組的列表。
-- `/ledger/new`、`/ledger/:id/edit`：`LedgerForm`（收入／支出、金額、幣別、日期、分類、付款方式、備註）；新增表單讀 `?amount=&currency=&rate=&source=fx` 預填（匯率頁預留介面）。
-- 主要幣別：第一次進帳本時設定（預設 TWD），已有帳目後不可改；存 `settings/profile.mainCurrency`（確認該文件的 rules 允許新增此欄位）。
-- 匯率取得失敗時可手動輸入（`useExchangeRate` 的 `setManualRate`）。
-- **`deleteMyData` 涵蓋 `transactions`（分批刪除）**，並更新 `public/privacy.html` 與 `public/privacy.en.html`：帳目一開始可以寫入，就必須能被刪除。
-- 帳號合併：確認 `transactions` 隨 `movePersonalData` 搬移，補單元測試；`functions/emulator-e2e/identity-flow.mjs` 若方便則加一個帳目。
-- i18n：中英文字串、個人收入分類。
-- 文件：新增 `docs/guides/personal-ledger.md`（第一版），更新 `README.md`、`docs/guides/data-model.md`。
+- 帳本專用導覽列 `LedgerTabBar`（帳本／帳戶／記帳／圖表／設定，中間凸起）；`/ledger/*` 路由下改用它，不顯示 `MainTabBar`（比照群組內頁的做法）。帳戶、圖表、設定先放佔位頁。
+- 帳本主頁：月份切換、本月合計、**上半月曆、下半當日明細**（點日期切換），月曆格顯示當日支出與收入小計。
+- 記帳面板：支出／收入、金額、分類、帳戶（沿用 `spendMethods`）、日期、備註；儲存並再記一筆；編輯與刪除。新增表單讀 `?amount=&currency=&rate=&source=fx` 預填（匯率頁預留介面）。
+- 主要幣別：第一次進帳本時設定（預設 TWD），已有帳目後不可改。
+- 分類圖示沿用群組；另寫 `LedgerForm`，不改動 `ExpenseForm`。
+- **`deleteMyData` 涵蓋 `transactions`（分批刪除）**，並更新 `public/privacy.html` 與 `public/privacy.en.html`。
+- 帳號合併：確認 `transactions` 隨 `movePersonalData` 搬移，補單元測試。
+- i18n（中英文）、`docs/guides/personal-ledger.md` 第一版、`README.md`。
 
-### PR3：月報表與統計
+### PR3：帳戶與轉帳
 
-- `/ledger/stats`：分類占比、付款方式支出、收支趨勢（沿用現有圖表元件，先看 `StatsPage` 用什麼）。
-- 純計算已在 PR1，這一步主要是畫面。
+- 先定案帳戶資料模型（見 spec「待決議」）；rules 與 `transfer` 類型驗證（補測試）。
+- 帳戶頁：帳戶清單、餘額、本月支出；帳戶新增與編輯（可沿用付款方式管理頁）。
+- 記帳面板加入「轉帳」；帳本主頁的當日明細顯示轉帳（轉出 → 轉入）。
 
-### PR4：群組連結與自動同步
+### PR4：圖表
+
+- `/ledger/stats`：分類占比、近 6 個月支出趨勢（沿用 `StatsPage` 的色盤）；純計算已在 PR1。
+
+### PR5：設定與群組連結同步
 
 先決條件：PR1 的純函式測試通過。
 
-- `src/features/ledger/syncPlan.js`（純函式）：輸入（群組帳目、現有帳目、`linkedAt`、`uid`、主要幣別）→ 輸出 `{ upserts, deletes, checks }`。涵蓋：依消費時間與 `linkedAt` 篩選、分攤為 0 與贊助不產生、固定 id `g_{g}_e_{id}`／`g_{g}_i_{id}`、`source.edited` 不被覆寫、匯率凍結、被刪除與日期移動的處理、`detached` 帳目重新接回。
+- 設定頁：連結群組（列出我加入的群組、開關、取消連結確認：保留／一併刪除）、主要幣別（唯讀說明）、回到分帳首頁。
+- `src/features/ledger/syncPlan.js`（純函式）：輸入（群組帳目、現有帳目、`linkedAt`、`uid`、主要幣別）→ 輸出 `{ upserts, deletes, checks }`。涵蓋：依消費時間與 `linkedAt` 篩選、分攤為 0 與贊助不產生、固定 id `g_{g}_e_{id}`／`g_{g}_i_{id}`、`source.edited` 不被覆寫、匯率凍結、被刪除與日期移動、`detached` 帳目重新接回。
 - `useLedgerSync`：只同步正在看的月份，用 `getDocs`、記憶已同步月份、先比對再寫；無法讀取的群組自動轉為一般帳目。
-- 帳本頁的「連結群組」入口：列出我加入的群組與開關；取消連結的確認（保留／一併刪除）。
-- 同步帳目的唯讀顯示（來自群組標籤、鎖頭、金額日期不可改）。
-- **帳號合併**：`mergeFlow`／`memberOps` 對 `settings/ledgerLinks` 做聯集（同群組取較早的 `linkedAt`），其餘路徑維持原規則；補單元測試。
+- 同步帳目的唯讀顯示（來自群組標籤、金額日期不可改）。
+- **帳號合併**：對 `settings/ledgerLinks` 做聯集（同群組取較早的 `linkedAt`），其餘路徑維持原規則；補單元測試。
 - 兩個帳號實測：A、B 同在一個群組，A 記帳後 B 開帳本應看到；A 改金額、刪除後 B 重新整理應跟著變。
 
-### PR5：收尾
+### PR6：收尾
 
 - 移除 `ComingSoonPage` 的 `/ledger` 用法（`/fx` 仍在用，元件保留）。
-- 更新 `docs/guides/personal-ledger.md` 為完整版、`README.md` 功能清單、`docs/superpowers/specs/README.md` 的 P12 狀態；P12 spec 與本計畫完成後搬到 `docs/superpowers/archive/`。
+- 更新 `docs/guides/personal-ledger.md` 為完整版、`README.md`、`docs/superpowers/specs/README.md`；P12 spec 與本計畫完成後搬到 `docs/superpowers/archive/`。
 
 ## 3. 風險與處理
 
@@ -76,10 +81,11 @@
 
 ## 4. 不在本計畫範圍
 
-預算（等 P8）、CSV 匯出、帳戶間轉帳、重複性記帳、匯率換算頁本身、首頁摘要卡片、本地快取（`persistentLocalCache`）、群組帳目增量同步。
+預算（等 P8）、CSV 匯出、重複性記帳、匯率換算頁本身、首頁摘要卡片、本地快取（`persistentLocalCache`）、群組帳目增量同步。
 
 ## 5. 開工前待確認
 
 1. `settings/profile` 的 rules 是否允許新增 `mainCurrency` 欄位（目前驗證暱稱 1～20 字，可能對其他欄位有限制）。
 2. 個人收入分類的最終清單（薪資、獎金、投資、退款、其他）與圖示。
 3. 統計圖表要沿用 `StatsPage` 的哪些元件。
+4. 帳戶資料模型（`spendMethods` 加餘額，或另建 `accounts`），決定後才能做 PR1 的 rules 與 PR3。
