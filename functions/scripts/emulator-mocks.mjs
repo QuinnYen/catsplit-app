@@ -1,5 +1,5 @@
 // 本機模擬器測試用：假冒需要連外驗證的兩個來源，讓雲端函式不用真的連 LINE 或 Google。
-// 只在啟動模擬器時以 NODE_OPTIONS 預載，不會被部署行為使用（見 docs/operations.md「本機模擬器跑雲端函式」）。
+// 只在啟動模擬器時以 NODE_OPTIONS 預載，不會被部署行為使用（見 docs/guides/operations.md「本機模擬器跑雲端函式」）。
 //
 // 1. LINE：攔截對 LINE API 的 fetch。
 //    - 驗證端點（verifyLiffToken、綁定時的 liffIdToken）：假的 idToken 直接當成 LINE userId（sub），例如 "U" + 32 位十六進位。

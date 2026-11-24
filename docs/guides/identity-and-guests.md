@@ -20,7 +20,7 @@
 
 ## 身分對照表 `identities`（P14 進行中）
 
-設計見 [P14 設計](superpowers/specs/2026-11-14-p14-identity-design.md)，實作順序見[實作計畫](superpowers/plans/2026-11-23-p14-identity-plan.md)。目的是讓 uid 不再等於 LINE userId，之後才能新增 Google 登入、帳號綁定與合併，並能脫離 LINE。
+設計見 [P14 設計](../superpowers/archive/2026-11-14-p14-identity-design.md)，實作順序見[實作計畫](../superpowers/archive/2026-11-23-p14-identity-plan.md)。目的是讓 uid 不再等於 LINE userId，之後才能新增 Google 登入、帳號綁定與合併，並能脫離 LINE。
 
 - 集合 `identities/{provider:subject}` → `{ uid, provider, subject, createdAt }`，例如 `identities/line:U1234…`。只有雲端函式（Admin SDK）讀寫，rules 全拒（`merges`、`mergeBackups` 同）。
 - **目前**：`lineLogin`、`verifyLiffToken` 登入時在 transaction 內查表；有對照項就用它的 uid，**沒有就是全新的使用者**，用新的內部 uid（`u_` 開頭）並建立對照項。**正式環境已經沒有以 LINE userId 當 uid 的帳號**：既有的 6 位舊使用者已於 2026-11-23 轉成 `u_`（一次性遷移，程式已移除，見 `operations.md`「已完成的一次性遷移」）。回應新增 `uid`，仍保留 `userId`（LINE userId）。前端以回應的 `uid` 為準，本機快取的使用者另存 `lineUserId`，只用來確認目前的 LIFF 使用者沒被換掉（見 `src/utils/authSession.js`）；快取沒有 `lineUserId` 時不走快速路徑，重新登入一次就會補上。
@@ -35,7 +35,7 @@
   - 合併後變成「自己轉給自己」的轉帳會被刪除；轉帳對餘額是對沖，淨效果為 0，不影響任何餘額。
   - 個人資料以 `listCollections` 遍歷 `users/{uid}` 底下所有子集合（不寫死集合名稱）。收款方式、付款方式、儲蓄目標都是自動 id，直接複製；只有固定 id 的文件（暱稱 `settings/profile`、`settings/oaPrompt`，以及 P12 的 `group_{groupId}`）會衝突：`settings/oaPrompt` 自動保留較新的，其他由使用者決定（預設保留 keepUid 的；不用「較新」，因為剛建立的新帳號資料一定較新，會預設刪掉用了很久的帳號）。
   - 先全部複製、再刪來源，可以重試：已複製的文件在重試時視為「保留」，資料相同。`users/{uid}` 本身不搬，合併最後與 Auth 一起刪。
-- **刪除我的資料**會一併刪掉該 uid 的 `identities`（見 `docs/operations.md`）。
+- **刪除我的資料**會一併刪掉該 uid 的 `identities`（見 `docs/guides/operations.md`）。
 
 ### 綁定與合併的端點（PR5，前端入口在 PR6）
 

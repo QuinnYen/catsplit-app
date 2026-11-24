@@ -7,6 +7,6 @@
 
 - [ ] `budget.byCategory`：分類代碼對上限金額；需要依分類的淨額（支出 − 收入）。
 - [ ] rules：`validBudget()` 的 `hasOnly` 放寬，驗證 `byCategory` 為 map、值為合理數字；補 `firestore-tests`。
-- [ ] 自訂分類只能比對文字；與內建分類代碼的對應見 `docs/i18n.md`。
+- [ ] 自訂分類只能比對文字；與內建分類代碼的對應見 `docs/guides/i18n.md`。
 - [ ] 群組設定頁、群組頁進度條、記帳頁提示、首頁徽章要決定顯示哪一層（整體或各分類）。
-- [ ] 更新 `docs/operations.md` 的預算說明。
+- [ ] 更新 `docs/guides/operations.md` 的預算說明。

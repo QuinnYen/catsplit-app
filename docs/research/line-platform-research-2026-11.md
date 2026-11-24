@@ -1,5 +1,7 @@
 # CatSplit × LINE 平台 API 完整研究報告（查證日期：2026-11-03）
 
+> **2026-11-24 註記**：本報告是查證當日的快照。下面「最緊急」的 LIFF 升級已完成（`package.json` 為 `@line/liff ^2.31.2`）；Messaging API、webhook 與費用的內容仍是 P17 群組 Bot 的依據，價格與政策動工前請再查證。
+
 CatSplit 現在最緊急的事不是加新功能，而是**把 `@line/liff` 從 ^2.28.0 升級到 v2.31.2**。LIFF v2.20.0～v2.31.0 有 DOM-based XSS 漏洞（CVE-2026-112148，GitHub 安全公告 GHSA-wppr-qmp4-w627；第三方 CVE 資料庫給的 CVSS 4.0 分數為 5.1 Medium，NVD 尚未完成分析）。LINE Developers News 原文是 "we plan to restrict the use of older versions of the LIFF SDK (v2.20.0 through v2.31.0) around November 24, 2026"，而 CatSplit 正好支援非 LINE 訪客在外部瀏覽器開啟。升級之後，下一步是建立 Messaging API webhook（`lineWebhook`）。這條路要先把 Bot 拉進 LINE 群組，用**免費的 reply 訊息**做記帳與查詢；推播（push）只用在使用者自己訂閱的提醒，並嚴格控管則數。依 LINE Biz-Solutions 官方公告，台灣 2026-11-01 起中用量從 NT$800 調為 NT$1,000，高用量從 NT$1,200 調為 NT$1,400，免費則數不變。
 
 ## TL;DR

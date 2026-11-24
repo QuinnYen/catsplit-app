@@ -28,7 +28,7 @@
   --tabbar-h: 54px;
 
   /* 主題色（淺色）。顏色一律用 var(--cs-…)，不要寫死色碼（npm run check:colors 會檢查）；
-     深色值在下方 :root[data-theme="dark"]，說明見 docs/theme.md */
+     深色值在下方 :root[data-theme="dark"]，說明見 docs/guides/theme.md */
   color-scheme: light;
   --cs-bg: var(--cs-rc-bg);
   --cs-card: var(--cs-rc-card);

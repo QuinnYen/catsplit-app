@@ -1,5 +1,5 @@
 // 身分對照用的純函式（沒有任何 import，方便用 node:test 直接測）
-// identities/{provider:subject} → { uid }：登入方式與內部 uid 的對照，設計見 docs/superpowers/specs/2026-11-14-p14-identity-design.md
+// identities/{provider:subject} → { uid }：登入方式與內部 uid 的對照，設計見 docs/superpowers/archive/2026-11-14-p14-identity-design.md
 
 export const PROVIDERS = ['line', 'google']
 

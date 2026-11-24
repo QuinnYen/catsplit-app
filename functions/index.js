@@ -269,7 +269,7 @@ export const authExchange = onRequest(
 
 // ---------- 綁定與帳號合併 ----------
 // 已登入（非訪客）的使用者再通過第二種身分的驗證，就能把它綁到自己的帳號；
-// 第二種身分若已是另一個有資料的帳號，要先預覽、確認後才合併（流程見 mergeFlow.js 與 docs/identity-and-guests.md）。
+// 第二種身分若已是另一個有資料的帳號，要先預覽、確認後才合併（流程見 mergeFlow.js 與 docs/guides/identity-and-guests.md）。
 
 // POST 端點共用的外殼：處理 CORS 與方法，requireAuth 時要求登入且不是訪客；並把 MergeError 轉成對應的 HTTP 狀態
 const postHandler = (handler, { requireAuth }) => async (req, res) => {
@@ -782,7 +782,7 @@ export const detachMember = onRequest(
 /**
  * 把前端產生的 CSV 存到 Storage（exports/，由 bucket 的生命週期規則 1 天後清除），
  * 回傳 5 分鐘內有效的簽名網址，開啟即下載。需登入且是該群組成員（訪客也可）。
- * body { groupId, csv, filename }。簽名需要服務帳號有 Service Account Token Creator 權限（見 docs/operations.md）。
+ * body { groupId, csv, filename }。簽名需要服務帳號有 Service Account Token Creator 權限（見 docs/guides/operations.md）。
  */
 export const exportCsv = onRequest(
   { cors: false, region: 'asia-east1', maxInstances: 5 },

@@ -1,5 +1,5 @@
 // 檢查與修復所有群組的彙總欄位（Firestore 操作，db 與重算函式由呼叫端傳入，所以不 import firebase-admin，可在模擬器直接測）。
-// 用法見 scripts/check-aggregates.mjs 與 docs/operations.md。
+// 用法見 scripts/check-aggregates.mjs 與 docs/guides/operations.md。
 import { diffAggregates, normalizeAggregates } from './aggregates.js'
 
 const PAGE = 200

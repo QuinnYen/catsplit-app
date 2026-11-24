@@ -1,5 +1,5 @@
 // 綁定與合併流程用的純函式（不碰 Firestore、不連外，方便用 node:test 直接測）。
-// Firestore 操作在 mergeFlow.js，HTTP 端點在 index.js。設計見 docs/superpowers/specs/2026-11-14-p14-identity-design.md。
+// Firestore 操作在 mergeFlow.js，HTTP 端點在 index.js。設計見 docs/superpowers/archive/2026-11-14-p14-identity-design.md。
 
 export const MERGE_PREVIEW_TTL_MS = 10 * 60 * 1000 // 預覽後 10 分鐘內要確認，逾時需重新驗證
 export const MERGE_PREVIEW_RECORD_TTL_MS = 24 * 60 * 60 * 1000 // 沒人確認的預覽紀錄，一天後清除

@@ -1,6 +1,6 @@
 # P14 獨立帳號：實作計畫
 
-日期：2026-11-23　對應設計：[`../specs/2026-11-14-p14-identity-design.md`](../specs/2026-11-14-p14-identity-design.md)　狀態：已完成（2026-11-23）
+日期：2026-11-23　對應設計：[`./2026-11-14-p14-identity-design.md`](./2026-11-14-p14-identity-design.md)　狀態：已完成（2026-11-23）
 
 **進度**：全部完成並在正式環境驗證（GitHub PR #5 至 #16）：LINE 與 Google 雙向綁定、完整帳號合併、LINE 內以一次性連結碼綁定 Google（LINE 內無法自動開啟外部瀏覽器，只提供複製連結）、隱私權政策與使用條款更新。實測後多出的修正不另編號，見 PR7 與 PR10 的備註。
 
@@ -20,7 +20,7 @@ LINE 維持主要登入，新增 Google 登入；LINE 與 Google 可互相綁定
 8. **`deleteMyData` 在前端依序刪各集合，最後呼叫 `detachMember`（deleteAccount）**；新增的 `identities`、`merges`、`mergeBackups` 客戶端讀寫不到，必須在 `detachMember` 內由後端刪除。
 9. **CI：push `main` 會同時部署 hosting、functions、firestore rules、storage**（`firebase-hosting-merge.yml`）。因此每個 PR 合併後都是「立刻上線」，每一步都必須向下相容，rules 與前端放同一個 PR。PR 預覽只部署 hosting，不含 functions。
 10. **LINE OAuth `code` 只能用一次。** 設計文件的「dry-run 後再執行」若兩步都帶 LINE code 會失敗，見下方「設計補修」。
-11. **`docs/operations.md` 說模擬器不啟動 functions，所以訪客與合併無法本機測。** Firebase 模擬器其實可以同時起 `functions`、`auth`、`firestore`，值得做一次 spike（見 PR1）。
+11. **`docs/guides/operations.md` 說模擬器不啟動 functions，所以訪客與合併無法本機測。** Firebase 模擬器其實可以同時起 `functions`、`auth`、`firestore`，值得做一次 spike（見 PR1）。
 
 ## 2. 對設計文件的補修（需同步修改 spec）
 
@@ -59,7 +59,7 @@ D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 
 - 新增 `scripts/backfill-identities.mjs`：掃描 `users/` 與群組 `members`，為現有 LINE 使用者補對照項，預設 dry-run。
 - 修改 `firestore.rules`：`isLineUser()` 改名 `isMember()`；`identities`、`merges`、`mergeBackups` 明確註記全拒。
 - 修改 `firestore-tests/*.mjs`：配合改名；新增 `identities.rules.mjs`（客戶端讀寫皆被拒、訪客不能存取個人集合）。
-- **Spike（已完成）**：`firebase emulators:start --only auth,firestore,functions` 可在本機實跑 functions。LINE 驗證端點用預載檔 `functions/scripts/emulator-mocks.mjs` 攔截，不改正式程式碼。已實測 `verifyLiffToken` 的查表（新使用者、重複登入、對照項指向別的 uid、並行 10 次只建一筆）、補齊腳本與 `guestLogin`，做法寫在 `docs/operations.md`。後續 PR 的端到端測試沿用這個方式。
+- **Spike（已完成）**：`firebase emulators:start --only auth,firestore,functions` 可在本機實跑 functions。LINE 驗證端點用預載檔 `functions/scripts/emulator-mocks.mjs` 攔截，不改正式程式碼。已實測 `verifyLiffToken` 的查表（新使用者、重複登入、對照項指向別的 uid、並行 10 次只建一筆）、補齊腳本與 `guestLogin`，做法寫在 `docs/guides/operations.md`。後續 PR 的端到端測試沿用這個方式。
 
 完成條件：現有 LINE 使用者登入、群組、記帳完全正常；`identities` 有資料；rules 測試通過。
 
@@ -78,7 +78,7 @@ D1 到 D3 皆照建議，已決定。四項設計補修已於 2026-11-23 寫回 
 - 新增前端 `src/components/GoogleSignInButton.jsx`、`src/pages/NicknameSetupPage.jsx`（新建的 Google 帳號未設暱稱時導向，預設帶 Google 名字，頭像用預設貓咪）。
 - 修改 `src/App.jsx`：`LoginScreen` 外部瀏覽器顯示 LINE／Google 兩按鈕（D5：LINE 內不顯示 Google）；路由加入暱稱頁。
 - 修改 `src/context/AppContext.jsx`：新增 `loginWithGoogle`，登入後同樣認領訪客名字。
-- 新增環境變數 `VITE_GOOGLE_CLIENT_ID`（加入兩個 CI workflow 與 `docs/operations.md`）、後端參數 `GOOGLE_CLIENT_ID`。
+- 新增環境變數 `VITE_GOOGLE_CLIENT_ID`（加入兩個 CI workflow 與 `docs/guides/operations.md`）、後端參數 `GOOGLE_CLIENT_ID`。
 - i18n：`zh-TW` 與 `en` 同步新增字串，跑 `npm run check:cjk`。
 
 完成條件：全新的 Google 使用者可登入、設暱稱、建立群組、用邀請連結加入群組、認領訪客名字；LINE 使用者不受影響。
@@ -151,14 +151,14 @@ PR6 部署後實測發現（Android）：LINE 內建瀏覽器按 Google 按鈕�
 
 ### PR10：收尾與文件（S）
 
-- 更新 `docs/identity-and-guests.md`、`docs/operations.md`（Google OAuth 用戶端、授權網域、環境變數、備份排程、測試方式）、`docs/architecture.md`、`README.md`。
+- 更新 `docs/guides/identity-and-guests.md`、`docs/guides/operations.md`（Google OAuth 用戶端、授權網域、環境變數、備份排程、測試方式）、`docs/guides/architecture.md`、`README.md`。
 - 更新 `public/privacy.html`、`public/terms.html`（中英文）：新增 Google 登入、身分對照、合併備份保留 30 天、一次性連結碼的說明。
 - 更新 `docs/superpowers/specs/README.md` 的 P14 狀態。
 - 順帶：LINE 內匯出 CSV 同樣無法開外部瀏覽器，改成自動複製 5 分鐘有效的下載網址並彈窗提示（#16）。
 
-**P14 之後的資料庫整理（2026-11-23）**：索引進版本控制、刪除群組改走後端、群組彙總檢查與修復工具、舊 LINE uid 轉成內部 uid（全部已在正式環境完成並驗證），之後並移除舊格式的相容程式與一次性遷移工具（補齊腳本、轉移腳本、懶建立、`create_self`／`repoint` 分支），見 `docs/data-model.md`。
+**P14 之後的資料庫整理（2026-11-23）**：索引進版本控制、刪除群組改走後端、群組彙總檢查與修復工具、舊 LINE uid 轉成內部 uid（全部已在正式環境完成並驗證），之後並移除舊格式的相容程式與一次性遷移工具（補齊腳本、轉移腳本、懶建立、`create_self`／`repoint` 分支），見 `docs/guides/data-model.md`。
 
-**後續（不在 P14）**：Google 帳號沒有頭像時的預設貓咪頭像（Google 頭像已於登入時取得，LINE 優先，見 `docs/identity-and-guests.md`）、Apple 登入、一鍵還原合併、真正脫離 LINE（LINE 仍是主要登入）。
+**後續（不在 P14）**：Google 帳號沒有頭像時的預設貓咪頭像（Google 頭像已於登入時取得，LINE 優先，見 `docs/guides/identity-and-guests.md`）、Apple 登入、一鍵還原合併、真正脫離 LINE（LINE 仍是主要登入）。
 
 ## 5. 風險與對策
 

@@ -1,4 +1,4 @@
-# 每天清除過期的帳號合併紀錄與備份（見 docs/identity-and-guests.md、docs/operations.md）。
+# 每天清除過期的帳號合併紀錄與備份（見 docs/guides/identity-and-guests.md、docs/guides/operations.md）。
 # 也可以到 Actions 頁面手動執行：預設 dry-run，只列出會刪什麼；勾選 apply 才會真的刪。排程執行一律真的刪。
 # 不使用 Cloud Scheduler 排程函式：部署它需要額外啟用 API 與權限，部署失敗會連帶影響其他函式；
 # 這裡沿用已有的服務帳號，另外 executeMerge 每次也會順便清幾筆當備援。

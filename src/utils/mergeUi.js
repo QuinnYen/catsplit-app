@@ -1,5 +1,5 @@
 // 綁定與合併確認頁的顯示邏輯（純函式，方便用 node:test 直接測）。
-// 預覽內容由雲端函式 bindIdentity 回傳（見 docs/identity-and-guests.md「綁定與合併的端點」）。
+// 預覽內容由雲端函式 bindIdentity 回傳（見 docs/guides/identity-and-guests.md「綁定與合併的端點」）。
 
 export const PREVIEW_STORAGE_KEY = 'catsplit_merge_preview'
 

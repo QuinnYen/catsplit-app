@@ -3,7 +3,7 @@
 日期：2026-11-14　狀態：backlog（自 todo.md 搬入，尚未 brainstorm；動工前先走設計流程產出正式 spec）
 
 
-來源：`docs/line-platform-research-2026-11.md` §4 P17。在 LINE 群組內查結算、餘額、記帳，回覆一律用 **reply（不計費）**。
+來源：`docs/research/line-platform-research-2026-11.md` §4 P17。在 LINE 群組內查結算、餘額、記帳，回覆一律用 **reply（不計費）**。
 
 **前置（本項不含，需先有）**：Messaging API webhook 基礎（`lineWebhook` 驗簽、冪等、`lineProcessEvent`）；官方帳號 @uhu2720z 啟用 Messaging API，且 **channel 與 LINE Login channel 同一個 Provider**（否則 webhook 的 userId 對不上）；Console 開啟 Use webhook、Webhook redelivery、Allow bot to join group chats；OA Manager 關閉或縮小自動回應。
 
@@ -22,7 +22,7 @@
   - [ ] `leave`：解除群組綁定；`memberLeft`：標記成員已離開。
 - [ ] **Functions**：`lineBindGroup`（onCall）；`lineProcessEvent` 內新增 `handlers/group.ts`、`handlers/command.ts`。
 - [ ] **Firestore**：`lineGroups/{lineGroupId}`、`lineGroupBindCodes/{code}`、`groups/{gid}.members[].lineUserId`；`line*` 集合 rules 一律 `allow read, write: if false`（只給 Admin SDK）。
-- [ ] 文件：`docs/` 新增群組 Bot 說明；`README.md` 功能清單、`docs/operations.md`（Secrets、Console 設定）。
+- [ ] 文件：`docs/guides/` 新增群組 Bot 說明；`README.md` 功能清單、`docs/guides/operations.md`（Secrets、Console 設定）。
 
 **驗證**：綁定碼過期與重複使用；非群組成員誤綁；1 分鐘內一定要 reply（重度計算不可依賴 loading）；兩個帳號實測 rules。
 

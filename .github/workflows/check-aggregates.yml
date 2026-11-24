@@ -1,4 +1,4 @@
-# 手動觸發：檢查（並可修復）所有群組的彙總欄位（餘額、支出與收入總額與筆數、每人參與筆數），見 docs/operations.md。
+# 手動觸發：檢查（並可修復）所有群組的彙總欄位（餘額、支出與收入總額與筆數、每人參與筆數），見 docs/guides/operations.md。
 # 到 GitHub 的 Actions 頁面選「Check group aggregates」→ Run workflow。
 # 預設只列出哪些群組對不上、差在哪（dry-run）；勾選 apply 才會寫回重算的值。可重複執行。
 name: Check group aggregates

@@ -1,6 +1,6 @@
 // 身分綁定與帳號合併的端到端測試：從 HTTP 端點一路走完（Google 先登入、綁定既有 LINE 帳號、預覽、合併、重新登入、解除綁定…）。
 // 需要同時啟動 auth、firestore、functions 模擬器，並預載 functions/scripts/emulator-mocks.mjs 假冒 LINE 與 Google 驗證；
-// 做法見 docs/operations.md「本機模擬器跑雲端函式」，用 npm run test:e2e 執行（不屬於 npm test）。
+// 做法見 docs/guides/operations.md「本機模擬器跑雲端函式」，用 npm run test:e2e 執行（不屬於 npm test）。
 import { test, before } from 'node:test'
 import assert from 'node:assert/strict'
 import { initializeApp } from 'firebase-admin/app'

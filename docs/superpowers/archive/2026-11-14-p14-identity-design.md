@@ -2,7 +2,7 @@
 
 日期：2026-11-14　修訂：2026-11-23（依實作與實測結果補修）　狀態：已完成並上線（2026-11-23）。實作順序見 `../plans/2026-11-23-p14-identity-plan.md`
 
-> **實作後的簡化（2026-11-23）**：本文件寫的「舊 LINE 使用者 uid 即 LINE userId、對照項懶建立、補齊腳本、解除自己的 LINE 要指向新空帳號」是上線過程的過渡設計。舊使用者後來已全部轉成 `u_` 內部 uid，相容程式與遷移工具已移除：登入對照表沒有項目就是全新使用者，綁定沒有對照項就新增，解除綁定就是刪除對照項。下文保留原設計供查閱，以 `docs/identity-and-guests.md` 與 `docs/data-model.md` 為現況。
+> **實作後的簡化（2026-11-23）**：本文件寫的「舊 LINE 使用者 uid 即 LINE userId、對照項懶建立、補齊腳本、解除自己的 LINE 要指向新空帳號」是上線過程的過渡設計。舊使用者後來已全部轉成 `u_` 內部 uid，相容程式與遷移工具已移除：登入對照表沒有項目就是全新使用者，綁定沒有對照項就新增，解除綁定就是刪除對照項。下文保留原設計供查閱，以 `docs/guides/identity-and-guests.md` 與 `docs/guides/data-model.md` 為現況。
 
 ## 背景與整體決策（P18 首頁大改版的前提）
 
@@ -101,7 +101,7 @@
 
 **介面**
 - 登入畫面：LINE 內自動登入不變；外部瀏覽器顯示 LINE／Google 兩按鈕，LINE 內建瀏覽器的登入畫面不顯示 Google 按鈕；訪客入口維持。
-- 設定頁新增「登入方式」：列出已綁定 provider、解除綁定、綁定其他方式。**LINE 內建瀏覽器的設定頁不放 Google 按鈕**（Google 不允許在內嵌 WebView 登入，實測 Android 彈出視窗會停在 Google 的 `accounts.google.com/transform` 頁面）：改成「用 Google 綁定」，由 LINE 內已登入的帳號產生一次性連結碼，顯示連結讓使用者複製並貼到手機瀏覽器，在那裡用手機上已登入的 Google 帳號完成綁定（`createLinkCode`、`redeemLinkCode`、`/link` 頁，設計見 `docs/identity-and-guests.md`）。
+- 設定頁新增「登入方式」：列出已綁定 provider、解除綁定、綁定其他方式。**LINE 內建瀏覽器的設定頁不放 Google 按鈕**（Google 不允許在內嵌 WebView 登入，實測 Android 彈出視窗會停在 Google 的 `accounts.google.com/transform` 頁面）：改成「用 Google 綁定」，由 LINE 內已登入的帳號產生一次性連結碼，顯示連結讓使用者複製並貼到手機瀏覽器，在那裡用手機上已登入的 Google 帳號完成綁定（`createLinkCode`、`redeemLinkCode`、`/link` 頁，設計見 `docs/guides/identity-and-guests.md`）。
 - 新增「合併確認頁」：顯示將搬動的群組數與帳目筆數、自動加總的群組、需要決定的衝突清單；每項帶預設建議值，使用者確認或修改後才執行。
 - LINE 專屬功能（`sendMessages`、`shareTargetPicker`）維持只在 LINE 內建瀏覽器出現；非 LINE 環境以複製邀請連結或 Web Share 替代。
 - LINE 內建瀏覽器無法登入 Google，也無法從網頁開啟外部瀏覽器（`liff.openWindow`、`openExternalBrowser=1` 實測無效），所以只提供「複製連結」，由使用者貼到手機瀏覽器的網址列；LINE 內匯出 CSV 同樣改為自動複製下載網址。
@@ -121,7 +121,7 @@
 3. 補 `migrateMember` 的缺口，上 `bindIdentity` 與 `mergeAccounts`，先以兩個測試帳號在測試專案實跑。
 4. 上設定頁「登入方式」與合併確認頁。
 
-**文件**：更新 `docs/identity-and-guests.md`、`public/privacy.html`、`public/terms.html`（中英文）、`docs/operations.md`（Firebase Auth provider 設定、網域授權）、`README.md`。
+**文件**：更新 `docs/guides/identity-and-guests.md`、`public/privacy.html`、`public/terms.html`（中英文）、`docs/guides/operations.md`（Firebase Auth provider 設定、網域授權）、`README.md`。
 
 ## 風險
 

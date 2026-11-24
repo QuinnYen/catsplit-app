@@ -1,5 +1,5 @@
 // 帳號合併用的純函式（不碰 Firestore，方便用 node:test 直接測）。
-// 設計見 docs/superpowers/specs/2026-11-14-p14-identity-design.md 的「合併」；Firestore 操作在 memberOps.js。
+// 設計見 docs/superpowers/archive/2026-11-14-p14-identity-design.md 的「合併」；Firestore 操作在 memberOps.js。
 import { swapId, MIGRATION_FIELDS, migrationPatch } from './migrate.js'
 
 // 訪客（虛擬成員）的 id 以 p_ 開頭，不是真正的帳號，不能參與合併

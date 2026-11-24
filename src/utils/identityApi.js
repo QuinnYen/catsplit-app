@@ -1,4 +1,4 @@
-// 身分綁定與合併的 API 呼叫：雲端函式 listIdentities、bindIdentity、executeMerge、unbindIdentity（見 docs/identity-and-guests.md）。
+// 身分綁定與合併的 API 呼叫：雲端函式 listIdentities、bindIdentity、executeMerge、unbindIdentity（見 docs/guides/identity-and-guests.md）。
 // 網址由 VITE_TOKEN_EXCHANGE_URL（lineLogin 的網址）把結尾換掉推算，與其他雲端函式一致。
 
 export class ApiError extends Error {

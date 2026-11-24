@@ -1,5 +1,5 @@
 // 綁定與帳號合併的流程（Firestore 操作，db 與 Auth 相關函式由呼叫端傳入，所以不 import firebase-admin，可在模擬器直接測）。
-// 純判斷在 bind.js、merge.js；群組與個人資料的實際搬移在 memberOps.js。設計見 docs/superpowers/specs/2026-11-14-p14-identity-design.md。
+// 純判斷在 bind.js、merge.js；群組與個人資料的實際搬移在 memberOps.js。設計見 docs/superpowers/archive/2026-11-14-p14-identity-design.md。
 import {
   MergeError, MERGE_LEASE_MS, MERGE_DONE_TTL_MS,
   decideBind, planUnbind, planExecute, buildMergeRecord, mergeDocId, isInProgress, stateRank, conflictsOf,

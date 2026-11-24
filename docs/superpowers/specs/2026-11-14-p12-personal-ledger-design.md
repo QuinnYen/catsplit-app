@@ -54,7 +54,7 @@
 - **rules**：`transactions` 僅本人可讀寫且為非訪客（現用 `isLineUser()`，P14 改名 `isMember()` 時一併跟著改）；驗證 `type`、`currency` 在 `CURRENCIES` 內、`amount` 與 `baseAmount` 為大於 0 且小於 1e12 的數字。補 `firestore-tests/ledger.rules.mjs`。
 - **單元測試**：月份加總、依分類加總、群組分攤加總、固定 id 覆寫的冪等性、主要幣別已有帳目時不可改。
 - **刪除我的資料**：`deleteMyData` 涵蓋 `transactions`；`public/privacy.html`（中英文）補寫個人帳本資料。
-- **文件**：新增 `docs/personal-ledger.md`，更新 `README.md`。
+- **文件**：新增 `docs/guides/personal-ledger.md`，更新 `README.md`。
 - **與 P14**：P12 不依賴 P14 完成。P14 的 `mergeAccounts` 搬移 `users/{dropUid}/…` 時必須包含 `transactions`（含 `source.groupId` 的快照），並遵守「同 id 衝突以 `keepUid` 為準」；`group_{groupId}` 這類固定 id 在兩邊都有時以 `keepUid` 為準。
 
 ## 風險
