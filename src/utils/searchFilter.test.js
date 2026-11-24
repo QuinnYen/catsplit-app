@@ -20,11 +20,18 @@ test('沒有條件時 isFiltering 為 false、原樣回傳', () => {
   assert.equal(isFiltering({ ...EMPTY_FILTERS, text: '  ' }), false)
 })
 
-test('日期：這個月、上個月、今年、去年', () => {
-  assert.deepEqual(ids({ range: 'thisMonth' }), ['e1', 's1'])
-  assert.deepEqual(ids({ range: 'lastMonth' }), ['e2'])
-  assert.deepEqual(ids({ range: 'thisYear' }), ['e1', 'e2', 's1'])
-  assert.deepEqual(ids({ range: 'lastYear' }), ['i1'])
+test('日期：最近 30／45／60 天（含今天，今天是 11/15）', () => {
+  assert.deepEqual(ids({ range: 'days30' }), ['e1', 'e2', 's1']) // 10/17 起
+  assert.deepEqual(ids({ range: 'days45' }), ['e1', 'e2', 's1']) // 10/2 起
+  assert.deepEqual(ids({ range: 'days60' }), ['e1', 'e2', 's1']) // 9/17 起，2025/12/31 仍在範圍外
+})
+
+test('日期：最近 N 天的邊界含第 N 天、不含前一天，也不含明天', () => {
+  const b = dateBounds({ ...EMPTY_FILTERS, range: 'days30' }, new Date(2026, 10, 15, 18))
+  assert.deepEqual(b.start, new Date(2026, 9, 17)) // 今天往前 29 天
+  assert.deepEqual(b.end, new Date(2026, 10, 16))
+  const m = dateBounds({ ...EMPTY_FILTERS, range: 'days30' }, new Date(2026, 2, 5)) // 跨月、跨二月
+  assert.deepEqual(m.start, new Date(2026, 1, 4))
 })
 
 test('日期：自訂區間含起訖日、可只填一邊、顛倒會自動對調', () => {
@@ -53,5 +60,5 @@ test('文字：比對標題、備註、類別顯示文字、付款人；收入�
 })
 
 test('多個條件取交集', () => {
-  assert.deepEqual(ids({ range: 'thisYear', mine: true, type: 'expense' }), ['e1'])
+  assert.deepEqual(ids({ range: 'days60', mine: true, type: 'expense' }), ['e1'])
 })

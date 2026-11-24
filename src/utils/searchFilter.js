@@ -4,7 +4,7 @@ import { matchExpense } from './expenseHelpers.js'
 import { normalizeCategory } from '../i18n/codes.js'
 
 export const EMPTY_FILTERS = {
-  range: 'all', // all | thisMonth | lastMonth | thisYear | lastYear | custom
+  range: 'all', // all | days30 | days45 | days60（最近 N 天，含今天）| custom
   from: '', // custom 的起訖日（YYYY-MM-DD，可只填一邊）
   to: '',
   type: 'all', // all | expense | income | settlement
@@ -24,13 +24,16 @@ const parseDay = (s) => {
 
 // 回傳 { start, end }（start 含、end 不含，皆可為 null）；沒有日期條件時回傳 null
 export const dateBounds = (f, now = new Date()) => {
-  const y = now.getFullYear()
-  const m = now.getMonth()
+  const days = /^days(\d+)$/.exec(f.range)
+  if (days) {
+    // 最近 N 天含今天：從 N-1 天前的 00:00 起，到明天 00:00 止（不含）
+    const n = Number(days[1])
+    const y = now.getFullYear()
+    const m = now.getMonth()
+    const d = now.getDate()
+    return { start: new Date(y, m, d - (n - 1)), end: new Date(y, m, d + 1) }
+  }
   switch (f.range) {
-    case 'thisMonth': return { start: new Date(y, m, 1), end: new Date(y, m + 1, 1) }
-    case 'lastMonth': return { start: new Date(y, m - 1, 1), end: new Date(y, m, 1) }
-    case 'thisYear': return { start: new Date(y, 0, 1), end: new Date(y + 1, 0, 1) }
-    case 'lastYear': return { start: new Date(y - 1, 0, 1), end: new Date(y, 0, 1) }
     case 'custom': {
       let start = parseDay(f.from)
       let end = parseDay(f.to)

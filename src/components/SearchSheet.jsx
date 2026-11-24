@@ -6,8 +6,8 @@ import { categoryLabel } from '../i18n/codes'
 import { EMPTY_FILTERS } from '../utils/searchFilter'
 
 const RANGES = [
-  ['all', 'search.range.all'], ['thisMonth', 'search.range.thisMonth'], ['lastMonth', 'search.range.lastMonth'],
-  ['thisYear', 'search.range.thisYear'], ['lastYear', 'search.range.lastYear'], ['custom', 'search.range.custom'],
+  ['all', 'search.range.all'], ['days30', 'search.range.days30'], ['days45', 'search.range.days45'],
+  ['days60', 'search.range.days60'], ['custom', 'search.range.custom'],
 ]
 const TYPES = [
   ['all', 'group.filterAll'], ['expense', 'kind.expense'], ['income', 'kind.income'], ['settlement', 'search.type.settlement'],
