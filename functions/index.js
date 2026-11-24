@@ -7,6 +7,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
 import { migrateMember as migrateMemberOp } from './memberOps.js'
+import { deleteLedgerTree, deleteAllLedgers, isValidLedgerId } from './ledgerOps.js'
 import { MergeError, parseBindRequest, isFreshProof } from './bind.js'
 import {
   bindIdentity as bindIdentityFlow, executeMerge as executeMergeFlow, unbindIdentity as unbindIdentityFlow,
@@ -698,6 +699,21 @@ export const deleteGroup = onRequest(
 )
 
 /**
+ * 刪除自己的一個個人帳本（帳戶、帳目、群組連結與帳本文件）。需登入且不是訪客。body { ledgerId }。
+ * 用後端的 recursiveDelete，沒有客戶端單一 batch 最多 500 個操作的上限；rules 也不讓客戶端刪帳本文件。
+ * 只能刪呼叫者自己的帳本（路徑由 uid 組成）；帳本已經不存在視為成功（重試安全）。回傳 { ok: true }。
+ */
+export const deleteLedger = onRequest(
+  { cors: false, region: 'asia-east1', maxInstances: 5, timeoutSeconds: 300 },
+  authedPost(async ({ req, caller }) => {
+    const { ledgerId } = req.body || {}
+    if (!isValidLedgerId(ledgerId)) throw new MergeError('invalid_request', 400)
+    await deleteLedgerTree(getFirestore(), caller.uid, ledgerId)
+    return { ok: true }
+  })
+)
+
+/**
  * 退出多個群組並保留帳目（見 detachFromGroup）。需登入且不是訪客。body { groupIds: string[], deleteAccount?: boolean }。
  * deleteAccount 為 true 時，全部退出成功後再刪除這個人的 Auth 紀錄（此時群組清單可為空）；有任何失敗就不刪，讓使用者能重試。
  * 回傳 { results: { [groupId]: 結果 }, failed: string[], accountDeleted: boolean }。
@@ -735,6 +751,15 @@ export const detachMember = onRequest(
       } catch (e) {
         console.error('detachMember error', groupId, e)
         failed.push(groupId)
+      }
+    }
+    // 個人帳本要在刪 Auth 之前刪：中途失敗時帳號還在，使用者可以重試；先刪 Auth 就再也沒有身分能重試了
+    if (deleteAccount === true && failed.length === 0) {
+      try {
+        await deleteAllLedgers(getFirestore(), caller.uid)
+      } catch (e) {
+        console.error('detachMember delete ledgers error', e)
+        failed.push('ledgers')
       }
     }
     let accountDeleted = false

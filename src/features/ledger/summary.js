@@ -45,3 +45,13 @@ export const sumByCategory = (txs, type = 'expense') => {
     .map(([category, total]) => ({ category, total, ratio: sum > 0 ? total / sum : 0 }))
     .sort((a, b) => b.total - a.total)
 }
+
+// 月曆格：週日開頭。leading 是月初前要補的空格數，dates 是當月每一天 'YYYY-MM-DD'
+export const monthGrid = (monthKey) => {
+  const [y, m] = monthKey.split('-').map(Number)
+  const days = new Date(y, m, 0).getDate()
+  return {
+    leading: new Date(y, m - 1, 1).getDay(),
+    dates: Array.from({ length: days }, (_, i) => `${y}-${pad(m)}-${pad(i + 1)}`),
+  }
+}

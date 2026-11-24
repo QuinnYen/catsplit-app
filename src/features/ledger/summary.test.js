@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { monthDateBounds, summarizeEntries, datesWithEntries, entriesOfDate, sumByCategory, isCounted } from './summary.js'
+import { monthGrid, monthDateBounds, summarizeEntries, datesWithEntries, entriesOfDate, sumByCategory, isCounted } from './summary.js'
 
 const tx = (o) => ({ type: 'expense', baseAmount: 100, date: '2026-11-24', category: 'food', ...o })
 
@@ -60,4 +60,17 @@ test('sumByCategory：由大到小、占比加總為 1，沒有分類歸其他',
 test('sumByCategory：可算收入、沒有資料回空陣列', () => {
   assert.deepEqual(sumByCategory([tx({ type: 'income', category: 'salary', baseAmount: 42000 })], 'income').map((x) => x.category), ['salary'])
   assert.deepEqual(sumByCategory([]), [])
+})
+
+test('monthGrid：月初前的空格數與每一天', () => {
+  const nov = monthGrid('2026-11') // 2026-11-01 是週日
+  assert.equal(nov.leading, 0)
+  assert.equal(nov.dates.length, 30)
+  assert.equal(nov.dates[0], '2026-11-01')
+  assert.equal(nov.dates[29], '2026-11-30')
+  const jan = monthGrid('2026-01') // 2026-01-01 是週四
+  assert.equal(jan.leading, 4)
+  assert.equal(jan.dates.length, 31)
+  assert.equal(monthGrid('2024-02').dates.length, 29) // 閏年
+  assert.equal(monthGrid('2026-02').dates.length, 28)
 })

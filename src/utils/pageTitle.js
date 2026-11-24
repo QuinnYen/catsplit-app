@@ -2,6 +2,9 @@
 const ROUTES = [
   [/^\/$/, 'tab.split'],
   [/^\/ledger$/, 'tab.ledger'],
+  [/^\/ledger\/accounts$/, 'ledger.tab.accounts'],
+  [/^\/ledger\/stats$/, 'ledger.chart'],
+  [/^\/ledger\/settings$/, 'ledger.tab.settings'],
   [/^\/fx$/, 'tab.fx'],
   [/^\/create$/, 'cg.title'],
   [/^\/settings$/, 'group.settings'],

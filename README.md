@@ -43,6 +43,7 @@
 - 記錄轉帳（結清），可附付款方式與備註；每筆轉帳建議可各自選要用哪個貨幣轉，依即時匯率換算，紀錄存實際轉的幣別與匯率
 - 收款方式：在首頁頭像選單設定 Richart、街口支付、銀行轉帳或自行輸入的收款資訊，轉帳時自動帶出收款人公開的收款方式，可複製或一鍵開啟已安裝的 App，見[收款方式](docs/guides/payment-methods.md)
 - 主導覽列：底部固定「記帳／分帳／目標／匯率」四個入口（首頁即分帳）；記帳與匯率目前是「即將推出」佔位頁；訪客可看到全部，但記帳與目標灰色，點了提示綁定 LINE 或 Google
+- 個人記帳：底部導覽列「記帳」建立多個帳本（每個帳本有自己的統計幣別與帳戶），用月曆與當日明細記收入、支出與轉帳，支援多幣別與常駐數字鍵盤，見[個人記帳](docs/guides/personal-ledger.md)；帳戶管理、圖表與連結分帳群組開發中
 - 儲蓄目標：在底部導覽列「目標」建立個人儲蓄目標，記錄存款與提款，查看進度與明細，見[儲蓄目標](docs/guides/savings-goals.md)
 
 ## 開發環境設定
@@ -104,6 +105,7 @@ firebase deploy
 - [貨幣與匯率](docs/guides/currency.md)：貨幣清單與小數位數、基準幣與資料格式、母國貨幣、轉帳幣別、結算取整與金額顯示、`CurrencySelect`
 - [收款方式](docs/guides/payment-methods.md)：支援的收款方式、資料結構、可見範圍與新增一家的做法
 - [儲蓄目標](docs/guides/savings-goals.md)：頁面、資料結構、金額規則與刪除流程
+- [個人記帳](docs/guides/personal-ledger.md)：帳本、帳戶、帳目、幣別與餘額、記帳面板、刪除
 - [身分與訪客](docs/guides/identity-and-guests.md)：LINE 使用者與訪客的差異、認領機制
 - [啟動速度](docs/guides/startup-performance.md)：登入快速路徑與載入策略，改啟動流程前請先看
 - [安全與維運](docs/guides/operations.md)：rules、CORS、換網域、備份、已知取捨與待辦

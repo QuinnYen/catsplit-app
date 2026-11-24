@@ -1,0 +1,67 @@
+// /ledger/* 的殼層：載入帳本與帳戶、提供共用資料、放底部導覽列與記帳面板。
+// 沒有任何帳本時先建立預設帳本（見 hooks.js 的 useEnsureDefaultLedger）。
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useApp } from '../../context/AppContext'
+import { useI18n } from '../../i18n/I18nProvider'
+import { LedgerContext } from './LedgerContext'
+import { useLedgers, useAccounts, useEnsureDefaultLedger, useActiveLedger } from './hooks'
+import { todayStr } from './dates'
+import LedgerTabBar from './LedgerTabBar'
+import LedgerBookPage from './LedgerBookPage'
+import LedgerSettingsPage from './LedgerSettingsPage'
+import LedgerPlaceholderPage from './LedgerPlaceholderPage'
+import LedgerEntrySheet from './LedgerEntrySheet'
+
+const LedgerShell = () => {
+  const { user } = useApp()
+  const { t } = useI18n()
+  const uid = user.uid
+  const ledgers = useLedgers(uid)
+  const labels = useMemo(() => ({ name: t('ledger.default.name'), baseCurrency: 'TWD', cashName: t('ledger.default.cash') }), [t])
+  useEnsureDefaultLedger(uid, ledgers, labels)
+  const [ledger, setActiveLedger] = useActiveLedger(uid, ledgers)
+  const accounts = useAccounts(uid, ledger?.id)
+  const [selectedDate, setSelectedDate] = useState(() => todayStr())
+  const [entry, setEntry] = useState(null) // null | { tx?: 編輯中的帳目 }
+  const [toast, setToast] = useState('')
+  const toastTimer = useRef(null)
+
+  const showToast = useCallback((message) => {
+    setToast(message)
+    clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(''), 2200)
+  }, [])
+  useEffect(() => () => clearTimeout(toastTimer.current), [])
+
+  const openEntry = useCallback((tx) => setEntry({ tx }), [])
+  const ctx = useMemo(
+    () => ({ uid, ledger, ledgers, accounts, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
+    [uid, ledger, ledgers, accounts, setActiveLedger, selectedDate, openEntry, showToast],
+  )
+
+  if (!ledger || !accounts) {
+    return <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'grid', placeItems: 'center', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
+  }
+
+  return (
+    <LedgerContext.Provider value={ctx}>
+      <Routes>
+        <Route index element={<LedgerBookPage />} />
+        <Route path="accounts" element={<LedgerPlaceholderPage titleKey="ledger.tab.accounts" descKey="ledger.soon.accounts" />} />
+        <Route path="stats" element={<LedgerPlaceholderPage titleKey="ledger.chart" descKey="ledger.soon.stats" back />} />
+        <Route path="settings" element={<LedgerSettingsPage />} />
+        <Route path="*" element={<Navigate to="/ledger" replace />} />
+      </Routes>
+      <LedgerTabBar onAdd={() => openEntry(undefined)} />
+      {entry && <LedgerEntrySheet key={`${ledger.id}/${entry.tx?.id ?? 'new'}`} editing={entry.tx} onClose={() => setEntry(null)} />}
+      {toast && (
+        <div role="status" style={{ position: 'fixed', left: 16, right: 16, top: 'calc(env(safe-area-inset-top, 0px) + 72px)', zIndex: 300, margin: '0 auto', maxWidth: 360, background: 'var(--cs-text)', color: 'var(--cs-bg)', borderRadius: 6, padding: '10px 14px', fontSize: 13, lineHeight: 1.5, textAlign: 'center' }}>
+          {toast}
+        </div>
+      )}
+    </LedgerContext.Provider>
+  )
+}
+
+export default LedgerShell
