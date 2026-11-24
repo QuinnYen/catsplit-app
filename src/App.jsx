@@ -33,6 +33,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const MergePage = lazy(() => import('./pages/MergePage'))
 const LinkPage = lazy(() => import('./pages/LinkPage'))
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
+const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'))
 
 const LoadingScreen = () => {
   const { t } = useI18n()
@@ -165,6 +166,8 @@ const ProtectedRoutes = () => {
     {!user.guest && <OfficialAccountPrompt />}
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/ledger" element={user.guest ? <Navigate to="/" /> : <ComingSoonPage titleKey="tab.ledger" descKey="comingSoon.ledger" />} />
+      <Route path="/fx" element={<ComingSoonPage titleKey="tab.fx" descKey="comingSoon.fx" />} />
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/merge" element={user.guest ? <Navigate to="/" /> : <MergePage />} />

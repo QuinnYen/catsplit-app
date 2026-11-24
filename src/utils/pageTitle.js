@@ -1,6 +1,8 @@
 // 網址路徑 → 頁面名稱的 i18n key，用來組網頁標題（貓咪分帳 | 群組）；沒對到回 null（只顯示 app 名稱）
 const ROUTES = [
-  [/^\/$/, 'tab.home'],
+  [/^\/$/, 'tab.split'],
+  [/^\/ledger$/, 'tab.ledger'],
+  [/^\/fx$/, 'tab.fx'],
   [/^\/create$/, 'cg.title'],
   [/^\/settings$/, 'group.settings'],
   [/^\/merge$/, 'merge.title'],

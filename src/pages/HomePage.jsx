@@ -1,7 +1,7 @@
-// / — 首頁：未登入顯示登入畫面；已登入顯示使用者資訊、消費總覽與我的群組列表，頭像可開啟選單（設定、收款方式、條款、登出）。
+// / — 分帳首頁：使用者資訊與我的群組列表，頭像可開啟選單（設定、收款方式、消費方式、官方帳號、登出）；底部是全站主導覽列。未登入由 App.jsx 的 LoginScreen 處理。
 import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Users, Wallet, Calculator, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, LogOut, QrCode, PiggyBank, CreditCard, ChevronDown } from 'lucide-react'
+import { Settings, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, LogOut, QrCode, CreditCard, ChevronDown } from 'lucide-react'
 import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
@@ -9,9 +9,9 @@ import useMyGroups from '../hooks/useMyGroups'
 import Avatar from '../components/Avatar'
 import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
+import MainTabBar from '../components/MainTabBar'
 import { computeBudgetStatus } from '../utils/budget'
 import { getBalanceStatus } from '../utils/balanceStatus'
-import catLogo from '../assets/cat-logo.webp'
 
 const GREETINGS = [
   // 0-4 深夜
@@ -39,10 +39,8 @@ const GROUPS_PER_PAGE = 10
 
 const HomePage = () => {
   const { user, loading: authLoading, loginWithLine, logout, guestNames } = useApp()
-  const { t, lang } = useI18n()
+  const { t } = useI18n()
   const navigate = useNavigate()
-  // 英文版條款與隱私權政策是另一份靜態頁；中文版維持原網址
-  const legalHref = (page) => lang === 'en' ? `/${page}.en.html` : `/${page}.html`
   const [{ Icon: GreetingIcon, key: greetingKey }] = useState(getGreeting)
   const { groups, groupsLoaded } = useMyGroups()
   const loading = authLoading || (!!user && !groupsLoaded)
@@ -64,54 +62,6 @@ const HomePage = () => {
   const pageCount = Math.max(1, Math.ceil(activeGroups.length / GROUPS_PER_PAGE))
   const currentPage = Math.min(page, pageCount)
   const pagedGroups = activeGroups.slice((currentPage - 1) * GROUPS_PER_PAGE, currentPage * GROUPS_PER_PAGE)
-
-  if (!authLoading && !user) {
-    return (
-      <div style={{ minHeight: '100vh', background: 'var(--cs-rc-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
-        <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
-          {/* Logo / Icon */}
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <img src={catLogo} alt={t('app.title')} style={{ width: 80, height: 80, marginBottom: 16 }} />
-            <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--cs-rc-ink)', marginBottom: 6 }}>{t('app.title')}</div>
-            <div style={{ fontSize: 14, color: 'var(--cs-rc-sub)', lineHeight: 1.6 }}>
-              {t('home.tagline1')}<br />{t('home.tagline2')}
-            </div>
-          </div>
-
-          {/* 特色說明 */}
-          <div style={{ background: 'var(--cs-rc-card)', borderRadius: 6, border: '1px solid var(--cs-rc-rule)', padding: '4px 18px', marginBottom: 24 }}>
-            {[
-              { Icon: Users, text: t('home.feature1') },
-              { Icon: Wallet, text: t('home.feature2') },
-              { Icon: Calculator, text: t('home.feature3') },
-            ].map(({ Icon, text }, i) => (
-              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderTop: i === 0 ? 'none' : '1.5px dashed var(--cs-rc-rule)' }}>
-                <div style={{ width: 32, display: 'flex', justifyContent: 'center', flexShrink: 0 }}><Icon size={20} color="var(--cs-rc-stamp)" /></div>
-                <div style={{ fontSize: 13, color: 'var(--cs-rc-ink)' }}>{text}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* LINE 登入按鈕 */}
-          <button
-            onClick={() => loginWithLine()}
-            style={{ width: '100%', padding: '15px 0', borderRadius: 6, border: 'none', background: '#06C755', color: '#fff', fontSize: 16, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-          >
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M11 2C6.03 2 2 5.58 2 10c0 3.54 2.56 6.57 6.24 7.73-.09.31-.56 1.97-.64 2.27 0 0-.04.14.07.19.11.06.24.01.24.01.32-.04 3.72-2.45 4.09-2.7.66.09 1.34.14 2.03.14 4.97 0 9-3.58 9-8s-4.03-8-9-8z" fill="var(--cs-on-brand)"/>
-            </svg>
-            {t('home.loginLine')}
-          </button>
-          <p style={{ marginTop: 14, fontSize: 12, color: 'var(--cs-rc-sub)', textAlign: 'center', lineHeight: 1.6 }}>
-            {t('home.agreePrefix')}
-            <a href={legalHref('terms')} style={{ color: 'var(--cs-rc-stamp)' }}>{t('home.terms')}</a>
-            {t('home.and')}
-            <a href={legalHref('privacy')} style={{ color: 'var(--cs-rc-stamp)' }}>{t('home.privacy')}</a>
-          </p>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--cs-rc-bg)' }}>
@@ -149,7 +99,7 @@ const HomePage = () => {
       </div>
 
       {/* 內容 */}
-      <div className="cs-body" style={{ padding: '16px', flex: 1, paddingBottom: 24, display: 'flex', flexDirection: 'column' }}>
+      <div className="cs-body" style={{ padding: '16px', flex: 1, paddingBottom: 'calc(var(--tabbar-h) + 24px)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-rc-ink)' }}>{t('home.myGroups')}</div>
           {!user?.guest && (
@@ -317,6 +267,8 @@ const HomePage = () => {
 
       </div>
 
+      <MainTabBar />
+
       {/* 設定氣泡：從頭像旁展開 */}
       {showSettings && (
         <>
@@ -328,7 +280,6 @@ const HomePage = () => {
               // 訪客沒有穩定身分，不提供收款方式
               ...(!user?.guest ? [{ Icon: QrCode, label: t('home.menu.payment'), onClick: () => navigate('/payment-methods') }] : []),
               ...(!user?.guest ? [{ Icon: CreditCard, label: t('home.menu.spend'), onClick: () => navigate('/spend-methods') }] : []),
-              ...(!user?.guest ? [{ Icon: PiggyBank, label: t('home.menu.savings'), onClick: () => navigate('/savings') }] : []),
               { Icon: LineIcon, label: t('group.menu.official'), href: OFFICIAL_ACCOUNT_URL },
               { Icon: LogOut, label: t('home.menu.logout'), onClick: handleLogout },
             ].map(({ Icon, label, href, onClick }, i) => {

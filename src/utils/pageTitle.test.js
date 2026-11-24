@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import { pageTitleKey } from './pageTitle.js'
 
 test('pageTitleKey：各頁路徑對到頁面名稱 key', () => {
-  assert.equal(pageTitleKey('/'), 'tab.home')
+  assert.equal(pageTitleKey('/'), 'tab.split')
+  assert.equal(pageTitleKey('/ledger'), 'tab.ledger')
+  assert.equal(pageTitleKey('/fx'), 'tab.fx')
   assert.equal(pageTitleKey('/merge'), 'merge.title')
   assert.equal(pageTitleKey('/group/abc'), 'tab.group')
   assert.equal(pageTitleKey('/group/abc/'), 'tab.group')

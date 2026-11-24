@@ -5,6 +5,7 @@ import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
+import MainTabBar from '../components/MainTabBar'
 import { getCurrency } from '../config/currencies'
 import useSavingsEntries from '../hooks/useSavingsEntries'
 import { sumSaved, progressRatio } from '../utils/savings'
@@ -53,10 +54,9 @@ const SavingsListPage = () => {
   }, [user.uid])
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 40 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
       <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={() => navigate('/')} aria-label={t('savings.back')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', fontSize: 26, cursor: 'pointer', lineHeight: 1, padding: 0 }}>‹</button>
           <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{t('savings.title')}</div>
         </div>
       </div>
@@ -69,6 +69,7 @@ const SavingsListPage = () => {
         {goals?.length === 0 && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('savings.empty')}</div>}
         {goals?.map(g => <GoalCard key={g.id} goal={g} uid={user.uid} />)}
       </div>
+      <MainTabBar />
     </div>
   )
 }
