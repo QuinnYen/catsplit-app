@@ -87,7 +87,7 @@ const LedgerBookPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--cs-bg)' }}>
       <div className="cs-header" style={{ background: 'var(--cs-rc-head)', color: 'var(--cs-rc-head-text)', padding: '14px 16px 24px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <button onClick={() => setMenuOpen(true)} aria-label={t('ledger.switch')} aria-haspopup="dialog" style={circleBtn}><Layers size={18} /></button>
@@ -141,8 +141,9 @@ const LedgerBookPage = () => {
         </div>
       </div>
 
-      <div className="cs-body" style={{ marginTop: 8, flex: 1 }}>
-        <div style={{ background: 'var(--cs-rc-card)', borderTop: '1px solid var(--cs-rc-rule)', minHeight: 200 }}>
+      <div className="cs-body" style={{ marginTop: 8, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* 當日明細卡片撐到畫面最底下；底部留出導覽列的高度，內容多時最後一筆不會被蓋住 */}
+        <div style={{ background: 'var(--cs-rc-card)', borderTop: '1px solid var(--cs-rc-rule)', flex: 1, minHeight: 200, paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '10px 16px 8px', borderBottom: '1.5px dashed var(--cs-rc-rule)' }}>
             <b style={{ fontSize: 14, color: isHoliday(selectedDate) ? 'var(--cs-danger)' : 'var(--cs-text)' }}>{t('ledger.day.header', { date: shortDate(selectedDate), weekday: t(`date.weekday.${weekdayOf(selectedDate)}`) })}{holidayName(selectedDate) && ` · ${holidayName(selectedDate)}`}</b>
             <span style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>
