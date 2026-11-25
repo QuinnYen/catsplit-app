@@ -1,4 +1,4 @@
-// 設定頁「資料」分頁：匯出 CSV（整個帳本的全部帳目）、備份與還原（單一帳本的 JSON 檔，還原成新帳本）。
+// 設定頁「資料」分頁：匯出 CSV（整個帳本的全部帳目）、備份與還原（單一帳本的 JSON 檔，還原成新帳本）、重新計算帳戶餘額。
 // 一般瀏覽器直接下載；LINE 內建瀏覽器無法下載 blob，改由雲端函式存檔並回傳下載網址（見 utils/ledgerApi.js）。
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -12,6 +12,7 @@ import { transactionsPath } from './paths'
 import { buildLedgerCsv, ledgerCsvFileName } from './csvExport'
 import { buildBackup, parseBackup, backupFileName, LIMITS } from './backup'
 import { restoreBackup } from './backupData'
+import { repairBalances } from './data'
 import { MAX_LEDGERS, LEDGER_NAME_MAX } from './constants'
 
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
@@ -29,6 +30,7 @@ const LedgerDataSettings = () => {
   const [error, setError] = useState('')
   const [progress, setProgress] = useState(null) // { done, total }
   const fileInput = useRef(null)
+  const [repairing, setRepairing] = useState(false)
 
   // 畫面只載入單月帳目，匯出與備份要抓整個帳本
   const loadTransactions = async () => (await getDocs(collection(db, ...transactionsPath(uid, ledger.id)))).docs.map((d) => ({ id: d.id, ...d.data() }))
@@ -77,6 +79,20 @@ const LedgerDataSettings = () => {
     await deliver({ content: JSON.stringify(backup), filename: backupFileName(ledger), mime: 'application/json;charset=utf-8;', format: 'json' })
   })
 
+  // 讀整個帳本的帳目，依「期初餘額＋帳目」重算每個帳戶，與記錄不同的才寫回（餘額漂移或帳號合併後用）
+  const repair = async () => {
+    if (repairing || busy || !window.confirm(t('ledger.accounts.repairConfirm'))) return
+    setRepairing(true)
+    try {
+      const fixes = await repairBalances(uid, ledger.id, accounts)
+      showToast(fixes.length === 0 ? t('ledger.accounts.repairNone') : t('ledger.accounts.repairDone', { n: fixes.length }))
+    } catch (e) {
+      console.error('Failed to repair balances', e)
+      showToast(t('ledger.accounts.repairFailed'))
+    }
+    setRepairing(false)
+  }
+
   const pickFile = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = '' // 同一個檔案可以再選一次
@@ -123,6 +139,12 @@ const LedgerDataSettings = () => {
         <div style={heading}>{t('ledger.data.exportTitle')}</div>
         <div style={hint}>{t('ledger.data.exportDesc', { name: ledger.name })}</div>
         <button onClick={exportCsv} disabled={busy} style={button(busy)}>{busy ? t('common.processing') : t('ledger.data.export')}</button>
+      </div>
+
+      <div style={card}>
+        <div style={heading}>{t('ledger.accounts.repair')}</div>
+        <div style={hint}>{t('ledger.accounts.repairHint')}</div>
+        <button onClick={repair} disabled={repairing || busy} style={button(repairing || busy)}>{repairing ? t('common.processing') : t('ledger.accounts.repair')}</button>
       </div>
 
       <div style={card}>

@@ -1,4 +1,4 @@
-// /ledger/accounts — 淨資產、帳戶清單與餘額、新增與編輯帳戶、重新計算餘額。
+// /ledger/accounts — 淨資產、帳戶清單與餘額、新增與編輯帳戶。重新計算餘額在設定頁的「資料」分頁。
 // 快照帳戶（群組同步）獨立一區，不計入淨資產。
 import { useEffect, useMemo, useState } from 'react'
 import { Plus, ChevronRight } from 'lucide-react'
@@ -6,7 +6,6 @@ import { useI18n } from '../../i18n/I18nProvider'
 import { fetchExchangeRate } from '../../config/currencies'
 import { useLedger } from './LedgerContext'
 import { computeNetWorth, netWorthCurrencies } from './netWorth'
-import { repairBalances } from './data'
 import { MAX_ACCOUNTS } from './constants'
 import AccountSheet from './AccountSheet'
 
@@ -46,11 +45,10 @@ const AccountRow = ({ account, base, rate, onOpen }) => {
 }
 
 const LedgerAccountsPage = () => {
-  const { uid, ledger, accounts, showToast } = useLedger()
+  const { ledger, accounts, showToast } = useLedger()
   const { t, fmt } = useI18n()
   const base = ledger.baseCurrency
   const [sheet, setSheet] = useState(null) // null | { account? }
-  const [repairing, setRepairing] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
 
   const normal = useMemo(() => accounts.filter((a) => a.kind !== 'group'), [accounts])
@@ -61,19 +59,6 @@ const LedgerAccountsPage = () => {
   const currencies = useMemo(() => netWorthCurrencies(accounts, base), [accounts, base])
   const { rates, loading } = useBaseRates(currencies, base)
   const worth = computeNetWorth({ accounts, baseCurrency: base, rates })
-
-  const repair = async () => {
-    if (repairing || !window.confirm(t('ledger.accounts.repairConfirm'))) return
-    setRepairing(true)
-    try {
-      const fixes = await repairBalances(uid, ledger.id, accounts)
-      showToast(fixes.length === 0 ? t('ledger.accounts.repairNone') : t('ledger.accounts.repairDone', { n: fixes.length }))
-    } catch (e) {
-      console.error('Failed to repair balances', e)
-      showToast(t('ledger.accounts.repairFailed'))
-    }
-    setRepairing(false)
-  }
 
   const add = () => {
     if (normal.length >= MAX_ACCOUNTS) return showToast(t('ledger.account.limit', { n: MAX_ACCOUNTS }))
@@ -143,13 +128,6 @@ const LedgerAccountsPage = () => {
             )}
           </>
         )}
-
-        <div style={{ ...card, padding: 14 }}>
-          <button onClick={repair} disabled={repairing} style={{ width: '100%', padding: '10px 0', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'transparent', color: 'var(--cs-text)', fontSize: 14, cursor: repairing ? 'not-allowed' : 'pointer' }}>
-            {repairing ? t('common.processing') : t('ledger.accounts.repair')}
-          </button>
-          <div style={{ fontSize: 11.5, color: 'var(--cs-text-mute)', lineHeight: 1.5, marginTop: 8 }}>{t('ledger.accounts.repairHint')}</div>
-        </div>
       </div>
 
       {sheet && <AccountSheet key={sheet.account?.id ?? 'new'} account={sheet.account} activeNormalCount={active.length} onClose={() => setSheet(null)} />}
