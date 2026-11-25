@@ -32,7 +32,8 @@ users/{uid}/ledgers/{ledgerId}/categories/{id}       類別（自訂與改過的
 | `recurring.js`、`recurringRun.js`、`useRecurringRun.js`、`holidays.js` | 固定收支與固定轉帳：規則產生計畫（純函式）、開啟帳本時補入（交易）、國定假日資料 |
 | `LedgerRecurringSettings.jsx`、`RecurringSheet.jsx` | 「基本」分頁的固定項目列表與新增、編輯面板 |
 | `budget.js`、`LedgerBudgetSettings.jsx`、`BudgetRow.jsx` | 預算：計算（純函式）、「基本」分頁的預算設定、進度列 |
-| `LedgerDataSettings.jsx`、`csvExport.js` | 「資料」分頁：匯出 CSV（整個帳本）與 CSV 組裝（純函式） |
+| `LedgerDataSettings.jsx`、`csvExport.js` | 「資料」分頁：匯出 CSV（整個帳本）與 CSV 組裝（純函式）、備份與還原 |
+| `backup.js`、`backupData.js` | 備份的組裝、驗證與還原計畫（純函式）、還原的 Firestore 寫入 |
 | `data.js`、`hooks.js` | Firestore 讀寫與即時訂閱（畫面不直接組路徑或寫 batch） |
 | `entryDraft.js`、`money.js`、`balance.js`、`summary.js` | 草稿轉帳目、換算、餘額增量、月彙總（純函式，有單元測試） |
 | `expression.js` | 數字鍵盤的算式規則，不用 `eval` |
@@ -89,7 +90,15 @@ users/{uid}/ledgers/{ledgerId}/categories/{id}       類別（自訂與改過的
 - 群組同步來的帳目：類別在帳本清單裡有同 `key` 就沿用，**對不到（含已刪除、群組的自訂文字）一律歸「其他」**；你在群組帳目上改過的類別不會被覆寫。
 - 記帳面板、帳本主頁、圖表、群組帳目面板與 CSV 匯出都用帳本的類別名稱。
 - 類別圖示還沒做。
-- 備份與還原（最後做）。
+
+## 備份與還原
+
+設定頁「資料」分頁的「備份與還原」，以**單一帳本**為單位：
+
+- **下載備份**：JSON 檔（`format: catsplit-ledger-backup`、`version: 1`），內容是帳本設定（名稱、統計幣別、期間、預算、假日調整）、帳戶、帳目、類別（含預算）、固定項目規則（含進度）。**不含**群組同步的快照帳戶與快照帳目、群組連結：還原後重新連結群組就會同步回來；已匯入成一般帳目的群組帳目有備份。LINE 內建瀏覽器無法下載檔案，和 CSV 一樣改呼叫 `exportCsv`（`ledgerId` 加 `format: 'json'`，上限 300 萬字元）取得 5 分鐘有效的下載網址。
+- **從檔案還原**：一律建立成**新帳本**（名稱加「（還原）」），不動現有帳本。選檔後先整份驗證（格式版本、帳戶引用、id 不重複、數量上限：帳目 4 萬筆、檔案 20 MB），沒過就說明原因、什麼都不寫；通過後顯示摘要（帳戶數、帳目數、日期範圍）讓你確認。
+- **寫入**：先分批（每批 400）寫類別、帳戶、固定項目、帳目，**最後才寫帳本文件**；中途失敗（網路、rules 拒絕）時呼叫 `deleteLedger` 清掉已寫的部分，不會留下半套資料。帳戶餘額依期初餘額與帳目**重新計算**，不採信檔案裡的 `balance`；帳目的建立時間與固定項目的進度保留，所以還原後固定收支不會重複產生。全部走現有的 rules，沒有新增 rules。
+- 受帳本數量上限（20 個）限制。
 
 ## 期間（月開始日、週開始日）
 

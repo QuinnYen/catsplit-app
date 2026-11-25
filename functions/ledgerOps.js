@@ -66,3 +66,10 @@ export const ledgerExportPrefix = async (db, uid, ledgerId) => {
   const snap = await db.doc(`users/${uid}/ledgers/${ledgerId}`).get()
   return snap.exists ? `exports/${uid}/${ledgerId}` : null
 }
+
+// 匯出檔案的格式：csv（群組明細與個人帳本 CSV）或 json（只有個人帳本備份）。回傳副檔名、內容類型與字元上限；格式不認得回 null
+export const exportFileSpec = (format) => {
+  if (format === undefined || format === 'csv') return { ext: 'csv', contentType: 'text/csv; charset=utf-8', maxChars: 1_000_000 }
+  if (format === 'json') return { ext: 'json', contentType: 'application/json; charset=utf-8', maxChars: 3_000_000 }
+  return null
+}

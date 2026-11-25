@@ -120,3 +120,12 @@ test('ledgerExportPrefix：只有自己的、存在的帳本有路徑；別人�
   assert.equal(await ledgerExportPrefix(db, 'u1', '../x'), null)
   assert.equal(await ledgerExportPrefix(db, 'u1', undefined), null)
 })
+
+test('exportFileSpec：csv 與 json 的副檔名、內容類型與上限，其他格式不認得', async () => {
+  const { exportFileSpec } = await import('../ledgerOps.js')
+  assert.deepEqual(exportFileSpec(undefined), { ext: 'csv', contentType: 'text/csv; charset=utf-8', maxChars: 1_000_000 })
+  assert.equal(exportFileSpec('csv').ext, 'csv')
+  assert.deepEqual(exportFileSpec('json'), { ext: 'json', contentType: 'application/json; charset=utf-8', maxChars: 3_000_000 })
+  assert.equal(exportFileSpec('xml'), null)
+  assert.equal(exportFileSpec(''), null)
+})

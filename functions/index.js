@@ -7,7 +7,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
 import { migrateMember as migrateMemberOp } from './memberOps.js'
-import { deleteLedgerTree, deleteAllLedgers, isValidLedgerId, ledgerExportPrefix } from './ledgerOps.js'
+import { deleteLedgerTree, deleteAllLedgers, isValidLedgerId, ledgerExportPrefix, exportFileSpec } from './ledgerOps.js'
 import { MergeError, parseBindRequest, isFreshProof } from './bind.js'
 import {
   bindIdentity as bindIdentityFlow, executeMerge as executeMergeFlow, unbindIdentity as unbindIdentityFlow,
@@ -645,7 +645,6 @@ export const cleanupGuestsOnMemberRemoved = onDocumentUpdated(
 // ---------- 匯出 CSV：LINE 內建瀏覽器無法下載 blob，改給一個短效網址在外部瀏覽器下載 ----------
 
 const EXPORT_URL_TTL_MS = 5 * 60 * 1000
-const MAX_CSV_CHARS = 1_000_000
 
 // 整個群組刪除：子集合（支出、轉帳）、群組文件與 Storage 檔案（收據、封面）
 const deleteGroupCompletely = async (groupId) => {
@@ -807,7 +806,7 @@ export const detachMember = onRequest(
 /**
  * 把前端產生的 CSV 存到 Storage（exports/，由 bucket 的生命週期規則 1 天後清除），
  * 回傳 5 分鐘內有效的簽名網址，開啟即下載。需登入且是該群組成員（訪客也可）。
- * body { groupId, csv, filename }。簽名需要服務帳號有 Service Account Token Creator 權限（見 docs/guides/operations.md）。
+ * body { groupId | ledgerId, csv, filename, format? }。個人帳本（ledgerId）可帶 format: 'json'，存帳本備份檔（內容仍放在 csv 欄位）。簽名需要服務帳號有 Service Account Token Creator 權限（見 docs/guides/operations.md）。
  */
 export const exportCsv = onRequest(
   { cors: false, region: 'asia-east1', maxInstances: 5 },
@@ -828,8 +827,10 @@ export const exportCsv = onRequest(
       return
     }
 
-    const { groupId, ledgerId, csv, filename } = req.body || {}
-    if (typeof csv !== 'string' || csv.length === 0 || csv.length > MAX_CSV_CHARS) {
+    const { groupId, ledgerId, csv, filename, format } = req.body || {}
+    const spec = exportFileSpec(format)
+    // json 只給個人帳本備份用，群組明細一律是 csv
+    if (!spec || (spec.ext === 'json' && ledgerId === undefined) || typeof csv !== 'string' || csv.length === 0 || csv.length > spec.maxChars) {
       res.status(400).json({ error: 'invalid_csv' })
       return
     }
@@ -852,16 +853,16 @@ export const exportCsv = onRequest(
         prefix = `exports/${groupId}`
       }
 
-      // 檔名只留可見字元，去掉路徑與控制字元，一律以 .csv 結尾
-      const base = String(filename || 'export').replace(/[\u0000-\u001f\\/:*?"<>|]/g, '_').replace(/\.csv$/i, '').slice(0, 80) || 'export'
-      const file = getStorage().bucket().file(`${prefix}/${randomBytes(16).toString('hex')}.csv`)
-      await file.save(Buffer.from(csv, 'utf8'), { contentType: 'text/csv; charset=utf-8', resumable: false })
+      // 檔名只留可見字元，去掉路徑與控制字元，副檔名依格式（.csv 或 .json）
+      const base = String(filename || 'export').replace(/[\u0000-\u001f\\/:*?"<>|]/g, '_').replace(/\.(csv|json)$/i, '').slice(0, 80) || 'export'
+      const file = getStorage().bucket().file(`${prefix}/${randomBytes(16).toString('hex')}.${spec.ext}`)
+      await file.save(Buffer.from(csv, 'utf8'), { contentType: spec.contentType, resumable: false })
       const [url] = await file.getSignedUrl({
         version: 'v4',
         action: 'read',
         expires: Date.now() + EXPORT_URL_TTL_MS,
-        responseType: 'text/csv; charset=utf-8',
-        responseDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(base + '.csv')}`,
+        responseType: spec.contentType,
+        responseDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(`${base}.${spec.ext}`)}`,
       })
       res.json({ url })
     } catch (e) {
