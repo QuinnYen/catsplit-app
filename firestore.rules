@@ -121,7 +121,7 @@ service cloud.firestore {
     }
 
     // ===== 個人帳本（P12）=====
-    // 結構與欄位見 docs/superpowers/specs/2026-11-14-p12-personal-ledger-design.md。
+    // 結構與欄位見 docs/superpowers/archive/2026-11-14-p12-personal-ledger-design.md。
     // 只有本人能讀寫，訪客不能寫。貨幣只驗證是 3 碼字串：清單比對在前端，避免新增貨幣時 rules 也要同步部署。
     // 帳本文件的刪除一律由後端處理（recursiveDelete，連同子集合），客戶端不能刪，避免留下孤兒子集合。
     function isLedgerOwner(userId) {

@@ -1,4 +1,4 @@
-// 個人帳本（P12）共用常數。設計見 docs/superpowers/specs/2026-11-14-p12-personal-ledger-design.md
+// 個人帳本（P12）共用常數。設計見 docs/superpowers/archive/2026-11-14-p12-personal-ledger-design.md
 import { DEFAULT_CATEGORIES } from '../../config/expenseForm.js'
 
 export const MAX_LEDGERS = 20 // 前端限制，rules 無法計數

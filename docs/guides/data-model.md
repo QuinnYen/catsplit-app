@@ -2,7 +2,7 @@
 
 日期：2026-11-23。依 `firestore.rules`、`storage.rules`、`src/`、`functions/` 的實際程式盤點，**描述現況**；「分析」與「待決議」是提案，不是已決定的事。改動資料結構時請同步更新本文件。
 
-相關文件：身分與帳號合併見 [`identity-and-guests.md`](identity-and-guests.md)，架構見 [`architecture.md`](architecture.md)，個人記帳設計見 `../superpowers/specs/2026-11-14-p12-personal-ledger-design.md`。
+相關文件：身分與帳號合併見 [`identity-and-guests.md`](identity-and-guests.md)，架構見 [`architecture.md`](architecture.md)，個人記帳設計見 `../superpowers/archive/2026-11-14-p12-personal-ledger-design.md`。
 
 ## 1. 身分（uid）
 

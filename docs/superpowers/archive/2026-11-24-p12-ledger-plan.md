@@ -1,6 +1,6 @@
 # P12 個人記帳：實作計畫
 
-日期：2026-11-24　對應設計：[`../specs/2026-11-14-p12-personal-ledger-design.md`](../specs/2026-11-14-p12-personal-ledger-design.md)　狀態：待開始
+日期：2026-11-24　對應設計：[`2026-11-14-p12-personal-ledger-design.md`](2026-11-14-p12-personal-ledger-design.md)　狀態：已完成並上線（2026-11-25，PR1–PR6）
 
 ## 0. 目標與原則
 
@@ -79,7 +79,9 @@
 - **帳號合併**：`groupLinks` 兩邊都有同一群組時取較早的 `linkedAt`，補單元測試；並評估合併後自動重算帳戶餘額（見 PR3 的已知限制）。
 - 兩個帳號實測：A、B 同在一個群組，A 記帳後 B 開帳本應看到；A 改金額、刪除後 B 重新整理應跟著變；匯入後再同步不會把帳目拉回快照。
 
-### PR6：收尾
+### PR6：收尾 — 已完成（2026-11-25）
+
+- 移除 `/ledger` 的佔位頁用法（`ComingSoonPage` 只剩 `/fx`）；spec 與本計畫搬到 `archive/`，更新各處連結與 guide。
 
 - 移除 `ComingSoonPage` 的 `/ledger` 用法（`/fx` 仍在用，元件保留）。
 - 更新 `docs/guides/personal-ledger.md` 為完整版、`docs/guides/data-model.md`、`README.md`、`docs/superpowers/specs/README.md`；P12 spec 與本計畫完成後搬到 `docs/superpowers/archive/`。
@@ -103,7 +105,7 @@
 
 ## 5. 開工前待確認
 
-1. 統計圖表要沿用 `StatsPage` 的哪些元件，以及讀取量方案（見 PR4）。
-2. 新增帳本的圖示選擇器：沿用群組的 `GroupIconPicker`，還是先只用顏色。
+1. ~~統計圖表元件與讀取量方案~~：已定，沿用 `StatsPage` 的甜甜圈與色盤、逐月讀取（PR4）。
+2. 新增帳本的圖示選擇器：沿用群組的 `GroupIconPicker`，還是先只用顏色。**尚未做**，列入後續。
 
 已確認：個人收入分類用 spec 的清單；記帳體驗見 spec 3.1；資料庫維持 Firestore。

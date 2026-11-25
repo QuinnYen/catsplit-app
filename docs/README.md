@@ -1,6 +1,6 @@
 # 文件索引
 
-分三類：**guides** 描述現在的程式（改功能時要同步更新）、**research** 是一次性研究（有日期，不會隨程式更新）、**superpowers** 是規劃（進行中與 backlog 在 `specs/`，已完成的在 `archive/`）。
+分三類：**guides** 描述現在的程式（改功能時要同步更新）、**research** 是一次性研究（有日期，不會隨程式更新）、**superpowers** 是規劃（進行中與 backlog 在 `specs/`（實作計畫寫好時放 `plans/`），已完成的在 `archive/`）。
 
 ## guides — 現行功能與維運
 
@@ -26,10 +26,10 @@
 
 ## superpowers — 規劃
 
-- [Specs 與 Backlog 索引](superpowers/specs/README.md)：功能路線、進行中與待辦項目（P12、匯率頁、P18、P5、P7、P8、P9、P17）。
-- [plans](superpowers/plans/)：進行中的實作計畫（目前是 [P12 個人記帳](superpowers/plans/2026-11-24-p12-ledger-plan.md)）。
+- [Specs 與 Backlog 索引](superpowers/specs/README.md)：功能路線、進行中與待辦項目（匯率頁、P18、P5、P7、P8、P9、P17）。
 - [archive](superpowers/archive/)：已完成並上線的設計與計畫。
   - P14 獨立帳號：[設計](superpowers/archive/2026-11-14-p14-identity-design.md)、[實作計畫](superpowers/archive/2026-11-23-p14-identity-plan.md)
+  - P12 個人記帳：[設計](superpowers/archive/2026-11-14-p12-personal-ledger-design.md)、[實作計畫](superpowers/archive/2026-11-24-p12-ledger-plan.md)；現行說明在 [個人記帳](guides/personal-ledger.md)
 
 ## 整理規則
 

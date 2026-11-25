@@ -1,8 +1,8 @@
 # 個人記帳
 
-底部導覽列「記帳」進入個人帳本：多個帳本、帳戶與多幣別帳目、月曆主頁。只有本人看得到；訪客不能使用（導覽列灰色並提示）。設計見 [P12 spec](../superpowers/specs/2026-11-14-p12-personal-ledger-design.md)，實作順序見[計畫](../superpowers/plans/2026-11-24-p12-ledger-plan.md)。
+底部導覽列「記帳」進入個人帳本：多個帳本、帳戶與多幣別帳目、月曆主頁。只有本人看得到；訪客不能使用（導覽列灰色並提示）。設計當時的決定見 [P12 spec](../superpowers/archive/2026-11-14-p12-personal-ledger-design.md)，實作順序見[計畫](../superpowers/archive/2026-11-24-p12-ledger-plan.md)（皆已封存）。
 
-**目前已完成（PR5）**：帳本切換與新增、月曆主頁、記帳面板（支出、收入、轉帳）、編輯與刪除、刪除帳本、帳戶管理與淨資產、重新計算餘額、圖表、連結分帳群組（同步與匯入）。
+**已上線（2026-11-25）**：帳本切換與新增、月曆主頁、記帳面板（支出、收入、轉帳）、編輯與刪除、刪除帳本、帳戶管理與淨資產、重新計算餘額、圖表、連結分帳群組（同步與匯入）。
 
 ## 結構
 
@@ -10,10 +10,10 @@
 users/{uid}/ledgers/{ledgerId}                       帳本（名稱、統計幣別）
 users/{uid}/ledgers/{ledgerId}/accounts/{accountId}  帳戶（單一幣別、餘額）
 users/{uid}/ledgers/{ledgerId}/transactions/{id}     帳目（收入、支出、轉帳）
-users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組（PR5）
+users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 ```
 
-欄位、rules 與取捨見 [資料模型](data-model.md) 與 spec 第 1 節。第一次進入會自動建立 id 固定為 `default` 的「我的帳本」（TWD）與一個「現金」帳戶；新增帳本時同樣會建立「現金」帳戶（幣別 = 統計幣別）。
+欄位、rules 與取捨見 [資料模型](data-model.md) 與封存的 spec 第 1 節。第一次進入會自動建立 id 固定為 `default` 的「我的帳本」（TWD）與一個「現金」帳戶；新增帳本時同樣會建立「現金」帳戶（幣別 = 統計幣別）。
 
 ## 程式在哪裡
 
@@ -93,4 +93,14 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組（PR5
 
 `movePersonalData` 遞迴搬移整棵 `users/{uid}`，帳本子樹連同 id 一起搬，帳目裡的 `accountId` 不會失效。
 
-**已知限制**：兩個帳號都開過帳本時，雙方的預設帳本（`default`）與現金帳戶（`cash`）是固定 id，會落入衝突處理，預設保留「保留帳號」那一份；被併入帳號的帳目仍會搬進來，但**帳戶 `balance` 不會相加**，餘額可能與帳目不符。**已處理**：`movePersonalData` 對雙方都有的帳本，搬完帳目後在後端（`functions/ledgerOps.js` 的 `recomputeLedgerBalances`）依帳目重算帳戶餘額；兩邊連結同一個群組時 `groupLinks` 取較早的 `linkedAt`。帳戶頁的「重新計算餘額」仍可手動修復。群組同步帳目的份額在合併後由下一次同步依新的分攤改寫。
+兩個帳號都開過帳本時，雙方的預設帳本（`default`）與現金帳戶（`cash`）是固定 id，會落入衝突處理，預設保留「保留帳號」那一份，帳戶 `balance` 因此不會相加。處理方式：`movePersonalData` 對雙方都有的帳本，搬完帳目後在後端（`functions/ledgerOps.js` 的 `recomputeLedgerBalances`）依帳目重算帳戶餘額；兩邊連結同一個群組時 `groupLinks` 取較早的 `linkedAt`。帳戶頁的「重新計算餘額」仍可手動修復。群組同步帳目的份額在合併後由下一次同步依新的分攤改寫。
+
+## 尚未做（之後）
+
+- 使用者自訂分類與分類圖示（設定頁），目前分類沿用群組的預設清單與個人收入清單。
+- 新增帳本時選圖示或顏色。
+- 匯率換算頁的「記一筆」入口（記帳面板已能讀 `?amount=&currency=&rate=&source=fx`）。
+- 首頁摘要卡片、預算、重複性記帳、CSV 匯出、跨帳本總覽、帳目在帳本間移動、錢包式外幣帳戶（見 [specs 索引](../superpowers/specs/README.md)）。
+- 本地快取（`persistentLocalCache`）：降低重複讀取，影響全站，需另開任務。
+- 趨勢圖的讀取量隨帳目數增加；若出現重度使用者，優先把趨勢改成聚合查詢 `sum`（需手動部署複合索引）。
+- 實機驗證：兩個真人帳號的群組同步、LINE 內建瀏覽器、正式環境的 `deleteLedger` 與自動帶入匯率。
