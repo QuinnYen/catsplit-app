@@ -155,7 +155,7 @@
 |---|---|---|---|---|
 | `receipts/{groupId}/{expenseId}/{file}` | 支出收據照片，5 MB 內，圖片 | 群組成員 | 群組成員 | 刪除群組時由客戶端或後端刪整個前綴 |
 | `groups/{groupId}/cover/{file}` | 群組封面，2 MB 內，圖片 | 群組成員 | 群組成員 | 同上 |
-| `exports/{groupId}/{random}.csv` | LINE 內匯出 CSV 用的暫存檔 | 簽名網址 | 後端 | bucket 生命週期規則 1 天後刪除 |
+| `exports/{groupId}/{random}.csv`、`exports/{uid}/{ledgerId}/{random}.csv`（個人帳本） | LINE 內匯出 CSV 用的暫存檔 | 簽名網址 | 後端 | bucket 生命週期規則 1 天後刪除 |
 
 ## 5. 查詢與索引
 

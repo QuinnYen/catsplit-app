@@ -23,7 +23,7 @@ gcloud storage buckets update gs://catsplit-app.firebasestorage.app --cors-file=
 
 CSV 內容由前端的 `src/utils/csvExport.js` 組出：明細（支出、收入、轉帳）加彙總（群組總額與「我」的收支），金額一律是群組基準幣。
 
-LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 CSV 傳給 `exportCsv`，函式驗證登入與群組成員身分後存到 Storage 的 `exports/`，回傳 **5 分鐘有效的簽名網址**，LINE 內無法從網頁開啟外部瀏覽器（`liff.openWindow` 實測無效），所以前端自動複製這個網址並用彈窗提示，由使用者貼到手機瀏覽器的網址列下載；無法自動複製時改用輸入框顯示網址。一般瀏覽器仍直接下載，不經過函式。
+LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 CSV 傳給 `exportCsv`，函式驗證登入與群組成員身分（個人帳本則驗證帳本屬於本人）後存到 Storage 的 `exports/`，回傳 **5 分鐘有效的簽名網址**，LINE 內無法從網頁開啟外部瀏覽器（`liff.openWindow` 實測無效），所以前端自動複製這個網址並用彈窗提示，由使用者貼到手機瀏覽器的網址列下載；無法自動複製時改用輸入框顯示網址。一般瀏覽器仍直接下載，不經過函式。
 
 首次部署前要手動設定兩件事（不會隨部署更新）：
 

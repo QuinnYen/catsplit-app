@@ -110,3 +110,13 @@ test('planBalanceRepair：依期初餘額與帳目重算，快照帳目與快照
     { id: 'bank', from: 999, to: 525 },
   ])
 })
+
+test('ledgerExportPrefix：只有自己的、存在的帳本有路徑；別人的與無效 id 回 null', async () => {
+  const { ledgerExportPrefix } = await import('../ledgerOps.js')
+  await db.doc('users/u1/ledgers/l1').set({ name: 'A' })
+  assert.equal(await ledgerExportPrefix(db, 'u1', 'l1'), 'exports/u1/l1')
+  assert.equal(await ledgerExportPrefix(db, 'u2', 'l1'), null)
+  assert.equal(await ledgerExportPrefix(db, 'u1', 'nope'), null)
+  assert.equal(await ledgerExportPrefix(db, 'u1', '../x'), null)
+  assert.equal(await ledgerExportPrefix(db, 'u1', undefined), null)
+})

@@ -14,3 +14,19 @@ export const deleteLedger = async (ledgerId) => {
   })
   if (!res.ok) throw new Error(`deleteLedger ${res.status}`)
 }
+
+const EXPORT_CSV_URL = import.meta.env.VITE_TOKEN_EXCHANGE_URL?.replace('/lineLogin', '/exportCsv')
+export const canExportViaFunction = () => !!EXPORT_CSV_URL
+
+// LINE 內建瀏覽器無法下載 blob：把帳本的 CSV 交給雲端函式存檔，回傳 5 分鐘有效的下載網址（帳本必須是自己的）
+export const uploadLedgerCsv = async (ledgerId, csv, filename) => {
+  if (!EXPORT_CSV_URL) throw new Error('export_csv_url_not_configured')
+  const idToken = await auth.currentUser.getIdToken()
+  const res = await fetch(EXPORT_CSV_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+    body: JSON.stringify({ ledgerId, csv, filename }),
+  })
+  if (!res.ok) throw new Error(`exportCsv ${res.status}`)
+  return (await res.json()).url
+}

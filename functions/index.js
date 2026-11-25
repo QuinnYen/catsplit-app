@@ -7,7 +7,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { randomBytes } from 'node:crypto'
 import { migrateMember as migrateMemberOp } from './memberOps.js'
-import { deleteLedgerTree, deleteAllLedgers, isValidLedgerId } from './ledgerOps.js'
+import { deleteLedgerTree, deleteAllLedgers, isValidLedgerId, ledgerExportPrefix } from './ledgerOps.js'
 import { MergeError, parseBindRequest, isFreshProof } from './bind.js'
 import {
   bindIdentity as bindIdentityFlow, executeMerge as executeMergeFlow, unbindIdentity as unbindIdentityFlow,
@@ -828,22 +828,33 @@ export const exportCsv = onRequest(
       return
     }
 
-    const { groupId, csv, filename } = req.body || {}
+    const { groupId, ledgerId, csv, filename } = req.body || {}
     if (typeof csv !== 'string' || csv.length === 0 || csv.length > MAX_CSV_CHARS) {
       res.status(400).json({ error: 'invalid_csv' })
       return
     }
 
     try {
-      const group = await readGroup(groupId)
-      if (!group || !group.members.includes(caller.uid)) {
-        res.status(403).json({ error: 'not_a_member' })
-        return
+      // 群組明細（groupId，必須是成員）或個人帳本（ledgerId，必須是自己的帳本）
+      let prefix
+      if (ledgerId !== undefined) {
+        prefix = await ledgerExportPrefix(getFirestore(), caller.uid, ledgerId)
+        if (!prefix) {
+          res.status(403).json({ error: 'not_your_ledger' })
+          return
+        }
+      } else {
+        const group = await readGroup(groupId)
+        if (!group || !group.members.includes(caller.uid)) {
+          res.status(403).json({ error: 'not_a_member' })
+          return
+        }
+        prefix = `exports/${groupId}`
       }
 
       // 檔名只留可見字元，去掉路徑與控制字元，一律以 .csv 結尾
       const base = String(filename || 'export').replace(/[\u0000-\u001f\\/:*?"<>|]/g, '_').replace(/\.csv$/i, '').slice(0, 80) || 'export'
-      const file = getStorage().bucket().file(`exports/${groupId}/${randomBytes(16).toString('hex')}.csv`)
+      const file = getStorage().bucket().file(`${prefix}/${randomBytes(16).toString('hex')}.csv`)
       await file.save(Buffer.from(csv, 'utf8'), { contentType: 'text/csv; charset=utf-8', resumable: false })
       const [url] = await file.getSignedUrl({
         version: 'v4',

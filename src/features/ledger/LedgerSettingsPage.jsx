@@ -1,13 +1,15 @@
 // /ledger/settings — 帳本設定，分頁呈現。目前只有「分帳」（連結群組、同步、匯入）；
-// 其他分頁（基本、進階、資料）做好一個加一個，只有一個分頁時不顯示分頁列。分頁狀態在網址 ?tab=。
+// 「資料」（匯出 CSV）；其他分頁（基本、進階）做好一個加一個，只有一個分頁時不顯示分頁列。分頁狀態在網址 ?tab=。
 // 帳本的改名與刪除在帳本選單（左上圓鈕）。
 import { useSearchParams } from 'react-router-dom'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useLedger } from './LedgerContext'
 import LedgerGroupLinks from './LedgerGroupLinks'
+import LedgerDataSettings from './LedgerDataSettings'
 
 const TABS = [
   { key: 'group', label: 'ledger.settings.tab.group', render: () => <LedgerGroupLinks /> },
+  { key: 'data', label: 'ledger.settings.tab.data', render: () => <LedgerDataSettings /> },
 ]
 
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }

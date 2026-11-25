@@ -58,3 +58,11 @@ export const recomputeLedgerBalances = async (db, uid, ledgerId) => {
 
 // 兩邊都連結同一個群組時取較早的 linkedAt（Timestamp 或有 toMillis 的物件），讓「連結之後」的範圍涵蓋雙方
 export const earlierTimestamp = (a, b) => (a.toMillis() <= b.toMillis() ? a : b)
+
+// 匯出 CSV（LINE 內建瀏覽器用）：個人帳本的檔案存在 exports/{uid}/{ledgerId}/，帳本必須是呼叫者自己的。
+// 回傳儲存路徑前綴；ledgerId 無效或帳本不存在回傳 null
+export const ledgerExportPrefix = async (db, uid, ledgerId) => {
+  if (!isValidLedgerId(ledgerId)) return null
+  const snap = await db.doc(`users/${uid}/ledgers/${ledgerId}`).get()
+  return snap.exists ? `exports/${uid}/${ledgerId}` : null
+}

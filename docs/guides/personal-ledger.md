@@ -25,7 +25,8 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 | `LedgerEntrySheet.jsx`、`NumberPad.jsx` | 記帳面板與常駐數字鍵盤 |
 | `LedgerAccountsPage.jsx`、`AccountSheet.jsx`、`netWorth.js` | 帳戶頁（淨資產、清單、封存區、重新計算餘額）、新增與編輯帳戶、淨資產計算（純函式） |
 | `LedgerStatsPage.jsx` | 圖表：分類占比（支出／收入）、近 6 個月趨勢，月份可切換 |
-| `LedgerSettingsPage.jsx` | 帳本設定，分頁呈現（網址 `?tab=`）；目前只有「分帳」，只有一個分頁時不顯示分頁列，之後規劃基本、進階、資料 |
+| `LedgerSettingsPage.jsx` | 帳本設定，分頁呈現（網址 `?tab=`）；目前有「分帳」「資料」，之後規劃基本、進階；只有一個分頁時不顯示分頁列 |
+| `LedgerDataSettings.jsx`、`csvExport.js` | 「資料」分頁：匯出 CSV（整個帳本）與 CSV 組裝（純函式） |
 | `data.js`、`hooks.js` | Firestore 讀寫與即時訂閱（畫面不直接組路徑或寫 batch） |
 | `entryDraft.js`、`money.js`、`balance.js`、`summary.js` | 草稿轉帳目、換算、餘額增量、月彙總（純函式，有單元測試） |
 | `expression.js` | 數字鍵盤的算式規則，不用 `eval` |
@@ -71,6 +72,13 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 - **關閉**：確認後刪除快照帳戶、尚未匯入的快照帳目與連結（改過的分類備註一併消失）；已匯入的一般帳目保留。
 - **匯入到帳戶**：選群組與一般帳戶，預覽筆數與餘額變動；帳目與目標帳戶幣別不同時顯示匯率（自動帶入、可修改，抓不到要手動輸入），只新增 `accountAmount`／`accountRate`，統計金額不變。帳目以固定 id 就地改成 `detached` 一般帳目（可編輯、計入餘額、不再同步，編輯時保留 `source` 與標題），分批寫入並以 `increment` 更新餘額與快照帳戶；完成後詢問是否停止同步。
 - **無法讀取的群組**（已退出或已刪除）：不動既有快照帳目，顯示提示，使用者可匯入保留或關閉同步。
+
+## 匯出 CSV
+
+設定頁「資料」分頁，匯出**整個帳本**的全部帳目（不提供範圍選項），日期由舊到新。欄位：類型、日期、標題、類別、帳戶、金額、幣別、統計金額（統計幣別）、扣款金額（跨幣別才有）、轉入帳戶、轉入金額、備註、來源（手動／群組同步／群組（已匯入））。格式沿用群組匯出：開頭 BOM（Excel 不亂碼）、以 `=+-@` 開頭的文字補單引號、金額一律正數。
+
+- 一般瀏覽器直接下載；LINE 內建瀏覽器無法下載 blob，改呼叫 `exportCsv`（傳 `ledgerId`），後端驗證帳本屬於呼叫者後存到 `exports/{uid}/{ledgerId}/`，回傳 5 分鐘有效的簽名網址，由使用者貼到手機瀏覽器開啟。檔案 1 天後由 bucket 生命週期規則清除。
+- 讀取：按下匯出時 `getDocs` 讀整個帳本的帳目。
 
 ## 圖表
 
