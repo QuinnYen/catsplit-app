@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { ledgersPath, accountsPath, transactionsPath, groupLinksPath, categoriesPath } from './paths.js'
+import { ledgersPath, accountsPath, transactionsPath, groupLinksPath, categoriesPath, recurringPath } from './paths.js'
 import { monthDateBounds } from './summary.js'
 import { yearBounds } from './dates.js'
 import { ensureDefaultLedger } from './data.js'
@@ -50,6 +50,22 @@ export const useGroupLinks = (uid, ledgerId) => {
       setState({ key, list: snap.docs.map(withId).sort((a, b) => (a.linkedAt?.toMillis?.() ?? Infinity) - (b.linkedAt?.toMillis?.() ?? Infinity)) })
     }, (err) => {
       console.error('Failed to load group links', err)
+      setState({ key, list: [] })
+    })
+  }, [uid, ledgerId, key])
+  return state.key === key ? state.list : null
+}
+
+// 帳本的固定收支與固定轉帳規則（依建立時間）；載入前是 null
+export const useRecurringRules = (uid, ledgerId) => {
+  const key = `${uid}/${ledgerId}`
+  const [state, setState] = useState({ key: null, list: null })
+  useEffect(() => {
+    if (!ledgerId) return
+    return onSnapshot(collection(db, ...recurringPath(uid, ledgerId)), (snap) => {
+      setState({ key, list: snap.docs.map(withId).sort((a, b) => createdMs(a) - createdMs(b)) })
+    }, (err) => {
+      console.error('Failed to load recurring rules', err)
       setState({ key, list: [] })
     })
   }, [uid, ledgerId, key])

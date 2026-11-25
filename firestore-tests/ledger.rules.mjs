@@ -236,6 +236,57 @@ test('類別：別人與未登入不能讀寫，訪客不能寫', async () => {
   await assertFails(setDoc(categoryRef(dbAs('u1', { guest: true }), 'u1', 'e_daily'), { kind: 'expense', key: 'daily', order: 1 }))
 })
 
+// ---------- 固定收支 ----------
+
+const ruleRef = (db, uid, id = 'r1') => doc(db, 'users', uid, 'ledgers', 'l1', 'recurring', id)
+const rule = (extra = {}) => ({ kind: 'expense', name: '房租', accountId: 'cash', amount: 8000, frequency: 'monthly', startDate: '2026-11-05', dayOfMonth: 5, enabled: true, createdAt: now(), ...extra })
+
+test('固定收支規則：欄位、種類、頻率、日期格式、金額、轉帳條件', async () => {
+  const db = dbAs('u1')
+  await assertSucceeds(setDoc(ledgerRef(db, 'u1'), ledger()))
+  const w = (id, extra) => setDoc(ruleRef(db, 'u1', id), rule(extra))
+  await assertSucceeds(w('a', { category: 'daily', note: '每月房租', endDate: '2027-11-05', rate: 0.21, generatedThrough: '2026-11-05' }))
+  await assertSucceeds(w('b', { kind: 'income', frequency: 'weekly', dayOfMonth: 0 }))
+  await assertSucceeds(w('c', { kind: 'transfer', toAccountId: 'bank' }))
+  await assertFails(w('d', { name: '' }))
+  await assertFails(w('d', { name: 'x'.repeat(21) }))
+  await assertFails(w('d', { kind: 'refund' }))
+  await assertFails(w('d', { frequency: 'hourly' }))
+  await assertFails(w('d', { startDate: '2026/11/05' }))
+  await assertFails(w('d', { endDate: '2027-1-1' }))
+  await assertFails(w('d', { amount: 0 }))
+  await assertFails(w('d', { dayOfMonth: 29 }))
+  await assertFails(w('d', { enabled: 'yes' }))
+  await assertFails(w('d', { extra: 1 }))
+  await assertFails(w('d', { kind: 'transfer' })) // 轉帳要有轉入帳戶
+  await assertFails(w('d', { kind: 'transfer', toAccountId: 'cash' })) // 不能轉給自己
+  await assertFails(w('d', { kind: 'transfer', toAccountId: 'bank', category: 'food' })) // 轉帳沒有類別
+  await assertFails(w('d', { toAccountId: 'bank' })) // 收支不能有轉入帳戶
+  await assertSucceeds(updateDoc(ruleRef(db, 'u1', 'a'), { enabled: false, generatedThrough: '2026-12-05', amount: 9000 }))
+  await assertFails(updateDoc(ruleRef(db, 'u1', 'a'), { createdAt: Timestamp.fromMillis(1) }))
+  await assertSucceeds(deleteDoc(ruleRef(db, 'u1', 'a')))
+})
+
+test('固定收支規則：別人與訪客不能讀寫', async () => {
+  await assertSucceeds(setDoc(ruleRef(dbAs('u1'), 'u1', 'a'), rule()))
+  await assertFails(getDoc(ruleRef(dbAs('u2'), 'u1', 'a')))
+  await assertFails(setDoc(ruleRef(dbAs('u2'), 'u1', 'b'), rule()))
+  await assertFails(setDoc(ruleRef(dbAs('u1', { guest: true }), 'u1', 'c'), rule()))
+})
+
+test('固定收支產生的帳目：來源 recurring 要帶規則 id 與原定日期；帳本假日調整只接受三個值', async () => {
+  const db = dbAs('u1')
+  const recurring = (extra) => expense({ source: { type: 'recurring', ruleId: 'r1', scheduled: '2026-11-05' }, ...extra })
+  await assertSucceeds(setDoc(txRef(db, 'u1', 'r_r1_2026-11-05'), recurring()))
+  await assertFails(setDoc(txRef(db, 'u1', 'x1'), expense({ source: { type: 'recurring' } })))
+  await assertFails(setDoc(txRef(db, 'u1', 'x2'), expense({ source: { type: 'recurring', ruleId: 'r1', scheduled: '11/05' } })))
+  const ok = (id, extra) => setDoc(ledgerRef(db, 'u1', id), ledger(extra))
+  await assertSucceeds(ok('h1', { holidayAdjust: 'before' }))
+  await assertSucceeds(ok('h2', { holidayAdjust: 'after' }))
+  await assertSucceeds(ok('h3', { holidayAdjust: 'none' }))
+  await assertFails(ok('h4', { holidayAdjust: 'skip' }))
+})
+
 // ---------- 帳目 ----------
 
 test('收入與支出驗證：種類、金額、幣別、日期、匯率與統計金額', async () => {

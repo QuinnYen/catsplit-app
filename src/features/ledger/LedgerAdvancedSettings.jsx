@@ -47,6 +47,13 @@ const LedgerAdvancedSettings = () => {
           {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{t('ledger.adv.monthN', { n: m })}</option>)}
         </select>
       </label>
+      <label style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>
+        {t('ledger.adv.holiday')}
+        <select value={ledger.holidayAdjust ?? 'none'} disabled={busy} onChange={(e) => save({ holidayAdjust: e.target.value })} style={selectStyle}>
+          {['none', 'before', 'after'].map((m) => <option key={m} value={m}>{t(`ledger.adv.holiday.${m}`)}</option>)}
+        </select>
+        <span style={{ display: 'block', fontSize: 11.5, color: 'var(--cs-text-mute)', marginTop: 4, lineHeight: 1.6 }}>{t('ledger.adv.holidayHint')}</span>
+      </label>
       <div style={{ fontSize: 11.5, color: 'var(--cs-text-mute)', lineHeight: 1.7 }}>
         <div>{t('ledger.adv.hint')}</div>
         <div>{t('ledger.adv.example')}</div>

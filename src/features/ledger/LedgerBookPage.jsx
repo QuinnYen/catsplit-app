@@ -52,12 +52,13 @@ const LedgerBookPage = () => {
     if (tx.type === 'transfer') {
       const to = accountById.get(tx.toAccountId)
       amountText = fmt.money(tx.amount, tx.currency) + (to && to.currency !== tx.currency ? ` → ${fmt.money(tx.toAmount, to.currency)}` : '')
-      sub = `${account?.name ?? ''} → ${to?.name ?? ''}`
+      sub = [`${account?.name ?? ''} → ${to?.name ?? ''}`, tx.source?.type === 'recurring' ? t('ledger.recurring.badge') : null].filter(Boolean).join(' · ')
     } else {
       amountText = `${tx.type === 'income' ? '+' : '−'}${fmt.money(tx.amount, tx.currency)}`
       const charged = tx.accountAmount != null && tx.currency !== accountCurrency
       sub = [
         account?.name,
+        tx.source?.type === 'recurring' ? t('ledger.recurring.badge') : null,
         // 沒有標題與備註時，分類已經當標題了，不重複顯示
         tx.title || tx.note ? label(tx) : null,
         charged ? t('ledger.row.charged', { amount: fmt.money(tx.accountAmount, accountCurrency) }) : null,

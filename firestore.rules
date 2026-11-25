@@ -138,7 +138,7 @@ service cloud.firestore {
     }
 
     function validLedger(d) {
-      return d.keys().hasOnly(['name', 'baseCurrency', 'icon', 'color', 'archived', 'monthStartDay', 'weekStartDay', 'yearStartMonth', 'monthBudget', 'yearBudget', 'createdAt'])
+      return d.keys().hasOnly(['name', 'baseCurrency', 'icon', 'color', 'archived', 'monthStartDay', 'weekStartDay', 'yearStartMonth', 'monthBudget', 'yearBudget', 'holidayAdjust', 'createdAt'])
         && d.keys().hasAll(['name', 'baseCurrency', 'createdAt'])
         && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
         && validCurrencyCode(d.baseCurrency)
@@ -150,6 +150,8 @@ service cloud.firestore {
         && (!('weekStartDay' in d) || (d.weekStartDay is int && d.weekStartDay in [0, 1, 6]))
         && (!('yearStartMonth' in d) || (d.yearStartMonth is int && d.yearStartMonth >= 1 && d.yearStartMonth <= 12))
         // 預算（統計幣別）：月預算、年預算總額，必須是正數；沒設就不存這個欄位
+        // 固定收支遇到假日：none 不調整、before 提前到前一個工作日、after 延後到下一個工作日
+        && (!('holidayAdjust' in d) || d.holidayAdjust in ['none', 'before', 'after'])
         && (!('monthBudget' in d) || validMoney(d.monthBudget))
         && (!('yearBudget' in d) || validMoney(d.yearBudget))
         && d.createdAt is timestamp;
@@ -184,10 +186,36 @@ service cloud.firestore {
         && d.order is int && d.order >= 0 && d.order < 1000;
     }
 
+    // 固定收支與固定轉帳的規則：幣別固定是帳戶幣別（由前端與產生程式保證），帳戶幣別與統計幣別不同時用規則上固定的 rate
+    function validRecurring(d) {
+      return d.keys().hasOnly(['kind', 'name', 'accountId', 'toAccountId', 'amount', 'category', 'note', 'frequency', 'startDate', 'endDate', 'dayOfMonth', 'rate', 'enabled', 'generatedThrough', 'createdAt'])
+        && d.keys().hasAll(['kind', 'name', 'accountId', 'amount', 'frequency', 'startDate', 'enabled', 'createdAt'])
+        && d.kind in ['expense', 'income', 'transfer']
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
+        && d.accountId is string && d.accountId.size() >= 1 && d.accountId.size() <= 120
+        && validMoney(d.amount)
+        && d.frequency in ['daily', 'weekly', 'monthly', 'yearly']
+        && d.startDate is string && d.startDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && (!('endDate' in d) || (d.endDate is string && d.endDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && (!('generatedThrough' in d) || (d.generatedThrough is string && d.generatedThrough.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && (!('dayOfMonth' in d) || (d.dayOfMonth is int && d.dayOfMonth >= 0 && d.dayOfMonth <= 28))
+        && (!('rate' in d) || validMoney(d.rate))
+        && (!('category' in d) || (d.category is string && d.category.size() <= 30))
+        && (!('note' in d) || (d.note is string && d.note.size() <= 50))
+        && d.enabled is bool
+        && d.createdAt is timestamp
+        && (d.kind == 'transfer'
+          ? (d.keys().hasAll(['toAccountId']) && d.toAccountId is string && d.toAccountId.size() >= 1 && d.toAccountId.size() <= 120 && d.toAccountId != d.accountId && !d.keys().hasAny(['category', 'rate']))
+          : !d.keys().hasAny(['toAccountId']));
+    }
+
     function validSource(s) {
       return s is map
-        && s.keys().hasOnly(['type', 'groupId', 'kind', 'itemId', 'detached', 'edited'])
-        && s.type in ['manual', 'fx', 'group']
+        && s.keys().hasOnly(['type', 'groupId', 'kind', 'itemId', 'detached', 'edited', 'ruleId', 'scheduled'])
+        && s.type in ['manual', 'fx', 'group', 'recurring']
+        && (s.type != 'recurring' || s.keys().hasAll(['ruleId', 'scheduled']))
+        && (!('ruleId' in s) || (s.ruleId is string && s.ruleId.size() >= 1 && s.ruleId.size() <= 100))
+        && (!('scheduled' in s) || (s.scheduled is string && s.scheduled.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
         && (s.type != 'group' || s.keys().hasAll(['groupId', 'kind', 'itemId']))
         && (!('groupId' in s) || (s.groupId is string && s.groupId.size() >= 1 && s.groupId.size() <= 100))
         && (!('kind' in s) || s.kind in ['expense', 'income'])
@@ -247,6 +275,14 @@ service cloud.firestore {
         allow update: if isLedgerOwner(userId) && validAccount(request.resource.data)
           && request.resource.data.currency == resource.data.currency
           && request.resource.data.kind == resource.data.kind
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isLedgerOwner(userId);
+      }
+
+      match /recurring/{ruleId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if isLedgerOwner(userId) && validRecurring(request.resource.data);
+        allow update: if isLedgerOwner(userId) && validRecurring(request.resource.data)
           && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if isLedgerOwner(userId);
       }

@@ -6,7 +6,7 @@ const dict = {
   'ledger.csv.type': '類型', 'ledger.csv.date': '日期', 'ledger.csv.title': '標題', 'ledger.csv.category': '類別', 'ledger.csv.account': '帳戶',
   'ledger.csv.amount': '金額', 'ledger.csv.currency': '幣別', 'ledger.csv.baseAmount': '統計金額({currency})', 'ledger.csv.chargedAmount': '扣款金額',
   'ledger.csv.toAccount': '轉入帳戶', 'ledger.csv.toAmount': '轉入金額', 'ledger.csv.note': '備註', 'ledger.csv.source': '來源',
-  'ledger.csv.srcManual': '手動', 'ledger.csv.srcGroup': '群組同步', 'ledger.csv.srcImported': '群組（已匯入）',
+  'ledger.csv.srcManual': '手動', 'ledger.csv.srcRecurring': '固定', 'ledger.csv.srcGroup': '群組同步', 'ledger.csv.srcImported': '群組（已匯入）',
   'kind.expense': '支出', 'kind.income': '收入', 'ledger.kind.transfer': '轉帳', 'category.food': '餐飲', 'category.salary': '薪資',
 }
 const t = (k, p = {}) => (dict[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => p[n])
@@ -53,4 +53,9 @@ test('文字欄位以公式字元開頭時補單引號，雙引號跳脫', () =>
 
 test('檔名：帳本名稱＋日期', () => {
   assert.equal(ledgerCsvFileName(ledger, new Date(2026, 10, 5)), '大阪_20261105.csv')
+})
+
+test('固定收支產生的帳目：來源標示為固定', () => {
+  const transactions = [{ id: 'r', type: 'expense', accountId: 'cash', amount: 8000, currency: 'TWD', baseAmount: 8000, title: '房租', date: '2026-11-05', source: { type: 'recurring', ruleId: 'r1', scheduled: '2026-11-05' } }]
+  assert.ok(lines(buildLedgerCsv({ ledger, accounts, transactions, t }))[1].endsWith('"固定"'))
 })

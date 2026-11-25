@@ -2,7 +2,7 @@
 // 餘額（accounts.balance）在記帳、編輯、刪除時於同一個 batch 用 increment 更新，增量由 balance.js 算。
 import { deleteField, collection, doc, writeBatch, increment, serverTimestamp, getDoc, setDoc, getDocs, query, where, limit } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { ledgersPath, ledgerPath, accountsPath, transactionsPath, categoriesPath } from './paths.js'
+import { ledgersPath, ledgerPath, accountsPath, transactionsPath, categoriesPath, recurringPath } from './paths.js'
 import { planCategoryChange } from './categories.js'
 import { deltasForChange, planBalanceRepair } from './balance.js'
 import { roundMoney } from './money.js'
@@ -184,5 +184,28 @@ export const updateLedgerBudget = (uid, ledgerId, patch) => {
   for (const [k, v] of Object.entries(patch)) data[k] = v === null ? deleteField() : v
   const batch = writeBatch(db)
   batch.update(doc(db, ...ledgerPath(uid, ledgerId)), data)
+  return batch.commit()
+}
+
+// ---------- 固定收支與固定轉帳（規則）----------
+// data 是規則欄位（不含 createdAt、generatedThrough）；沒有值的選填欄位不要放進去（undefined 會被 Firestore 拒絕）
+export const createRecurring = async (uid, ledgerId, data) => {
+  const ref = doc(collection(db, ...recurringPath(uid, ledgerId)))
+  await setDoc(ref, { ...data, enabled: true, createdAt: serverTimestamp() })
+  return ref.id
+}
+
+// 修改規則：patch 裡值為 null 的欄位會被移除；已產生的帳目不受影響，只影響之後
+export const updateRecurring = (uid, ledgerId, ruleId, patch) => {
+  const data = {}
+  for (const [k, v] of Object.entries(patch)) data[k] = v === null ? deleteField() : v
+  const batch = writeBatch(db)
+  batch.update(doc(db, ...recurringPath(uid, ledgerId), ruleId), data)
+  return batch.commit()
+}
+
+export const deleteRecurring = (uid, ledgerId, ruleId) => {
+  const batch = writeBatch(db)
+  batch.delete(doc(db, ...recurringPath(uid, ledgerId), ruleId))
   return batch.commit()
 }

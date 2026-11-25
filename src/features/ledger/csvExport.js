@@ -8,6 +8,7 @@ const BOM = String.fromCharCode(0xFEFF)
 const createdMs = (tx) => tx.createdAt?.toMillis?.() ?? 0
 
 const sourceLabel = (tx, t) => {
+  if (tx.source?.type === 'recurring') return t('ledger.csv.srcRecurring')
   if (tx.source?.type !== 'group') return t('ledger.csv.srcManual')
   return tx.source.detached ? t('ledger.csv.srcImported') : t('ledger.csv.srcGroup')
 }

@@ -5,9 +5,10 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nProvider'
 import { LedgerContext } from './LedgerContext'
-import { useLedgers, useAccounts, useGroupLinks, useCategoryDocs, useEnsureDefaultLedger, useActiveLedger } from './hooks'
+import { useLedgers, useAccounts, useGroupLinks, useCategoryDocs, useRecurringRules, useEnsureDefaultLedger, useActiveLedger } from './hooks'
 import { resolveCategories, categoryKeys, categoryName } from './categories'
 import { useLedgerSync } from './useLedgerSync'
+import { useRecurringRun } from './useRecurringRun'
 import { todayStr } from './dates'
 import LedgerTabBar from './LedgerTabBar'
 import LedgerBookPage from './LedgerBookPage'
@@ -29,6 +30,7 @@ const LedgerShell = () => {
   const accounts = useAccounts(uid, ledger?.id)
   const links = useGroupLinks(uid, ledger?.id)
   const categoryDocs = useCategoryDocs(uid, ledger?.id)
+  const recurringRules = useRecurringRules(uid, ledger?.id)
   const categories = useMemo(() => resolveCategories(categoryDocs ?? []), [categoryDocs])
   const catName = useCallback((kind, key) => categoryName(categories, kind, key, t), [categories, t])
   const [selectedDate, setSelectedDate] = useState(() => todayStr())
@@ -46,10 +48,15 @@ const LedgerShell = () => {
   const onUnreadable = useCallback((list) => showToast(t('ledger.sync.unreadable', { name: list.map((l) => l.groupName).join(', ') })), [showToast, t])
   const sync = useLedgerSync({ uid, ledger, links, accounts, categories: categoryKeys(categories), onUnreadable })
 
+  const onRecurringDone = useCallback(({ added, capped }) => {
+    if (added > 0) showToast(t(capped ? 'ledger.recurring.addedMore' : 'ledger.recurring.added', { n: added }))
+  }, [showToast, t])
+  const { runNow: runRecurringNow } = useRecurringRun({ uid, ledger, rules: recurringRules, accounts, onDone: onRecurringDone })
+
   const openEntry = useCallback((tx) => setEntry({ tx }), [])
   const ctx = useMemo(
-    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, categories, categoryDocs: categoryDocs ?? [], catName, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
-    [uid, ledger, ledgers, accounts, links, sync, categories, categoryDocs, catName, setActiveLedger, selectedDate, openEntry, showToast],
+    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, categories, categoryDocs: categoryDocs ?? [], catName, recurringRules: recurringRules ?? [], runRecurringNow, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
+    [uid, ledger, ledgers, accounts, links, sync, categories, categoryDocs, catName, recurringRules, runRecurringNow, setActiveLedger, selectedDate, openEntry, showToast],
   )
 
   if (!ledger || !accounts) {
