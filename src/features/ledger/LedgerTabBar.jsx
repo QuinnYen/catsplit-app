@@ -1,15 +1,16 @@
-// 帳本專用底部導覽列：首頁（回分帳）／帳本／記帳（中間凸起，開啟記帳面板）／帳戶／設定。
+// 帳本專用底部導覽列：首頁（回分帳）／帳本／記帳（中間凸起，開啟記帳面板）／帳戶／頭像（帳號選單）。
+// 帳本設定在各頁標題列右上角的齒輪。
 // 進入 /ledger/* 後不顯示全站的 MainTabBar，比照群組內頁換成自己的導覽列。
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, BookOpen, Plus, CreditCard, Settings } from 'lucide-react'
+import { House, BookOpen, Plus, CreditCard } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
+import AvatarMenuTab from '../../components/AvatarMenu'
 
 const TABS = [
   { id: 'home', Icon: House, label: 'tab.home', to: '/' },
   { id: 'book', Icon: BookOpen, label: 'ledger.tab.book', to: '/ledger', exact: true },
   { id: 'add', Icon: Plus, label: 'ledger.tab.add' },
   { id: 'accounts', Icon: CreditCard, label: 'ledger.tab.accounts', to: '/ledger/accounts' },
-  { id: 'settings', Icon: Settings, label: 'ledger.tab.settings', to: '/ledger/settings' },
 ]
 
 // 圖表頁是從帳本主頁右上角進去的，導覽列仍標示在「帳本」
@@ -62,6 +63,7 @@ const LedgerTabBar = ({ onAdd }) => {
           </button>
         )
       })}
+      <AvatarMenuTab />
     </nav>
   )
 }

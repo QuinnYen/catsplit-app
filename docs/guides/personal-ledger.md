@@ -47,7 +47,7 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 | `groupSync.js`、`useLedgerSync.js` | 連結、同步、取消連結、匯入的 Firestore 讀寫；開啟帳本時自動同步的 hook |
 | `LedgerGroupLinks.jsx`、`GroupImportDialog.jsx`、`SnapshotTxSheet.jsx` | 設定頁的連結列與匯入、群組帳目的唯讀面板 |
 | `batch.js` | 大量寫入分批（每批 ≤ 400） |
-| `LedgerContext.jsx`、`LedgerTabBar.jsx` | 各頁共用的帳本資料（帳本、帳戶、類別、連結、固定項目、提示）、底部導覽列（首頁、帳本、記帳、帳戶、設定） |
+| `LedgerContext.jsx`、`LedgerTabBar.jsx` | 各頁共用的帳本資料（帳本、帳戶、類別、連結、固定項目、提示）、底部導覽列（首頁、帳本、記帳、帳戶、頭像帳號選單）；帳本設定在帳本、帳戶、圖表三頁標題列右上角的齒輪，圖表入口在帳本頁左上角帳本切換鈕旁 |
 | `constants.js`、`paths.js`、`source.js` | 常數與上限、Firestore 路徑與固定 id、帳目來源判斷（快照／已匯入） |
 | `prefs.js`、`dates.js` | 本機偏好（目前帳本、最近用的帳戶與分類）、日期輔助 |
 

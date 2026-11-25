@@ -1,7 +1,8 @@
 // /ledger/accounts — 淨資產、帳戶清單與餘額、新增與編輯帳戶。重新計算餘額在設定頁的「資料」分頁。
 // 快照帳戶（群組同步）獨立一區，不計入淨資產。
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, ChevronRight, Settings } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import { fetchExchangeRate } from '../../config/currencies'
 import { useLedger } from './LedgerContext'
@@ -47,6 +48,7 @@ const AccountRow = ({ account, base, rate, onOpen }) => {
 const LedgerAccountsPage = () => {
   const { ledger, accounts, showToast } = useLedger()
   const { t, fmt } = useI18n()
+  const navigate = useNavigate()
   const base = ledger.baseCurrency
   const [sheet, setSheet] = useState(null) // null | { account? }
   const [showArchived, setShowArchived] = useState(false)
@@ -70,9 +72,14 @@ const LedgerAccountsPage = () => {
       <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '20px 16px 22px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ color: 'var(--cs-rc-head-text)', fontSize: 16, fontWeight: 500 }}>{t('ledger.tab.accounts')}</div>
-          <button onClick={add} aria-label={t('ledger.account.newTitle')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '50%', width: 32, height: 32, display: 'grid', placeItems: 'center', color: 'var(--cs-rc-head-text)', cursor: 'pointer' }}>
-            <Plus size={18} />
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => navigate('/ledger/settings')} aria-label={t('ledger.tab.settings')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '50%', width: 32, height: 32, display: 'grid', placeItems: 'center', color: 'var(--cs-rc-head-text)', cursor: 'pointer' }}>
+              <Settings size={18} />
+            </button>
+            <button onClick={add} aria-label={t('ledger.account.newTitle')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '50%', width: 32, height: 32, display: 'grid', placeItems: 'center', color: 'var(--cs-rc-head-text)', cursor: 'pointer' }}>
+              <Plus size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
