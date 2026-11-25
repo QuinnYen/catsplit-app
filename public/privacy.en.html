@@ -33,7 +33,7 @@
   <li><strong>Guest names:</strong> you can join without signing in to LINE by entering your own name from a group link (group members can also add a name on your behalf). We only record the name you enter and generate an identifier that stands for that name. We get no other personal data about you. The names you picked (up to 3 groups) are stored only in your browser so you can switch between groups. A guest name is not tied to a specific person, and anyone with the group link can pick it. After you sign in with LINE and claim it, that name's records move to your LINE account and only you can use it.</li>
   <li><strong>Content you create:</strong> group names and icons, member lists, and expense and transfer records (amount, currency, category, date, note, split method).</li>
   <li><strong>Payment methods:</strong> payment details you enter yourself in the app (for example a bank account or phone number), which you can choose to make public or not.</li>
-  <li><strong>Personal ledgers:</strong> the ledgers and accounts you create (name, currency, balance) and your income, expense and transfer records (amount, currency, exchange rate, category, date, note). If you link a split-bill group to a ledger, a copy of your share of that group's entries (amount, title, category, date) is stored in your ledger and deleted when you unlink.</li>
+  <li><strong>Personal ledgers:</strong> the ledgers and accounts you create (name, currency, balance) and your income, expense and transfer records (amount, currency, exchange rate, category, date, note). If you link a split-bill group to a ledger, a copy of your share of that group's entries (amount, title, category, date) is stored in your ledger and deleted when you unlink. Your category, budget and recurring-item settings are stored with the ledger. You can also download a backup file (JSON) of a ledger and keep it yourself; the backup file is held by you and is not uploaded to our servers, except that when downloaded inside LINE it is stored temporarily and deleted automatically after 1 day.</li>
   <li><strong>Images you upload:</strong> group covers and receipt photos. Receipts may contain store, item or other personal information, so please be careful about what you upload.</li>
 </ul>
 
@@ -56,6 +56,7 @@
   <li><strong>Google sign-in (Google Identity Services):</strong> provides Google sign-in. Google's privacy policy applies.</li>
   <li><strong>Google Firebase / Google Cloud:</strong> used for authentication, the database, file storage, the website and backend functions (hosted in Google's cloud data centers).</li>
   <li><strong>Exchange rate service open.er-api.com:</strong> when you choose a foreign currency, your device asks this service for the rate. The request contains only currency codes.</li>
+  <li><strong>Holiday data (jsDelivr, GitHub):</strong> when you use the personal ledger, your device fetches public Taiwan public-holiday data (the open-source dataset ruyut/TaiwanCalendar) from jsDelivr or GitHub. The request contains only the year and none of your data; these services see your IP address under their own privacy policies.</li>
 </ul>
 <p>The Service does not currently use cookies for tracking, and no advertising or analytics tools are installed.</p>
 

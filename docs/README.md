@@ -15,7 +15,7 @@
 | [貨幣與匯率](guides/currency.md) | 貨幣清單、基準幣、母國貨幣、結算取整 |
 | [收款方式](guides/payment-methods.md) | 支援的收款方式、資料結構、可見範圍 |
 | [儲蓄目標](guides/savings-goals.md) | 頁面、資料結構、金額規則與刪除流程 |
-| [個人記帳](guides/personal-ledger.md) | 多帳本、帳戶、多幣別帳目、記帳面板、刪除 |
+| [個人記帳](guides/personal-ledger.md) | 多帳本、帳戶、多幣別帳目、圖表與預算、類別、固定收支、期間設定、群組同步、CSV 與備份 |
 | [啟動速度](guides/startup-performance.md) | 登入快速路徑與載入策略 |
 
 ## research — 研究報告

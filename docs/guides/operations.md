@@ -23,7 +23,7 @@ gcloud storage buckets update gs://catsplit-app.firebasestorage.app --cors-file=
 
 CSV 內容由前端的 `src/utils/csvExport.js` 組出：明細（支出、收入、轉帳）加彙總（群組總額與「我」的收支），金額一律是群組基準幣。
 
-LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 CSV 傳給 `exportCsv`，函式驗證登入與群組成員身分（個人帳本則驗證帳本屬於本人）後存到 Storage 的 `exports/`，回傳 **5 分鐘有效的簽名網址**，LINE 內無法從網頁開啟外部瀏覽器（`liff.openWindow` 實測無效），所以前端自動複製這個網址並用彈窗提示，由使用者貼到手機瀏覽器的網址列下載；無法自動複製時改用輸入框顯示網址。一般瀏覽器仍直接下載，不經過函式。
+LINE 內建瀏覽器無法下載 blob，所以在 LINE 裡匯出時：前端把 CSV 傳給 `exportCsv`，函式驗證登入與群組成員身分（個人帳本則驗證帳本屬於本人）後存到 Storage 的 `exports/`，回傳 **5 分鐘有效的簽名網址**（個人帳本還可存 JSON 備份檔，`format: 'json'`，上限 300 萬字元），LINE 內無法從網頁開啟外部瀏覽器（`liff.openWindow` 實測無效），所以前端自動複製這個網址並用彈窗提示，由使用者貼到手機瀏覽器的網址列下載；無法自動複製時改用輸入框顯示網址。一般瀏覽器仍直接下載，不經過函式。
 
 首次部署前要手動設定兩件事（不會隨部署更新）：
 
@@ -165,6 +165,9 @@ Google 登入用 Google Identity Services 取得 ID token，由 `authExchange` �
 
 - 已知漏洞：`@grpc/grpc-js`（firebase 間接相依，僅 Node 端使用，瀏覽器不載入）與 functions 的 `uuid`（邊界檢查，不受影響）。待上游更新後再升級。
 - 每人可建立的群組數無法只靠 rules 限制，目前不限。
+- **CI 部署順序**（`.github/workflows/firebase-hosting-merge.yml`）：先部署 Hosting，再部署 functions、Firestore rules 與 Storage。2026-11-25 曾發生 Hosting 已部署成功、但 Firebase 部署動作最後的收尾步驟報 `Assertion failed: resolving hosting target of a site with no site name or target name` 而整個工作失敗，後面的 rules 與 functions 被跳過（前端已是新版、rules 還是舊的，新欄位會被拒絕）；重跑失敗的工作即恢復。若再發生：先到 Actions 重跑失敗的工作，並確認 rules 有部署；根治可在 `firebase.json` 的 `hosting` 明確寫 `"site": "catsplit-app"`，或把 rules 與 functions 的部署移到 Hosting 之前（rules 向下相容，先上較安全）。
+- 個人記帳的假日資料來自第三方開源資料集 `ruyut/TaiwanCalendar`（經 jsDelivr 或 GitHub raw 取得，瀏覽器快取 30 天），不是官方 API，沒有可用性保證；失敗時只會退回「週六日是假日」。細節見[個人記帳](personal-ledger.md)。
+- 個人記帳沒有後端排程：固定收支在使用者開啟帳本時才補入。
 - 訪客名字不是專屬的，任何持有群組連結的人都能選用；`guestLogin` 沒有頻率限制，有人可以反覆輸入新名字塞滿群組（上限 50 人，建立者可移除）。
 - LINE 使用者認領訪客名字後沒有復原機制。
 - 清除瀏覽器資料後，訪客記住的名字會消失，需重新點群組連結選名字（帳目不受影響）。
