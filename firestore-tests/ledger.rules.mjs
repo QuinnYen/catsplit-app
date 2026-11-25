@@ -182,6 +182,40 @@ test('帳戶管理：期初餘額與餘額可一起調整、封存與取消封�
   await assertSucceeds(deleteDoc(accountRef(db, 'u1')))
 })
 
+// ---------- 類別 ----------
+
+const categoryRef = (db, uid, id) => doc(db, 'users', uid, 'ledgers', 'l1', 'categories', id)
+
+test('類別：欄位、種類、文件 id 與 key 對應、自訂類別必須有名稱、順序是整數', async () => {
+  const db = dbAs('u1')
+  await assertSucceeds(setDoc(ledgerRef(db, 'u1'), ledger()))
+  const w = (id, data) => setDoc(categoryRef(db, 'u1', id), data)
+  await assertSucceeds(w('e_food', { kind: 'expense', key: 'food', order: 0 }))
+  await assertSucceeds(w('i_other', { kind: 'income', key: 'other', order: 4, name: '雜項收入' }))
+  await assertSucceeds(w('e_other', { kind: 'expense', key: 'other', order: 7 })) // 支出與收入的 other 不撞
+  await assertSucceeds(w('e_c_abc', { kind: 'expense', key: 'c_abc', name: '咖啡', order: 8 }))
+  await assertFails(w('e_c_noname', { kind: 'expense', key: 'c_noname', order: 9 })) // 自訂類別要有名稱
+  await assertFails(w('e_wrong', { kind: 'expense', key: 'food', order: 0 })) // 文件 id 要對得上種類與 key
+  await assertFails(w('i_food', { kind: 'expense', key: 'food', order: 0 }))
+  await assertFails(w('e_x', { kind: 'other', key: 'x', order: 0 }))
+  await assertFails(w('e_food', { kind: 'expense', key: 'food', order: 1.5 }))
+  await assertFails(w('e_food', { kind: 'expense', key: 'food', order: -1 }))
+  await assertFails(w('e_food', { kind: 'expense', key: 'food', order: 0, name: '' }))
+  await assertFails(w('e_food', { kind: 'expense', key: 'food', order: 0, name: 'a'.repeat(21) }))
+  await assertFails(w('e_food', { kind: 'expense', key: 'food', order: 0, extra: 1 }))
+  await assertFails(w('e_k', { kind: 'expense', key: 'k'.repeat(31), order: 0 }))
+  await assertSucceeds(updateDoc(categoryRef(db, 'u1', 'e_food'), { name: '美食', order: 3 }))
+  await assertSucceeds(deleteDoc(categoryRef(db, 'u1', 'e_food')))
+})
+
+test('類別：別人與未登入不能讀寫，訪客不能寫', async () => {
+  await assertSucceeds(setDoc(categoryRef(dbAs('u1'), 'u1', 'e_food'), { kind: 'expense', key: 'food', order: 0 }))
+  await assertFails(getDoc(categoryRef(dbAs('u2'), 'u1', 'e_food')))
+  await assertFails(setDoc(categoryRef(dbAs('u2'), 'u1', 'e_daily'), { kind: 'expense', key: 'daily', order: 1 }))
+  await assertFails(getDoc(categoryRef(env.unauthenticatedContext().firestore(), 'u1', 'e_food')))
+  await assertFails(setDoc(categoryRef(dbAs('u1', { guest: true }), 'u1', 'e_daily'), { kind: 'expense', key: 'daily', order: 1 }))
+})
+
 // ---------- 帳目 ----------
 
 test('收入與支出驗證：種類、金額、幣別、日期、匯率與統計金額', async () => {

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
-import { categoryLabel } from '../../i18n/codes'
 import useExchangeRate from '../../hooks/useExchangeRate'
 import CurrencySelect from '../../components/CurrencySelect'
 import { PINNED_CURRENCIES, getCurrency, roundToCurrency } from '../../config/currencies'
@@ -13,21 +12,20 @@ import { pressKey, evaluateExpression, commitExpression, hasOperator } from './e
 import { buildTransactionData, draftFromTransaction } from './entryDraft'
 import { saveTransaction, deleteTransaction } from './data'
 import { readLastUsed, writeLastUsed, pickEntryDefaults } from './prefs'
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, NOTE_MAX } from './constants'
+import { NOTE_MAX } from './constants'
 import { todayStr, weekdayOf } from './dates'
 
 const accountLabel = (a) => `${a.name} (${a.currency})`
-const categoriesOf = (kind) => (kind === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)
 
 const fieldBox = { display: 'flex', alignItems: 'center', gap: 6, border: '0.5px solid var(--cs-border)', background: 'var(--cs-card)', borderRadius: 10, padding: '0 12px', minHeight: 44, minWidth: 0 }
 const fieldLabel = { fontSize: 11.5, color: 'var(--cs-text-sub)', flexShrink: 0 }
 const selectStyle = { flex: 1, minWidth: 0, border: 'none', background: 'transparent', color: 'var(--cs-text)', fontSize: 14, padding: '10px 0', outline: 'none' }
 const smallInput = { border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', borderRadius: 6, padding: '6px 8px', fontSize: 14, outline: 'none', textAlign: 'right' }
 
-const initialDraft = ({ editing, uid, ledgerId, selectable, selectedDate }) => {
+const initialDraft = ({ editing, uid, ledgerId, selectable, selectedDate, expenseKeys }) => {
   if (editing) return { ...draftFromTransaction(editing), currencyTouched: true }
   const last = readLastUsed(localStorage, uid, ledgerId)
-  const { accountId, category } = pickEntryDefaults({ accounts: selectable, last, kind: 'expense', categories: EXPENSE_CATEGORIES })
+  const { accountId, category } = pickEntryDefaults({ accounts: selectable, last, kind: 'expense', categories: expenseKeys })
   const account = selectable.find((a) => a.id === accountId)
   return {
     kind: 'expense', expr: '', currency: account?.currency ?? '', accountId, category, note: '', date: selectedDate,
@@ -64,7 +62,8 @@ const RateRow = ({ from, to, state }) => {
 }
 
 const LedgerEntrySheet = ({ editing, onClose }) => {
-  const { uid, ledger, accounts, selectedDate, setSelectedDate, showToast } = useLedger()
+  const { uid, ledger, accounts, selectedDate, setSelectedDate, showToast, categories: ledgerCategories, catName } = useLedger()
+  const categoriesOf = (kind) => (kind === 'income' ? ledgerCategories.income : ledgerCategories.expense).map((c) => c.key)
   const { t, fmt } = useI18n()
   const base = ledger.baseCurrency
 
@@ -73,7 +72,7 @@ const LedgerEntrySheet = ({ editing, onClose }) => {
     () => accounts.filter((a) => a.kind !== 'group' && (!a.archived || a.id === editing?.accountId || a.id === editing?.toAccountId)),
     [accounts, editing],
   )
-  const [d, setD] = useState(() => initialDraft({ editing, uid, ledgerId: ledger.id, selectable, selectedDate }))
+  const [d, setD] = useState(() => initialDraft({ editing, uid, ledgerId: ledger.id, selectable, selectedDate, expenseKeys: categoriesOf('expense') }))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const set = (patch) => setD((prev) => ({ ...prev, ...patch }))
@@ -243,7 +242,7 @@ const LedgerEntrySheet = ({ editing, onClose }) => {
               <label style={{ ...fieldBox, flex: 1 }}>
                 <span style={fieldLabel}>{t('ledger.entry.category')}</span>
                 <select value={d.category} onChange={(e) => set({ category: e.target.value })} style={selectStyle}>
-                  {categoryOptions.map((c) => <option key={c} value={c}>{categoryLabel(c, t)}</option>)}
+                  {categoryOptions.map((c) => <option key={c} value={c}>{catName(d.kind, c)}</option>)}
                 </select>
               </label>
               <label style={{ ...fieldBox, flex: 1 }}>

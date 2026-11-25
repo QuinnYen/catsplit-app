@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BarChart3 } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
-import { categoryLabel } from '../../i18n/codes'
 import { CATEGORY_COLORS } from '../../config/chartColors'
 import DonutChart from '../../components/DonutChart'
 import MonthPicker from '../../components/MonthPicker'
@@ -19,7 +18,7 @@ const title = { fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)', marg
 const navBtn = { background: 'none', border: 'none', color: 'inherit', fontSize: 22, lineHeight: 1, padding: '0 10px', cursor: 'pointer' }
 
 const LedgerStatsPage = () => {
-  const { uid, ledger, selectedDate, setSelectedDate } = useLedger()
+  const { uid, ledger, selectedDate, setSelectedDate, catName } = useLedger()
   const { t, fmt } = useI18n()
   const navigate = useNavigate()
   const base = ledger.baseCurrency
@@ -93,7 +92,7 @@ const LedgerStatsPage = () => {
                 {segments.map((s) => (
                   <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
                     <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, flexShrink: 0 }} />
-                    <span style={{ flex: 1, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{categoryLabel(s.category, t)}</span>
+                    <span style={{ flex: 1, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{catName(type, s.category)}</span>
                     <span style={{ color: 'var(--cs-text-sub)', flexShrink: 0 }}>{s.pct.toFixed(1)}%</span>
                     <span style={{ color: 'var(--cs-text)', fontWeight: 500, minWidth: 80, textAlign: 'right', flexShrink: 0 }}>{fmt.money(s.total, base)}</span>
                   </div>

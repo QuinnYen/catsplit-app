@@ -2,7 +2,8 @@
 // 餘額（accounts.balance）在記帳、編輯、刪除時於同一個 batch 用 increment 更新，增量由 balance.js 算。
 import { collection, doc, writeBatch, increment, serverTimestamp, getDoc, setDoc, getDocs, query, where, limit } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { ledgersPath, ledgerPath, accountsPath, transactionsPath } from './paths.js'
+import { ledgersPath, ledgerPath, accountsPath, transactionsPath, categoriesPath } from './paths.js'
+import { planCategoryChange } from './categories.js'
 import { deltasForChange, planBalanceRepair } from './balance.js'
 import { roundMoney } from './money.js'
 import { LEDGER_NAME_MAX, ACCOUNT_NAME_MAX } from './constants.js'
@@ -160,4 +161,19 @@ export const updateLedgerPeriod = (uid, ledgerId, patch) => {
   const batch = writeBatch(db)
   batch.update(doc(db, ...ledgerPath(uid, ledgerId)), patch)
   return batch.commit()
+}
+
+/**
+ * 類別的新增、改名、刪除、排序（見 categories.js 的 planCategoryChange）。stored 是目前的類別文件（沒有任何文件時是 []，
+ * 第一次編輯會把整份預設清單寫成文件）。驗證沒過回傳 { error }，成功回傳 { ok: true }。
+ */
+export const applyCategoryChange = async (uid, ledgerId, stored, change, nameOf) => {
+  const plan = planCategoryChange(stored, change, nameOf)
+  if (plan.error) return { error: plan.error }
+  if (plan.sets.length === 0 && plan.deletes.length === 0) return { ok: true }
+  const batch = writeBatch(db)
+  for (const s of plan.sets) batch.set(doc(db, ...categoriesPath(uid, ledgerId), s.id), s.data)
+  for (const id of plan.deletes) batch.delete(doc(db, ...categoriesPath(uid, ledgerId), id))
+  await batch.commit()
+  return { ok: true }
 }

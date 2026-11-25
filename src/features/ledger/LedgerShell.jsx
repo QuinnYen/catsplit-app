@@ -5,7 +5,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nProvider'
 import { LedgerContext } from './LedgerContext'
-import { useLedgers, useAccounts, useGroupLinks, useEnsureDefaultLedger, useActiveLedger } from './hooks'
+import { useLedgers, useAccounts, useGroupLinks, useCategoryDocs, useEnsureDefaultLedger, useActiveLedger } from './hooks'
+import { resolveCategories, categoryKeys, categoryName } from './categories'
 import { useLedgerSync } from './useLedgerSync'
 import { todayStr } from './dates'
 import LedgerTabBar from './LedgerTabBar'
@@ -27,6 +28,9 @@ const LedgerShell = () => {
   const [ledger, setActiveLedger] = useActiveLedger(uid, ledgers)
   const accounts = useAccounts(uid, ledger?.id)
   const links = useGroupLinks(uid, ledger?.id)
+  const categoryDocs = useCategoryDocs(uid, ledger?.id)
+  const categories = useMemo(() => resolveCategories(categoryDocs ?? []), [categoryDocs])
+  const catName = useCallback((kind, key) => categoryName(categories, kind, key, t), [categories, t])
   const [selectedDate, setSelectedDate] = useState(() => todayStr())
   const [entry, setEntry] = useState(null) // null | { tx?: 編輯中的帳目 }
   const [toast, setToast] = useState('')
@@ -40,12 +44,12 @@ const LedgerShell = () => {
   useEffect(() => () => clearTimeout(toastTimer.current), [])
 
   const onUnreadable = useCallback((list) => showToast(t('ledger.sync.unreadable', { name: list.map((l) => l.groupName).join(', ') })), [showToast, t])
-  const sync = useLedgerSync({ uid, ledger, links, accounts, onUnreadable })
+  const sync = useLedgerSync({ uid, ledger, links, accounts, categories: categoryKeys(categories), onUnreadable })
 
   const openEntry = useCallback((tx) => setEntry({ tx }), [])
   const ctx = useMemo(
-    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
-    [uid, ledger, ledgers, accounts, links, sync, setActiveLedger, selectedDate, openEntry, showToast],
+    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, categories, categoryDocs: categoryDocs ?? [], catName, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
+    [uid, ledger, ledgers, accounts, links, sync, categories, categoryDocs, catName, setActiveLedger, selectedDate, openEntry, showToast],
   )
 
   if (!ledger || !accounts) {

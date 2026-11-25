@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { planGroupSync, toMillis, toDateString, mapIncomeCategory } from './syncPlan.js'
+import { planGroupSync, toMillis, toDateString, mapCategory } from './syncPlan.js'
 
 // 本機時間 2026-11-d 中午，避免時區造成日期跨日
 const ms = (d) => new Date(2026, 10, d, 12).getTime()
@@ -204,11 +204,30 @@ test('createdAt 可以是 Firestore Timestamp、Date 或毫秒', () => {
   assert.equal(r.upserts.length, 1)
 })
 
-test('toDateString 用本機日期；mapIncomeCategory', () => {
+test('toDateString 用本機日期；mapCategory', () => {
   assert.equal(toDateString(new Date(2026, 10, 3, 23, 59).getTime()), '2026-11-03')
   assert.equal(toDateString(new Date(2026, 0, 31, 0, 0).getTime()), '2026-01-31')
-  assert.equal(mapIncomeCategory('refund'), 'refund')
-  assert.equal(mapIncomeCategory('salary'), 'salary')
-  assert.equal(mapIncomeCategory('advance'), 'other')
-  assert.equal(mapIncomeCategory(undefined), 'other')
+  assert.equal(mapCategory('refund', ['refund', 'other']), 'refund')
+  assert.equal(mapCategory('salary', ['salary']), 'salary')
+  assert.equal(mapCategory('advance', ['refund', 'other']), 'other')
+  assert.equal(mapCategory(undefined, ['refund', 'other']), 'other')
+})
+
+test('群組帳目的類別：帳本清單裡有就沿用，對不到（含已刪除、自訂文字）一律歸其他', () => {
+  const categories = { expense: ['food', 'c_coffee', 'other'], income: ['salary', 'other'] }
+  const r = plan({
+    categories,
+    expenses: [expense('e1', { category: 'food' }), expense('e2', { category: 'transport' }), expense('e3', { category: '咖啡' }), expense('e4', { category: 'c_coffee' })],
+    incomes: [income('i1', { category: 'refund' })],
+  })
+  assert.deepEqual(r.upserts.map((u) => [u.id, u.data.category]), [
+    ['g_g1_e_e1', 'food'], ['g_g1_e_e2', 'other'], ['g_g1_e_e3', 'other'], ['g_g1_e_e4', 'c_coffee'], ['g_g1_i_i1', 'other'],
+  ])
+})
+
+test('改過類別的快照帳目不被對照結果覆寫', () => {
+  const row = plan({ expenses: [expense('e1', { category: 'food' })] }).upserts[0].data
+  const existing = [{ id: 'g_g1_e_e1', ...row, category: 'c_mine', source: { ...row.source, edited: { category: true } } }]
+  const r = plan({ expenses: [expense('e1', { category: 'transport', title: '新標題' })], existing, categories: { expense: ['food', 'other'], income: ['other'] } })
+  assert.equal(r.upserts[0].data.category, 'c_mine')
 })

@@ -32,6 +32,7 @@
 | `users/{uid}/savingsGoals/{id}/entries/{auto}` | 存提款紀錄 | 本人 | 本人（非訪客） | — |
 | `users/{uid}/ledgers/{id}` | 個人帳本（P12，已使用；說明見[個人記帳](personal-ledger.md)） | 本人 | 本人（非訪客）；客戶端不能刪，由後端 `deleteLedger` 刪 | 合併時搬移 |
 | `users/{uid}/ledgers/{id}/accounts/{id}` | 帳本內的帳戶（含群組快照帳戶） | 本人 | 本人（非訪客） | 隨帳本搬移 |
+| `users/{uid}/ledgers/{id}/categories/{id}` | 帳本的類別（自訂與改過的清單；沒有文件時用預設清單） | 本人 | 本人（非訪客） | 隨帳本搬移 |
 | `users/{uid}/ledgers/{id}/transactions/{id}` | 帳目（收入、支出、轉帳） | 本人 | 本人（非訪客） | 隨帳本搬移 |
 | `users/{uid}/ledgers/{id}/groupLinks/{groupId}` | 帳本連結的分帳群組 | 本人 | 本人（非訪客） | 隨帳本搬移（同群組衝突時取較早的 `linkedAt`） |
 | `groups/{auto}` | 群組 | 見下 | 見下 | 搬移成員、刪除成員 |

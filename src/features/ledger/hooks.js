@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { ledgersPath, accountsPath, transactionsPath, groupLinksPath } from './paths.js'
+import { ledgersPath, accountsPath, transactionsPath, groupLinksPath, categoriesPath } from './paths.js'
 import { monthDateBounds } from './summary.js'
 import { ensureDefaultLedger } from './data.js'
 import { pickActiveLedgerId, readActiveLedgerId, writeActiveLedgerId } from './prefs.js'
@@ -49,6 +49,22 @@ export const useGroupLinks = (uid, ledgerId) => {
       setState({ key, list: snap.docs.map(withId).sort((a, b) => (a.linkedAt?.toMillis?.() ?? Infinity) - (b.linkedAt?.toMillis?.() ?? Infinity)) })
     }, (err) => {
       console.error('Failed to load group links', err)
+      setState({ key, list: [] })
+    })
+  }, [uid, ledgerId, key])
+  return state.key === key ? state.list : null
+}
+
+// 帳本的類別文件 [{ id, kind, key, name?, order }]；載入前是 null，沒有任何文件是 []（代表用預設清單）
+export const useCategoryDocs = (uid, ledgerId) => {
+  const key = `${uid}/${ledgerId}`
+  const [state, setState] = useState({ key: null, list: null })
+  useEffect(() => {
+    if (!ledgerId) return
+    return onSnapshot(collection(db, ...categoriesPath(uid, ledgerId)), (snap) => {
+      setState({ key, list: snap.docs.map(withId) })
+    }, (err) => {
+      console.error('Failed to load categories', err)
       setState({ key, list: [] })
     })
   }, [uid, ledgerId, key])

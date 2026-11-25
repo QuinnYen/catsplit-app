@@ -3,16 +3,15 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
-import { categoryLabel } from '../../i18n/codes'
 import { useLedger } from './LedgerContext'
 import { saveSnapshotEdits } from './data'
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, NOTE_MAX } from './constants'
+import { NOTE_MAX } from './constants'
 
 const inputStyle = { display: 'block', width: '100%', marginTop: 6, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', background: 'var(--cs-card)', outline: 'none', boxSizing: 'border-box' }
 const labelStyle = { fontSize: 12, color: 'var(--cs-text-sub)' }
 
 const SnapshotTxSheet = ({ tx, onClose }) => {
-  const { uid, ledger, accounts, showToast } = useLedger()
+  const { uid, ledger, accounts, showToast, categories: ledgerCategories, catName } = useLedger()
   const { t, fmt } = useI18n()
   const [category, setCategory] = useState(tx.category ?? '')
   const [note, setNote] = useState(tx.note ?? '')
@@ -20,7 +19,7 @@ const SnapshotTxSheet = ({ tx, onClose }) => {
   const [error, setError] = useState('')
   const base = ledger.baseCurrency
   const group = accounts.find((a) => a.id === tx.accountId)?.name ?? ''
-  const options = tx.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+  const options = (tx.type === 'income' ? ledgerCategories.income : ledgerCategories.expense).map((c) => c.key)
   const categoryOptions = !category || options.includes(category) ? options : [category, ...options]
 
   const save = async () => {
@@ -68,7 +67,7 @@ const SnapshotTxSheet = ({ tx, onClose }) => {
         <label style={labelStyle}>
           {t('ledger.entry.category')}
           <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
-            {categoryOptions.map((c) => <option key={c} value={c}>{categoryLabel(c, t)}</option>)}
+            {categoryOptions.map((c) => <option key={c} value={c}>{catName(tx.type, c)}</option>)}
           </select>
         </label>
         <label style={labelStyle}>

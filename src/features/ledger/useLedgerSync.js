@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { syncGroup } from './groupSync'
 
-export const useLedgerSync = ({ uid, ledger, links, accounts, onUnreadable }) => {
+export const useLedgerSync = ({ uid, ledger, links, accounts, categories, onUnreadable }) => {
   const done = useRef(new Set())
-  const latest = useRef({ accounts, onUnreadable })
-  useEffect(() => { latest.current = { accounts, onUnreadable } })
+  const latest = useRef({ accounts, categories, onUnreadable })
+  useEffect(() => { latest.current = { accounts, categories, onUnreadable } })
   const [state, setState] = useState({ scope: '', syncing: false, unreadable: [], ratePending: false, scanned: {} })
   const [tick, setTick] = useState(0)
   const scope = `${uid}/${ledger?.id}`
@@ -25,7 +25,7 @@ export const useLedgerSync = ({ uid, ledger, links, accounts, onUnreadable }) =>
       for (const link of todo) {
         try {
           const snapshotAccount = latest.current.accounts.find((a) => a.id === `snap_${link.id}`)
-          const r = await syncGroup({ uid, ledger, link, snapshotAccount })
+          const r = await syncGroup({ uid, ledger, link, snapshotAccount, categories: latest.current.categories })
           if (r.status === 'unreadable') unreadable.push(link)
           if (r.ratePending) ratePending = true
           if (r.scanned != null) scanned[link.id] = r.scanned

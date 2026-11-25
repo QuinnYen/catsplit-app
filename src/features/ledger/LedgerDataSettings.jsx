@@ -11,7 +11,7 @@ import { transactionsPath } from './paths'
 import { buildLedgerCsv, ledgerCsvFileName } from './csvExport'
 
 const LedgerDataSettings = () => {
-  const { uid, ledger, accounts } = useLedger()
+  const { uid, ledger, accounts, categories } = useLedger()
   const { liffInstance } = useApp()
   const { t } = useI18n()
   const [busy, setBusy] = useState(false)
@@ -22,7 +22,7 @@ const LedgerDataSettings = () => {
     try {
       // 畫面只載入單月帳目，匯出要抓整個帳本
       const snap = await getDocs(collection(db, ...transactionsPath(uid, ledger.id)))
-      const csv = buildLedgerCsv({ ledger, accounts, transactions: snap.docs.map((d) => ({ id: d.id, ...d.data() })), t })
+      const csv = buildLedgerCsv({ ledger, accounts, categories, transactions: snap.docs.map((d) => ({ id: d.id, ...d.data() })), t })
       const filename = ledgerCsvFileName(ledger)
 
       if (liffInstance?.isInClient?.() && canExportViaFunction()) {

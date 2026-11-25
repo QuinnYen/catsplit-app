@@ -63,12 +63,13 @@ export const unlinkGroup = async (uid, ledgerId, groupId) => {
 }
 
 /**
- * 同步一個群組。link：{ id, linkedAt, groupName }；snapshotAccount：帳戶清單裡目前的快照帳戶（可能不存在）。
+ * 同步一個群組。link：{ id, linkedAt, groupName }；snapshotAccount：帳戶清單裡目前的快照帳戶（可能不存在）；
+ * categories：帳本目前的類別 key { expense: [...], income: [...] }，群組帳目的類別對不到就歸「其他」。
  * 回傳 { status: 'ok' | 'unreadable', changed, ratePending, scanned }（scanned：讀到的群組帳目筆數，診斷用）。
  *  - unreadable：群組已刪除或本人已退出，不動現有快照帳目
  *  - ratePending：兩邊基準幣不同、又抓不到匯率，有些帳目這次沒同步
  */
-export const syncGroup = async ({ uid, ledger, link, snapshotAccount }) => {
+export const syncGroup = async ({ uid, ledger, link, snapshotAccount, categories }) => {
   const groupId = link.id
   let group
   try {
@@ -94,7 +95,7 @@ export const syncGroup = async ({ uid, ledger, link, snapshotAccount }) => {
   const existing = await loadGroupRows(uid, ledger.id, groupId)
 
   const groupBaseCurrency = group.baseCurrency || ledger.baseCurrency
-  const input = { uid, groupId, linkedAt: SYNC_FROM(), groupBaseCurrency, ledgerBaseCurrency: ledger.baseCurrency, expenses, incomes, existing, now: serverTimestamp() }
+  const input = { uid, groupId, linkedAt: SYNC_FROM(), groupBaseCurrency, ledgerBaseCurrency: ledger.baseCurrency, expenses, incomes, existing, categories, now: serverTimestamp() }
   let plan = planGroupSync(input)
   if (plan.pending.length > 0 && groupBaseCurrency !== ledger.baseCurrency) {
     try {

@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layers, BarChart3 } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
-import { categoryLabel } from '../../i18n/codes'
 import MonthPicker from '../../components/MonthPicker'
 import { useLedger } from './LedgerContext'
 import LedgerMenu from './LedgerMenu'
@@ -15,7 +14,7 @@ import { todayStr, monthKeyOf, weekdayOf, shiftMonthDate, dateForMonth, shortDat
 const circleBtn = { width: 36, height: 36, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.65)', background: 'none', color: 'var(--cs-rc-head-text)', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0 }
 
 const LedgerBookPage = () => {
-  const { uid, ledger, accounts, selectedDate, setSelectedDate, openEntry } = useLedger()
+  const { uid, ledger, accounts, selectedDate, setSelectedDate, openEntry, catName } = useLedger()
   const { t, fmt } = useI18n()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -34,7 +33,7 @@ const LedgerBookPage = () => {
   const grid = useMemo(() => monthGrid(monthKey, monthStartDay, weekStartDay), [monthKey, monthStartDay, weekStartDay])
   const day = useMemo(() => entriesOfDate(list, selectedDate), [list, selectedDate])
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
-  const label = (c) => categoryLabel(c, t)
+  const label = (tx) => catName(tx.type, tx.category)
 
   const stat = (name, value) => (
     <div style={{ textAlign: 'center' }}>
@@ -58,14 +57,14 @@ const LedgerBookPage = () => {
       sub = [
         account?.name,
         // 沒有標題與備註時，分類已經當標題了，不重複顯示
-        tx.title || tx.note ? label(tx.category) : null,
+        tx.title || tx.note ? label(tx) : null,
         charged ? t('ledger.row.charged', { amount: fmt.money(tx.accountAmount, accountCurrency) }) : null,
         // 扣款帳戶幣別就是統計幣別時，扣款金額已經是統計金額，不再重複
         tx.currency !== base && !(charged && accountCurrency === base) ? `≈ ${fmt.money(tx.baseAmount, base)}` : null,
       ].filter(Boolean).join(' · ')
     }
-    const headline = tx.type === 'transfer' ? (tx.note || t('ledger.kind.transfer')) : entryHeadline(tx, label)
-    const initial = (tx.type === 'transfer' ? t('ledger.kind.transfer') : label(tx.category)).charAt(0)
+    const headline = tx.type === 'transfer' ? (tx.note || t('ledger.kind.transfer')) : entryHeadline(tx, () => label(tx))
+    const initial = (tx.type === 'transfer' ? t('ledger.kind.transfer') : label(tx)).charAt(0)
     const tone = tx.type === 'income' ? 'var(--cs-rc-get)' : tx.type === 'expense' ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)'
     return (
       <button

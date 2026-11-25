@@ -4,6 +4,7 @@ export const ledgersPath = (uid) => ['users', uid, 'ledgers']
 export const ledgerPath = (uid, ledgerId) => [...ledgersPath(uid), ledgerId]
 export const accountsPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId), 'accounts']
 export const transactionsPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId), 'transactions']
+export const categoriesPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId), 'categories']
 export const groupLinksPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId), 'groupLinks']
 
 // 快照帳戶的 id 固定，重複連結同一個群組不會產生第二個

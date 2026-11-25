@@ -11,6 +11,7 @@ users/{uid}/ledgers/{ledgerId}                       帳本（名稱、統計幣
 users/{uid}/ledgers/{ledgerId}/accounts/{accountId}  帳戶（單一幣別、餘額）
 users/{uid}/ledgers/{ledgerId}/transactions/{id}     帳目（收入、支出、轉帳）
 users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
+users/{uid}/ledgers/{ledgerId}/categories/{id}       類別（自訂與改過的清單）
 ```
 
 欄位、rules 與取捨見 [資料模型](data-model.md) 與封存的 spec 第 1 節。第一次進入會自動建立 id 固定為 `default` 的「我的帳本」（TWD）與一個「現金」帳戶；新增帳本時同樣會建立「現金」帳戶（幣別 = 統計幣別）。
@@ -25,7 +26,8 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 | `LedgerEntrySheet.jsx`、`NumberPad.jsx` | 記帳面板與常駐數字鍵盤 |
 | `LedgerAccountsPage.jsx`、`AccountSheet.jsx`、`netWorth.js` | 帳戶頁（淨資產、清單、封存區、重新計算餘額）、新增與編輯帳戶、淨資產計算（純函式） |
 | `LedgerStatsPage.jsx` | 圖表：分類占比（支出／收入）、近 6 個月趨勢，月份可切換 |
-| `LedgerSettingsPage.jsx` | 帳本設定，分頁呈現（網址 `?tab=`）；目前有「進階」「分帳」「資料」，之後規劃「基本」；只有一個分頁時不顯示分頁列 |
+| `LedgerSettingsPage.jsx` | 帳本設定，分頁呈現（網址 `?tab=`）；目前有「基本」「進階」「分帳」「資料」；只有一個分頁時不顯示分頁列 |
+| `categories.js`、`LedgerCategorySettings.jsx` | 類別（每個帳本各一份）：預設清單、顯示名稱、增刪改排序的寫入計畫（純函式）；「基本」分頁的支出與收入類別設定 |
 | `LedgerAdvancedSettings.jsx` | 「進階」分頁：週開始日、月開始日（帳本層級，選了立刻儲存） |
 | `LedgerDataSettings.jsx`、`csvExport.js` | 「資料」分頁：匯出 CSV（整個帳本）與 CSV 組裝（純函式） |
 | `data.js`、`hooks.js` | Firestore 讀寫與即時訂閱（畫面不直接組路徑或寫 batch） |
@@ -73,6 +75,17 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 - **關閉**：確認後刪除快照帳戶、尚未匯入的快照帳目與連結（改過的分類備註一併消失）；已匯入的一般帳目保留。
 - **匯入到帳戶**：選群組與一般帳戶，預覽筆數與餘額變動；帳目與目標帳戶幣別不同時顯示匯率（自動帶入、可修改，抓不到要手動輸入），只新增 `accountAmount`／`accountRate`，統計金額不變。帳目以固定 id 就地改成 `detached` 一般帳目（可編輯、計入餘額、不再同步，編輯時保留 `source` 與標題），分批寫入並以 `increment` 更新餘額與快照帳戶；完成後詢問是否停止同步。
 - **無法讀取的群組**（已退出或已刪除）：不動既有快照帳目，顯示提示，使用者可匯入保留或關閉同步。
+
+## 類別（每個帳本各一份）
+
+設定頁「基本」分頁，支出類別與收入類別各一份清單：新增、改名、上移／下移、刪除；名稱最多 20 字、同種類不可重名、每種至少留一個、前端限制每種 30 個。
+
+- 存成 `ledgers/{id}/categories/{文件id}`：`kind`、`key`（帳目 `category` 欄位存的值）、`name`（選填）、`order`。文件 id = `e_`／`i_` 加 `key`（支出與收入都有 `other`，不會撞）；標準類別的 `key` 就是原本的代碼（`food`、`salary`…），自訂類別的 `key` 是 `c_` 加亂數，必須有名稱。rules 逐份驗證。
+- **沒有任何類別文件的帳本直接用預設清單**（支出：餐飲、交通、住宿、購物、娛樂、日用品、醫療、其他；收入：薪資、獎金、投資、退款、其他），既有帳本與帳目不用遷移；第一次編輯時才把整份預設清單一次寫成文件，再套用修改。
+- 顯示名稱（`categoryName`）：有自訂名稱用它；標準類別沒有名稱用翻譯；**已刪除的自訂類別顯示「其他」**；舊的自由文字原樣顯示。刪除類別不改動任何帳目。
+- 群組同步來的帳目：類別在帳本清單裡有同 `key` 就沿用，**對不到（含已刪除、群組的自訂文字）一律歸「其他」**；你在群組帳目上改過的類別不會被覆寫。
+- 記帳面板、帳本主頁、圖表、群組帳目面板與 CSV 匯出都用帳本的類別名稱。
+- 類別圖示與「基本」分頁的固定收支、預算、節日還沒做。
 
 ## 期間（月開始日、週開始日）
 
