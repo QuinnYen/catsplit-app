@@ -5,7 +5,7 @@ import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import MainTabBar from '../components/MainTabBar'
+import FeatureTabBar from '../components/FeatureTabBar'
 import { getCurrency } from '../config/currencies'
 import useSavingsEntries from '../hooks/useSavingsEntries'
 import { sumSaved, progressRatio } from '../utils/savings'
@@ -39,7 +39,6 @@ const GoalCard = ({ goal, uid }) => {
 const SavingsListPage = () => {
   const { user } = useApp()
   const { t } = useI18n()
-  const navigate = useNavigate()
   const [goals, setGoals] = useState(null)
 
   useEffect(() => {
@@ -62,14 +61,11 @@ const SavingsListPage = () => {
       </div>
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={() => navigate('/savings/new')} style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{t('savings.add')}</button>
-        </div>
         {goals === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
         {goals?.length === 0 && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('savings.empty')}</div>}
         {goals?.map(g => <GoalCard key={g.id} goal={g} uid={user.uid} />)}
       </div>
-      <MainTabBar />
+      <FeatureTabBar action={{ label: 'tab.addGoal', to: '/savings/new' }} />
     </div>
   )
 }

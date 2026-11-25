@@ -14,6 +14,7 @@ import { pageTitleKey } from './utils/pageTitle'
 
 // 首頁與群組頁是主要落地頁（含邀請連結），直接載入；其餘頁面用到才下載
 import HomePage from './pages/HomePage'
+import PortalPage from './pages/PortalPage'
 import GroupPage from './pages/GroupPage'
 const CreateGroupPage = lazy(() => import('./pages/CreateGroupPage'))
 const AddExpensePage = lazy(() => import('./pages/AddExpensePage'))
@@ -167,6 +168,7 @@ const ProtectedRoutes = () => {
     {!user.guest && <OfficialAccountPrompt />}
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/home" element={<PortalPage />} />
       <Route path="/ledger/*" element={user.guest ? <Navigate to="/" /> : <LedgerShell />} />
       <Route path="/fx" element={<ComingSoonPage titleKey="tab.fx" descKey="comingSoon.fx" />} />
       <Route path="/create" element={user.guest ? <Navigate to="/" /> : <CreateGroupPage />} />

@@ -8,7 +8,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import AvatarMenuTab from './AvatarMenu'
 
 const TABS = [
-  { id: 'home', Icon: House, label: 'tab.home', to: '/' },
+  { id: 'home', Icon: House, label: 'tab.home', to: '/home' },
   { id: 'receive', Icon: QrCode, label: 'tab.receive', to: '/payment-methods', needsAccount: true },
   { id: 'create', Icon: Plus, label: 'tab.createGroup', to: '/create', needsAccount: true },
   { id: 'pay', Icon: CreditCard, label: 'tab.pay', to: '/spend-methods', needsAccount: true },

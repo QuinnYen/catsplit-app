@@ -1,6 +1,6 @@
 // /ledger、/fx — 尚未開發的功能佔位頁（P12 個人記帳、匯率頁完成後換成正式頁面）。
 import { useI18n } from '../i18n/I18nProvider'
-import MainTabBar from '../components/MainTabBar'
+import FeatureTabBar from '../components/FeatureTabBar'
 
 const ComingSoonPage = ({ titleKey, descKey }) => {
   const { t } = useI18n()
@@ -15,7 +15,7 @@ const ComingSoonPage = ({ titleKey, descKey }) => {
           <div style={{ fontSize: 13, color: 'var(--cs-rc-sub)', lineHeight: 1.6 }}>{t(descKey)}</div>
         </div>
       </div>
-      <MainTabBar />
+      <FeatureTabBar />
     </div>
   )
 }

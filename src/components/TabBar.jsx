@@ -10,7 +10,7 @@ const TabBar = () => {
   const navigate = useNavigate()
   const { t } = useI18n()
   const location = useLocation()
-  const tabs = [{ id: 'home', path: '/' }]
+  const tabs = [{ id: 'home', path: '/home' }]
   const TAB_ICONS = { home: { Icon: House, label: 'tab.home' } }
 
   return (

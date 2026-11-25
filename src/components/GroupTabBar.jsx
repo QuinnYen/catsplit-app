@@ -10,7 +10,7 @@ const GroupTabBar = ({ groupId, active = null }) => {
   const { t } = useI18n()
   const base = `/group/${groupId}`
   const tabs = [
-    { id: 'home', Icon: House, label: 'tab.home', to: '/' },
+    { id: 'home', Icon: House, label: 'tab.home', to: '/home' },
     { id: 'book', Icon: BookOpen, label: 'tab.groupBook', to: base },
     { id: 'add', Icon: Plus, label: 'tab.add', to: `${base}/add` },
     { id: 'settle', Icon: Scale, label: 'tab.settle', to: `${base}/settle` },

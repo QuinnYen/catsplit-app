@@ -9,7 +9,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import Avatar from './Avatar'
 import LineIcon from './LineIcon'
 
-const AvatarMenuTab = () => {
+const AvatarMenuTab = ({ style }) => {
   const { user, logout } = useApp()
   const { t } = useI18n()
   const navigate = useNavigate()
@@ -32,7 +32,7 @@ const AvatarMenuTab = () => {
         aria-label={t('group.settings')}
         aria-haspopup="menu"
         aria-expanded={open}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', WebkitTapHighlightColor: 'transparent' }}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', WebkitTapHighlightColor: 'transparent', ...style }}
       >
         <span style={{ position: 'relative', display: 'inline-flex', width: 26, height: 26, marginBottom: 2 }}>
           <Avatar src={user?.avatar} name={user?.name} size={26} style={{ background: 'var(--cs-soft-2)', border: '1.5px solid var(--cs-rc-stamp)' }} />

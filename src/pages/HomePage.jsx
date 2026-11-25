@@ -1,37 +1,16 @@
 // / — 分帳首頁：使用者資訊與我的群組列表，帳號選單在底部導覽列最右的頭像；底部是 SplitTabBar（首頁／收款／建立群組／付款／頭像）。未登入由 App.jsx 的 LoginScreen 處理。
 import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import useMyGroups from '../hooks/useMyGroups'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import SplitTabBar from '../components/SplitTabBar'
+import { getGreeting } from '../utils/greeting'
 import { computeBudgetStatus } from '../utils/budget'
 import { getBalanceStatus } from '../utils/balanceStatus'
-
-const GREETINGS = [
-  // 0-4 深夜
-  [{ Icon: Moon, key: 'greeting.n1' }, { Icon: Cat, key: 'greeting.n2' }, { Icon: BedDouble, key: 'greeting.n3' }],
-  // 5-10 早上
-  [{ Icon: Sun, key: 'greeting.m1' }, { Icon: PawPrint, key: 'greeting.m2' }, { Icon: Coffee, key: 'greeting.m3' }],
-  // 11-13 中午
-  [{ Icon: Utensils, key: 'greeting.d1' }, { Icon: Fish, key: 'greeting.d2' }, { Icon: PawPrint, key: 'greeting.d3' }],
-  // 14-17 下午
-  [{ Icon: Cookie, key: 'greeting.a1' }, { Icon: CloudSun, key: 'greeting.a2' }, { Icon: Coffee, key: 'greeting.a3' }],
-  // 18-21 晚上
-  [{ Icon: Sunset, key: 'greeting.e1' }, { Icon: Soup, key: 'greeting.e2' }, { Icon: PawPrint, key: 'greeting.e3' }],
-  // 22-23 夜晚
-  [{ Icon: Moon, key: 'greeting.l1' }, { Icon: BedDouble, key: 'greeting.l2' }, { Icon: Cat, key: 'greeting.l3' }],
-]
-
-const getGreeting = () => {
-  const h = new Date().getHours()
-  const bucket = h < 5 ? 0 : h < 11 ? 1 : h < 14 ? 2 : h < 18 ? 3 : h < 22 ? 4 : 5
-  const options = GREETINGS[bucket]
-  return options[Math.floor(Math.random() * options.length)]
-}
 
 const GROUPS_PER_PAGE = 10
 
