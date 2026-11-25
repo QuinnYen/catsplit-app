@@ -1,23 +1,24 @@
 // 台灣國定假日資料（給固定收支的「假日調整」用）。來源是開源資料集 ruyut/TaiwanCalendar 的整年 JSON，
-// 每天一筆（date 'YYYYMMDD'、isHoliday），已包含週末、補假與補班日（補班的週六 isHoliday 是 false）。
+// 每天一筆（date 'YYYYMMDD'、isHoliday、description 假日或補班的名稱），已包含週末、補假與補班日（補班的週六 isHoliday 是 false）。
+// 月曆用它把假日標成紅色並在當日標題顯示名稱，固定收支的「假日調整」也用它。
 // 這不是官方 API：某年份沒有資料、抓不到或格式不對時，該年退回「週六、週日是假日」，固定收支不會因此壞掉。
 export const holidayUrls = (year) => [
   `https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`,
   `https://raw.githubusercontent.com/ruyut/TaiwanCalendar/master/data/${year}.json`,
 ]
 
-const CACHE_PREFIX = 'cs-holidays:'
+const CACHE_PREFIX = 'cs-holidays2:' // v2：每天多存名稱
 const DAY_MS = 24 * 60 * 60 * 1000
 const FOUND_TTL_MS = 30 * DAY_MS // 抓到的資料快取 30 天（官方偶爾會調整放假）
 const MISSING_TTL_MS = 1 * DAY_MS // 沒有資料的年份一天後再試
 
-// 整年 JSON → Map('YYYY-MM-DD' → isHoliday)；格式不對（不是整年的陣列）回 null
+// 整年 JSON → Map('YYYY-MM-DD' → { holiday, name })；格式不對（不是整年的陣列）回 null
 export const parseHolidayYear = (json) => {
   if (!Array.isArray(json) || json.length < 360) return null
   const map = new Map()
   for (const e of json) {
     if (typeof e?.date !== 'string' || !/^\d{8}$/.test(e.date) || typeof e.isHoliday !== 'boolean') return null
-    map.set(`${e.date.slice(0, 4)}-${e.date.slice(4, 6)}-${e.date.slice(6)}`, e.isHoliday)
+    map.set(`${e.date.slice(0, 4)}-${e.date.slice(4, 6)}-${e.date.slice(6)}`, { holiday: e.isHoliday, name: typeof e.description === 'string' ? e.description.slice(0, 30) : '' })
   }
   return map
 }
@@ -31,8 +32,11 @@ export const isWeekend = (dateStr) => {
 // yearMaps：Map(year 字串 → Map 或 null)。有該年資料用資料，否則退回週末
 export const makeIsHoliday = (yearMaps) => (dateStr) => {
   const map = yearMaps.get(dateStr.slice(0, 4))
-  return map ? (map.get(dateStr) ?? isWeekend(dateStr)) : isWeekend(dateStr)
+  return map ? (map.get(dateStr)?.holiday ?? isWeekend(dateStr)) : isWeekend(dateStr)
 }
+
+// 當天的假日或補班名稱（例如「國慶日」「補行上班日」）；沒有資料或沒有名稱回空字串
+export const makeHolidayName = (yearMaps) => (dateStr) => yearMaps.get(dateStr.slice(0, 4))?.get(dateStr)?.name ?? ''
 
 const readCache = (storage, year, now) => {
   try {

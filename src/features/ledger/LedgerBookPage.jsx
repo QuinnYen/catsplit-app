@@ -9,6 +9,7 @@ import LedgerMenu from './LedgerMenu'
 import { useMonthTransactions } from './hooks'
 import { monthGrid, summarizeEntries, datesWithEntries, entriesOfDate } from './summary'
 import { budgetStatus } from './budget'
+import { useHolidays } from './useHolidays'
 import { entryHeadline } from './entryDraft'
 import { todayStr, monthKeyOf, weekdayOf, shiftMonthDate, dateForMonth, shortDate, periodSettings, periodBounds, periodLastDay } from './dates'
 
@@ -33,6 +34,7 @@ const LedgerBookPage = () => {
   const monthBudget = budgetStatus(ledger.monthBudget, totals.expense)
   const marked = useMemo(() => datesWithEntries(list), [list])
   const grid = useMemo(() => monthGrid(monthKey, monthStartDay, weekStartDay), [monthKey, monthStartDay, weekStartDay])
+  const { isHoliday, holidayName } = useHolidays([grid.dates[0].slice(0, 4), grid.dates.at(-1).slice(0, 4)])
   const day = useMemo(() => entriesOfDate(list, selectedDate), [list, selectedDate])
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
   const label = (tx) => catName(tx.type, tx.category)
@@ -129,7 +131,7 @@ const LedgerBookPage = () => {
                 key={date} onClick={() => setSelectedDate(date)} aria-pressed={selected}
                 style={{ border: 'none', background: 'none', padding: '3px 0 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, minHeight: 40, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
               >
-                <span style={{ width: 26, height: 26, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 13, fontVariantNumeric: 'tabular-nums', background: selected ? 'var(--cs-rc-stamp)' : 'transparent', color: selected ? 'var(--cs-rc-stamp-text)' : 'var(--cs-text)', fontWeight: selected ? 700 : 400, boxShadow: date === today && !selected ? 'inset 0 0 0 1.5px var(--cs-rc-stamp)' : 'none' }}>
+                <span style={{ width: 26, height: 26, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 13, fontVariantNumeric: 'tabular-nums', background: selected ? 'var(--cs-rc-stamp)' : 'transparent', color: selected ? 'var(--cs-rc-stamp-text)' : isHoliday(date) ? 'var(--cs-danger)' : 'var(--cs-text)', fontWeight: selected ? 700 : 400, boxShadow: date === today && !selected ? 'inset 0 0 0 1.5px var(--cs-rc-stamp)' : 'none' }}>
                   {date.endsWith('-01') && date !== grid.dates[0] ? shortDate(date) : Number(date.slice(8))}
                 </span>
                 <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: '50%', marginTop: 1, background: marked.has(date) ? 'var(--cs-rc-stamp)' : 'transparent' }} />
@@ -142,7 +144,7 @@ const LedgerBookPage = () => {
       <div className="cs-body" style={{ marginTop: 8, flex: 1 }}>
         <div style={{ background: 'var(--cs-rc-card)', borderTop: '1px solid var(--cs-rc-rule)', minHeight: 200 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '10px 16px 8px', borderBottom: '1.5px dashed var(--cs-rc-rule)' }}>
-            <b style={{ fontSize: 14, color: 'var(--cs-text)' }}>{t('ledger.day.header', { date: shortDate(selectedDate), weekday: t(`date.weekday.${weekdayOf(selectedDate)}`) })}</b>
+            <b style={{ fontSize: 14, color: isHoliday(selectedDate) ? 'var(--cs-danger)' : 'var(--cs-text)' }}>{t('ledger.day.header', { date: shortDate(selectedDate), weekday: t(`date.weekday.${weekdayOf(selectedDate)}`) })}{holidayName(selectedDate) && ` · ${holidayName(selectedDate)}`}</b>
             <span style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>
               <span>{t('kind.expense')} {fmt.num(day.expense)}</span>
               <span>{t('kind.income')} {fmt.num(day.income)}</span>

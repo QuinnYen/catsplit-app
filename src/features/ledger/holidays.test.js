@@ -1,13 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseHolidayYear, isWeekend, makeIsHoliday, loadHolidayYears, holidayUrls } from './holidays.js'
+import { parseHolidayYear, isWeekend, makeIsHoliday, makeHolidayName, loadHolidayYears, holidayUrls } from './holidays.js'
 
 // 一整年的假資料：2026 全部是工作日，只有 1/1 國定假日；2/14 是補班的週六
 const year2026 = () => {
   const out = []
   for (let d = new Date(2026, 0, 1); d.getFullYear() === 2026; d.setDate(d.getDate() + 1)) {
     const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
-    out.push({ date, week: '', isHoliday: date === '20260101', description: '' })
+    out.push({ date, week: '', isHoliday: date === '20260101', description: date === '20260101' ? '開國紀念日' : date === '20260214' ? '補行上班日' : '' })
   }
   return out
 }
@@ -17,8 +17,8 @@ const okRes = (json) => ({ ok: true, json: async () => json })
 test('parseHolidayYear：整年資料轉成日期對照，格式不對回 null', () => {
   const map = parseHolidayYear(year2026())
   assert.equal(map.size, 365)
-  assert.equal(map.get('2026-01-01'), true)
-  assert.equal(map.get('2026-02-14'), false)
+  assert.deepEqual(map.get('2026-01-01'), { holiday: true, name: '開國紀念日' })
+  assert.deepEqual(map.get('2026-02-14'), { holiday: false, name: '補行上班日' })
   assert.equal(parseHolidayYear([]), null)
   assert.equal(parseHolidayYear({ a: 1 }), null)
   assert.equal(parseHolidayYear([...year2026().slice(0, 400), { date: 'x', isHoliday: true }]), null)
@@ -40,7 +40,7 @@ test('loadHolidayYears：第一個來源失敗改用第二個，並快取；再�
   const calls = []
   const fetchImpl = async (url) => { calls.push(url); if (url.includes('jsdelivr')) throw new Error('blocked'); return okRes(year2026()) }
   const r = await loadHolidayYears([2026, 2026], { storage, fetchImpl, now: 1000 })
-  assert.equal(r.get('2026').get('2026-01-01'), true)
+  assert.equal(r.get('2026').get('2026-01-01').holiday, true)
   assert.deepEqual(calls, holidayUrls('2026'))
   const again = await loadHolidayYears([2026], { storage, fetchImpl: async () => { throw new Error('should not fetch') }, now: 1000 + 1000 })
   assert.equal(again.get('2026').size, 365)
@@ -72,4 +72,13 @@ test('loadHolidayYears：快取 30 天後過期重抓；沒有該年（404）快
 test('沒有 storage 也能用（無痕模式）', async () => {
   const r = await loadHolidayYears([2026], { fetchImpl: async () => okRes(year2026()) })
   assert.equal(r.get('2026').size, 365)
+})
+
+test('makeHolidayName：有名稱回名稱，沒資料或沒名稱回空字串', () => {
+  const name = makeHolidayName(new Map([['2026', parseHolidayYear(year2026())], ['2027', null]]))
+  assert.equal(name('2026-01-01'), '開國紀念日')
+  assert.equal(name('2026-02-14'), '補行上班日')
+  assert.equal(name('2026-03-03'), '')
+  assert.equal(name('2027-01-01'), '')
+  assert.equal(name('2030-01-01'), '')
 })
