@@ -1,4 +1,4 @@
-// 設定頁「進階」分頁：週開始日與月開始日（帳本層級）。只影響月曆、總計與圖表怎麼分月，資料不變；選了立刻儲存。
+// 設定頁「進階」分頁：週開始日、月開始日、年開始月（帳本層級）。只影響月曆、總計、圖表與預算怎麼分期間，資料不變；選了立刻儲存。
 import { useState } from 'react'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useLedger } from './LedgerContext'
@@ -12,7 +12,7 @@ const selectStyle = { width: '100%', marginTop: 6, border: '0.5px solid var(--cs
 const LedgerAdvancedSettings = () => {
   const { uid, ledger, showToast } = useLedger()
   const { t } = useI18n()
-  const { monthStartDay, weekStartDay } = periodSettings(ledger)
+  const { monthStartDay, weekStartDay, yearStartMonth } = periodSettings(ledger)
   const [busy, setBusy] = useState(false)
 
   const save = async (patch) => {
@@ -39,6 +39,12 @@ const LedgerAdvancedSettings = () => {
         {t('ledger.adv.monthStart')}
         <select value={monthStartDay} disabled={busy} onChange={(e) => save({ monthStartDay: Number(e.target.value) })} style={selectStyle}>
           {MONTH_STARTS.map((d) => <option key={d} value={d}>{d === 0 ? t('ledger.adv.monthEnd') : t('ledger.adv.day', { n: d })}</option>)}
+        </select>
+      </label>
+      <label style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>
+        {t('ledger.adv.yearStart')}
+        <select value={yearStartMonth} disabled={busy} onChange={(e) => save({ yearStartMonth: Number(e.target.value) })} style={selectStyle}>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{t('ledger.adv.monthN', { n: m })}</option>)}
         </select>
       </label>
       <div style={{ fontSize: 11.5, color: 'var(--cs-text-mute)', lineHeight: 1.7 }}>

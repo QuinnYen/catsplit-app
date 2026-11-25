@@ -8,6 +8,7 @@ import { useLedger } from './LedgerContext'
 import LedgerMenu from './LedgerMenu'
 import { useMonthTransactions } from './hooks'
 import { monthGrid, summarizeEntries, datesWithEntries, entriesOfDate } from './summary'
+import { budgetStatus } from './budget'
 import { entryHeadline } from './entryDraft'
 import { todayStr, monthKeyOf, weekdayOf, shiftMonthDate, dateForMonth, shortDate, periodSettings, periodBounds, periodLastDay } from './dates'
 
@@ -29,6 +30,7 @@ const LedgerBookPage = () => {
   const [year, month] = monthKey.split('-').map(Number)
 
   const totals = useMemo(() => summarizeEntries(list), [list])
+  const monthBudget = budgetStatus(ledger.monthBudget, totals.expense)
   const marked = useMemo(() => datesWithEntries(list), [list])
   const grid = useMemo(() => monthGrid(monthKey, monthStartDay, weekStartDay), [monthKey, monthStartDay, weekStartDay])
   const day = useMemo(() => entriesOfDate(list, selectedDate), [list, selectedDate])
@@ -96,6 +98,16 @@ const LedgerBookPage = () => {
           <button onClick={() => navigate('/ledger/stats')} aria-label={t('ledger.chart')} style={circleBtn}><BarChart3 size={18} /></button>
         </div>
         <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.75, marginTop: 6 }}>{monthStartDay !== 1 && `${shortDate(periodBounds(monthKey, monthStartDay).start)}–${shortDate(periodLastDay(monthKey, monthStartDay))} · `}{ledger.name} · {t('ledger.baseCaption', { currency: base })}</div>
+        {monthBudget && (
+          <div data-budget-level={monthBudget.level} style={{ marginTop: 10 }}>
+            <div style={{ height: 4, background: 'rgba(255,255,255,0.25)', borderRadius: 2 }}>
+              <div style={{ width: `${Math.min(monthBudget.ratio, 1) * 100}%`, height: '100%', borderRadius: 2, background: { ok: 'var(--cs-on-brand)', warn: 'var(--cs-on-brand-warn)', over: 'var(--cs-on-brand-over)' }[monthBudget.level] }} />
+            </div>
+            <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.85, marginTop: 4 }}>
+              {monthBudget.level === 'over' ? t('ledger.book.budgetOver', { amount: fmt.money(-monthBudget.remaining, base) }) : t('ledger.book.budgetUsed', { pct: Math.floor(monthBudget.ratio * 100) })}
+            </div>
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', marginTop: 10, fontSize: 12.5, fontVariantNumeric: 'tabular-nums' }}>
           {stat(t('kind.expense'), totals.expense)}
           {stat(t('kind.income'), totals.income)}

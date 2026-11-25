@@ -1,6 +1,6 @@
 // 帳本主頁、月曆、圖表用的彙總。帳目的 date 是 'YYYY-MM-DD'；統計只加總 baseAmount，轉帳不計入收支。
 import { addMoney, roundMoney } from './money.js'
-import { periodBounds, toDateStr, weekdayOf } from './dates.js'
+import { periodBounds, monthKeyOf, toDateStr, weekdayOf } from './dates.js'
 
 const pad = (n) => String(n).padStart(2, '0')
 
@@ -63,3 +63,10 @@ export const lastMonths = (monthKey, n) => {
 // 趨勢：每個月的支出與收入（統計幣別）。txsByMonth 是 { [monthKey]: 帳目[] }，沒載入的月份當作 0
 export const trendByMonth = (txsByMonth, monthKeys) =>
   monthKeys.map((key) => ({ key, ...summarizeEntries(txsByMonth[key] ?? []) }))
+
+// 把帳目依月期間分組：{ [monthKey]: 帳目[] }（年檢視一次讀整年後，用它畫 12 個月的趨勢）
+export const groupByMonth = (txs, startDay = 1) => {
+  const out = {}
+  for (const tx of txs) (out[monthKeyOf(tx.date, startDay)] ??= []).push(tx)
+  return out
+}

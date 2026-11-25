@@ -1,6 +1,7 @@
 // 帳本的類別（每個帳本各一份）。純函式：預設清單、整理成顯示用清單、名稱顯示、增刪改與排序的寫入計畫。
 // 存成 ledgers/{id}/categories/{文件id} 的子集合（rules 無法逐項驗證陣列，所以一個類別一份文件）：
-//   kind 'expense' | 'income'、key（帳目 category 欄位存的值）、name（選填，標準類別沒有名稱就用翻譯）、order（整數）
+//   kind 'expense' | 'income'、key（帳目 category 欄位存的值）、name（選填，標準類別沒有名稱就用翻譯）、order（整數）、
+//   budget（選填，只有支出類別，每個月預算，統計幣別）
 // 文件 id = 'e_' 或 'i_' 加 key（支出與收入都有 'other'，id 不能撞）。自訂類別的 key 是 'c_' 加亂數。
 // 沒有任何類別文件的帳本直接用預設清單；第一次編輯時才把預設清單一次寫成文件。
 import { DEFAULT_CATEGORIES } from '../../config/expenseForm.js'
@@ -25,7 +26,7 @@ const byOrder = (a, b) => (a.order - b.order) || (a.key < b.key ? -1 : 1)
 // 整理成 { expense: [{ key, name? }], income: [...] }，依 order；沒有任何文件時用預設清單
 export const resolveCategories = (docs) => {
   const source = docs && docs.length > 0 ? docs : defaultCategoryDocs()
-  const pick = (kind) => source.filter((d) => d.kind === kind).sort(byOrder).map(({ key, name }) => ({ key, ...(name && { name }) }))
+  const pick = (kind) => source.filter((d) => d.kind === kind).sort(byOrder).map(({ key, name, budget }) => ({ key, ...(name && { name }), ...(budget > 0 && { budget }) }))
   return { expense: pick('expense'), income: pick('income') }
 }
 
@@ -49,6 +50,7 @@ const newKey = () => `${CUSTOM_PREFIX}${Math.random().toString(36).slice(2, 10)}
  * 增刪改與排序要寫入什麼。stored：目前的類別文件（可能是空，代表還在用預設清單）；
  * nameOf(kind, key)：顯示名稱（用來擋同種類重名）。change：
  *   { type: 'add', kind, name } | { type: 'rename', kind, key, name } | { type: 'delete', kind, key } | { type: 'move', kind, key, dir: -1 | 1 }
+ *   | { type: 'budget', kind, key, amount: 正數 | null }（null 是取消預算）
  * 回傳 { sets: [{ id, data }], deletes: [id] } 或 { error }（'name'：空白或超長、'duplicate'、'limit'、'last'、'notFound'）。
  * stored 是空的時候，sets 會包含整份預設清單（第一次編輯才寫入）。
  */
@@ -85,6 +87,13 @@ export const planCategoryChange = (stored, change, nameOf) => {
 
   const target = list.find((d) => d.key === change.key)
   if (!target) return { error: 'notFound' }
+
+  if (change.type === 'budget') {
+    if (change.amount !== null && !(change.amount > 0)) return { error: 'budget' }
+    if (change.amount === null) delete target.budget
+    else target.budget = change.amount
+    return finish()
+  }
 
   if (change.type === 'delete') {
     if (list.length <= 1) return { error: 'last' }

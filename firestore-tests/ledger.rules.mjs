@@ -132,6 +132,22 @@ test('帳本期間設定：月開始日 0–28（0 是月末）、週開始日 0
   await assertFails(updateDoc(ledgerRef(db, 'u1', 'l1'), { weekStartDay: 7 }))
 })
 
+test('帳本年開始月與預算：年開始月 1–12 整數，預算必須是正數', async () => {
+  const db = dbAs('u1')
+  const ok = (id, extra) => setDoc(ledgerRef(db, 'u1', id), ledger(extra))
+  await assertSucceeds(ok('l1', { yearStartMonth: 4, monthBudget: 30000, yearBudget: 360000 }))
+  await assertSucceeds(ok('l2', { yearStartMonth: 12, monthBudget: 100.5 }))
+  await assertFails(ok('l3', { yearStartMonth: 0 }))
+  await assertFails(ok('l3', { yearStartMonth: 13 }))
+  await assertFails(ok('l3', { yearStartMonth: 1.5 }))
+  await assertFails(ok('l3', { monthBudget: 0 }))
+  await assertFails(ok('l3', { monthBudget: -5 }))
+  await assertFails(ok('l3', { yearBudget: '1000' }))
+  await assertFails(ok('l3', { yearBudget: 1e12 }))
+  await assertSucceeds(updateDoc(ledgerRef(db, 'u1', 'l1'), { monthBudget: 20000 }))
+  await assertFails(updateDoc(ledgerRef(db, 'u1', 'l1'), { monthBudget: 0 }))
+})
+
 test('帳本統計幣別與建立時間建立後不可改', async () => {
   const db = dbAs('u1')
   await assertSucceeds(setDoc(ledgerRef(db, 'u1'), ledger()))
@@ -204,6 +220,10 @@ test('類別：欄位、種類、文件 id 與 key 對應、自訂類別必須�
   await assertFails(w('e_food', { kind: 'expense', key: 'food', order: 0, name: 'a'.repeat(21) }))
   await assertFails(w('e_food', { kind: 'expense', key: 'food', order: 0, extra: 1 }))
   await assertFails(w('e_k', { kind: 'expense', key: 'k'.repeat(31), order: 0 }))
+  await assertSucceeds(w('e_daily', { kind: 'expense', key: 'daily', order: 5, budget: 3000 })) // 分類預算
+  await assertFails(w('e_medical', { kind: 'expense', key: 'medical', order: 6, budget: 0 }))
+  await assertFails(w('e_lodging', { kind: 'expense', key: 'lodging', order: 7, budget: '100' }))
+  await assertFails(w('i_salary', { kind: 'income', key: 'salary', order: 0, budget: 100 })) // 收入類別沒有預算
   await assertSucceeds(updateDoc(categoryRef(db, 'u1', 'e_food'), { name: '美食', order: 3 }))
   await assertSucceeds(deleteDoc(categoryRef(db, 'u1', 'e_food')))
 })

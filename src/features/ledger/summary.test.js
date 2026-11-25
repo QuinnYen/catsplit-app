@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { monthGrid, monthDateBounds, summarizeEntries, datesWithEntries, entriesOfDate, sumByCategory, isCounted, lastMonths, trendByMonth } from './summary.js'
+import { monthGrid, monthDateBounds, summarizeEntries, datesWithEntries, entriesOfDate, sumByCategory, isCounted, lastMonths, trendByMonth, groupByMonth } from './summary.js'
 
 const tx = (o) => ({ type: 'expense', baseAmount: 100, date: '2026-11-24', category: 'food', ...o })
 
@@ -117,4 +117,12 @@ test('期間內的帳目歸屬：按起始日分月加總', () => {
   const { start, end } = monthDateBounds('2026-11', 5)
   const inPeriod = txs.filter((t) => t.date >= start && t.date < end)
   assert.equal(summarizeEntries(inPeriod).expense, 500)
+})
+
+test('groupByMonth：依月期間分組', () => {
+  const txs = [{ date: '2026-11-04', id: 'a' }, { date: '2026-11-05', id: 'b' }, { date: '2026-12-04', id: 'c' }]
+  const g1 = groupByMonth(txs)
+  assert.deepEqual(Object.keys(g1), ['2026-11', '2026-12'])
+  const g5 = groupByMonth(txs, 5)
+  assert.deepEqual(Object.fromEntries(Object.entries(g5).map(([k, v]) => [k, v.map((x) => x.id)])), { '2026-10': ['a'], '2026-11': ['b', 'c'] })
 })

@@ -138,7 +138,7 @@ service cloud.firestore {
     }
 
     function validLedger(d) {
-      return d.keys().hasOnly(['name', 'baseCurrency', 'icon', 'color', 'archived', 'monthStartDay', 'weekStartDay', 'createdAt'])
+      return d.keys().hasOnly(['name', 'baseCurrency', 'icon', 'color', 'archived', 'monthStartDay', 'weekStartDay', 'yearStartMonth', 'monthBudget', 'yearBudget', 'createdAt'])
         && d.keys().hasAll(['name', 'baseCurrency', 'createdAt'])
         && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
         && validCurrencyCode(d.baseCurrency)
@@ -148,6 +148,10 @@ service cloud.firestore {
         // 月開始日：1–28 是每月幾日，0 是月末；週開始日：0 週日、1 週一、6 週六（見 src/features/ledger/dates.js）
         && (!('monthStartDay' in d) || (d.monthStartDay is int && d.monthStartDay >= 0 && d.monthStartDay <= 28))
         && (!('weekStartDay' in d) || (d.weekStartDay is int && d.weekStartDay in [0, 1, 6]))
+        && (!('yearStartMonth' in d) || (d.yearStartMonth is int && d.yearStartMonth >= 1 && d.yearStartMonth <= 12))
+        // 預算（統計幣別）：月預算、年預算總額，必須是正數；沒設就不存這個欄位
+        && (!('monthBudget' in d) || validMoney(d.monthBudget))
+        && (!('yearBudget' in d) || validMoney(d.yearBudget))
         && d.createdAt is timestamp;
     }
 
@@ -169,13 +173,14 @@ service cloud.firestore {
 
     // 帳本的類別：kind、key（帳目 category 存的值）、name（選填，自訂類別必填）、order；文件 id = 'e_' 或 'i_' 加 key（支出與收入各自唯一）
     function validCategory(d, categoryId) {
-      return d.keys().hasOnly(['kind', 'key', 'name', 'order'])
+      return d.keys().hasOnly(['kind', 'key', 'name', 'order', 'budget'])
         && d.keys().hasAll(['kind', 'key', 'order'])
         && d.kind in ['expense', 'income']
         && d.key is string && d.key.size() >= 1 && d.key.size() <= 30
         && categoryId == (d.kind == 'expense' ? 'e_' : 'i_') + d.key
         && (!('name' in d) || (d.name is string && d.name.size() >= 1 && d.name.size() <= 20))
         && (!d.key.matches('^c_.*') || 'name' in d)
+        && (!('budget' in d) || (d.kind == 'expense' && validMoney(d.budget)))
         && d.order is int && d.order >= 0 && d.order < 1000;
     }
 

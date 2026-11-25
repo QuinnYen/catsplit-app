@@ -4,6 +4,7 @@ import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestor
 import { db } from '../../config/firebase'
 import { ledgersPath, accountsPath, transactionsPath, groupLinksPath, categoriesPath } from './paths.js'
 import { monthDateBounds } from './summary.js'
+import { yearBounds } from './dates.js'
 import { ensureDefaultLedger } from './data.js'
 import { pickActiveLedgerId, readActiveLedgerId, writeActiveLedgerId } from './prefs.js'
 
@@ -88,6 +89,22 @@ export const useMonthTransactions = (uid, ledgerId, monthKey, startDay = 1) => {
     })
   }, [uid, ledgerId, monthKey, startDay, key])
   return state.key === key ? state.list : null
+}
+
+// 年檢視用：整個年期間的帳目，一次性讀取（getDocs，不訂閱；切換年度才重讀）。yearKey 是 null 時不讀；載入前回傳 null
+export const useYearTransactions = (uid, ledgerId, yearKey, startDay = 1, yearStartMonth = 1) => {
+  const key = yearKey ? `${uid}/${ledgerId}/${yearKey}/${startDay}/${yearStartMonth}` : null
+  const [state, setState] = useState({ key: null, list: null })
+  useEffect(() => {
+    if (!key) return
+    let cancelled = false
+    const { start, end } = yearBounds(yearKey, startDay, yearStartMonth)
+    getDocs(query(collection(db, ...transactionsPath(uid, ledgerId)), where('date', '>=', start), where('date', '<', end)))
+      .then((snap) => { if (!cancelled) setState({ key, list: snap.docs.map(withId) }) })
+      .catch((err) => { console.error('Failed to load year transactions', err); if (!cancelled) setState({ key, list: [] }) })
+    return () => { cancelled = true }
+  }, [uid, ledgerId, yearKey, startDay, yearStartMonth, key])
+  return key && state.key === key ? state.list : null
 }
 
 // 趨勢圖用：把 monthKeys 各讀一次（getDocs，不訂閱），結果留在這個元件的記憶體，切換月份只補讀新的月份。

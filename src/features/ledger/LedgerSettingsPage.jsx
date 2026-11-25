@@ -1,16 +1,17 @@
-// /ledger/settings — 帳本設定，分頁呈現：「基本」（支出與收入類別）、「進階」（週開始日、月開始日）、「分帳」（連結群組、同步、匯入）、
+// /ledger/settings — 帳本設定，分頁呈現：「基本」（預算、支出與收入類別）、「進階」（週開始日、月開始日）、「分帳」（連結群組、同步、匯入）、
 // 「資料」（匯出 CSV）；固定收支、預算、節日之後加進「基本」，只有一個分頁時不顯示分頁列。分頁狀態在網址 ?tab=。
 // 帳本的改名與刪除在帳本選單（左上圓鈕）。
 import { useSearchParams } from 'react-router-dom'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useLedger } from './LedgerContext'
+import LedgerBudgetSettings from './LedgerBudgetSettings'
 import LedgerCategorySettings from './LedgerCategorySettings'
 import LedgerAdvancedSettings from './LedgerAdvancedSettings'
 import LedgerGroupLinks from './LedgerGroupLinks'
 import LedgerDataSettings from './LedgerDataSettings'
 
 const TABS = [
-  { key: 'basic', label: 'ledger.settings.tab.basic', render: () => <LedgerCategorySettings /> },
+  { key: 'basic', label: 'ledger.settings.tab.basic', render: () => <><LedgerBudgetSettings /><LedgerCategorySettings /></> },
   { key: 'advanced', label: 'ledger.settings.tab.advanced', render: () => <LedgerAdvancedSettings /> },
   { key: 'group', label: 'ledger.settings.tab.group', render: () => <LedgerGroupLinks /> },
   { key: 'data', label: 'ledger.settings.tab.data', render: () => <LedgerDataSettings /> },

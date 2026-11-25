@@ -82,3 +82,17 @@ test('上移與下移：與相鄰的對調，頭尾不動', () => {
   assert.deepEqual(plan(stored, { type: 'move', kind: 'expense', key: 'food', dir: -1 }), { sets: [], deletes: [] })
   assert.deepEqual(plan(stored, { type: 'move', kind: 'expense', key: 'other', dir: 1 }), { sets: [], deletes: [] })
 })
+
+test('分類預算：設定與取消，只動那一份；無效金額被擋', () => {
+  const stored = defaultCategoryDocs()
+  const set = plan(stored, { type: 'budget', kind: 'expense', key: 'food', amount: 8000 })
+  assert.deepEqual(set.sets, [{ id: 'e_food', data: { kind: 'expense', key: 'food', order: 0, budget: 8000 } }])
+  const withBudget = [...stored.filter((d) => d.id !== 'e_food'), { ...stored.find((d) => d.id === 'e_food'), budget: 8000 }]
+  assert.equal(resolveCategories(withBudget).expense[0].budget, 8000)
+  const cleared = plan(withBudget, { type: 'budget', kind: 'expense', key: 'food', amount: null })
+  assert.deepEqual(cleared.sets, [{ id: 'e_food', data: { kind: 'expense', key: 'food', order: 0 } }])
+  assert.equal(plan(stored, { type: 'budget', kind: 'expense', key: 'food', amount: 0 }).error, 'budget')
+  assert.equal(plan(stored, { type: 'budget', kind: 'expense', key: 'nope', amount: 5 }).error, 'notFound')
+  // 第一次編輯：整份預設清單寫入
+  assert.equal(plan([], { type: 'budget', kind: 'expense', key: 'food', amount: 100 }).sets.length, defaultCategoryDocs().length)
+})

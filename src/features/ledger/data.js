@@ -1,6 +1,6 @@
 // 個人帳本的 Firestore 讀寫（資料存取層）：畫面與 hooks 不直接組路徑或寫 batch，一律經過這裡。
 // 餘額（accounts.balance）在記帳、編輯、刪除時於同一個 batch 用 increment 更新，增量由 balance.js 算。
-import { collection, doc, writeBatch, increment, serverTimestamp, getDoc, setDoc, getDocs, query, where, limit } from 'firebase/firestore'
+import { deleteField, collection, doc, writeBatch, increment, serverTimestamp, getDoc, setDoc, getDocs, query, where, limit } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { ledgersPath, ledgerPath, accountsPath, transactionsPath, categoriesPath } from './paths.js'
 import { planCategoryChange } from './categories.js'
@@ -176,4 +176,13 @@ export const applyCategoryChange = async (uid, ledgerId, stored, change, nameOf)
   for (const id of plan.deletes) batch.delete(doc(db, ...categoriesPath(uid, ledgerId), id))
   await batch.commit()
   return { ok: true }
+}
+
+// 帳本的月預算與年預算（統計幣別，只算支出）：金額是正數，null 是取消預算（移除欄位）
+export const updateLedgerBudget = (uid, ledgerId, patch) => {
+  const data = {}
+  for (const [k, v] of Object.entries(patch)) data[k] = v === null ? deleteField() : v
+  const batch = writeBatch(db)
+  batch.update(doc(db, ...ledgerPath(uid, ledgerId)), data)
+  return batch.commit()
 }
