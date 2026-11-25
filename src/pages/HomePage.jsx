@@ -1,15 +1,13 @@
-// / — 分帳首頁：使用者資訊與我的群組列表，頭像可開啟選單（設定、收款方式、消費方式、官方帳號、登出）；底部是全站主導覽列。未登入由 App.jsx 的 LoginScreen 處理。
+// / — 分帳首頁：使用者資訊與我的群組列表，帳號選單在底部導覽列最右的頭像；底部是 SplitTabBar（首頁／收款／建立群組／付款／頭像）。未登入由 App.jsx 的 LoginScreen 處理。
 import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup, LogOut, QrCode, CreditCard, ChevronDown } from 'lucide-react'
-import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
+import { Check, Moon, Cat, BedDouble, Sun, PawPrint, Coffee, Utensils, Fish, Cookie, CloudSun, Sunset, Soup } from 'lucide-react'
 import { useApp, MAX_GUEST_NAMES } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import useMyGroups from '../hooks/useMyGroups'
 import Avatar from '../components/Avatar'
-import LineIcon from '../components/LineIcon'
 import GroupIcon from '../components/GroupIcon'
-import MainTabBar from '../components/MainTabBar'
+import SplitTabBar from '../components/SplitTabBar'
 import { computeBudgetStatus } from '../utils/budget'
 import { getBalanceStatus } from '../utils/balanceStatus'
 
@@ -38,7 +36,7 @@ const getGreeting = () => {
 const GROUPS_PER_PAGE = 10
 
 const HomePage = () => {
-  const { user, loading: authLoading, loginWithLine, logout, guestNames } = useApp()
+  const { user, loading: authLoading, loginWithLine, guestNames } = useApp()
   const { t } = useI18n()
   const navigate = useNavigate()
   const [{ Icon: GreetingIcon, key: greetingKey }] = useState(getGreeting)
@@ -46,15 +44,10 @@ const HomePage = () => {
   const loading = authLoading || (!!user && !groupsLoaded)
   const [showArchived, setShowArchived] = useState(false)
   const [page, setPage] = useState(1)
-  const [showSettings, setShowSettings] = useState(false)
 
   const myIdIn = (group) => user?.guest
     ? guestNames.find(g => g.groupId === group.id)?.memberId
     : user?.uid
-
-  const handleLogout = () => {
-    if (confirm(user?.guest ? t('home.logoutConfirmGuest') : t('home.logoutConfirm'))) logout()
-  }
 
   const activeGroups = groups.filter(g => !g.archived)
   const archivedGroups = groups.filter(g => g.archived)
@@ -71,14 +64,8 @@ const HomePage = () => {
 
         {/* 使用者資訊 */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* 頭像、問候與名字整塊是一個按鈕，名字後面的箭頭提示可以展開選單 */}
-          <button
-            onClick={() => setShowSettings(v => !v)}
-            aria-label={t('group.settings')}
-            aria-haspopup="menu"
-            aria-expanded={showSettings}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', WebkitTapHighlightColor: 'transparent' }}
-          >
+          {/* 頭像、問候與名字（帳號選單在底部導覽列最右邊的頭像） */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Avatar
               src={user?.avatar}
               name={user?.name}
@@ -89,12 +76,9 @@ const HomePage = () => {
               <div style={{ color: 'var(--cs-rc-head-text)', opacity: 0.75, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <GreetingIcon size={12} color="var(--cs-rc-stamp)" />{t(greetingKey)}
               </div>
-              <div style={{ color: 'var(--cs-rc-head-text)', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 2 }}>
-                {user?.name}
-                <ChevronDown size={16} color="var(--cs-rc-head-text)" style={{ opacity: 0.8, flexShrink: 0, transform: showSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
-              </div>
+              <div style={{ color: 'var(--cs-rc-head-text)', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
             </div>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -102,14 +86,6 @@ const HomePage = () => {
       <div className="cs-body" style={{ padding: '16px', flex: 1, paddingBottom: 'calc(var(--tabbar-h) + 24px)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-rc-ink)' }}>{t('home.myGroups')}</div>
-          {!user?.guest && (
-            <button
-              onClick={() => navigate('/create')}
-              style={{ background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
-            >
-              {t('home.create')}
-            </button>
-          )}
         </div>
 
         {user?.guest && (
@@ -267,31 +243,7 @@ const HomePage = () => {
 
       </div>
 
-      <MainTabBar />
-
-      {/* 設定氣泡：從頭像旁展開 */}
-      {showSettings && (
-        <>
-          <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
-          <div style={{ position: 'fixed', top: 70, left: 'max(16px, calc((100% - 720px) / 2 + 16px))', zIndex: 101, width: 220, background: 'var(--cs-rc-card)', borderRadius: 6, border: '0.5px solid var(--cs-rc-rule)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', padding: '2px 14px' }}>
-            <div style={{ position: 'absolute', top: -6, left: 14, width: 12, height: 12, background: 'var(--cs-rc-card)', borderTop: '0.5px solid var(--cs-rc-rule)', borderLeft: '0.5px solid var(--cs-rc-rule)', transform: 'rotate(45deg)' }} />
-            {[
-              { Icon: Settings, label: t('group.settings'), onClick: () => navigate('/settings') },
-              // 訪客沒有穩定身分，不提供收款方式
-              ...(!user?.guest ? [{ Icon: QrCode, label: t('home.menu.payment'), onClick: () => navigate('/payment-methods') }] : []),
-              ...(!user?.guest ? [{ Icon: CreditCard, label: t('home.menu.spend'), onClick: () => navigate('/spend-methods') }] : []),
-              { Icon: LineIcon, label: t('group.menu.official'), href: OFFICIAL_ACCOUNT_URL },
-              { Icon: LogOut, label: t('home.menu.logout'), onClick: handleLogout },
-            ].map(({ Icon, label, href, onClick }, i) => {
-              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid var(--cs-rc-rule)', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: 'var(--cs-rc-ink)', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
-              const content = <><Icon size={18} color="var(--cs-rc-sub)" />{label}</>
-              return href
-                ? <a key={label} href={href} style={style}>{content}</a>
-                : <button key={label} onClick={onClick} style={style}>{content}</button>
-            })}
-          </div>
-        </>
-      )}
+      <SplitTabBar />
     </div>
   )
 }

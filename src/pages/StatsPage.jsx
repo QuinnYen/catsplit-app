@@ -266,7 +266,7 @@ const StatsPage = () => {
         )}
       </div>
 
-      <GroupTabBar groupId={id} active="stats" />
+      <GroupTabBar groupId={id} active={null} />
     </div>
   )
 }

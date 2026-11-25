@@ -1,8 +1,9 @@
-// 群組內頁共用底部導覽列：首頁／帳目／新增（中間凸起）／結算／統計。樣式比照個人記帳的 LedgerTabBar。
-// active：目前頁對應的格子（'book' | 'add' | 'settle' | 'stats'），編輯頁等不屬於任何一格時傳 null。
+// 群組內頁共用底部導覽列：首頁／帳目／新增（中間凸起）／結算／頭像（帳號選單）。樣式比照個人記帳的 LedgerTabBar。
+// active：目前頁對應的格子（'book' | 'add' | 'settle'），編輯頁等不屬於任何一格時傳 null。
 import { useNavigate } from 'react-router-dom'
-import { House, BookOpen, Plus, Scale, ChartPie } from 'lucide-react'
+import { House, BookOpen, Plus, Scale } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
+import AvatarMenuTab from './AvatarMenu'
 
 const GroupTabBar = ({ groupId, active = null }) => {
   const navigate = useNavigate()
@@ -13,7 +14,6 @@ const GroupTabBar = ({ groupId, active = null }) => {
     { id: 'book', Icon: BookOpen, label: 'tab.groupBook', to: base },
     { id: 'add', Icon: Plus, label: 'tab.add', to: `${base}/add` },
     { id: 'settle', Icon: Scale, label: 'tab.settle', to: `${base}/settle` },
-    { id: 'stats', Icon: ChartPie, label: 'tab.stats', to: `${base}/stats` },
   ]
 
   return (
@@ -57,6 +57,7 @@ const GroupTabBar = ({ groupId, active = null }) => {
           </button>
         )
       })}
+      <AvatarMenuTab />
     </nav>
   )
 }
