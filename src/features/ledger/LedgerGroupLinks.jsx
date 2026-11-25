@@ -32,6 +32,15 @@ const LedgerGroupLinks = () => {
   const countOf = (groupId) => accounts.find((a) => a.id === snapshotAccountId(groupId))?.syncedCount ?? 0
   const unreadable = new Set(sync.unreadable.map((l) => l.id))
 
+  // 同步 0 筆時說明原因：群組裡有帳目但都沒有「我的分攤」，或群組裡根本還沒有帳目
+  const syncedText = (l) => {
+    const n = countOf(l.id)
+    const scanned = sync.scanned[l.id]
+    if (n === 0 && scanned > 0) return t('ledger.link.noShare', { n: scanned })
+    if (n === 0 && scanned === 0) return t('ledger.link.noEntries')
+    return t('ledger.link.synced', { n })
+  }
+
   const run = async (fn, errorKey = 'ledger.sync.failed') => {
     setBusy(true)
     try {
@@ -78,7 +87,7 @@ const LedgerGroupLinks = () => {
               <Switch on label={t('ledger.link.switch', { name: l.groupName })} onChange={() => turnOff(l)} disabled={busy} />
             </div>
             <div style={{ fontSize: 11.5, marginTop: 4, color: unreadable.has(l.id) ? 'var(--cs-danger)' : 'var(--cs-text-sub)' }}>
-              {unreadable.has(l.id) ? t('ledger.link.unreadable') : l.linkedAt ? t('ledger.link.synced', { n: countOf(l.id) }) : t('common.processing')}
+              {unreadable.has(l.id) ? t('ledger.link.unreadable') : syncedText(l)}
             </div>
           </div>
         ))}

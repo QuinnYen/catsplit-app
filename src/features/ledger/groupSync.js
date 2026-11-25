@@ -1,6 +1,6 @@
 // 個人帳本 ⇄ 分帳群組：連結、同步、取消連結、匯入到帳戶的 Firestore 讀寫。
 // 計算都在純函式（syncPlan.js、importPlan.js），這裡只負責讀資料、分批寫入與更新快照帳戶的筆數與淨額。
-import { collection, doc, getDoc, getDocs, query, where, writeBatch, increment, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, where, writeBatch, increment, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { fetchExchangeRate } from '../../config/currencies'
 import { accountsPath, transactionsPath, groupLinksPath, snapshotAccountId } from './paths.js'
@@ -12,6 +12,8 @@ import { SNAPSHOT_ACCOUNT_TYPE } from './constants.js'
 
 const withId = (d) => ({ id: d.id, ...d.data() })
 const GROUP_NAME_MAX = 50
+// 同步範圍是群組的全部帳目（含連結前的歷史）：連結時間記成最早的時間；舊版連結存的是「按下開關的那一刻」，同步時一律忽略
+const SYNC_FROM = () => Timestamp.fromMillis(0)
 
 const snapshotAccountData = (ledger, groupName, extra = {}) => ({
   name: groupName.slice(0, 20),
@@ -35,11 +37,11 @@ const loadGroupRows = async (uid, ledgerId, groupId) => {
 export const loadSnapshotRows = async (uid, ledgerId, groupId) =>
   (await loadGroupRows(uid, ledgerId, groupId)).filter(isSnapshotTx)
 
-/** 連結群組：寫入連結（linkedAt = 現在，不帶歷史）與快照帳戶。快照帳戶已存在就只補連結。 */
+/** 連結群組：寫入連結（linkedAt = 最早的時間，帶入群組全部歷史）與快照帳戶。快照帳戶已存在就只補連結。 */
 export const linkGroup = async (uid, ledger, group) => {
   const batch = writeBatch(db)
   const accountRef = doc(db, ...accountsPath(uid, ledger.id), snapshotAccountId(group.id))
-  batch.set(doc(db, ...groupLinksPath(uid, ledger.id), group.id), { linkedAt: serverTimestamp(), groupName: group.name.slice(0, GROUP_NAME_MAX) })
+  batch.set(doc(db, ...groupLinksPath(uid, ledger.id), group.id), { linkedAt: SYNC_FROM(), groupName: group.name.slice(0, GROUP_NAME_MAX) })
   if (!(await getDoc(accountRef)).exists()) {
     batch.set(accountRef, { ...snapshotAccountData(ledger, group.name), createdAt: serverTimestamp() })
   }
@@ -62,7 +64,7 @@ export const unlinkGroup = async (uid, ledgerId, groupId) => {
 
 /**
  * 同步一個群組。link：{ id, linkedAt, groupName }；snapshotAccount：帳戶清單裡目前的快照帳戶（可能不存在）。
- * 回傳 { status: 'ok' | 'unreadable', changed, ratePending }。
+ * 回傳 { status: 'ok' | 'unreadable', changed, ratePending, scanned }（scanned：讀到的群組帳目筆數，診斷用）。
  *  - unreadable：群組已刪除或本人已退出，不動現有快照帳目
  *  - ratePending：兩邊基準幣不同、又抓不到匯率，有些帳目這次沒同步
  */
@@ -81,7 +83,7 @@ export const syncGroup = async ({ uid, ledger, link, snapshotAccount }) => {
   let expenses
   let incomes
   try {
-    const q = (name) => getDocs(query(collection(db, 'groups', groupId, name), where('createdAt', '>=', link.linkedAt)))
+    const q = (name) => getDocs(query(collection(db, 'groups', groupId, name), where('createdAt', '>=', SYNC_FROM())))
     const [e, i] = await Promise.all([q('expenses'), q('incomes')])
     expenses = e.docs.map(withId)
     incomes = i.docs.map(withId)
@@ -92,7 +94,7 @@ export const syncGroup = async ({ uid, ledger, link, snapshotAccount }) => {
   const existing = await loadGroupRows(uid, ledger.id, groupId)
 
   const groupBaseCurrency = group.baseCurrency || ledger.baseCurrency
-  const input = { uid, groupId, linkedAt: link.linkedAt, groupBaseCurrency, ledgerBaseCurrency: ledger.baseCurrency, expenses, incomes, existing, now: serverTimestamp() }
+  const input = { uid, groupId, linkedAt: SYNC_FROM(), groupBaseCurrency, ledgerBaseCurrency: ledger.baseCurrency, expenses, incomes, existing, now: serverTimestamp() }
   let plan = planGroupSync(input)
   if (plan.pending.length > 0 && groupBaseCurrency !== ledger.baseCurrency) {
     try {
@@ -113,7 +115,7 @@ export const syncGroup = async ({ uid, ledger, link, snapshotAccount }) => {
     ...plan.deletes.map((id) => ({ ref: doc(db, ...transactionsPath(uid, ledger.id), id), del: true })),
   ]
   const changed = ops.length
-  if (changed === 0 && !accountStale && !linkStale) return { status: 'ok', changed, ratePending: plan.pending.length > 0 }
+  if (changed === 0 && !accountStale && !linkStale) return { status: 'ok', changed, ratePending: plan.pending.length > 0, scanned: expenses.length + incomes.length }
 
   for (const part of chunk(ops)) {
     const batch = writeBatch(db)
@@ -126,7 +128,7 @@ export const syncGroup = async ({ uid, ledger, link, snapshotAccount }) => {
   else batch.set(accountRef, { ...snapshotAccountData(ledger, name || groupId, counts), createdAt: serverTimestamp() })
   if (linkStale) batch.update(doc(db, ...groupLinksPath(uid, ledger.id), groupId), { groupName: name.slice(0, GROUP_NAME_MAX) })
   await batch.commit()
-  return { status: 'ok', changed, ratePending: plan.pending.length > 0 }
+  return { status: 'ok', changed, ratePending: plan.pending.length > 0, scanned: expenses.length + incomes.length }
 }
 
 /**
