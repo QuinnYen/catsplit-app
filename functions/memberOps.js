@@ -6,7 +6,10 @@ import {
   countMigrationImpact, isSelfTransferAfterMove,
 } from './merge.js'
 
+import { recomputeLedgerBalances, earlierTimestamp } from './ledgerOps.js'
+
 const ALREADY_EXISTS = 6
+const LEDGER_LINK_PATH = /^ledgers\/[^/]+\/groupLinks\/[^/]+$/
 
 /**
  * 把群組內所有 fromId 的紀錄改成 toUid。先改子集合、最後才改群組文件，
@@ -176,6 +179,7 @@ export const movePersonalData = async (db, keepUid, dropUid, resolutions = {}) =
   }
 
   const stats = { copied: 0, overwritten: 0, skipped: 0 }
+  const sharedLedgers = new Set() // 雙方都有的帳本，搬完後要重算帳戶餘額
   for (const { path, data } of items) {
     const targetRef = db.doc(`users/${keepUid}/${path}`)
     try {
@@ -183,7 +187,14 @@ export const movePersonalData = async (db, keepUid, dropUid, resolutions = {}) =
       stats.copied += 1
     } catch (e) {
       if (e.code !== ALREADY_EXISTS) throw e
-      if (resolutions[path] === 'drop') {
+      const ledgerMatch = path.match(/^ledgers\/([^/]+)$/)
+      if (ledgerMatch) sharedLedgers.add(ledgerMatch[1])
+      if (LEDGER_LINK_PATH.test(path)) {
+        // 同一個群組兩邊都連結：取較早的連結時間（只動 linkedAt，群組名稱留保留帳號的）
+        const target = await targetRef.get()
+        if (data.linkedAt && target.data().linkedAt) await targetRef.update({ linkedAt: earlierTimestamp(data.linkedAt, target.data().linkedAt) })
+        stats.skipped += 1
+      } else if (resolutions[path] === 'drop') {
         await targetRef.set(data)
         stats.overwritten += 1
       } else {
@@ -191,6 +202,9 @@ export const movePersonalData = async (db, keepUid, dropUid, resolutions = {}) =
       }
     }
   }
+
+  // 兩邊都有的帳本：固定 id 的預設帳本與現金帳戶衝突時，帳目搬過來但餘額沒相加，這裡依帳目重算
+  for (const ledgerId of sharedLedgers) await recomputeLedgerBalances(db, keepUid, ledgerId)
 
   // 全部複製成功才刪來源；子文件排在父文件後面，倒著刪就是先子後父
   for (const { ref } of [...items].reverse()) await ref.delete()

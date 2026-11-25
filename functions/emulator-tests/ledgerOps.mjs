@@ -90,3 +90,23 @@ test('deleteAllLedgers：刪除這個人所有帳本，別人的不動；沒有�
   assert.equal(await exists('users/u2/ledgers/l1'), true)
   assert.equal(await exists('users/u1/settings/profile'), true) // 只刪帳本，其他個人資料由別處處理
 })
+
+test('planBalanceRepair：依期初餘額與帳目重算，快照帳目與快照帳戶不算，轉帳兩邊都算', async () => {
+  const { planBalanceRepair } = await import('../ledgerOps.js')
+  const accounts = [
+    { id: 'cash', kind: 'normal', initialBalance: 100, balance: 100 },
+    { id: 'bank', kind: 'normal', initialBalance: 0, balance: 999 },
+    { id: 'snap_g', kind: 'group', initialBalance: 0, balance: 7 },
+  ]
+  const txs = [
+    { type: 'expense', accountId: 'cash', amount: 30 },
+    { type: 'expense', accountId: 'cash', amount: 10, accountAmount: 12 },
+    { type: 'transfer', accountId: 'cash', toAccountId: 'bank', amount: 20, toAmount: 25 },
+    { type: 'expense', accountId: 'snap_g', amount: 500, source: { type: 'group', groupId: 'g' } },
+    { type: 'income', accountId: 'bank', amount: 500, source: { type: 'group', groupId: 'g', detached: true } },
+  ]
+  assert.deepEqual(planBalanceRepair(accounts, txs), [
+    { id: 'cash', from: 100, to: 38 },
+    { id: 'bank', from: 999, to: 525 },
+  ])
+})

@@ -131,3 +131,18 @@ test('entryHeadline：標題 > 備註 > 分類', () => {
   assert.equal(entryHeadline({ note: '拉麵', category: 'food' }, label), '拉麵')
   assert.equal(entryHeadline({ category: 'food' }, label), 'L:food')
 })
+
+test('已匯入的群組帳目編輯：保留原本的 source 與標題', () => {
+  const tx = { type: 'expense', accountId: 'jcash', amount: 500, currency: 'JPY', category: 'food', title: '拉麵', date: '2026-11-20', source: { type: 'group', groupId: 'g1', kind: 'expense', itemId: 'e1', detached: true, edited: { note: true } } }
+  const d = draftFromTransaction(tx)
+  assert.deepEqual(d.keepSource, tx.source)
+  assert.equal(d.title, '拉麵')
+  const r = build({ amount: 600, keepSource: d.keepSource, title: d.title, baseRate: 1, category: 'food' })
+  assert.equal(r.ok, true)
+  assert.deepEqual(r.data.source, tx.source)
+  assert.equal(r.data.title, '拉麵')
+  // 手動帳目沒有這兩個欄位
+  const manual = build({ baseRate: 1 })
+  assert.deepEqual(manual.data.source, { type: 'manual' })
+  assert.ok(!('title' in manual.data))
+})

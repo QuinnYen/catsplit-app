@@ -288,3 +288,31 @@ test('不能合併訪客或相同的帳號', async () => {
   await assert.rejects(() => movePersonalData(db, 'p_abc', DROP), /guest_not_mergeable/)
   await assert.rejects(() => buildMergePreview(db, KEEP, KEEP), /same_uid/)
 })
+
+test('搬移個人資料：雙方都有預設帳本時重算現金帳戶餘額，群組連結取較早的連結時間', async () => {
+  const keep = KEEP, drop = DROP
+  const ledger = (uid, id) => db.doc(`users/${uid}/ledgers/${id}`)
+  const seedLedger = async (uid, id, balance, spent, txId) => {
+    await ledger(uid, id).set({ name: id, baseCurrency: 'TWD' })
+    await ledger(uid, id).collection('accounts').doc('cash').set({ name: '現金', type: 'cash', currency: 'TWD', initialBalance: 0, balance, kind: 'normal' })
+    await ledger(uid, id).collection('transactions').doc(txId).set({ type: 'expense', accountId: 'cash', amount: spent, currency: 'TWD', baseAmount: spent, exchangeRate: 1, date: '2026-11-01', source: { type: 'manual' } })
+  }
+  await seedLedger(keep, 'default', -100, 100, 'k1')
+  await seedLedger(drop, 'default', -50, 50, 'd1')
+  await seedLedger(drop, 'trip', -30, 30, 't1') // 只有被併入帳號有的帳本，原樣搬過去
+  await ledger(keep, 'default').collection('groupLinks').doc('g1').set({ groupName: 'KeepName', linkedAt: Timestamp.fromMillis(5000) })
+  await ledger(drop, 'default').collection('groupLinks').doc('g1').set({ groupName: 'DropName', linkedAt: Timestamp.fromMillis(1000) })
+  await ledger(drop, 'default').collection('groupLinks').doc('g2').set({ groupName: 'Only', linkedAt: Timestamp.fromMillis(2000) })
+
+  await movePersonalData(db, keep, drop, {})
+
+  const cash = (await ledger(keep, 'default').collection('accounts').doc('cash').get()).data()
+  assert.equal(cash.balance, -150) // 重算：兩邊的帳目都計入
+  assert.equal((await ledger(keep, 'default').collection('transactions').get()).size, 2)
+  assert.equal((await ledger(keep, 'trip').collection('accounts').doc('cash').get()).data().balance, -30)
+  const g1 = (await ledger(keep, 'default').collection('groupLinks').doc('g1').get()).data()
+  assert.equal(g1.linkedAt.toMillis(), 1000)
+  assert.equal(g1.groupName, 'KeepName')
+  assert.equal((await ledger(keep, 'default').collection('groupLinks').doc('g2').get()).data().linkedAt.toMillis(), 2000)
+  assert.deepEqual(await db.doc(`users/${drop}`).listCollections(), [])
+})

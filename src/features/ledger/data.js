@@ -137,3 +137,13 @@ export const repairBalances = async (uid, ledgerId, accounts) => {
   await batch.commit()
   return fixes
 }
+
+// 群組同步來的帳目只能改分類與備註；改過的欄位記在 source.edited，之後同步不再覆寫
+export const saveSnapshotEdits = (uid, ledgerId, tx, { category, note }) => {
+  const edited = { ...(tx.source.edited ?? {}) }
+  if (category !== (tx.category ?? '')) edited.category = true
+  if (note !== (tx.note ?? '')) edited.note = true
+  const batch = writeBatch(db)
+  batch.update(doc(db, ...transactionsPath(uid, ledgerId), tx.id), { category, note, source: { ...tx.source, ...(Object.keys(edited).length > 0 && { edited }) } })
+  return batch.commit()
+}

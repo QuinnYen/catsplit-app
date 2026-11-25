@@ -5,7 +5,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nProvider'
 import { LedgerContext } from './LedgerContext'
-import { useLedgers, useAccounts, useEnsureDefaultLedger, useActiveLedger } from './hooks'
+import { useLedgers, useAccounts, useGroupLinks, useEnsureDefaultLedger, useActiveLedger } from './hooks'
+import { useLedgerSync } from './useLedgerSync'
 import { todayStr } from './dates'
 import LedgerTabBar from './LedgerTabBar'
 import LedgerBookPage from './LedgerBookPage'
@@ -13,6 +14,8 @@ import LedgerSettingsPage from './LedgerSettingsPage'
 import LedgerAccountsPage from './LedgerAccountsPage'
 import LedgerStatsPage from './LedgerStatsPage'
 import LedgerEntrySheet from './LedgerEntrySheet'
+import SnapshotTxSheet from './SnapshotTxSheet'
+import { isSnapshotTx } from './source'
 
 const LedgerShell = () => {
   const { user } = useApp()
@@ -23,6 +26,7 @@ const LedgerShell = () => {
   useEnsureDefaultLedger(uid, ledgers, labels)
   const [ledger, setActiveLedger] = useActiveLedger(uid, ledgers)
   const accounts = useAccounts(uid, ledger?.id)
+  const links = useGroupLinks(uid, ledger?.id)
   const [selectedDate, setSelectedDate] = useState(() => todayStr())
   const [entry, setEntry] = useState(null) // null | { tx?: 編輯中的帳目 }
   const [toast, setToast] = useState('')
@@ -35,10 +39,13 @@ const LedgerShell = () => {
   }, [])
   useEffect(() => () => clearTimeout(toastTimer.current), [])
 
+  const onUnreadable = useCallback((list) => showToast(t('ledger.sync.unreadable', { name: list.map((l) => l.groupName).join(', ') })), [showToast, t])
+  const sync = useLedgerSync({ uid, ledger, links, accounts, onUnreadable })
+
   const openEntry = useCallback((tx) => setEntry({ tx }), [])
   const ctx = useMemo(
-    () => ({ uid, ledger, ledgers, accounts, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
-    [uid, ledger, ledgers, accounts, setActiveLedger, selectedDate, openEntry, showToast],
+    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
+    [uid, ledger, ledgers, accounts, links, sync, setActiveLedger, selectedDate, openEntry, showToast],
   )
 
   if (!ledger || !accounts) {
@@ -55,7 +62,9 @@ const LedgerShell = () => {
         <Route path="*" element={<Navigate to="/ledger" replace />} />
       </Routes>
       <LedgerTabBar onAdd={() => openEntry(undefined)} />
-      {entry && <LedgerEntrySheet key={`${ledger.id}/${entry.tx?.id ?? 'new'}`} editing={entry.tx} onClose={() => setEntry(null)} />}
+      {entry && (isSnapshotTx(entry.tx)
+        ? <SnapshotTxSheet key={`${ledger.id}/${entry.tx.id}`} tx={entry.tx} onClose={() => setEntry(null)} />
+        : <LedgerEntrySheet key={`${ledger.id}/${entry.tx?.id ?? 'new'}`} editing={entry.tx} onClose={() => setEntry(null)} />)}
       {toast && (
         <div role="status" style={{ position: 'fixed', left: 16, right: 16, top: 'calc(env(safe-area-inset-top, 0px) + 72px)', zIndex: 300, margin: '0 auto', maxWidth: 360, background: 'var(--cs-text)', color: 'var(--cs-bg)', borderRadius: 6, padding: '10px 14px', fontSize: 13, lineHeight: 1.5, textAlign: 'center' }}>
           {toast}

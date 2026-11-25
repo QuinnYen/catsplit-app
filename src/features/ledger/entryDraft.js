@@ -23,7 +23,7 @@ const findAccount = (accounts, id) => accounts.find((a) => a.id === id && a.kind
  *   kind: 'expense' | 'income' | 'transfer', amount: number（已由算式算好）, date: 'YYYY-MM-DD', note?: string,
  *   accountId, currency?（實際花的幣別，預設帳戶幣別）, category?,
  *   baseRate?（1 currency = ? 統計幣別）, accountRate?（1 currency = ? 帳戶幣別）, accountAmount?（實際扣款金額，覆寫估算）,
- *   toAccountId?, toAmount?, transferRate?（轉帳跨幣別：1 轉出幣別 = ? 轉入幣別）, sourceType?: 'manual' | 'fx'
+ *   toAccountId?, toAmount?, transferRate?（轉帳跨幣別：1 轉出幣別 = ? 轉入幣別）, sourceType?: 'manual' | 'fx', keepSource?（已匯入的群組帳目原本的 source）, title?（群組帳目的標題，編輯時保留）
  * }
  * @returns { ok: true, data } | { ok: false, reason }
  *   reason：amount、date、account、sameAccount、category、baseRate、accountRate、transferRate
@@ -37,7 +37,8 @@ export const buildTransactionData = ({ draft, accounts, ledgerBaseCurrency }) =>
   const amount = num(draft.amount)
   if (!amount) return { ok: false, reason: 'amount' }
   const note = String(draft.note ?? '').trim().slice(0, NOTE_MAX)
-  const source = { type: draft.sourceType === 'fx' ? 'fx' : 'manual' }
+  // 已匯入的群組帳目編輯時保留原本的來源（群組、項目、edited），其餘是手動或匯率頁帶入
+  const source = draft.keepSource ?? { type: draft.sourceType === 'fx' ? 'fx' : 'manual' }
 
   if (kind === 'transfer') {
     const to = findAccount(accounts, draft.toAccountId)
@@ -74,7 +75,7 @@ export const buildTransactionData = ({ draft, accounts, ledgerBaseCurrency }) =>
   }
   return {
     ok: true,
-    data: { type: kind, accountId: account.id, currency, ...amounts, category, ...(note && { note }), date: draft.date, source },
+    data: { type: kind, accountId: account.id, currency, ...amounts, category, ...(draft.title && { title: draft.title }), ...(note && { note }), date: draft.date, source },
   }
 }
 
@@ -91,6 +92,8 @@ export const draftFromTransaction = (tx) => ({
   accountAmount: tx.accountAmount != null ? String(tx.accountAmount) : '',
   toAmount: tx.toAmount != null ? String(tx.toAmount) : '',
   sourceType: tx.source?.type === 'fx' ? 'fx' : 'manual',
+  ...(tx.source?.type === 'group' && { keepSource: tx.source }),
+  ...(tx.title && { title: tx.title }),
 })
 
 // 帳目要顯示的標題：群組同步來的有 title；手動帳目沒有標題，先用備註，再用分類（呼叫端轉成目前語言）

@@ -64,7 +64,9 @@
 - 先評估讀取量：逐月讀帳目、Firestore 聚合查詢（`sum`）或每月摘要文件三選一；聚合若需要複合索引，要手動部署（CI 不會部署索引）。
 - 純計算已在 PR1，這一步主要是畫面。
 
-### PR5：設定與群組連結同步
+### PR5：設定與群組連結同步 — 已完成（2026-11-25）
+
+- **實作結果**：`groupSync.js`（`linkGroup`、`unlinkGroup`、`syncGroup`、`loadSnapshotRows`、`importGroupRows`）、`useLedgerSync`／`useGroupLinks`、設定頁 `LedgerGroupLinks` 與 `GroupImportDialog`、`SnapshotTxSheet`、`entryDraft` 保留已匯入帳目的 `source` 與標題；後端 `movePersonalData` 對雙方都有的帳本重算餘額、`groupLinks` 取較早的 `linkedAt`（`functions/emulator-tests` 新增 2 個測試）。隱私權政策補寫群組分攤的複本。快照帳戶只有「同步中」有，`syncedCount`、`syncedNet` 在同步時一併更新。
 
 先決條件：PR1 的純函式測試通過。
 

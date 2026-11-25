@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { ledgersPath, accountsPath, transactionsPath } from './paths.js'
+import { ledgersPath, accountsPath, transactionsPath, groupLinksPath } from './paths.js'
 import { monthDateBounds } from './summary.js'
 import { ensureDefaultLedger } from './data.js'
 import { pickActiveLedgerId, readActiveLedgerId, writeActiveLedgerId } from './prefs.js'
@@ -33,6 +33,22 @@ export const useAccounts = (uid, ledgerId) => {
       setState({ key, list: snap.docs.map(withId).sort((a, b) => createdMs(a) - createdMs(b)) })
     }, (err) => {
       console.error('Failed to load accounts', err)
+      setState({ key, list: [] })
+    })
+  }, [uid, ledgerId, key])
+  return state.key === key ? state.list : null
+}
+
+// 帳本連結的群組 [{ id, linkedAt, groupName }]；linkedAt 剛寫入時還是 null（伺服器時間待確認）
+export const useGroupLinks = (uid, ledgerId) => {
+  const key = `${uid}/${ledgerId}`
+  const [state, setState] = useState({ key: null, list: null })
+  useEffect(() => {
+    if (!ledgerId) return
+    return onSnapshot(collection(db, ...groupLinksPath(uid, ledgerId)), (snap) => {
+      setState({ key, list: snap.docs.map(withId).sort((a, b) => (a.linkedAt?.toMillis?.() ?? Infinity) - (b.linkedAt?.toMillis?.() ?? Infinity)) })
+    }, (err) => {
+      console.error('Failed to load group links', err)
       setState({ key, list: [] })
     })
   }, [uid, ledgerId, key])

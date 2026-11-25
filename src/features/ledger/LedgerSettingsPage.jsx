@@ -1,8 +1,9 @@
-// /ledger/settings — 帳本設定（第一版）：目前帳本資訊與刪除。連結分帳群組與分類管理之後再做。
+// /ledger/settings — 帳本設定：目前帳本資訊、連結分帳群組（同步與匯入）、刪除帳本。分類管理之後再做。
 import { useState } from 'react'
 import { useI18n } from '../../i18n/I18nProvider'
 import { deleteLedger } from '../../utils/ledgerApi'
 import { useLedger } from './LedgerContext'
+import LedgerGroupLinks from './LedgerGroupLinks'
 
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
 const rowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 0', fontSize: 14, color: 'var(--cs-text)' }
@@ -48,7 +49,7 @@ const LedgerSettingsPage = () => {
           </div>
         </div>
 
-        <div style={{ ...card, fontSize: 13, color: 'var(--cs-text-mute)' }}>{t('ledger.settings.groupsSoon')}</div>
+        <LedgerGroupLinks />
 
         <div style={card}>
           <button

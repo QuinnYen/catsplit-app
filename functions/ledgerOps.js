@@ -16,3 +16,45 @@ export const deleteLedgerTree = async (db, uid, ledgerId) => {
 export const deleteAllLedgers = async (db, uid) => {
   await db.recursiveDelete(db.collection(`users/${uid}/ledgers`))
 }
+
+// ---------- 帳號合併後的修復 ----------
+// 兩個帳號都開過帳本時，固定 id 的預設帳本與現金帳戶會衝突、只保留一份，帳目搬過來但 balance 不會相加。
+// 合併時對雙方都有的帳本重算一般帳戶的餘額；邏輯與前端 src/features/ledger/balance.js 一致（functions 不能 import src/）。
+
+const roundMoney = (v) => Math.round(v * 1e6) / 1e6
+
+// 快照帳目（群組同步來、尚未匯入）不影響餘額
+const isSnapshotTx = (tx) => tx?.source?.type === 'group' && tx.source.detached !== true
+
+const txDeltas = (tx) => {
+  if (isSnapshotTx(tx)) return {}
+  if (tx.type === 'expense') return { [tx.accountId]: -(tx.accountAmount ?? tx.amount) }
+  if (tx.type === 'income') return { [tx.accountId]: tx.accountAmount ?? tx.amount }
+  if (tx.type === 'transfer') {
+    return { [tx.accountId]: -tx.amount, [tx.toAccountId]: tx.toAmount }
+  }
+  return {}
+}
+
+// accounts：[{ id, ...欄位 }]，transactions：[帳目]。回傳餘額與帳目加總不一致的一般帳戶 [{ id, from, to }]
+export const planBalanceRepair = (accounts, transactions) => {
+  const sums = {}
+  for (const tx of transactions) {
+    for (const [id, d] of Object.entries(txDeltas(tx))) sums[id] = roundMoney((sums[id] ?? 0) + d)
+  }
+  return accounts
+    .filter((a) => a.kind !== 'group')
+    .map((a) => ({ id: a.id, from: a.balance ?? 0, to: roundMoney((a.initialBalance ?? 0) + (sums[a.id] ?? 0)) }))
+    .filter((r) => r.from !== r.to)
+}
+
+export const recomputeLedgerBalances = async (db, uid, ledgerId) => {
+  const base = `users/${uid}/ledgers/${ledgerId}`
+  const [acc, txs] = await Promise.all([db.collection(`${base}/accounts`).get(), db.collection(`${base}/transactions`).get()])
+  const fixes = planBalanceRepair(acc.docs.map((d) => ({ id: d.id, ...d.data() })), txs.docs.map((d) => d.data()))
+  for (const f of fixes) await db.doc(`${base}/accounts/${f.id}`).update({ balance: f.to })
+  return fixes
+}
+
+// 兩邊都連結同一個群組時取較早的 linkedAt（Timestamp 或有 toMillis 的物件），讓「連結之後」的範圍涵蓋雙方
+export const earlierTimestamp = (a, b) => (a.toMillis() <= b.toMillis() ? a : b)
