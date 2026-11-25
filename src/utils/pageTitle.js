@@ -16,7 +16,7 @@ const ROUTES = [
   [/^\/savings\/[^/]+\/edit$/, 'savings.form.editTitle'],
   [/^\/savings\/[^/]+$/, 'savings.title'],
   [/^\/group\/[^/]+$/, 'tab.group'],
-  [/^\/group\/[^/]+\/add$/, 'tab.add'],
+  [/^\/group\/[^/]+\/add$/, 'tab.addTitle'],
   [/^\/group\/[^/]+\/settle$/, 'settle.title'],
   [/^\/group\/[^/]+\/stats$/, 'stats.title'],
   [/^\/group\/[^/]+\/transfer$/, 'transfer.title'],
