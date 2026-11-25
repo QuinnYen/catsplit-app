@@ -15,6 +15,7 @@ import { pageTitleKey } from './utils/pageTitle'
 // 首頁與群組頁是主要落地頁（含邀請連結），直接載入；其餘頁面用到才下載
 import HomePage from './pages/HomePage'
 import PortalPage from './pages/PortalPage'
+import { getStartPage, startPath, takeLaunch } from './utils/startPage'
 import GroupPage from './pages/GroupPage'
 const CreateGroupPage = lazy(() => import('./pages/CreateGroupPage'))
 const AddExpensePage = lazy(() => import('./pages/AddExpensePage'))
@@ -142,6 +143,19 @@ const OfficialAccountPrompt = () => {
   return null
 }
 
+// 開 App 後第一次進入 /（這個分頁／webview 第一次載入）時，依「預設開啟頁面」導向；從群組連結等其他網址進來不導向，之後回 / 也不再導向
+const StartRedirect = () => {
+  const { user } = useApp()
+  const location = useLocation()
+  const [target] = useState(() => {
+    const first = takeLaunch()
+    if (!first || location.pathname !== '/' || location.search.includes('liff.')) return null
+    const path = startPath(getStartPage(), !!user.guest)
+    return path === '/' ? null : path
+  })
+  return target ? <Navigate to={target} replace /> : null
+}
+
 const ProtectedRoutes = () => {
   const { user, loading, loginWithLine, loginWithGoogle, switchGuestGroup, guestNames, needsNickname, nicknameLoading } = useApp()
   const location = useLocation()
@@ -166,6 +180,7 @@ const ProtectedRoutes = () => {
     <>
     {!user.guest && <ProfileSync />}
     {!user.guest && <OfficialAccountPrompt />}
+    <StartRedirect />
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/home" element={<PortalPage />} />

@@ -1025,6 +1025,7 @@ export default {
   'savings.deleteFailed': 'Could not delete. Please try again later.',
   'settings.tab.appearance': 'Appearance',
   'settings.tab.account': 'Account',
+  'settings.startPage': 'Open the app on',
   'settings.theme': 'Appearance',
   'settings.theme.system': 'Follow system',
   'settings.theme.light': 'Light',

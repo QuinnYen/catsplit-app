@@ -1018,6 +1018,7 @@ export default {
   'savings.deleteFailed': '刪除失敗，請稍後再試',
   'settings.tab.appearance': '外觀',
   'settings.tab.account': '帳號',
+  'settings.startPage': '預設開啟頁面',
   'settings.theme': '外觀',
   'settings.theme.system': '跟隨系統',
   'settings.theme.light': '淺色',

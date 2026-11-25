@@ -13,6 +13,7 @@ import TabBar from '../components/TabBar'
 import LoginMethodsCard from '../components/LoginMethodsCard'
 import { deleteMyData, planDeleteMyData } from '../utils/deleteMyData'
 import { isBalanceSettled } from '../utils/balanceStatus'
+import { START_PAGES, getStartPage, setStartPage, startPath } from '../utils/startPage'
 
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
 
@@ -29,6 +30,9 @@ const SettingsPage = () => {
   const [params] = useSearchParams()
   const [groups, setGroups] = useState(null)
   const [deletingData, setDeletingData] = useState(false)
+  const [startPageRaw, setStartPageState] = useState(getStartPage)
+  // 訪客選不到記帳與目標：顯示實際會開的頁面
+  const startPage = START_PAGES.find(p => p.path === startPath(startPageRaw, !!user?.guest))?.id ?? startPageRaw
   const canDelete = !!user && !user.guest
   // 綁定、合併、連結登入完成後會帶 ?bound= / ?merged= / ?link= 回到設定頁，結果顯示在登入方式，所以直接開帳號分頁
   const [tab, setTab] = useState(() => (params.has('bound') || params.has('merged') || params.has('link') ? 'account' : 'appearance'))
@@ -176,6 +180,18 @@ const SettingsPage = () => {
               <option value="system">{t('settings.theme.system')}</option>
               <option value="light">{t('settings.theme.light')}</option>
               <option value="dark">{t('settings.theme.dark')}</option>
+            </select>
+        </div>
+
+        {/* 預設開啟頁面：開 App 時先到哪個功能，只存在這台裝置；訪客沒有記帳與目標 */}
+        <div style={card}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--cs-text-sub)', marginBottom: 8 }}>{t('settings.startPage')}</div>
+            <select
+              value={startPage}
+              onChange={e => { setStartPage(e.target.value); setStartPageState(e.target.value) }}
+              style={{ width: '100%', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', outline: 'none', background: 'var(--cs-bg)' }}
+            >
+              {START_PAGES.map(p => <option key={p.id} value={p.id} disabled={!!user?.guest && !!p.needsAccount}>{t(p.label)}</option>)}
             </select>
         </div>
         </div>

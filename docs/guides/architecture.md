@@ -34,13 +34,19 @@ scripts/storage/            # bucket CORS 與生命週期設定（需手動套�
 - **Backend** — Firebase Cloud Functions（`asia-east1`）
 - **Hosting** — Firebase Hosting
 
+## 導覽與預設開啟頁面
+
+- 入口頁 `/home`（`PortalPage`）有四個功能大按鈕：記帳 `/ledger`、分帳 `/`、目標 `/savings`、匯率 `/fx`。每個功能有自己的底部列，「首頁」一律回 `/home`，最右一格是頭像（帳號選單：設定、官方帳號、登出）。
+- 設定頁「預設開啟頁面」（首頁／記帳／分帳／目標／匯率，預設記帳）存在這台裝置的 localStorage（`cs-start-page`，`src/utils/startPage.js`）。
+- 導向規則（`App.jsx` 的 `StartRedirect`）：這個分頁／webview 第一次載入且網址是 `/` 時才依偏好導向；用 sessionStorage（`cs-launched`）記下，所以同分頁重新整理或之後點回 `/` 不會再被導走；從群組連結等其他網址進來也不導向，網址帶 `liff.` 參數時略過。訪客的記帳與目標退回分帳列表。
+
 ## 網頁版版型
 
 全站是 inline style，桌機置中的規則集中在 `src/index.css` 的單一 `@media (min-width: 481px)`，手機（≤480）不命中，版面完全不變。
 
 - 頁面頂部與主體分別加 `cs-header`、`cs-body`、`cs-tabbar` class；規則用 `!important` 蓋過 inline style。
 - header 與背景撐滿視窗；內容（`cs-body`）最寬 720 置中、單欄；TabBar 白底撐滿，按鈕群組置中 480。
-- 數字要同步的地方：720（`.cs-header`、`.cs-body`、首頁頭像氣泡的 `left`）、480（`.cs-tabbar`、`CalculatorModal`、`InviteModal`、`GroupPage` 詳情面板）。
+- 數字要同步的地方：720（`.cs-header`、`.cs-body`、`AvatarMenu` 頭像選單的 `right`）、480（`.cs-tabbar`、`CalculatorModal`、`InviteModal`、`GroupPage` 詳情面板）。
 - 不要在 `#root` 或 `.cs-body` 加 `overflow`、`transform`、`contain`、`filter`，會破壞 `fixed` 的底部導覽列與浮層。
 - 新頁面照既有頁面加上 `cs-header`／`cs-body` 即可。
 
