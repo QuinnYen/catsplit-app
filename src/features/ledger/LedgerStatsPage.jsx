@@ -10,7 +10,7 @@ import DonutChart from '../../components/DonutChart'
 import MonthPicker from '../../components/MonthPicker'
 import { useLedger } from './LedgerContext'
 import { useMonthTransactions, useMonthsOnce } from './hooks'
-import { monthKeyOf, shiftMonthDate } from './dates'
+import { todayStr, monthKeyOf, shiftMonthDate, dateForMonth, shortDate, periodSettings, periodBounds, periodLastDay } from './dates'
 import { summarizeEntries, sumByCategory, lastMonths, trendByMonth } from './summary'
 
 const TREND_MONTHS = 6
@@ -23,14 +23,15 @@ const LedgerStatsPage = () => {
   const { t, fmt } = useI18n()
   const navigate = useNavigate()
   const base = ledger.baseCurrency
-  const monthKey = monthKeyOf(selectedDate)
+  const { monthStartDay } = periodSettings(ledger)
+  const monthKey = monthKeyOf(selectedDate, monthStartDay)
   const [year, month] = monthKey.split('-').map(Number)
   const [type, setType] = useState('expense')
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  const live = useMonthTransactions(uid, ledger.id, monthKey)
+  const live = useMonthTransactions(uid, ledger.id, monthKey, monthStartDay)
   const keys = lastMonths(monthKey, TREND_MONTHS)
-  const loaded = useMonthsOnce(uid, ledger.id, keys, monthKey)
+  const loaded = useMonthsOnce(uid, ledger.id, keys, monthKey, monthStartDay)
   const loading = live === null || keys.some((k) => k !== monthKey && !loaded[k])
 
   const totals = summarizeEntries(live ?? [])
@@ -49,15 +50,15 @@ const LedgerStatsPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <button onClick={() => navigate('/ledger')} aria-label={t('ledger.tab.book')} style={{ ...navBtn, fontSize: 26, padding: 0, width: 32 }}>‹</button>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, -1))} aria-label={t('month.prev')} style={navBtn}>‹</button>
+            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, -1, todayStr(), monthStartDay))} aria-label={t('month.prev')} style={navBtn}>‹</button>
             <button onClick={() => setPickerOpen(true)} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 15, fontWeight: 600, padding: '4px 6px', cursor: 'pointer' }}>
               {t('ledger.month.label', { year, month })} ▾
             </button>
-            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, 1))} aria-label={t('month.next')} style={navBtn}>›</button>
+            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, 1, todayStr(), monthStartDay))} aria-label={t('month.next')} style={navBtn}>›</button>
           </div>
           <span style={{ width: 32 }} />
         </div>
-        <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.75, marginTop: 6 }}>{ledger.name} · {t('ledger.baseCaption', { currency: base })}</div>
+        <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.75, marginTop: 6 }}>{monthStartDay !== 1 && `${shortDate(periodBounds(monthKey, monthStartDay).start)}–${shortDate(periodLastDay(monthKey, monthStartDay))} · `}{ledger.name} · {t('ledger.baseCaption', { currency: base })}</div>
       </div>
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -124,7 +125,7 @@ const LedgerStatsPage = () => {
         </div>
       </div>
 
-      {pickerOpen && <MonthPicker value={monthKey} onPick={(key) => { setPickerOpen(false); setSelectedDate(`${key}-01`) }} onClose={() => setPickerOpen(false)} />}
+      {pickerOpen && <MonthPicker value={monthKey} onPick={(key) => { setPickerOpen(false); setSelectedDate(dateForMonth(key, todayStr(), monthStartDay)) }} onClose={() => setPickerOpen(false)} />}
     </div>
   )
 }

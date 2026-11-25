@@ -115,6 +115,23 @@ test('帳本驗證：名稱、統計幣別、未知欄位', async () => {
   await assertSucceeds(w({ icon: 'plane', color: 'blue', archived: false }))
 })
 
+test('帳本期間設定：月開始日 0–28（0 是月末）、週開始日 0／1／6，必須是整數', async () => {
+  const db = dbAs('u1')
+  const w = (extra) => setDoc(ledgerRef(db, 'u1'), ledger(extra))
+  const ok = (id, extra) => setDoc(ledgerRef(db, 'u1', id), ledger(extra))
+  await assertSucceeds(ok('l1', { monthStartDay: 5, weekStartDay: 1 }))
+  await assertSucceeds(ok('l2', { monthStartDay: 0, weekStartDay: 6 }))
+  await assertSucceeds(ok('l3', { monthStartDay: 28, weekStartDay: 0 }))
+  await assertFails(w({ monthStartDay: 29 }))
+  await assertFails(w({ monthStartDay: -1 }))
+  await assertFails(w({ monthStartDay: 5.5 }))
+  await assertFails(w({ monthStartDay: '5' }))
+  await assertFails(w({ weekStartDay: 2 }))
+  await assertFails(w({ weekStartDay: '1' }))
+  await assertSucceeds(updateDoc(ledgerRef(db, 'u1', 'l1'), { monthStartDay: 10 }))
+  await assertFails(updateDoc(ledgerRef(db, 'u1', 'l1'), { weekStartDay: 7 }))
+})
+
 test('帳本統計幣別與建立時間建立後不可改', async () => {
   const db = dbAs('u1')
   await assertSucceeds(setDoc(ledgerRef(db, 'u1'), ledger()))

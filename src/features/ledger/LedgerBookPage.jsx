@@ -10,7 +10,7 @@ import LedgerMenu from './LedgerMenu'
 import { useMonthTransactions } from './hooks'
 import { monthGrid, summarizeEntries, datesWithEntries, entriesOfDate } from './summary'
 import { entryHeadline } from './entryDraft'
-import { todayStr, monthKeyOf, weekdayOf, shiftMonthDate, dateForMonth, shortDate } from './dates'
+import { todayStr, monthKeyOf, weekdayOf, shiftMonthDate, dateForMonth, shortDate, periodSettings, periodBounds, periodLastDay } from './dates'
 
 const circleBtn = { width: 36, height: 36, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.65)', background: 'none', color: 'var(--cs-rc-head-text)', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0 }
 
@@ -21,8 +21,9 @@ const LedgerBookPage = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  const monthKey = monthKeyOf(selectedDate)
-  const txs = useMonthTransactions(uid, ledger.id, monthKey)
+  const { monthStartDay, weekStartDay } = periodSettings(ledger)
+  const monthKey = monthKeyOf(selectedDate, monthStartDay)
+  const txs = useMonthTransactions(uid, ledger.id, monthKey, monthStartDay)
   const list = useMemo(() => txs ?? [], [txs])
   const base = ledger.baseCurrency
   const today = todayStr()
@@ -30,7 +31,7 @@ const LedgerBookPage = () => {
 
   const totals = useMemo(() => summarizeEntries(list), [list])
   const marked = useMemo(() => datesWithEntries(list), [list])
-  const grid = useMemo(() => monthGrid(monthKey), [monthKey])
+  const grid = useMemo(() => monthGrid(monthKey, monthStartDay, weekStartDay), [monthKey, monthStartDay, weekStartDay])
   const day = useMemo(() => entriesOfDate(list, selectedDate), [list, selectedDate])
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
   const label = (c) => categoryLabel(c, t)
@@ -87,15 +88,15 @@ const LedgerBookPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <button onClick={() => setMenuOpen(true)} aria-label={t('ledger.switch')} aria-haspopup="dialog" style={circleBtn}><Layers size={18} /></button>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, -1))} aria-label={t('month.prev')} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 22, lineHeight: 1, padding: '0 10px', cursor: 'pointer' }}>‹</button>
+            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, -1, todayStr(), monthStartDay))} aria-label={t('month.prev')} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 22, lineHeight: 1, padding: '0 10px', cursor: 'pointer' }}>‹</button>
             <button onClick={() => setPickerOpen(true)} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 15, fontWeight: 600, padding: '4px 6px', cursor: 'pointer' }}>
               {t('ledger.month.label', { year, month })} ▾
             </button>
-            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, 1))} aria-label={t('month.next')} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 22, lineHeight: 1, padding: '0 10px', cursor: 'pointer' }}>›</button>
+            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, 1, todayStr(), monthStartDay))} aria-label={t('month.next')} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 22, lineHeight: 1, padding: '0 10px', cursor: 'pointer' }}>›</button>
           </div>
           <button onClick={() => navigate('/ledger/stats')} aria-label={t('ledger.chart')} style={circleBtn}><BarChart3 size={18} /></button>
         </div>
-        <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.75, marginTop: 6 }}>{ledger.name} · {t('ledger.baseCaption', { currency: base })}</div>
+        <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.75, marginTop: 6 }}>{monthStartDay !== 1 && `${shortDate(periodBounds(monthKey, monthStartDay).start)}–${shortDate(periodLastDay(monthKey, monthStartDay))} · `}{ledger.name} · {t('ledger.baseCaption', { currency: base })}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', marginTop: 10, fontSize: 12.5, fontVariantNumeric: 'tabular-nums' }}>
           {stat(t('kind.expense'), totals.expense)}
           {stat(t('kind.income'), totals.income)}
@@ -105,7 +106,7 @@ const LedgerBookPage = () => {
 
       <div className="cs-body" style={{ padding: '8px 10px 0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-          {[0, 1, 2, 3, 4, 5, 6].map((i) => <span key={i} style={{ textAlign: 'center', fontSize: 11, color: 'var(--cs-text-mute)', padding: '2px 0 4px' }}>{t(`date.weekday.${i}`)}</span>)}
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => <span key={i} style={{ textAlign: 'center', fontSize: 11, color: 'var(--cs-text-mute)', padding: '2px 0 4px' }}>{t(`date.weekday.${(weekStartDay + i) % 7}`)}</span>)}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
           {Array.from({ length: grid.leading }, (_, i) => <span key={`b${i}`} />)}
@@ -117,7 +118,7 @@ const LedgerBookPage = () => {
                 style={{ border: 'none', background: 'none', padding: '3px 0 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, minHeight: 40, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
               >
                 <span style={{ width: 26, height: 26, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 13, fontVariantNumeric: 'tabular-nums', background: selected ? 'var(--cs-rc-stamp)' : 'transparent', color: selected ? 'var(--cs-rc-stamp-text)' : 'var(--cs-text)', fontWeight: selected ? 700 : 400, boxShadow: date === today && !selected ? 'inset 0 0 0 1.5px var(--cs-rc-stamp)' : 'none' }}>
-                  {Number(date.slice(8))}
+                  {date.endsWith('-01') && date !== grid.dates[0] ? shortDate(date) : Number(date.slice(8))}
                 </span>
                 <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: '50%', marginTop: 1, background: marked.has(date) ? 'var(--cs-rc-stamp)' : 'transparent' }} />
               </button>
@@ -147,7 +148,7 @@ const LedgerBookPage = () => {
       {pickerOpen && (
         <MonthPicker
           value={monthKey}
-          onPick={(key) => { setPickerOpen(false); setSelectedDate(dateForMonth(key)) }}
+          onPick={(key) => { setPickerOpen(false); setSelectedDate(dateForMonth(key, todayStr(), monthStartDay)) }}
           onClose={() => setPickerOpen(false)}
         />
       )}

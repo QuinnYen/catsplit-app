@@ -1,0 +1,52 @@
+// 設定頁「進階」分頁：週開始日與月開始日（帳本層級）。只影響月曆、總計與圖表怎麼分月，資料不變；選了立刻儲存。
+import { useState } from 'react'
+import { useI18n } from '../../i18n/I18nProvider'
+import { useLedger } from './LedgerContext'
+import { updateLedgerPeriod } from './data'
+import { periodSettings } from './dates'
+
+const WEEK_STARTS = [0, 1, 6]
+const MONTH_STARTS = [...Array.from({ length: 28 }, (_, i) => i + 1), 0] // 0 = 月末
+const selectStyle = { width: '100%', marginTop: 6, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', background: 'var(--cs-bg)', outline: 'none', boxSizing: 'border-box' }
+
+const LedgerAdvancedSettings = () => {
+  const { uid, ledger, showToast } = useLedger()
+  const { t } = useI18n()
+  const { monthStartDay, weekStartDay } = periodSettings(ledger)
+  const [busy, setBusy] = useState(false)
+
+  const save = async (patch) => {
+    setBusy(true)
+    try {
+      await updateLedgerPeriod(uid, ledger.id, patch)
+      showToast(t('ledger.edit.saved'))
+    } catch (e) {
+      console.error('Failed to save ledger period settings', e)
+      showToast(t('ledger.edit.failed'))
+    }
+    setBusy(false)
+  }
+
+  return (
+    <div style={{ background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <label style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>
+        {t('ledger.adv.weekStart')}
+        <select value={weekStartDay} disabled={busy} onChange={(e) => save({ weekStartDay: Number(e.target.value) })} style={selectStyle}>
+          {WEEK_STARTS.map((d) => <option key={d} value={d}>{t(`ledger.adv.week.${d}`)}</option>)}
+        </select>
+      </label>
+      <label style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>
+        {t('ledger.adv.monthStart')}
+        <select value={monthStartDay} disabled={busy} onChange={(e) => save({ monthStartDay: Number(e.target.value) })} style={selectStyle}>
+          {MONTH_STARTS.map((d) => <option key={d} value={d}>{d === 0 ? t('ledger.adv.monthEnd') : t('ledger.adv.day', { n: d })}</option>)}
+        </select>
+      </label>
+      <div style={{ fontSize: 11.5, color: 'var(--cs-text-mute)', lineHeight: 1.7 }}>
+        <div>{t('ledger.adv.hint')}</div>
+        <div>{t('ledger.adv.example')}</div>
+      </div>
+    </div>
+  )
+}
+
+export default LedgerAdvancedSettings

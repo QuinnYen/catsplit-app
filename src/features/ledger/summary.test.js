@@ -89,3 +89,32 @@ test('trendByMonth：每月支出與收入，轉帳不計，沒載入的月份�
     { key: '2026-10', expense: 300, income: 1000, balance: 700 },
   ])
 })
+
+test('monthDateBounds：帶起始日時是期間範圍', () => {
+  assert.deepEqual(monthDateBounds('2026-11', 5), { start: '2026-11-05', end: '2026-12-05' })
+  assert.deepEqual(monthDateBounds('2026-12', 0), { start: '2026-12-31', end: '2027-01-31' })
+})
+
+test('monthGrid：期間跨月的連續日期，依週開始日補空格', () => {
+  const g = monthGrid('2026-11', 5) // 11/5（週四）到 12/4
+  assert.equal(g.dates[0], '2026-11-05')
+  assert.equal(g.dates.at(-1), '2026-12-04')
+  assert.equal(g.dates.length, 30)
+  assert.equal(g.leading, 4) // 週日開頭：週四前補 4 格
+  assert.equal(monthGrid('2026-11', 5, 1).leading, 3) // 週一開頭
+  assert.equal(monthGrid('2026-11', 5, 6).leading, 5) // 週六開頭
+  assert.equal(monthGrid('2026-11').leading, 0) // 預設與原行為一致：11/1 是週日
+  assert.equal(monthGrid('2026-11', 1, 1).leading, 6)
+})
+
+test('期間內的帳目歸屬：按起始日分月加總', () => {
+  const txs = [
+    { type: 'expense', baseAmount: 100, date: '2026-11-04' },
+    { type: 'expense', baseAmount: 200, date: '2026-11-05' },
+    { type: 'expense', baseAmount: 300, date: '2026-12-04' },
+    { type: 'expense', baseAmount: 400, date: '2026-12-05' },
+  ]
+  const { start, end } = monthDateBounds('2026-11', 5)
+  const inPeriod = txs.filter((t) => t.date >= start && t.date < end)
+  assert.equal(summarizeEntries(inPeriod).expense, 500)
+})

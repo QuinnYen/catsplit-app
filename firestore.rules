@@ -138,13 +138,16 @@ service cloud.firestore {
     }
 
     function validLedger(d) {
-      return d.keys().hasOnly(['name', 'baseCurrency', 'icon', 'color', 'archived', 'createdAt'])
+      return d.keys().hasOnly(['name', 'baseCurrency', 'icon', 'color', 'archived', 'monthStartDay', 'weekStartDay', 'createdAt'])
         && d.keys().hasAll(['name', 'baseCurrency', 'createdAt'])
         && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
         && validCurrencyCode(d.baseCurrency)
         && (!('icon' in d) || (d.icon is string && d.icon.size() <= 40))
         && (!('color' in d) || (d.color is string && d.color.size() <= 20))
         && (!('archived' in d) || d.archived is bool)
+        // 月開始日：1–28 是每月幾日，0 是月末；週開始日：0 週日、1 週一、6 週六（見 src/features/ledger/dates.js）
+        && (!('monthStartDay' in d) || (d.monthStartDay is int && d.monthStartDay >= 0 && d.monthStartDay <= 28))
+        && (!('weekStartDay' in d) || (d.weekStartDay is int && d.weekStartDay in [0, 1, 6]))
         && d.createdAt is timestamp;
     }
 

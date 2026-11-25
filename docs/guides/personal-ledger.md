@@ -25,7 +25,8 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 | `LedgerEntrySheet.jsx`、`NumberPad.jsx` | 記帳面板與常駐數字鍵盤 |
 | `LedgerAccountsPage.jsx`、`AccountSheet.jsx`、`netWorth.js` | 帳戶頁（淨資產、清單、封存區、重新計算餘額）、新增與編輯帳戶、淨資產計算（純函式） |
 | `LedgerStatsPage.jsx` | 圖表：分類占比（支出／收入）、近 6 個月趨勢，月份可切換 |
-| `LedgerSettingsPage.jsx` | 帳本設定，分頁呈現（網址 `?tab=`）；目前有「分帳」「資料」，之後規劃基本、進階；只有一個分頁時不顯示分頁列 |
+| `LedgerSettingsPage.jsx` | 帳本設定，分頁呈現（網址 `?tab=`）；目前有「進階」「分帳」「資料」，之後規劃「基本」；只有一個分頁時不顯示分頁列 |
+| `LedgerAdvancedSettings.jsx` | 「進階」分頁：週開始日、月開始日（帳本層級，選了立刻儲存） |
 | `LedgerDataSettings.jsx`、`csvExport.js` | 「資料」分頁：匯出 CSV（整個帳本）與 CSV 組裝（純函式） |
 | `data.js`、`hooks.js` | Firestore 讀寫與即時訂閱（畫面不直接組路徑或寫 batch） |
 | `entryDraft.js`、`money.js`、`balance.js`、`summary.js` | 草稿轉帳目、換算、餘額增量、月彙總（純函式，有單元測試） |
@@ -72,6 +73,16 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 - **關閉**：確認後刪除快照帳戶、尚未匯入的快照帳目與連結（改過的分類備註一併消失）；已匯入的一般帳目保留。
 - **匯入到帳戶**：選群組與一般帳戶，預覽筆數與餘額變動；帳目與目標帳戶幣別不同時顯示匯率（自動帶入、可修改，抓不到要手動輸入），只新增 `accountAmount`／`accountRate`，統計金額不變。帳目以固定 id 就地改成 `detached` 一般帳目（可編輯、計入餘額、不再同步，編輯時保留 `source` 與標題），分批寫入並以 `increment` 更新餘額與快照帳戶；完成後詢問是否停止同步。
 - **無法讀取的群組**（已退出或已刪除）：不動既有快照帳目，顯示提示，使用者可匯入保留或關閉同步。
+
+## 期間（月開始日、週開始日）
+
+設定頁「進階」分頁，存在帳本文件的 `monthStartDay`、`weekStartDay`（選填，沒填是日曆月份、週日開頭，既有帳本不受影響）。只影響月曆、總計與圖表怎麼分月，帳目資料不變；rules 驗證 `monthStartDay` 為 0–28 的整數、`weekStartDay` 為 0／1／6。
+
+- **月開始日**：1–28 是每月幾日，`0` 是月末（每月最後一天）。期間 `YYYY-MM` 從該月的起始日開始，到下一個期間起始日的前一天，以「起始日所在的月份」命名：每月 5 日 → `2026-11` 是 11/5–12/4；月末 → `2026-11` 是 11/30–12/30（每月的長度隨月份變）。不開放 29–31 是因為短月份沒有那一天，要用月末取代。
+- **週開始日**：週日、週一、週六，影響月曆星期標題與第一週的補格。
+- 實作：`dates.js` 的 `periodStart`、`periodBounds`、`monthKeyOf(date, 起始日)`、`shiftMonthDate`、`dateForMonth`，`summary.js` 的 `monthDateBounds`、`monthGrid(monthKey, 起始日, 週開始日)`；查詢仍是單一欄位 `date` 的範圍，不需要索引。主頁與圖表的標題在起始日不是 1 時顯示範圍（例如 11/5–12/4），月曆跨月時每月 1 日的格子標成「12/1」。
+- 趨勢圖的月份切換、月份選擇器都跟著期間；帳戶頁、淨資產與帳目本身不受影響。
+- 「年開始月」等做年度檢視與預算時再加。
 
 ## 匯出 CSV
 

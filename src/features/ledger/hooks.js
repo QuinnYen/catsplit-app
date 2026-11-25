@@ -56,12 +56,12 @@ export const useGroupLinks = (uid, ledgerId) => {
 }
 
 // 某個月份（'YYYY-MM'）的帳目：依日期新到舊，同一天依建立時間新到舊
-export const useMonthTransactions = (uid, ledgerId, monthKey) => {
-  const key = `${uid}/${ledgerId}/${monthKey}`
+export const useMonthTransactions = (uid, ledgerId, monthKey, startDay = 1) => {
+  const key = `${uid}/${ledgerId}/${monthKey}/${startDay}`
   const [state, setState] = useState({ key: null, list: null })
   useEffect(() => {
     if (!ledgerId) return
-    const { start, end } = monthDateBounds(monthKey)
+    const { start, end } = monthDateBounds(monthKey, startDay)
     const q = query(collection(db, ...transactionsPath(uid, ledgerId)), where('date', '>=', start), where('date', '<', end))
     return onSnapshot(q, (snap) => {
       const list = snap.docs.map(withId).sort((a, b) => (a.date === b.date ? createdMs(b) - createdMs(a) : a.date < b.date ? 1 : -1))
@@ -70,14 +70,14 @@ export const useMonthTransactions = (uid, ledgerId, monthKey) => {
       console.error('Failed to load transactions', err)
       setState({ key, list: [] })
     })
-  }, [uid, ledgerId, monthKey, key])
+  }, [uid, ledgerId, monthKey, startDay, key])
   return state.key === key ? state.list : null
 }
 
 // 趨勢圖用：把 monthKeys 各讀一次（getDocs，不訂閱），結果留在這個元件的記憶體，切換月份只補讀新的月份。
 // skipKey 是已由 useMonthTransactions 即時訂閱的月份，不重複讀。回傳 { [monthKey]: 帳目[] }（尚未載入的月份沒有這個 key）
-export const useMonthsOnce = (uid, ledgerId, monthKeys, skipKey) => {
-  const scope = `${uid}/${ledgerId}`
+export const useMonthsOnce = (uid, ledgerId, monthKeys, skipKey, startDay = 1) => {
+  const scope = `${uid}/${ledgerId}/${startDay}`
   const [state, setState] = useState({ scope, months: {} })
   const requested = useRef({ scope, keys: new Set() })
   const wanted = monthKeys.filter((k) => k !== skipKey).join(',')
@@ -87,7 +87,7 @@ export const useMonthsOnce = (uid, ledgerId, monthKeys, skipKey) => {
     for (const key of wanted ? wanted.split(',') : []) {
       if (requested.current.keys.has(key)) continue
       requested.current.keys.add(key)
-      const { start, end } = monthDateBounds(key)
+      const { start, end } = monthDateBounds(key, startDay)
       const q = query(collection(db, ...transactionsPath(uid, ledgerId)), where('date', '>=', start), where('date', '<', end))
       getDocs(q).then((snap) => {
         const docs = snap.docs.map(withId)
@@ -97,7 +97,7 @@ export const useMonthsOnce = (uid, ledgerId, monthKeys, skipKey) => {
         requested.current.keys.delete(key)
       })
     }
-  }, [uid, ledgerId, scope, wanted])
+  }, [uid, ledgerId, startDay, scope, wanted])
   return state.scope === scope ? state.months : {}
 }
 

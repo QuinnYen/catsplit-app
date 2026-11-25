@@ -154,3 +154,10 @@ export const renameLedger = (uid, ledgerId, name) => {
   batch.update(doc(db, ...ledgerPath(uid, ledgerId)), { name: name.trim().slice(0, LEDGER_NAME_MAX) })
   return batch.commit()
 }
+
+// 帳本的期間設定（見 dates.js 的 periodSettings）：monthStartDay 0–28（0 是月末）、weekStartDay 0／1／6
+export const updateLedgerPeriod = (uid, ledgerId, patch) => {
+  const batch = writeBatch(db)
+  batch.update(doc(db, ...ledgerPath(uid, ledgerId)), patch)
+  return batch.commit()
+}
