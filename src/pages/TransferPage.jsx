@@ -6,7 +6,7 @@ import { collection, serverTimestamp, doc, getDoc, getDocs, query, where, writeB
 import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import Avatar from '../components/Avatar'
-import TabBar from '../components/TabBar'
+import GroupTabBar from '../components/GroupTabBar'
 import StickyFooter from '../components/StickyFooter'
 import ShareToLineToggle from '../components/ShareToLineToggle'
 import { PaymentMethodBody } from '../components/PaymentMethodModal'
@@ -264,7 +264,7 @@ const TransferPage = () => {
         </StickyFooter>
       </div>
 
-      <TabBar context="transfer" groupId={id} />
+      <GroupTabBar groupId={id} active="settle" />
     </div>
   )
 }

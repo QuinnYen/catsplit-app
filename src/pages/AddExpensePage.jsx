@@ -6,7 +6,7 @@ import { ref, uploadBytes } from 'firebase/storage'
 import { CheckCircle2 } from 'lucide-react'
 import { db, storage } from '../config/firebase'
 import { useApp } from '../context/AppContext'
-import TabBar from '../components/TabBar'
+import GroupTabBar from '../components/GroupTabBar'
 import StickyFooter from '../components/StickyFooter'
 import ExpenseForm from '../components/ExpenseForm'
 import useExchangeRate from '../hooks/useExchangeRate'
@@ -367,7 +367,7 @@ const AddExpensePage = () => {
         </StickyFooter>
       </div>
 
-      <TabBar context="expense" groupId={id} />
+      <GroupTabBar groupId={id} active="add" />
     </div>
   )
 }

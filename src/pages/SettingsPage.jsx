@@ -211,7 +211,7 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      <TabBar context="create" />
+      <TabBar />
     </div>
   )
 }

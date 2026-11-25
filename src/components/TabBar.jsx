@@ -1,56 +1,17 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, Users, CirclePlus } from 'lucide-react'
+import { House } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
 
-// 導覽類（首頁、群組）用灰褐色；動作類（新增、結算）用主色，讓主要操作更醒目
-const TAB_ICONS = {
-  home: { Icon: House, label: 'tab.home' },
-  group: { Icon: Users, label: 'tab.group' },
-  add: { Icon: CirclePlus, label: 'tab.add', action: true },
-}
-
 /**
- * TabBar - 共用底部導覽列
- *
- * context: 'home' | 'group' | 'expense' | 'settle' | 'create'
- * groupId: 當 context 為 group 相關頁面時傳入
+ * TabBar - 只剩「首頁」一格的底部列，給不屬於任何群組的頁面（建立群組、設定）。
+ * 群組內頁用 GroupTabBar。
  */
-const TabBar = ({ context = 'home', groupId }) => {
+const TabBar = () => {
   const navigate = useNavigate()
   const { t } = useI18n()
   const location = useLocation()
-
-  const tabs = (() => {
-    switch (context) {
-      case 'create':
-        return [
-          { id: 'home', path: '/' },
-        ]
-      case 'group':
-        return [
-          { id: 'home', path: '/' },
-          { id: 'add', path: `/group/${groupId}/add` },
-        ]
-      case 'expense':
-        return [
-          { id: 'home', path: '/' },
-          { id: 'group', path: `/group/${groupId}` },
-          { id: 'add', path: `/group/${groupId}/add` },
-        ]
-      case 'settle':
-        return [
-          { id: 'home', path: '/' },
-          { id: 'group', path: `/group/${groupId}` },
-        ]
-      case 'transfer':
-        return [
-          { id: 'home', path: '/' },
-          { id: 'group', path: `/group/${groupId}` },
-        ]
-      default:
-        return []
-    }
-  })()
+  const tabs = [{ id: 'home', path: '/' }]
+  const TAB_ICONS = { home: { Icon: House, label: 'tab.home' } }
 
   return (
     <div className="cs-tabbar" style={{

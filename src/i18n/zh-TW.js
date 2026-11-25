@@ -147,6 +147,8 @@ export default {
   'tab.home': '首頁',
   'tab.group': '群組',
   'tab.add': '新增支出',
+  'tab.groupBook': '帳目',
+  'tab.stats': '統計',
   'tab.settle': '結算',
   'tab.ledger': '記帳',
   'tab.split': '分帳',

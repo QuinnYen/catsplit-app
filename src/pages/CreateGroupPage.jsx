@@ -159,7 +159,7 @@ const CreateGroupPage = () => {
           </button>
         </StickyFooter>
       </div>
-      <TabBar context="create" />
+      <TabBar />
     </div>
   )
 }

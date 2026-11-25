@@ -13,7 +13,7 @@ import { EMPTY_FILTERS, isFiltering, applyFilters } from '../utils/searchFilter'
 import GuestJoin from '../components/GuestJoin'
 import InviteModal from '../components/InviteModal'
 import { buildShareContent } from '../utils/shareContent'
-import TabBar from '../components/TabBar'
+import GroupTabBar from '../components/GroupTabBar'
 import Avatar from '../components/Avatar'
 import SearchSheet from '../components/SearchSheet'
 import MonthPicker from '../components/MonthPicker'
@@ -1016,7 +1016,7 @@ const GroupPage = () => {
         </div>
       )}
 
-      <TabBar context="group" groupId={id} />
+      <GroupTabBar groupId={id} active="book" />
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
 import { BarChart3 } from 'lucide-react'
 import { db } from '../config/firebase'
 import Avatar from '../components/Avatar'
-import TabBar from '../components/TabBar'
+import GroupTabBar from '../components/GroupTabBar'
 import { useI18n } from '../i18n/I18nProvider'
 import { normalizeCategory, categoryLabel } from '../i18n/codes'
 import DonutChart from '../components/DonutChart'
@@ -266,7 +266,7 @@ const StatsPage = () => {
         )}
       </div>
 
-      <TabBar context="expense" groupId={id} />
+      <GroupTabBar groupId={id} active="stats" />
     </div>
   )
 }

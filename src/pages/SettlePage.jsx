@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { doc, collection, getDoc, getDocs } from 'firebase/firestore'
 import { Check, CheckCircle2, Info, PartyPopper } from 'lucide-react'
 import { db } from '../config/firebase'
-import TabBar from '../components/TabBar'
+import GroupTabBar from '../components/GroupTabBar'
 import Avatar from '../components/Avatar'
 import GroupIcon from '../components/GroupIcon'
 import CollapsibleCard from '../components/CollapsibleCard'
@@ -296,7 +296,7 @@ const SettlePage = () => {
       {breakdown && (
         <SettleBreakdownModal rows={breakdownRows} amount={breakdown.amount} fmt={fmt} onClose={() => setBreakdown(null)} />
       )}
-      <TabBar context="settle" groupId={id} />
+      <GroupTabBar groupId={id} active="settle" />
     </div>
   )
 }

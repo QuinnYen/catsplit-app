@@ -149,6 +149,8 @@ export default {
   'tab.home': 'Home',
   'tab.group': 'Group',
   'tab.add': 'Add expense',
+  'tab.groupBook': 'Expenses',
+  'tab.stats': 'Stats',
   'tab.settle': 'Settle up',
   'tab.ledger': 'Ledger',
   'tab.split': 'Split',
