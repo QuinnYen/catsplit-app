@@ -25,7 +25,7 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 | `LedgerEntrySheet.jsx`、`NumberPad.jsx` | 記帳面板與常駐數字鍵盤 |
 | `LedgerAccountsPage.jsx`、`AccountSheet.jsx`、`netWorth.js` | 帳戶頁（淨資產、清單、封存區、重新計算餘額）、新增與編輯帳戶、淨資產計算（純函式） |
 | `LedgerStatsPage.jsx` | 圖表：分類占比（支出／收入）、近 6 個月趨勢，月份可切換 |
-| `LedgerSettingsPage.jsx` | 帳本設定（目前只有資訊與刪除帳本） |
+| `LedgerSettingsPage.jsx` | 帳本設定，分頁呈現（網址 `?tab=`）；目前只有「分帳」，只有一個分頁時不顯示分頁列，之後規劃基本、進階、資料 |
 | `data.js`、`hooks.js` | Firestore 讀寫與即時訂閱（畫面不直接組路徑或寫 batch） |
 | `entryDraft.js`、`money.js`、`balance.js`、`summary.js` | 草稿轉帳目、換算、餘額增量、月彙總（純函式，有單元測試） |
 | `expression.js` | 數字鍵盤的算式規則，不用 `eval` |
@@ -80,7 +80,7 @@ users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
 
 ## 刪除
 
-- **刪除帳本**：設定頁，至少要保留一個。客戶端不能刪帳本文件（rules 擋掉），由後端 `deleteLedger` 用 `recursiveDelete` 刪整棵子樹（帳戶、帳目、群組連結），沒有 500 筆上限。
+- **帳本改名與刪除**：帳本選單（左上圓鈕）每個帳本旁的鉛筆，展開名稱（統計幣別唯讀）與「刪除這個帳本」，至少要保留一個。客戶端不能刪帳本文件（rules 擋掉），由後端 `deleteLedger` 用 `recursiveDelete` 刪整棵子樹（帳戶、帳目、群組連結），沒有 500 筆上限。
 - **刪除我的資料**：`detachMember`（`deleteAccount: true`）在刪 Auth 之前先刪 `users/{uid}/ledgers`，失敗就不刪帳號，使用者可以重試。
 - 後端邏輯在 `functions/ledgerOps.js`，整合測試 `functions/emulator-tests/ledgerOps.mjs`（`npm run test:merge`）。
 

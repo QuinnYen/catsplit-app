@@ -1,33 +1,27 @@
-// /ledger/settings — 帳本設定：目前帳本資訊、連結分帳群組（同步與匯入）、刪除帳本。分類管理之後再做。
-import { useState } from 'react'
+// /ledger/settings — 帳本設定，分頁呈現。目前只有「分帳」（連結群組、同步、匯入）；
+// 其他分頁（基本、進階、資料）做好一個加一個，只有一個分頁時不顯示分頁列。分頁狀態在網址 ?tab=。
+// 帳本的改名與刪除在帳本選單（左上圓鈕）。
+import { useSearchParams } from 'react-router-dom'
 import { useI18n } from '../../i18n/I18nProvider'
-import { deleteLedger } from '../../utils/ledgerApi'
 import { useLedger } from './LedgerContext'
 import LedgerGroupLinks from './LedgerGroupLinks'
 
+const TABS = [
+  { key: 'group', label: 'ledger.settings.tab.group', render: () => <LedgerGroupLinks /> },
+]
+
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14 }
 const rowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 0', fontSize: 14, color: 'var(--cs-text)' }
+const tabButton = (active) => ({
+  flex: 1, padding: '10px 0', border: 'none', borderBottom: `2px solid ${active ? 'var(--cs-rc-stamp)' : 'transparent'}`, background: 'none',
+  fontSize: 14, fontWeight: active ? 600 : 400, color: active ? 'var(--cs-text)' : 'var(--cs-text-sub)', cursor: 'pointer',
+})
 
 const LedgerSettingsPage = () => {
-  const { ledger, ledgers, showToast } = useLedger()
+  const { ledger } = useLedger()
   const { t } = useI18n()
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const isLast = ledgers.length <= 1
-
-  const remove = async () => {
-    if (isLast || busy || !window.confirm(t('ledger.settings.deleteConfirm', { name: ledger.name }))) return
-    setBusy(true)
-    setError('')
-    try {
-      await deleteLedger(ledger.id)
-      showToast(t('ledger.settings.deleted'))
-    } catch (e) {
-      console.error('Failed to delete ledger', e)
-      setError(t('ledger.settings.deleteFailed'))
-      setBusy(false)
-    }
-  }
+  const [params, setParams] = useSearchParams()
+  const tab = TABS.find((x) => x.key === params.get('tab')) ?? TABS[0]
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
@@ -49,18 +43,15 @@ const LedgerSettingsPage = () => {
           </div>
         </div>
 
-        <LedgerGroupLinks />
+        {TABS.length > 1 && (
+          <div role="tablist" style={{ display: 'flex', borderBottom: '0.5px solid var(--cs-border)' }}>
+            {TABS.map((x) => (
+              <button key={x.key} role="tab" aria-selected={tab.key === x.key} onClick={() => setParams({ tab: x.key }, { replace: true })} style={tabButton(tab.key === x.key)}>{t(x.label)}</button>
+            ))}
+          </div>
+        )}
 
-        <div style={card}>
-          <button
-            onClick={remove} disabled={isLast || busy}
-            style={{ width: '100%', padding: '11px 0', borderRadius: 6, border: '1px solid var(--cs-danger)', background: 'transparent', color: 'var(--cs-danger)', fontSize: 14, fontWeight: 500, cursor: isLast || busy ? 'not-allowed' : 'pointer', opacity: isLast ? 0.5 : 1 }}
-          >
-            {busy ? t('ledger.settings.deleting') : t('ledger.settings.delete')}
-          </button>
-          {isLast && <div style={{ marginTop: 8, fontSize: 12, color: 'var(--cs-text-mute)', textAlign: 'center' }}>{t('ledger.settings.deleteLast')}</div>}
-          {error && <div role="alert" style={{ marginTop: 8, fontSize: 12, color: 'var(--cs-danger)', textAlign: 'center' }}>{error}</div>}
-        </div>
+        {tab.render()}
       </div>
     </div>
   )

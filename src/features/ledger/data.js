@@ -147,3 +147,10 @@ export const saveSnapshotEdits = (uid, ledgerId, tx, { category, note }) => {
   batch.update(doc(db, ...transactionsPath(uid, ledgerId), tx.id), { category, note, source: { ...tx.source, ...(Object.keys(edited).length > 0 && { edited }) } })
   return batch.commit()
 }
+
+// 帳本改名（統計幣別建立後不可改，rules 也擋）
+export const renameLedger = (uid, ledgerId, name) => {
+  const batch = writeBatch(db)
+  batch.update(doc(db, ...ledgerPath(uid, ledgerId)), { name: name.trim().slice(0, LEDGER_NAME_MAX) })
+  return batch.commit()
+}
