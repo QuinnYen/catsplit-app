@@ -12,7 +12,7 @@
  * !important：要覆寫的是 JSX 的 inline style，不用 !important 就得改 inline 值（會動到手機）。
  *   代價：加了 cs-header、cs-tabbar 的元素，水平方向的 inline padding 在寬版無效，要改這些值請改本檔。
  *
- * 720 的同步點：本檔 .cs-header 與 .cs-body、src/pages/HomePage.jsx 頭像氣泡的 left 算式（與 header padding 相同）。
+ * 720 的同步點：本檔 .cs-header 與 .cs-body、src/components/UserHeader.jsx 帳號選單的位置（取頭像按鈕的實際座標）。
  * 480 的同步點：本檔 .cs-tabbar 按鈕群組、src/components/CalculatorModal.jsx、src/components/InviteModal.jsx、
  *   src/pages/GroupPage.jsx（轉帳明細面板）的底部抽屜 maxWidth。
  *

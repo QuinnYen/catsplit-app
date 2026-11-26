@@ -6,6 +6,7 @@ import { db } from '../config/firebase'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import FeatureTabBar from '../components/FeatureTabBar'
+import UserHeader from '../components/UserHeader'
 import { getCurrency } from '../config/currencies'
 import useSavingsEntries from '../hooks/useSavingsEntries'
 import { sumSaved, progressRatio } from '../utils/savings'
@@ -54,13 +55,10 @@ const SavingsListPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
-      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '16px 16px 20px', position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>{t('savings.title')}</div>
-        </div>
-      </div>
+      <UserHeader />
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-text)' }}>{t('savings.title')}</div>
         {goals === null && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
         {goals?.length === 0 && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t('savings.empty')}</div>}
         {goals?.map(g => <GoalCard key={g.id} goal={g} uid={user.uid} />)}

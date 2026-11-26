@@ -1,16 +1,14 @@
-// 入口頁、目標、匯率共用的簡單底部導覽列：首頁（回入口頁 /home）／可選的中間凸起動作鈕／頭像（帳號選單）。
-// 格子固定落在 5 欄的第 1、3、5 欄，和其他底部列的首頁與頭像位置一致。
-// homeActive：在入口頁本身時為 true（高亮、不跳轉）；action：{ label（i18n key）, to }。
+// 目標、匯率共用的簡單底部導覽列：首頁（回入口頁 /home）／可選的中間凸起動作鈕。
+// 格子固定落在 5 欄的第 1、3 欄，和其他底部列的首頁、中間凸起鈕位置一致。
+// action：{ label（i18n key）, to }。
 import { useNavigate } from 'react-router-dom'
 import { House, Plus } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
-import AvatarMenuTab from './AvatarMenu'
 
-const FeatureTabBar = ({ homeActive = false, action }) => {
+const FeatureTabBar = ({ action }) => {
   const navigate = useNavigate()
   const { t } = useI18n()
   const cell = { background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', WebkitTapHighlightColor: 'transparent' }
-  const homeColor = homeActive ? 'var(--cs-rc-owe)' : 'var(--cs-text-sub)'
 
   return (
     <nav
@@ -20,14 +18,9 @@ const FeatureTabBar = ({ homeActive = false, action }) => {
         padding: '6px 0 calc(6px + env(safe-area-inset-bottom, 0px))', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 10,
       }}
     >
-      <button
-        onClick={() => !homeActive && navigate('/home')}
-        aria-label={t('tab.home')}
-        aria-current={homeActive ? 'page' : undefined}
-        style={{ ...cell, gridColumn: 1, cursor: homeActive ? 'default' : 'pointer' }}
-      >
-        <House size={22} color={homeColor} strokeWidth={homeActive ? 2.4 : 1.8} />
-        <span style={{ fontSize: 11, lineHeight: '14px', fontWeight: homeActive ? 700 : 500, color: homeColor }}>{t('tab.home')}</span>
+      <button onClick={() => navigate('/home')} aria-label={t('tab.home')} style={{ ...cell, gridColumn: 1, cursor: 'pointer' }}>
+        <House size={22} color="var(--cs-text-sub)" strokeWidth={1.8} />
+        <span style={{ fontSize: 11, lineHeight: '14px', fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t('tab.home')}</span>
       </button>
       {action && (
         <button onClick={() => navigate(action.to)} aria-label={t(action.label)} style={{ ...cell, gridColumn: 3, cursor: 'pointer', marginTop: -22 }}>
@@ -37,7 +30,6 @@ const FeatureTabBar = ({ homeActive = false, action }) => {
           <span style={{ fontSize: 11, lineHeight: '14px', fontWeight: 600, color: 'var(--cs-rc-stamp)' }}>{t(action.label)}</span>
         </button>
       )}
-      <AvatarMenuTab style={{ gridColumn: 5 }} />
     </nav>
   )
 }

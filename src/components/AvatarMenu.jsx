@@ -1,29 +1,17 @@
 // 底部導覽列最右邊的頭像：圓圈右下角有小箭頭，點了從導覽列上方彈出帳號選單（設定、官方帳號、登出）。
 // 各底部列（分帳列表、群組內頁、記帳…）都放同一個，帳號層級的入口因此在每個功能都找得到。
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Settings, LogOut, ChevronUp } from 'lucide-react'
-import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
+import { ChevronUp } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 import Avatar from './Avatar'
-import LineIcon from './LineIcon'
+import { useAccountMenu, menuItemStyle } from './useAccountMenu'
 
 const AvatarMenuTab = ({ style }) => {
-  const { user, logout } = useApp()
+  const { user } = useApp()
   const { t } = useI18n()
-  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-
-  const handleLogout = () => {
-    setOpen(false)
-    if (confirm(user?.guest ? t('home.logoutConfirmGuest') : t('home.logoutConfirm'))) logout()
-  }
-  const items = [
-    { Icon: Settings, label: t('group.settings'), onClick: () => { setOpen(false); navigate('/settings') } },
-    { Icon: LineIcon, label: t('group.menu.official'), href: OFFICIAL_ACCOUNT_URL },
-    { Icon: LogOut, label: t('home.menu.logout'), onClick: handleLogout },
-  ]
+  const items = useAccountMenu(() => setOpen(false))
 
   return (
     <>
@@ -52,11 +40,10 @@ const AvatarMenuTab = ({ style }) => {
           >
             <div style={{ position: 'absolute', bottom: -6, right: 18, width: 12, height: 12, background: 'var(--cs-rc-card)', borderBottom: '0.5px solid var(--cs-rc-rule)', borderRight: '0.5px solid var(--cs-rc-rule)', transform: 'rotate(45deg)' }} />
             {items.map(({ Icon, label, href, onClick }, i) => {
-              const style = { width: '100%', padding: '14px 4px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '0.5px solid var(--cs-rc-rule)', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: 'var(--cs-rc-ink)', cursor: 'pointer', textAlign: 'left', textDecoration: 'none', boxSizing: 'border-box' }
               const content = <><Icon size={18} color="var(--cs-rc-sub)" />{label}</>
               return href
-                ? <a key={label} role="menuitem" href={href} style={style}>{content}</a>
-                : <button key={label} role="menuitem" onClick={onClick} style={style}>{content}</button>
+                ? <a key={label} role="menuitem" href={href} style={menuItemStyle(i)}>{content}</a>
+                : <button key={label} role="menuitem" onClick={onClick} style={menuItemStyle(i)}>{content}</button>
             })}
           </div>
         </>

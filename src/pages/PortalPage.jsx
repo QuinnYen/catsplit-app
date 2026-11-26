@@ -1,13 +1,11 @@
-// /home — 入口頁：問候加四個功能大按鈕（記帳、分帳、目標、匯率）。底部列只有首頁與頭像。
+// /home — 入口頁：頂部使用者列加四個功能大按鈕（記帳、分帳、目標、匯率），沒有底部列。
 // 訪客只能用分帳與匯率，記帳與目標灰色，點了跳提示。
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, Users, PiggyBank, ArrowLeftRight } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
-import Avatar from '../components/Avatar'
-import FeatureTabBar from '../components/FeatureTabBar'
-import { getGreeting } from '../utils/greeting'
+import UserHeader from '../components/UserHeader'
 
 const FEATURES = [
   { id: 'ledger', path: '/ledger', Icon: BookOpen, label: 'tab.ledger', needsAccount: true },
@@ -20,7 +18,6 @@ const PortalPage = () => {
   const { user } = useApp()
   const { t } = useI18n()
   const navigate = useNavigate()
-  const [{ Icon: GreetingIcon, key: greetingKey }] = useState(getGreeting)
   const [notice, setNotice] = useState(false)
   const timer = useRef(null)
   useEffect(() => () => clearTimeout(timer.current), [])
@@ -31,18 +28,8 @@ const PortalPage = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--cs-rc-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
-      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', padding: '20px 16px 22px', position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Avatar src={user?.avatar} name={user?.name} size={38} style={{ background: 'var(--cs-soft-2)', border: '2px solid var(--cs-rc-stamp)' }} />
-          <div>
-            <div style={{ color: 'var(--cs-rc-head-text)', opacity: 0.75, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <GreetingIcon size={12} color="var(--cs-rc-stamp)" />{t(greetingKey)}
-            </div>
-            <div style={{ color: 'var(--cs-rc-head-text)', fontSize: 14, fontWeight: 500 }}>{user?.name}</div>
-          </div>
-        </div>
-      </div>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-rc-bg)', paddingBottom: 24 }}>
+      <UserHeader />
 
       <div className="cs-body" style={{ padding: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -66,11 +53,10 @@ const PortalPage = () => {
       </div>
 
       {notice && (
-        <div role="status" style={{ position: 'fixed', left: 16, right: 16, bottom: 'calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom, 0px))', zIndex: 11, margin: '0 auto', maxWidth: 360, background: 'var(--cs-rc-ink)', color: 'var(--cs-rc-bg)', borderRadius: 6, padding: '10px 14px', fontSize: 13, lineHeight: 1.5, textAlign: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}>
+        <div role="status" style={{ position: 'fixed', left: 16, right: 16, bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))', zIndex: 11, margin: '0 auto', maxWidth: 360, background: 'var(--cs-rc-ink)', color: 'var(--cs-rc-bg)', borderRadius: 6, padding: '10px 14px', fontSize: 13, lineHeight: 1.5, textAlign: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}>
           {t('tab.guestLocked')}
         </div>
       )}
-      <FeatureTabBar homeActive />
     </div>
   )
 }
