@@ -1077,7 +1077,6 @@ export default {
   'fx.trip.notFound': 'Trip not found',
   'fx.trip.back': 'Back to trips',
   'fx.entry.trip': 'Trip: {name}',
-  'fx.calc.title': 'Currency converter',
   'fx.calc.noTrip': 'No trip',
   'fx.calc.pickTrip': 'Choose a trip',
   'fx.calc.noTripOption': 'No trip (convert only)',

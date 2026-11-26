@@ -1,10 +1,11 @@
 // 匯率計算機（截圖 1、4）：多列換算、實付（免稅與刷卡）、數字鍵盤、收據鍵記帳。
 // 這個元件只管計算與畫面，不碰 Firestore 或帳本：旅程、換算列的存取與「記帳」由外層（FxCalculatorPage）以 props 傳入。
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, List, SlidersHorizontal } from 'lucide-react'
+import { BookOpen, ChevronDown, List, SlidersHorizontal } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import CurrencySelect from '../../components/CurrencySelect'
 import FeatureTabBar from '../../components/FeatureTabBar'
+import UserHeader from '../../components/UserHeader'
 import { PINNED_CURRENCIES, getCurrency } from '../../config/currencies'
 import { pressKey, evaluateExpression, commitExpression, hasOperator } from '../ledger/expression'
 import { todayStr } from '../ledger/dates'
@@ -15,9 +16,10 @@ import TripPicker from './TripPicker'
 
 // 這個匯率用的是使用者的自訂匯率（不是網路匯率）
 const customBadge = { fontSize: 10, fontWeight: 600, color: 'var(--cs-rc-stamp)', border: '1px solid var(--cs-rc-stamp)', borderRadius: 999, padding: '1px 6px', marginRight: 6, verticalAlign: 'middle', whiteSpace: 'nowrap' }
-const iconBtn = { background: 'none', border: 'none', color: 'var(--cs-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 6, minWidth: 0 }
+// 頂部藍色條（UserHeader）上的按鈕樣式，和記帳頁的圓鈕一致
+const circleBtn = { width: 36, height: 36, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.65)', background: 'none', color: 'var(--cs-rc-head-text)', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0 }
 const chip = (on) => ({
-  border: `1px solid ${on ? 'var(--cs-rc-stamp)' : 'var(--cs-border)'}`, borderRadius: 999, padding: '9px 14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+  border: `1px solid ${on ? 'var(--cs-rc-stamp)' : 'var(--cs-border)'}`, borderRadius: 999, padding: '8px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
   background: on ? 'var(--cs-soft)' : 'var(--cs-card)', color: on ? 'var(--cs-rc-stamp)' : 'var(--cs-text-sub)', WebkitTapHighlightColor: 'transparent',
 })
 
@@ -104,21 +106,30 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip
   const showPay = (taxOn || cardOn) && pay
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 16px)' }}>
-      <div className="cs-body" style={{ padding: '10px 16px 0' }}>
-        {/* 頁首：旅程名稱（點開選旅程）與旅程明細 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
-          {onPickTrip ? (
-            <button onClick={() => setPickerOpen(true)} aria-haspopup="dialog" aria-label={t('fx.calc.pickTrip')} style={{ ...iconBtn, flex: 1, justifyContent: 'flex-start' }}>
-              <BookOpen size={22} />
-              <span style={{ fontSize: 18, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentTrip?.name ?? t('fx.calc.noTrip')}</span>
-            </button>
-          ) : <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--cs-text)', padding: 6 }}>{t('fx.calc.title')}</div>}
-          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            {currentTrip && <button onClick={onOpenDetail} aria-label={t('fx.calc.detail')} style={iconBtn}><List size={22} /></button>}
-            {onOpenSettings && <button onClick={onOpenSettings} aria-label={t('fx.calc.settings')} style={iconBtn}><SlidersHorizontal size={22} /></button>}
-          </div>
+    <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 8px)' }}>
+      {/* 頂部藍色條是全站共用的 UserHeader（頭像、招呼語、帳號選單）；右側放旅程明細與設定，旅程選擇放在下方 */}
+      <UserHeader right={(
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          {currentTrip && <button onClick={onOpenDetail} aria-label={t('fx.calc.detail')} style={circleBtn}><List size={18} /></button>}
+          {onOpenSettings && <button onClick={onOpenSettings} aria-label={t('fx.calc.settings')} style={circleBtn}><SlidersHorizontal size={18} /></button>}
         </div>
+      )}
+      >
+        {onPickTrip && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+            <button
+              onClick={() => setPickerOpen(true)} aria-haspopup="dialog" aria-label={t('fx.calc.pickTrip')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: '100%', background: 'none', border: '1.5px solid rgba(255,255,255,0.65)', borderRadius: 999, padding: '6px 14px', color: 'var(--cs-rc-head-text)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            >
+              <BookOpen size={16} style={{ flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentTrip?.name ?? t('fx.calc.noTrip')}</span>
+              <ChevronDown size={16} style={{ flexShrink: 0 }} />
+            </button>
+          </div>
+        )}
+      </UserHeader>
+
+      <div className="cs-body" style={{ padding: '4px 16px 0' }}>
 
         {/* 換算列：點金額從那一列輸入，點幣別代碼換幣別 */}
         <div>
@@ -126,12 +137,12 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip
             const on = i === activeIdx
             const preview = on && hasOperator(expr) && value != null ? `= ${formatFixed(value, decimals)}` : ''
             return (
-              <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--cs-border)', minHeight: 58 }}>
+              <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--cs-border)', minHeight: 'clamp(46px, 6.4vh, 58px)' }}>
                 {/* 選擇鈕本身是撐滿寬度的，要包一層固定寬度，金額才有位置 */}
                 <div style={{ width: 96, flexShrink: 0 }}>
-                  <CurrencySelect value={code} onChange={(c) => changeRow(i, c)} compact pinned={PINNED_CURRENCIES} ariaLabel={t('fx.calc.rowCurrency', { n: i + 1 })} style={{ fontWeight: 700, fontSize: 16 }} />
+                  <CurrencySelect value={code} onChange={(c) => changeRow(i, c)} compact pinned={PINNED_CURRENCIES} ariaLabel={t('fx.calc.rowCurrency', { n: i + 1 })} style={{ fontWeight: 700, fontSize: 16, padding: '6px 10px' }} />
                 </div>
-                <button onClick={() => activate(i)} aria-pressed={on} aria-label={`${code} ${on ? (expr || '0') : cell(rowValues[code])}`} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right', padding: '6px 0', color: on ? 'var(--cs-text)' : 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>
+                <button onClick={() => activate(i)} aria-pressed={on} aria-label={`${code} ${on ? (expr || '0') : cell(rowValues[code])}`} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right', padding: '2px 0', lineHeight: 1.2, color: on ? 'var(--cs-text)' : 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>
                   <span style={{ fontSize: (on ? (expr || '0') : cell(rowValues[code])).length > 11 ? 20 : 28, fontWeight: 700, wordBreak: 'break-all' }}>{on ? (expr || '0') : cell(rowValues[code])}</span>
                   {on && <span aria-hidden="true" style={{ display: 'inline-block', width: 2, height: 28, marginLeft: 3, background: 'var(--cs-rc-stamp)', verticalAlign: 'middle' }} />}
                   {!on && isCustomPair(customRates, activeCode, code) && <span style={{ ...customBadge, marginLeft: 8 }}>{t('fx.calc.custom')}</span>}
@@ -145,7 +156,7 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip
 
         {error
           ? <div role="alert" style={{ fontSize: 12, color: 'var(--cs-danger)', padding: '8px 0' }}>{t('fx.calc.rateError')} <button onClick={retry} style={{ background: 'none', border: 'none', color: 'var(--cs-rc-stamp)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}>{t('fx.calc.retry')}</button></div>
-          : <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', padding: '6px 0' }}>{hint || t('fx.calc.rateNote')}</div>}
+          : <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', padding: '2px 0' }}>{hint || t('fx.calc.rateNote')}</div>}
 
         {/* 實付：免稅與刷卡打開時才出現 */}
         {showPay && (
@@ -163,9 +174,9 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip
         )}
 
         {/* 實付幣別與修飾鈕 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 10px', overflowX: 'auto' }}>
-          <div style={{ width: 96, flexShrink: 0 }}>
-            <CurrencySelect value={payCurrency} onChange={onPayChange} compact pinned={PINNED_CURRENCIES} ariaLabel={t('fx.calc.payCurrency')} style={{ fontWeight: 700 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 6px', overflowX: 'auto' }}>
+          <div style={{ width: 88, flexShrink: 0 }}>
+            <CurrencySelect value={payCurrency} onChange={onPayChange} compact pinned={PINNED_CURRENCIES} ariaLabel={t('fx.calc.payCurrency')} style={{ fontWeight: 700, padding: '6px 10px' }} />
           </div>
           <button onClick={() => setCardOn(!cardOn)} aria-pressed={cardOn} style={chip(cardOn)}>{t('fx.calc.card', { pct: pct(settings.cardFeePercent) })}</button>
           <button onClick={() => setTaxOn(!taxOn)} aria-pressed={taxOn} style={chip(taxOn)}>{t('fx.calc.taxFree', { pct: pct(settings.taxFreePercent) })}</button>

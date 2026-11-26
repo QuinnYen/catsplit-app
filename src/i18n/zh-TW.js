@@ -1069,7 +1069,6 @@ export default {
   'fx.trip.notFound': '找不到這趟旅程',
   'fx.trip.back': '返回旅程列表',
   'fx.entry.trip': '旅程：{name}',
-  'fx.calc.title': '匯率換算',
   'fx.calc.noTrip': '未選旅程',
   'fx.calc.pickTrip': '選擇旅程',
   'fx.calc.noTripOption': '不選旅程（只換算）',

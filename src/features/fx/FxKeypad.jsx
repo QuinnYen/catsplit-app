@@ -13,7 +13,7 @@ const LAYOUT = [
 const OPS = '÷×−+'
 const ARIA = { C: 'fx.pad.clear', '⌫': 'ledger.pad.backspace', '÷': 'ledger.pad.divide', '×': 'ledger.pad.times', '−': 'ledger.pad.minus', '+': 'ledger.pad.plus', '=': 'fx.pad.equals', record: 'fx.pad.record' }
 
-const base = { border: '0.5px solid var(--cs-border)', borderRadius: 10, height: 46, fontSize: 22, fontVariantNumeric: 'tabular-nums', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', display: 'grid', placeItems: 'center', padding: 0 }
+const base = { border: '0.5px solid var(--cs-border)', borderRadius: 10, height: 'clamp(38px, 5.4vh, 46px)', fontSize: 22, fontVariantNumeric: 'tabular-nums', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', display: 'grid', placeItems: 'center', padding: 0 }
 
 const styleOf = (k, recordDisabled) => {
   if (k === 'record') return { ...base, background: 'var(--cs-soft)', color: 'var(--cs-rc-stamp)', opacity: recordDisabled ? 0.45 : 1 }
@@ -26,7 +26,7 @@ const styleOf = (k, recordDisabled) => {
 const FxKeypad = ({ onKey, onRecord, recordDisabled = false }) => {
   const { t } = useI18n()
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
       {LAYOUT.flat().map((k) => (
         <button
           key={k} type="button" onClick={() => (k === 'record' ? onRecord() : onKey(k))}
