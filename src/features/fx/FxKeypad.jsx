@@ -16,9 +16,9 @@ const ARIA = { C: 'fx.pad.clear', '⌫': 'ledger.pad.backspace', '÷': 'ledger.p
 const base = { border: '0.5px solid var(--cs-border)', borderRadius: 10, height: 'clamp(38px, 5.4vh, 46px)', fontSize: 22, fontVariantNumeric: 'tabular-nums', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', display: 'grid', placeItems: 'center', padding: 0 }
 
 const styleOf = (k, recordDisabled) => {
-  if (k === 'record') return { ...base, background: 'var(--cs-soft)', color: 'var(--cs-rc-stamp)', opacity: recordDisabled ? 0.45 : 1 }
+  if (k === 'record') return { ...base, background: 'var(--cs-soft-2)', color: 'var(--cs-rc-stamp)', opacity: recordDisabled ? 0.45 : 1 }
   if (k === '=') return { ...base, background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', fontWeight: 700 }
-  if (OPS.includes(k) || k === 'C' || k === '⌫') return { ...base, background: 'var(--cs-soft)', color: 'var(--cs-text)', fontWeight: 600 }
+  if (OPS.includes(k) || k === 'C' || k === '⌫') return { ...base, background: 'var(--cs-soft-2)', color: 'var(--cs-text)', fontWeight: 600 }
   return { ...base, background: 'var(--cs-card)', color: 'var(--cs-text)', fontWeight: 600 }
 }
 

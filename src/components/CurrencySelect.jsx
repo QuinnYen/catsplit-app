@@ -28,7 +28,8 @@ const FIELD_STYLE = {
   color: 'var(--cs-text)', background: 'var(--cs-bg)', cursor: 'pointer', outline: 'none',
 }
 
-const CurrencySelect = ({ value, onChange, exclude = [], pinned = [], noneLabel, compact = false, disabled = false, style, ariaLabel }) => {
+// triggerLabel：有值時觸發鈕顯示這段文字（不顯示目前幣別與箭頭），當成「新增幣別」之類的純挑選入口；value 傳空字串
+const CurrencySelect = ({ value, onChange, exclude = [], pinned = [], noneLabel, triggerLabel, compact = false, disabled = false, style, ariaLabel }) => {
   const { t, lang } = useI18n()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -63,7 +64,7 @@ const CurrencySelect = ({ value, onChange, exclude = [], pinned = [], noneLabel,
   const close = () => { setOpen(false); setQuery('') }
 
   const current = value ? getCurrency(value) : null
-  const triggerText = !current ? (noneLabel ?? '') : compact ? current.code : `${current.symbol} ${currencyName(current.code, lang)} (${current.code})`
+  const triggerText = triggerLabel ?? (!current ? (noneLabel ?? '') : compact ? current.code : `${current.symbol} ${currencyName(current.code, lang)} (${current.code})`)
 
   const row = (key, label, selected, onPick) => (
     <button
@@ -94,7 +95,7 @@ const CurrencySelect = ({ value, onChange, exclude = [], pinned = [], noneLabel,
         style={{ ...FIELD_STYLE, ...(disabled && { opacity: 0.6, cursor: 'not-allowed' }), ...style }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{triggerText}</span>
-        <ChevronDown size={16} style={{ flexShrink: 0, opacity: 0.7 }} />
+        {!triggerLabel && <ChevronDown size={16} style={{ flexShrink: 0, opacity: 0.7 }} />}
       </button>
 
       {open && (

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseSetting, mergeFxSettings, MAX_CUSTOM_RATES, customRateKey, listCustomRates, setCustomRate, removeCustomRate } from './fxSettings.js'
+import { parseSetting, mergeFxSettings, MAX_CUSTOM_RATES, customRateKey, setCustomRate, removeCustomRate } from './fxSettings.js'
 import { DEFAULT_FX_SETTINGS } from './fxMath.js'
 
 test('parseSetting：小數位數是 0–3 的整數', () => {
@@ -60,14 +60,8 @@ test('mergeFxSettings 不改動預設值物件', () => {
   assert.equal(JSON.stringify(DEFAULT_FX_SETTINGS), before)
 })
 
-test('customRateKey、listCustomRates：依鍵排序，拆出幣別與匯率', () => {
+test('customRateKey', () => {
   assert.equal(customRateKey('JPY', 'TWD'), 'JPY_TWD')
-  assert.deepEqual(listCustomRates({ USD_TWD: 31.5, JPY_TWD: 0.21 }), [
-    { key: 'JPY_TWD', from: 'JPY', to: 'TWD', rate: 0.21 },
-    { key: 'USD_TWD', from: 'USD', to: 'TWD', rate: 31.5 },
-  ])
-  assert.deepEqual(listCustomRates({}), [])
-  assert.deepEqual(listCustomRates(undefined), [])
 })
 
 test('setCustomRate：新增與修改，輸入的物件不被改動，匯率最多 8 位有效數字', () => {

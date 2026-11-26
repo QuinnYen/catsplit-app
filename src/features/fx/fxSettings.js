@@ -49,16 +49,11 @@ export const mergeFxSettings = (stored) => {
   }
 }
 
-// ---------- 自訂匯率的編輯（設定頁「自訂匯率」）----------
-// customRates 的鍵是 'FROM_TO'，值是 1 FROM = ? TO。同一組幣別只留一筆：新增 A→B 時會移除 B→A（反向本來就自動取倒數，兩筆並存會互相矛盾）。
+// ---------- 自訂匯率的編輯（「幣別」頁，每種幣別對基準幣一筆）----------
+// customRates 的鍵是 'FROM_TO'，值是 1 FROM = ? TO；幣別頁只會寫入 TO 是基準幣的項目（見 fxMath.js 的 adjustRates）。
+// 同一組幣別只留一筆：新增 A→B 時會移除 B→A（反向本來就自動取倒數，兩筆並存會互相矛盾）。
 
 export const customRateKey = (from, to) => `${from}_${to}`
-
-// 列表用：[{ key, from, to, rate }]，依鍵排序
-export const listCustomRates = (custom) =>
-  Object.entries(custom ?? {})
-    .map(([key, rate]) => ({ key, from: key.slice(0, 3), to: key.slice(4), rate }))
-    .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
 
 /**
  * 新增或修改一組自訂匯率，回傳新的 customRates（不改動傳入的物件）。

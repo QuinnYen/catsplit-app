@@ -13,7 +13,7 @@ const ROUTES = [
   [/^\/fx\/trips$/, 'fx.trips.title'],
   [/^\/fx\/settings$/, 'fx.settings.title'],
   [/^\/fx\/trash$/, 'fx.trash.title'],
-  [/^\/fx\/settings\/rates$/, 'fx.rates.title'],
+  [/^\/fx\/currencies$/, 'fx.cur.title'],
   [/^\/fx\/trips\/[^/]+$/, 'fx.trips.title'],
   [/^\/create$/, 'cg.title'],
   [/^\/settings$/, 'group.settings'],

@@ -1,12 +1,12 @@
 // /fx/settings — 計算機設定（截圖 2）：小數位數、預設金額、顯示幣別符號、免稅與刷卡百分比。選了或輸入完立刻儲存，存雲端（換裝置不用重設）。
-// 自訂匯率在 /fx/settings/rates（FxRatesPage）。
+// 自訂匯率在「幣別」頁（/fx/currencies，每種幣別直接設）。
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useFxSettings } from './hooks'
 import { saveFxSettings, resetFxSettings } from './data'
-import { parseSetting, listCustomRates } from './fxSettings'
+import { parseSetting } from './fxSettings'
 import { DEFAULT_FX_SETTINGS } from './fxMath'
 import { useLedger } from '../ledger/LedgerContext'
 import { trashedTrips } from './trash'
@@ -107,10 +107,6 @@ const FxSettingsPage = () => {
               </label>
               <NumberRow key={`taxFreePercent:${settings.taxFreePercent}`} field="taxFreePercent" label={t('fx.settings.taxFree')} hint={t('fx.settings.taxFreeHint')} value={settings.taxFreePercent} suffix="%" onSave={save} />
               <NumberRow key={`cardFeePercent:${settings.cardFeePercent}`} field="cardFeePercent" label={t('fx.settings.cardFee')} hint={t('fx.settings.cardFeeHint')} value={settings.cardFeePercent} suffix="%" onSave={save} />
-              <button onClick={() => navigate('/fx/settings/rates')} style={{ ...rowStyle, width: '100%', background: 'none', border: 'none', cursor: 'pointer', borderBottom: 'none', textAlign: 'left' }}>
-                <span style={labelStyle}>{t('fx.settings.customRates')}</span>
-                <span style={{ fontSize: 14, color: 'var(--cs-text-sub)' }}>{t('fx.settings.customRatesCount', { n: listCustomRates(settings.customRates).length })} ›</span>
-              </button>
               <button onClick={() => navigate('/fx/trash')} style={{ ...rowStyle, width: '100%', background: 'none', border: 'none', cursor: 'pointer', borderBottom: 'none', borderTop: '0.5px solid var(--cs-border)', textAlign: 'left' }}>
                 <span style={labelStyle}>{t('fx.settings.trash')}</span>
                 <span style={{ fontSize: 14, color: 'var(--cs-text-sub)' }}>{t('fx.settings.trashCount', { n: trashedTrips(trips).length })} ›</span>

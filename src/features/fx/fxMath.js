@@ -1,6 +1,6 @@
 // 匯率計算機的計算，純函式。設計見 docs/superpowers/specs/2026-11-26-fx-page-design.md 第 5 節。
 // rates：以 USD 為 1 的匯率表 { USD: 1, JPY: 156.2, TWD: 32.1, ... }（open.er-api.com 一份表就有全部幣別），
-// 任兩種幣別的匯率用「對 USD 的匯率相除」算出來；使用者設的自訂匯率（customRates）優先。
+// 任兩種幣別的匯率用「對 USD 的匯率相除」算出來；使用者的自訂匯率先用 adjustRates 套進表裡。
 import { CURRENCIES, roundToCurrency } from '../../config/currencies.js'
 
 export const MAX_ROWS = 6
@@ -30,26 +30,51 @@ export const sanitizeRows = (rows) => {
 
 export const validCode = (code) => (known(code) ? code : null)
 
-// 1 from = ? to。自訂匯率（'FROM_TO'，或反向 'TO_FROM'）優先；沒有就用匯率表相除；缺資料回 null
-export const pairRate = (rates, custom, from, to) => {
-  if (from === to) return 1
-  const direct = custom?.[`${from}_${to}`]
+/**
+ * 自訂匯率（使用者在「幣別」頁設的）：每種幣別對基準幣一筆，鍵 'JPY_TWD' 表示 1 JPY = ? TWD（基準幣是 TWD 的帳本）。
+ * 把匯率表調整成使用者的自訂值，這樣任兩種幣別的換算都用同一份，結果一致
+ * （例如自訂的 JPY 和市場的 USD 互換，也以自訂的 JPY 為準）。只處理「幣別對基準幣」的項目；
+ * 其他組合的舊資料（早期版本可設任意兩種幣別）不再套用，避免畫面上看不到、改不了的匯率偷偷生效。
+ * 反向的鍵（'TWD_JPY'）自動取倒數。rates 缺基準幣時原樣回傳。
+ */
+export const adjustRates = (rates, custom, base) => {
+  const out = { ...rates }
+  const rb = rates?.[base]
+  if (!(rb > 0)) return out
+  for (const code of Object.keys(rates)) {
+    if (code === base) continue
+    const k = customRateOf(custom, code, base)
+    if (k) out[code] = rb / k
+  }
+  return out
+}
+
+// 這種幣別有沒有自訂匯率（對基準幣），有就回傳「1 code = ? base」，沒有回 null
+export const customRateOf = (custom, code, base) => {
+  if (code === base) return null
+  const direct = custom?.[`${code}_${base}`]
   if (direct > 0) return direct
-  const inverse = custom?.[`${to}_${from}`]
-  if (inverse > 0) return 1 / inverse
+  const inverse = custom?.[`${base}_${code}`]
+  return inverse > 0 ? 1 / inverse : null
+}
+
+// 這兩種幣別之間的換算有沒有用到自訂匯率（畫面上標示「自訂」用）：任何一邊（不是基準幣）有自訂就算
+export const usesCustom = (custom, base, from, to) =>
+  from !== to && (customRateOf(custom, from, base) != null || customRateOf(custom, to, base) != null)
+
+// 1 from = ? to，用匯率表（以 USD 為 1，或 adjustRates 調整過的）相除；缺資料回 null
+export const pairRate = (rates, from, to) => {
+  if (from === to) return 1
   const rf = rates?.[from]
   const rt = rates?.[to]
   return rf > 0 && rt > 0 ? rt / rf : null
 }
 
-// 這兩種幣別之間的匯率是不是用了使用者的自訂匯率（畫面上標示「自訂」用；規則同 pairRate）
-export const isCustomPair = (custom, from, to) => from !== to && (custom?.[`${from}_${to}`] > 0 || custom?.[`${to}_${from}`] > 0)
-
 // 把 value（幣別 from）換成每一列的幣別：{ [code]: number | null }（null 是這個幣別沒有匯率）
-export const convertRows = ({ value, from, codes, rates, custom }) => {
+export const convertRows = ({ value, from, codes, rates }) => {
   const out = {}
   for (const code of codes) {
-    const rate = pairRate(rates, custom, from, code)
+    const rate = pairRate(rates, from, code)
     out[code] = value == null || rate == null ? null : value * rate
   }
   return out
@@ -62,8 +87,8 @@ export const convertRows = ({ value, from, codes, rates, custom }) => {
  *   刷卡：加在免稅後的金額上，手續費 = 免稅後金額 × f/100
  * amount 是輸入列的金額（幣別 from）。回傳未四捨五入的 { gross, taxDeduct, afterTax, fee, total }，缺匯率或金額回 null。
  */
-export const computePay = ({ amount, from, pay, rates, custom, taxFree, taxPercent, card, cardPercent }) => {
-  const rate = pairRate(rates, custom, from, pay)
+export const computePay = ({ amount, from, pay, rates, taxFree, taxPercent, card, cardPercent }) => {
+  const rate = pairRate(rates, from, pay)
   if (amount == null || rate == null) return null
   const gross = amount * rate
   const taxDeduct = taxFree ? gross - gross / (1 + taxPercent / 100) : 0
