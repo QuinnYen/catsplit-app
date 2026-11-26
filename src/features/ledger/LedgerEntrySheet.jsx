@@ -1,11 +1,11 @@
 // 記帳面板（spec 3.1）：從底部彈出；日期整行、類別與帳戶並排、備註占滿中間、金額列、常駐數字鍵盤。
 // 面板只收集輸入並顯示換算；驗證與換算在 entryDraft.js，寫入在 data.js。
 import { useEffect, useMemo, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, ChevronDown } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import useExchangeRate from '../../hooks/useExchangeRate'
 import CurrencySelect from '../../components/CurrencySelect'
-import { PINNED_CURRENCIES, getCurrency, roundToCurrency } from '../../config/currencies'
+import { PINNED_CURRENCIES, getCurrency, roundToCurrency, formatRate } from '../../config/currencies'
 import { useLedger } from './LedgerContext'
 import NumberPad from './NumberPad'
 import { pressKey, evaluateExpression, commitExpression, hasOperator } from './expression'
@@ -86,6 +86,8 @@ const LedgerEntrySheet = ({ editing, preset, onClose }) => {
   const [d, setD] = useState(() => initialDraft({ editing, preset, uid, ledgerId: ledger.id, selectable, selectedDate, expenseKeys: categoriesOf('expense') }))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  // 換算與扣款明細（匯率、扣款金額、轉入金額）：null＝自動（出問題或使用者改過才展開），true／false＝使用者點過
+  const [convOpen, setConvOpen] = useState(null)
   const set = (patch) => setD((prev) => ({ ...prev, ...patch }))
 
   // 面板開著時鎖住背景捲動
@@ -201,6 +203,23 @@ const LedgerEntrySheet = ({ editing, preset, onClose }) => {
   const amountColor = d.kind === 'income' ? 'var(--cs-rc-get)' : d.kind === 'expense' ? 'var(--cs-rc-owe)' : 'var(--cs-text)'
   const shownAmount = op ? `= ${fmt.num(amount ?? 0)}` : (d.expr || '0')
   const weekday = d.date ? t(`date.weekday.${weekdayOf(d.date)}`) : ''
+  // 換算與扣款明細預設折成一行摘要，避免把上方的日期、類別、備註擠掉：
+  // 匯率抓不到或缺匯率、使用者手動改過匯率或金額時自動展開，才不會把需要處理的東西藏起來
+  const accountDiff = !transfer && !!account && currency !== account.currency
+  const toDiff = transfer && !!account && !!toAccount && toAccount.currency !== account.currency
+  const hasConv = (!transfer && currency !== base) || accountDiff || toDiff
+  const accountValue = d.accountAmount !== '' ? Number(d.accountAmount) : (accountEstimate === '' ? null : accountEstimate)
+  const toValue = d.toAmount !== '' ? Number(d.toAmount) : (toEstimate === '' ? null : toEstimate)
+  const rateLoadingAny = baseRate.rateLoading || accountRate.rateLoading || transferRate.rateLoading
+  const convAttention = baseRate.rateError || accountRate.rateError || transferRate.rateError || (rateMissing && !rateLoadingAny && amount > 0 && !op)
+    || baseRate.rateManual || d.accountAmount !== '' || d.toAmount !== ''
+  const convExpanded = convOpen ?? convAttention
+  const convSummary = [
+    !transfer && currency !== base && (baseRate.exchangeRate ? t('ledger.entry.convRate', { from: currency, rate: formatRate(baseRate.exchangeRate), to: base }) : t(baseRate.rateLoading ? 'form.rateLoading' : 'form.rateEnter')),
+    baseEstimate != null && !(accountDiff && account.currency === base) && t('ledger.entry.baseAmount', { amount: fmt.money(baseEstimate, base) }),
+    accountDiff && accountValue != null && t('ledger.entry.convDeduct', { amount: fmt.money(accountValue, account.currency) }),
+    toDiff && toValue != null && t('ledger.entry.convTo', { amount: fmt.money(toValue, toAccount.currency) }),
+  ].filter(Boolean)
   const tripName = d.tripId ? trips.find((x) => x.id === d.tripId)?.name : null // 旅程帳目標示是哪一趟
 
   return (
@@ -295,28 +314,41 @@ const LedgerEntrySheet = ({ editing, preset, onClose }) => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-            {!transfer && currency !== base && (
-              <>
-                <RateRow from={currency} to={base} state={baseRate} />
-                {baseEstimate != null && <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('ledger.entry.baseAmount', { amount: fmt.money(baseEstimate, base) })}</div>}
-              </>
+            {hasConv && (
+              <button
+                type="button" onClick={() => setConvOpen(!convExpanded)} aria-expanded={convExpanded} aria-label={t('ledger.entry.convToggle')}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, width: '100%', background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', fontSize: 12, color: 'var(--cs-text-sub)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+              >
+                <span style={{ minWidth: 0 }}>{convSummary.length ? convSummary.join(' · ') : t('ledger.entry.convTitle')}</span>
+                <ChevronDown size={14} style={{ flexShrink: 0, transform: convExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+              </button>
             )}
-            {!transfer && account && currency !== account.currency && (
+            {convExpanded && (
               <>
-                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, fontSize: 12.5, color: 'var(--cs-text-sub)' }}>
-                  <span>{t('ledger.entry.accountAmount', { currency: account.currency })}</span>
-                  <input type="number" inputMode="decimal" step="any" min="0" value={d.accountAmount} onChange={(e) => set({ accountAmount: e.target.value })} placeholder={accountEstimate === '' ? '' : String(accountEstimate)} style={{ ...smallInput, width: 120 }} />
-                </label>
-                <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)' }}>{t('ledger.entry.accountHint')}</div>
-              </>
-            )}
-            {transfer && account && toAccount && toAccount.currency !== account.currency && (
-              <>
-                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, fontSize: 12.5, color: 'var(--cs-text-sub)' }}>
-                  <span>{t('ledger.entry.toAmount', { currency: toAccount.currency })}</span>
-                  <input type="number" inputMode="decimal" step="any" min="0" value={d.toAmount} onChange={(e) => set({ toAmount: e.target.value })} placeholder={toEstimate === '' ? '' : String(toEstimate)} style={{ ...smallInput, width: 120 }} />
-                </label>
-                <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)' }}>{t('ledger.entry.toAmountHint')}</div>
+                {!transfer && currency !== base && (
+                  <>
+                    <RateRow from={currency} to={base} state={baseRate} />
+                    {baseEstimate != null && <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--cs-text-sub)' }}>{t('ledger.entry.baseAmount', { amount: fmt.money(baseEstimate, base) })}</div>}
+                  </>
+                )}
+                {accountDiff && (
+                  <>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, fontSize: 12.5, color: 'var(--cs-text-sub)' }}>
+                      <span>{t('ledger.entry.accountAmount', { currency: account.currency })}</span>
+                      <input type="number" inputMode="decimal" step="any" min="0" value={d.accountAmount} onChange={(e) => set({ accountAmount: e.target.value })} placeholder={accountEstimate === '' ? '' : String(accountEstimate)} style={{ ...smallInput, width: 120 }} />
+                    </label>
+                    <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)' }}>{t('ledger.entry.accountHint')}</div>
+                  </>
+                )}
+                {toDiff && (
+                  <>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, fontSize: 12.5, color: 'var(--cs-text-sub)' }}>
+                      <span>{t('ledger.entry.toAmount', { currency: toAccount.currency })}</span>
+                      <input type="number" inputMode="decimal" step="any" min="0" value={d.toAmount} onChange={(e) => set({ toAmount: e.target.value })} placeholder={toEstimate === '' ? '' : String(toEstimate)} style={{ ...smallInput, width: 120 }} />
+                    </label>
+                    <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cs-text-mute)' }}>{t('ledger.entry.toAmountHint')}</div>
+                  </>
+                )}
               </>
             )}
             {rateMissing && amount > 0 && !op && <div role="alert" style={{ textAlign: 'right', fontSize: 12, color: 'var(--cs-danger)' }}>{t('ledger.entry.needRate')}</div>}
