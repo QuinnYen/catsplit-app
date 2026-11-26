@@ -12,9 +12,10 @@ const TABS = [
   { id: 'settings', Icon: Settings, label: 'ledger.tab.settings', to: '/ledger/settings' },
 ]
 
-// 圖表頁是從帳本主頁右上角進去的，導覽列仍標示在「帳本」
+// 圖表頁是從帳本主頁右上角進去的，導覽列仍標示在「帳本」；設定的內頁（/ledger/settings/…）標示在「設定」
 const isActive = (tab, pathname) => {
   if (tab.id === 'book') return pathname === '/ledger' || pathname === '/ledger/stats'
+  if (tab.id === 'settings') return pathname === '/ledger/settings' || pathname.startsWith('/ledger/settings/')
   return !!tab.to && pathname === tab.to
 }
 

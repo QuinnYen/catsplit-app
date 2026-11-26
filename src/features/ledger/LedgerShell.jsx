@@ -13,6 +13,7 @@ import { todayStr } from './dates'
 import LedgerTabBar from './LedgerTabBar'
 import LedgerBookPage from './LedgerBookPage'
 import LedgerSettingsPage from './LedgerSettingsPage'
+import LedgerSettingsSubPage from './LedgerSettingsSubPage'
 import LedgerAccountsPage from './LedgerAccountsPage'
 import LedgerStatsPage from './LedgerStatsPage'
 import LedgerEntrySheet from './LedgerEntrySheet'
@@ -70,6 +71,7 @@ const LedgerShell = () => {
         <Route path="accounts" element={<LedgerAccountsPage />} />
         <Route path="stats" element={<LedgerStatsPage />} />
         <Route path="settings" element={<LedgerSettingsPage />} />
+        <Route path="settings/:section" element={<LedgerSettingsSubPage />} />
         <Route path="*" element={<Navigate to="/ledger" replace />} />
       </Routes>
       <LedgerTabBar onAdd={() => openEntry(undefined)} />

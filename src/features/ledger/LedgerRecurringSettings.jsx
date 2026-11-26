@@ -1,4 +1,4 @@
-// 設定頁「基本」分頁的固定收支與固定轉帳：規則列表（頻率、金額、下次日期、停用狀態）、新增與編輯。
+// 設定的「固定收支與轉帳」內頁：規則列表（頻率、金額、下次日期、停用狀態）、新增與編輯。
 // 開啟帳本時由 useRecurringRun 補入漏掉的項目；沒有後端排程。
 import { useState } from 'react'
 import { Plus } from 'lucide-react'

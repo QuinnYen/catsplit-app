@@ -1,4 +1,4 @@
-// 設定頁「基本」分頁：支出類別與收入類別（每個帳本各一份）。新增、改名、上移下移、刪除。
+// 設定的「類別」內頁：支出類別與收入類別（每個帳本各一份），用「支出／收入」切換。新增、改名、上移下移、刪除。
 // 刪除的類別，舊帳目顯示為「其他」；每種至少保留一個。沒有編輯過的帳本用預設清單，第一次編輯才寫入。
 import { useState } from 'react'
 import { ChevronUp, ChevronDown, Pencil, Trash2, Check } from 'lucide-react'
@@ -80,11 +80,21 @@ const Section = ({ kind }) => {
 
 const LedgerCategorySettings = () => {
   const { t } = useI18n()
+  const [kind, setKind] = useState('expense')
   return (
     <>
+      <div role="tablist" style={{ display: 'flex', background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: 3, gap: 3 }}>
+        {['expense', 'income'].map((k) => (
+          <button
+            key={k} role="tab" aria-selected={kind === k} onClick={() => setKind(k)}
+            style={{ flex: 1, padding: '8px 0', borderRadius: 4, border: 'none', fontSize: 14, fontWeight: kind === k ? 600 : 400, cursor: 'pointer', background: kind === k ? 'var(--cs-rc-stamp)' : 'transparent', color: kind === k ? 'var(--cs-rc-stamp-text)' : 'var(--cs-text-sub)' }}
+          >
+            {t(`kind.${k}`)}
+          </button>
+        ))}
+      </div>
       <div style={{ fontSize: 11.5, color: 'var(--cs-text-mute)', lineHeight: 1.7 }}>{t('ledger.cat.hint')}</div>
-      <Section kind="expense" />
-      <Section kind="income" />
+      <Section key={kind} kind={kind} />
     </>
   )
 }
