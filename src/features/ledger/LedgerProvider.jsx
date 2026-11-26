@@ -53,9 +53,10 @@ const LedgerProvider = ({ lite = false, children }) => {
   }, [showToast, t])
   const { runNow: runRecurringNow } = useRecurringRun({ uid, ledger, rules: recurringRules, accounts, onDone: onRecurringDone })
 
-  const openEntry = useCallback((tx) => setEntry({ tx }), [])
+  // openEntry(tx)：編輯；openEntry(undefined, preset)：新增並預填（匯率頁帶 tripId、currency 等，見 LedgerEntrySheet 的 initialDraft）
+  const openEntry = useCallback((tx, preset) => setEntry({ tx, preset }), [])
   const ctx = useMemo(
-    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, categories, categoryDocs: categoryDocs ?? [], catName, recurringRules: recurringRules ?? [], trips: trips ?? [], hiddenTrips, runRecurringNow, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
+    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, categories, categoryDocs: categoryDocs ?? [], catName, recurringRules: recurringRules ?? [], trips: trips ?? [], tripsReady: trips !== null, hiddenTrips, runRecurringNow, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
     [uid, ledger, ledgers, accounts, links, sync, categories, categoryDocs, catName, recurringRules, trips, hiddenTrips, runRecurringNow, setActiveLedger, selectedDate, openEntry, showToast],
   )
 
@@ -68,7 +69,7 @@ const LedgerProvider = ({ lite = false, children }) => {
       {children}
       {entry && (isSnapshotTx(entry.tx)
         ? <SnapshotTxSheet key={`${ledger.id}/${entry.tx.id}`} tx={entry.tx} onClose={() => setEntry(null)} />
-        : <LedgerEntrySheet key={`${ledger.id}/${entry.tx?.id ?? 'new'}`} editing={entry.tx} onClose={() => setEntry(null)} />)}
+        : <LedgerEntrySheet key={`${ledger.id}/${entry.tx?.id ?? 'new'}`} editing={entry.tx} preset={entry.preset} onClose={() => setEntry(null)} />)}
       {toast && (
         <div role="status" style={{ position: 'fixed', left: 16, right: 16, top: 'calc(env(safe-area-inset-top, 0px) + 72px)', zIndex: 300, margin: '0 auto', maxWidth: 360, background: 'var(--cs-text)', color: 'var(--cs-bg)', borderRadius: 6, padding: '10px 14px', fontSize: 13, lineHeight: 1.5, textAlign: 'center' }}>
           {toast}

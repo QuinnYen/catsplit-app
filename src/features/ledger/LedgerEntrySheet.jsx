@@ -22,14 +22,24 @@ const fieldLabel = { fontSize: 11.5, color: 'var(--cs-text-sub)', flexShrink: 0 
 const selectStyle = { flex: 1, minWidth: 0, border: 'none', background: 'transparent', color: 'var(--cs-text)', fontSize: 14, padding: '10px 0', outline: 'none' }
 const smallInput = { border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', borderRadius: 6, padding: '6px 8px', fontSize: 14, outline: 'none', textAlign: 'right' }
 
-const initialDraft = ({ editing, uid, ledgerId, selectable, selectedDate, expenseKeys }) => {
+// preset（新增時預填，匯率頁用）：{ tripId?, currency?, date?, sourceType?, expr? }
+const initialDraft = ({ editing, preset, uid, ledgerId, selectable, selectedDate, expenseKeys }) => {
   if (editing) return { ...draftFromTransaction(editing), currencyTouched: true }
   const last = readLastUsed(localStorage, uid, ledgerId)
   const { accountId, category } = pickEntryDefaults({ accounts: selectable, last, kind: 'expense', categories: expenseKeys })
   const account = selectable.find((a) => a.id === accountId)
-  return {
+  const draft = {
     kind: 'expense', expr: '', currency: account?.currency ?? '', accountId, category, note: '', date: selectedDate,
     toAccountId: selectable.find((a) => a.id !== accountId)?.id ?? '', accountAmount: '', toAmount: '', sourceType: 'manual', currencyTouched: false,
+  }
+  if (!preset) return draft
+  return {
+    ...draft,
+    ...(preset.tripId && { tripId: preset.tripId }),
+    ...(preset.currency && { currency: preset.currency, currencyTouched: true }),
+    ...(preset.date && { date: preset.date }),
+    ...(preset.sourceType && { sourceType: preset.sourceType }),
+    ...(preset.expr && { expr: String(preset.expr) }),
   }
 }
 
@@ -61,8 +71,8 @@ const RateRow = ({ from, to, state }) => {
   )
 }
 
-const LedgerEntrySheet = ({ editing, onClose }) => {
-  const { uid, ledger, accounts, selectedDate, setSelectedDate, showToast, categories: ledgerCategories, catName } = useLedger()
+const LedgerEntrySheet = ({ editing, preset, onClose }) => {
+  const { uid, ledger, accounts, trips, selectedDate, setSelectedDate, showToast, categories: ledgerCategories, catName } = useLedger()
   const categoriesOf = (kind) => (kind === 'income' ? ledgerCategories.income : ledgerCategories.expense).map((c) => c.key)
   const { t, fmt } = useI18n()
   const base = ledger.baseCurrency
@@ -72,7 +82,7 @@ const LedgerEntrySheet = ({ editing, onClose }) => {
     () => accounts.filter((a) => a.kind !== 'group' && (!a.archived || a.id === editing?.accountId || a.id === editing?.toAccountId)),
     [accounts, editing],
   )
-  const [d, setD] = useState(() => initialDraft({ editing, uid, ledgerId: ledger.id, selectable, selectedDate, expenseKeys: categoriesOf('expense') }))
+  const [d, setD] = useState(() => initialDraft({ editing, preset, uid, ledgerId: ledger.id, selectable, selectedDate, expenseKeys: categoriesOf('expense') }))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const set = (patch) => setD((prev) => ({ ...prev, ...patch }))
@@ -187,6 +197,7 @@ const LedgerEntrySheet = ({ editing, onClose }) => {
   const amountColor = d.kind === 'income' ? 'var(--cs-rc-get)' : d.kind === 'expense' ? 'var(--cs-rc-owe)' : 'var(--cs-text)'
   const shownAmount = op ? `= ${fmt.num(amount ?? 0)}` : (d.expr || '0')
   const weekday = d.date ? t(`date.weekday.${weekdayOf(d.date)}`) : ''
+  const tripName = d.tripId ? trips.find((x) => x.id === d.tripId)?.name : null // 旅程帳目標示是哪一趟
 
   return (
     <>
@@ -207,6 +218,8 @@ const LedgerEntrySheet = ({ editing, onClose }) => {
           </div>
           <button type="button" onClick={onClose} aria-label={t('ledger.entry.close')} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: 'var(--cs-soft)', color: 'var(--cs-text-sub)', fontSize: 16, cursor: 'pointer', flexShrink: 0 }}>✕</button>
         </div>
+
+        {tripName && <div style={{ padding: '0 14px 6px', fontSize: 12, color: 'var(--cs-text-sub)', flexShrink: 0 }}>{t('fx.entry.trip', { name: tripName })}</div>}
 
         {/* 第一行日期、第二行類別與帳戶、其餘留給備註 */}
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '0 14px 8px' }}>

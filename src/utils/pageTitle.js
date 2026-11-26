@@ -10,6 +10,7 @@ const ROUTES = [
   [/^\/ledger\/settings\/budget$/, 'ledger.set.budget'],
   [/^\/ledger\/settings\/categories$/, 'ledger.set.categories'],
   [/^\/fx$/, 'tab.fx'],
+  [/^\/fx\/trips\/[^/]+$/, 'fx.trips.title'],
   [/^\/create$/, 'cg.title'],
   [/^\/settings$/, 'group.settings'],
   [/^\/merge$/, 'merge.title'],

@@ -64,7 +64,11 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 
 ## 旅程帳目（匯率頁，進行中）
 
-匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一、二階段（資料層、`LedgerProvider` 抽出）已完成，畫面還沒有：
+匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一～三階段（資料層、`LedgerProvider` 抽出、旅程頁）已完成，計算機與設定頁還沒有：
+
+- **旅程頁在 `src/features/fx/`**：`/fx` 目前是旅程列表（`TripListPage`，進行中與已封存）、`/fx/trips/:tripId` 是旅程明細（`TripDetailPage`：總花費卡、依日期分組、每日小計）。`FxShell` 用 `LedgerProvider lite` 包住路由，訪客只看到提示。新增與編輯旅程用 `TripSheet`（名稱、旅遊幣別、出發與回程日、是否計入個人統計、封存）；寫入在 `fx/data.js`，驗證與列表整理在 `fx/trips.js`，總花費與分組在 `fx/tripSummary.js`（皆為純函式，有測試）。
+- **旅程記帳**：明細頁底部「記帳」呼叫 `openEntry(undefined, { tripId, currency, date })`，同一個記帳面板預填旅程與旅遊幣別，面板上方標示「旅程：名稱」；點帳目列用同一個面板編輯。垃圾桶（刪除旅程）要到第六階段才有，現在只能封存。
+- **總花費**＝旅程內支出扣掉收入（統計幣別）；旅遊幣別的小計只加幣別相同的帳目。
 
 - 帳目可帶選填欄位 `tripId`，指向 `trips/{tripId}`（`name`、`currency`、`countInStats`、`deletedAt`、`rows`、`payCurrency`…）。沒有這個欄位就是一般帳目，既有資料不用遷移。
 - **旅程帳目預設不出現在月曆與個人統計**：`hooks.js` 的 `useMonthTransactions`、`useYearTransactions`、`useMonthsOnce` 在回傳前用 `summary.js` 的 `isPersonalTx(tx, hiddenTrips)` 過濾。要隱藏的旅程（`hiddenTripIds`）＝沒開 `countInStats` 或有 `deletedAt`；找不到旅程的 `tripId` 視為一般帳目。旅程載入前三個 hook 回傳 `null`（載入中）。`LedgerShell` 訂閱 `trips` 並把 `hiddenTrips` 放進 Context。

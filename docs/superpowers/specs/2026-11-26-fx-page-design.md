@@ -148,6 +148,7 @@ return useMemo(() => state.list?.filter((tx) => isPersonalTx(tx, hiddenTrips)) ?
 | `TripTrashPage.jsx` | 垃圾桶頁：還原與永久刪除，顯示剩餘天數（3.6，第六階段） |
 | `useTrashPurge.js` | 開啟匯率頁時自動永久刪除滿 30 天的旅程（3.6，第六階段） |
 | `FxSettingsPage.jsx` | 設定頁（截圖 2）：小數位數、預設金額、顯示幣別符號、免稅與刷卡百分比、自訂匯率（外觀沿用全站主題，不另做） |
+| `TripListPage.jsx` | 旅程列表（進行中、已封存）；第三階段先當 `/fx` 首頁，第四階段計算機完成後改由頁首的旅程切換進入 |
 | `TripDetailPage.jsx` | 旅程明細（截圖 3）：總花費卡、依日期分組列表、「＋記帳」 |
 | `tripSummary.js` | 純函式：總花費（支出扣掉收入；統計幣別與旅遊幣別）、依日分組與每日小計（有單元測試） |
 | `TripSheet.jsx` | 新增、編輯旅程的底部面板（名稱、旅遊幣別、日期、「計入個人統計」開關、封存）；第六階段加上「刪除旅程」（移到垃圾桶） |
