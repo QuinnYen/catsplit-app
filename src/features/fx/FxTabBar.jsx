@@ -1,7 +1,7 @@
-// 匯率計算機的底部導覽列：首頁／明細（目前旅程的明細）／分帳／幣別／設定，五個樣式一致（沒有凸起鈕）。
+// 匯率計算機的底部導覽列：匯率（目前所在頁，純裝飾不能點，避免一層一層堆頁）／明細（目前旅程的明細）／分帳／幣別／設定，五個樣式一致（沒有凸起鈕）。
 // 訪客沒有旅程與設定：onDetail、onSettings 沒給就不顯示，剩下的平均分欄。
 import { useNavigate } from 'react-router-dom'
-import { House, List, Users, Coins, Settings } from 'lucide-react'
+import { ArrowLeftRight, List, Users, Coins, Settings } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 
 const cell = { background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }
@@ -13,7 +13,7 @@ const FxTabBar = ({ onDetail, onCurrencies, onSettings }) => {
   const navigate = useNavigate()
   const { t } = useI18n()
   const items = [
-    { Icon: House, label: 'tab.home', onClick: () => navigate('/home') },
+    { Icon: ArrowLeftRight, label: 'tab.fx', current: true },
     onDetail && { Icon: List, label: 'fx.tab.detail', onClick: onDetail },
     { Icon: Users, label: 'tab.split', onClick: () => navigate('/') },
     { Icon: Coins, label: 'fx.tab.currencies', onClick: onCurrencies },
@@ -27,7 +27,12 @@ const FxTabBar = ({ onDetail, onCurrencies, onSettings }) => {
         padding: '6px 0 calc(6px + env(safe-area-inset-bottom, 0px))', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 10,
       }}
     >
-      {items.map(({ Icon, label, onClick }) => (
+      {items.map(({ Icon, label, onClick, current }) => current ? (
+        <div key={label} aria-current="page" style={{ ...cell, cursor: 'default' }}>
+          <Icon size={22} color="var(--cs-rc-stamp)" strokeWidth={2} />
+          <span style={{ fontSize: 11, lineHeight: '14px', fontWeight: 600, color: 'var(--cs-rc-stamp)' }}>{t(label)}</span>
+        </div>
+      ) : (
         <button key={label} onClick={onClick} aria-label={t(label)} style={cell}>
           <Icon size={22} color="var(--cs-text-sub)" strokeWidth={1.8} />
           <span style={{ fontSize: 11, lineHeight: '14px', fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t(label)}</span>

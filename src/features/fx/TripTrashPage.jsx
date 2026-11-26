@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from '../../i18n/I18nProvider'
+import FxHomeButton from './FxHomeButton'
 import { useLedger } from '../ledger/LedgerContext'
 import { shortDate, toDateStr } from '../ledger/dates'
 import { useTripTxCounts } from './hooks'
@@ -60,6 +61,8 @@ const TripTrashPage = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => navigate('/fx/trips')} aria-label={t('fx.trips.title')} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 26, lineHeight: 1, padding: 0, cursor: 'pointer', flexShrink: 0 }}>‹</button>
           <div style={{ fontSize: 16, fontWeight: 500 }}>{t('fx.trash.title')}</div>
+          <div style={{ flex: 1 }} />
+          <FxHomeButton />
         </div>
       </div>
 

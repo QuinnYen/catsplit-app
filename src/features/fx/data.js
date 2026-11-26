@@ -32,6 +32,9 @@ export const saveFxSettings = (uid, patch) => setDoc(doc(db, ...fxSettingsPath(u
 // 自訂匯率：整個 customRates 欄位一起寫（mergeFields 會取代整個欄位，單純 merge 會留下已刪除的鍵）
 export const saveCustomRates = (uid, customRates) => setDoc(doc(db, ...fxSettingsPath(uid)), { customRates }, { mergeFields: ['customRates'] })
 
+// 自訂捷徑：整個 customShortcuts 欄位一起寫（理由同上）
+export const saveCustomShortcuts = (uid, customShortcuts) => setDoc(doc(db, ...fxSettingsPath(uid)), { customShortcuts }, { mergeFields: ['customShortcuts'] })
+
 // 還原預設值：刪掉整份設定文件
 export const resetFxSettings = (uid) => deleteDoc(doc(db, ...fxSettingsPath(uid)))
 

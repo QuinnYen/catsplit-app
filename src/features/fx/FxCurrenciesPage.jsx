@@ -6,6 +6,7 @@ import { useApp } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useState } from 'react'
 import CurrencyEditor from './CurrencyEditor'
+import FxHomeButton from './FxHomeButton'
 import { useFxCalc } from './useFxCalc'
 import { saveCustomRates } from './data'
 import { DEFAULT_ROWS, sanitizeRows } from './fxMath'
@@ -19,10 +20,11 @@ const Shell = ({ title, subtitle, children }) => {
       <div className="cs-header" style={{ background: 'var(--cs-rc-head)', color: 'var(--cs-rc-head-text)', padding: '16px 16px 20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => navigate('/fx')} aria-label={t('tab.fx')} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 26, lineHeight: 1, padding: 0, cursor: 'pointer', flexShrink: 0 }}>‹</button>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 500 }}>{title}</div>
             {subtitle && <div style={{ fontSize: 11.5, opacity: 0.75, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>}
           </div>
+          <FxHomeButton />
         </div>
       </div>
       <div className="cs-body" style={{ padding: 16, maxWidth: 560 }}>{children}</div>

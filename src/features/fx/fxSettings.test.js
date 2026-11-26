@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseSetting, mergeFxSettings, MAX_CUSTOM_RATES, customRateKey, setCustomRate, removeCustomRate } from './fxSettings.js'
+import { parseSetting, parseShortcut, mergeFxSettings, MAX_SHORTCUTS, MAX_CUSTOM_RATES, customRateKey, setCustomRate, removeCustomRate } from './fxSettings.js'
 import { DEFAULT_FX_SETTINGS } from './fxMath.js'
 
 test('parseSetting：小數位數是 0–3 的整數', () => {
@@ -39,7 +39,7 @@ test('mergeFxSettings：沒有文件或空文件用預設值', () => {
 
 test('mergeFxSettings：有的欄位用存的值，壞掉的欄位退回預設值', () => {
   const m = mergeFxSettings({ decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 999 })
-  assert.deepEqual(m, { decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 1.5, customRates: {}, rows: ['TWD', 'JPY', 'USD'] })
+  assert.deepEqual(m, { decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 1.5, serviceFeePercent: 10, addTaxPercent: 8, tipPercent: 15, customShortcuts: [], customRates: {}, rows: ['TWD', 'JPY', 'USD'] })
   assert.equal(mergeFxSettings({ decimals: '2' }).decimals, DEFAULT_FX_SETTINGS.decimals) // 型別不對
   assert.equal(mergeFxSettings({ decimals: 9 }).decimals, DEFAULT_FX_SETTINGS.decimals)
   assert.equal(mergeFxSettings({ showSymbol: 'no' }).showSymbol, true)
@@ -57,6 +57,31 @@ test('mergeFxSettings：自訂匯率只留格式對、值為正數的項目，�
 test('mergeFxSettings：換算列要合法才用，否則退回預設', () => {
   assert.deepEqual(mergeFxSettings({ rows: ['JPY', 'EUR'] }).rows, ['JPY', 'EUR'])
   for (const bad of [[], ['JPY', 'JPY'], ['XXX'], 'JPY', ['TWD', 'JPY', 'USD', 'EUR', 'CNY', 'KRW', 'HKD']]) assert.deepEqual(mergeFxSettings({ rows: bad }).rows, ['TWD', 'JPY', 'USD'])
+})
+
+test('parseSetting：服務費、外加稅、小費和免稅、刷卡一樣是 0–100', () => {
+  for (const f of ['serviceFeePercent', 'addTaxPercent', 'tipPercent']) {
+    assert.deepEqual(parseSetting(f, '12.5'), { ok: true, value: 12.5 })
+    assert.equal(parseSetting(f, '101').reason, 'percent')
+    assert.equal(parseSetting(f, '').reason, 'percent')
+  }
+})
+
+test('parseShortcut：名稱 1–12 字、百分比大於 0 到 100、加收或扣除', () => {
+  assert.deepEqual(parseShortcut({ name: ' 折扣 ', percent: '5', kind: 'deduct' }), { ok: true, value: { name: '折扣', percent: 5, kind: 'deduct' } })
+  assert.equal(parseShortcut({ name: '', percent: 5, kind: 'add' }).reason, 'name')
+  assert.equal(parseShortcut({ name: 'x'.repeat(13), percent: 5, kind: 'add' }).reason, 'name')
+  for (const p of ['0', '-1', '101', 'abc', '']) assert.equal(parseShortcut({ name: 'a', percent: p, kind: 'add' }).reason, 'percent', p)
+  assert.equal(parseShortcut({ name: 'a', percent: 5, kind: 'x' }).reason, 'kind')
+})
+
+test('mergeFxSettings：自訂捷徑壞的略過、重複 id 只留第一個、最多 8 個', () => {
+  const good = { id: 'a', name: '折扣', percent: 5, kind: 'deduct' }
+  const m = mergeFxSettings({ customShortcuts: [good, { ...good, name: '重複' }, { id: 'b', name: '', percent: 5, kind: 'add' }, { id: 'c', name: 'x', percent: 0, kind: 'add' }, null, { name: 'noid', percent: 5, kind: 'add' }] })
+  assert.deepEqual(m.customShortcuts, [good])
+  assert.deepEqual(mergeFxSettings({ customShortcuts: 'x' }).customShortcuts, [])
+  const many = Array.from({ length: 12 }, (_, i) => ({ id: `i${i}`, name: `n${i}`, percent: 1, kind: 'add' }))
+  assert.equal(mergeFxSettings({ customShortcuts: many }).customShortcuts.length, MAX_SHORTCUTS)
 })
 
 test('mergeFxSettings 不改動預設值物件', () => {

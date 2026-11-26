@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { sanitizeRows, validCode, pairRate, convertRows, computePay, roundTo, formatFixed, recordAmount, adjustRates, customRateOf, usesCustom, DEFAULT_FX_SETTINGS } from './fxMath.js'
+import { formatExpr, sanitizeRows, validCode, pairRate, convertRows, computePay, roundTo, formatFixed, recordAmount, adjustRates, customRateOf, usesCustom, DEFAULT_FX_SETTINGS } from './fxMath.js'
 
 // 以 USD 為 1 的匯率表（數字是為了好算，不是真實匯率）
 const rates = { USD: 1, JPY: 160, TWD: 32, CNY: 7.2 }
@@ -8,7 +8,7 @@ const rates = { USD: 1, JPY: 160, TWD: 32, CNY: 7.2 }
 const close = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`)
 
 test('預設設定：截圖的預設值', () => {
-  assert.deepEqual(DEFAULT_FX_SETTINGS, { rows: ['TWD', 'JPY', 'USD'], decimals: 1, defaultAmount: 1, showSymbol: true, taxFreePercent: 10, cardFeePercent: 1.5, customRates: {} })
+  assert.deepEqual(DEFAULT_FX_SETTINGS, { rows: ['TWD', 'JPY', 'USD'], decimals: 1, defaultAmount: 1, showSymbol: true, taxFreePercent: 10, cardFeePercent: 1.5, serviceFeePercent: 10, addTaxPercent: 8, tipPercent: 15, customShortcuts: [], customRates: {} })
 })
 
 test('預設換算列是台幣、日圓、美元', () => {
@@ -19,6 +19,15 @@ test('computePay：實付幣別就是輸入的幣別時不用匯率，免稅與�
   const r = computePay({ amount: 1000, from: 'JPY', pay: 'JPY', rates: null, taxFree: true, taxPercent: 10, card: true, cardPercent: 1.5 })
   close(r.afterTax, 1000 / 1.1)
   close(r.total, (1000 / 1.1) * 1.015)
+})
+
+test('formatExpr：整數部分加千分位，小數與運算符號不動', () => {
+  assert.equal(formatExpr('1000'), '1,000')
+  assert.equal(formatExpr('1234567.891'), '1,234,567.891')
+  assert.equal(formatExpr('1000+2500.'), '1,000+2,500.')
+  assert.equal(formatExpr('12×3.5−1000'), '12×3.5−1,000')
+  assert.equal(formatExpr(''), '')
+  assert.equal(formatExpr('0.'), '0.')
 })
 
 test('sanitizeRows：不重複、認得的幣別、1–6 列，否則 null', () => {
@@ -107,7 +116,7 @@ test('computePay：只開其中一個、都不開、先換成實付幣別、缺�
   close(only({ taxFree: true }).total, 1000)
   close(only({ card: true }).total, 1116.5)
   assert.equal(only({}).total, 1100)
-  assert.deepEqual(only({}), { gross: 1100, taxDeduct: 0, afterTax: 1100, fee: 0, total: 1100 })
+  assert.deepEqual(only({}), { gross: 1100, taxDeduct: 0, afterTax: 1100, lines: [], subtotal: 1100, fee: 0, total: 1100 })
   // 80 USD → 以 JPY 實付：80 × 160 = 12800
   close(computePay({ amount: 80, from: 'USD', pay: 'JPY', rates, taxFree: false, taxPercent: 10, card: false, cardPercent: 1.5 }).total, 12800)
   assert.equal(computePay({ amount: 80, from: 'USD', pay: 'KRW', rates, taxFree: false, taxPercent: 10, card: false, cardPercent: 1.5 }), null)

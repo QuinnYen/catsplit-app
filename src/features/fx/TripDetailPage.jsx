@@ -2,7 +2,7 @@
 // 帳目就是個人記帳的一般帳目（只是帶 tripId），點一筆開同一個面板編輯。
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Pencil } from 'lucide-react'
+import { Pencil, ArrowLeftRight } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import FeatureTabBar from '../../components/FeatureTabBar'
 import UserHeader from '../../components/UserHeader'
@@ -11,6 +11,7 @@ import { entryHeadline } from '../ledger/entryDraft'
 import { shortDate, todayStr, weekdayOf } from '../ledger/dates'
 import { useTripTransactions } from './hooks'
 import { tripTotals, groupByDate } from './tripSummary'
+import FxHomeButton from './FxHomeButton'
 import TripSheet from './TripSheet'
 
 const TripDetailPage = () => {
@@ -31,10 +32,10 @@ const TripDetailPage = () => {
   if (!tripsReady || !trip) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
-        <UserHeader />
+        <UserHeader right={<FxHomeButton />} />
         <div className="cs-body" style={{ padding: '16px 16px 0', display: 'flex', alignItems: 'center', gap: 6 }}>{back}<div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-text)' }}>{t('fx.trips.title')}</div></div>
         <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--cs-text-sub)', fontSize: 14 }}>{t(tripsReady ? 'fx.trip.notFound' : 'common.loading')}</div>
-        <FeatureTabBar />
+        <FeatureTabBar start={{ Icon: ArrowLeftRight, label: 'tab.fx', onClick: () => navigate('/fx') }} />
       </div>
     )
   }
@@ -68,7 +69,7 @@ const TripDetailPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
-      <UserHeader />
+      <UserHeader right={<FxHomeButton />} />
 
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* 標題：旅程名稱與細節（和管理旅程頁的標題列同一種做法） */}
@@ -104,7 +105,7 @@ const TripDetailPage = () => {
         ))}
       </div>
 
-      <FeatureTabBar action={{ label: 'fx.trip.addEntry', onClick: () => openEntry(undefined, { tripId: trip.id, currency: trip.currency, date: todayStr() }) }} end={{ Icon: Pencil, label: 'fx.tab.edit', onClick: () => setEditing(true) }} />
+      <FeatureTabBar start={{ Icon: ArrowLeftRight, label: 'tab.fx', onClick: () => navigate('/fx') }} action={{ label: 'fx.trip.addEntry', onClick: () => openEntry(undefined, { tripId: trip.id, currency: trip.currency, date: todayStr() }) }} end={{ Icon: Pencil, label: 'fx.tab.edit', onClick: () => setEditing(true) }} />
       {editing && <TripSheet trip={trip} onClose={() => setEditing(false)} onTrashed={() => navigate('/fx/trips')} />}
     </div>
   )

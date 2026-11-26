@@ -360,12 +360,16 @@ service cloud.firestore {
       return v is number && v >= 0 && v <= 100;
     }
     function validFxSettings(d) {
-      return d.keys().hasOnly(['decimals', 'defaultAmount', 'showSymbol', 'taxFreePercent', 'cardFeePercent', 'customRates', 'rows'])
+      return d.keys().hasOnly(['decimals', 'defaultAmount', 'showSymbol', 'taxFreePercent', 'cardFeePercent', 'serviceFeePercent', 'addTaxPercent', 'tipPercent', 'customShortcuts', 'customRates', 'rows'])
         && (!('decimals' in d) || (d.decimals is int && d.decimals >= 0 && d.decimals <= 3))
         && (!('defaultAmount' in d) || (d.defaultAmount is number && d.defaultAmount >= 0 && d.defaultAmount < 1000000000))
         && (!('showSymbol' in d) || d.showSymbol is bool)
         && (!('taxFreePercent' in d) || validPercent(d.taxFreePercent))
         && (!('cardFeePercent' in d) || validPercent(d.cardFeePercent))
+        && (!('serviceFeePercent' in d) || validPercent(d.serviceFeePercent))
+        && (!('addTaxPercent' in d) || validPercent(d.addTaxPercent))
+        && (!('tipPercent' in d) || validPercent(d.tipPercent))
+        && (!('customShortcuts' in d) || (d.customShortcuts is list && d.customShortcuts.size() <= 8))
         && (!('customRates' in d) || (d.customRates is map && d.customRates.size() <= 20))
         && (!('rows' in d) || (d.rows is list && d.rows.size() >= 1 && d.rows.size() <= 6));
     }

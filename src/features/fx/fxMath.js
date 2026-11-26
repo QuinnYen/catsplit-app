@@ -16,6 +16,10 @@ export const DEFAULT_FX_SETTINGS = {
   showSymbol: true,
   taxFreePercent: 10, // 免稅：價格含稅 10%
   cardFeePercent: 1.5, // 刷卡手續費
+  serviceFeePercent: 10, // 服務費（加收，以免稅後的金額為基準）
+  addTaxPercent: 8, // 外加稅（價格不含稅時另外加收）
+  tipPercent: 15, // 小費
+  customShortcuts: [], // 自訂捷徑：[{ id, name, percent, kind: 'add' | 'deduct' }]
   customRates: {}, // { 'JPY_TWD': 0.2 }：1 JPY = 0.2 TWD，優先於 API 匯率
 }
 
@@ -82,20 +86,27 @@ export const convertRows = ({ value, from, codes, rates }) => {
 
 /**
  * 實付計算（依截圖驗算：12,733.7 → 免稅 −1,157.6 → 刷卡 +173.6 → 實付 11,749.8）。
- * 先換成實付幣別，再「先免稅、後刷卡」：
+ * 先換成實付幣別，再依序：
  *   免稅：價格含稅 p% 時扣掉稅金，扣掉的金額 = 金額 − 金額 ÷ (1 + p/100)（標示 −10%，實際是除以 1.1，不是乘 0.9）
- *   刷卡：加在免稅後的金額上，手續費 = 免稅後金額 × f/100
- * amount 是輸入列的金額（幣別 from）。回傳未四捨五入的 { gross, taxDeduct, afterTax, fee, total }，缺匯率或金額回 null。
+ *   extras：服務費、外加稅、小費與自訂捷徑，各自以「免稅後的金額」為基準加上或扣掉 percent%（percent 為負是扣除），彼此不疊加
+ *   刷卡：加在前面全部加總（subtotal）上，手續費 = subtotal × f/100
+ * amount 是輸入列的金額（幣別 from）。回傳未四捨五入的 { gross, taxDeduct, afterTax, lines, subtotal, fee, total }
+ * （lines 是 extras 對應的 [{ key, amount }]，扣除為負數），缺匯率或金額回 null。
  */
-export const computePay = ({ amount, from, pay, rates, taxFree, taxPercent, card, cardPercent }) => {
+export const computePay = ({ amount, from, pay, rates, taxFree, taxPercent, card, cardPercent, extras = [] }) => {
   const rate = from === pay ? 1 : pairRate(rates, from, pay)
   if (amount == null || rate == null) return null
   const gross = amount * rate
   const taxDeduct = taxFree ? gross - gross / (1 + taxPercent / 100) : 0
   const afterTax = gross - taxDeduct
-  const fee = card ? (afterTax * cardPercent) / 100 : 0
-  return { gross, taxDeduct, afterTax, fee, total: afterTax + fee }
+  const lines = extras.map(({ key, percent }) => ({ key, amount: (afterTax * percent) / 100 }))
+  const subtotal = afterTax + lines.reduce((sum, l) => sum + l.amount, 0)
+  const fee = card ? (subtotal * cardPercent) / 100 : 0
+  return { gross, taxDeduct, afterTax, lines, subtotal, fee, total: subtotal + fee }
 }
+
+// 算式顯示用：每個數字的整數部分加千分位（1000+2500. → 1,000+2,500.），小數部分與運算符號不動
+export const formatExpr = (expr) => expr.replace(/(\d+)(\.\d*)?/g, (_, int, frac = '') => int.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + frac)
 
 export const roundTo = (value, decimals) => {
   const f = 10 ** decimals

@@ -53,6 +53,14 @@ test('欄位驗證：小數位數、預設金額、符號、百分比、自訂�
   await assertFails(w({ decimals: -1 }))
   await assertFails(w({ decimals: 1.5 }))
   await assertFails(w({ decimals: '1' }))
+  for (const field of ['serviceFeePercent', 'addTaxPercent', 'tipPercent']) {
+    await assertSucceeds(w({ [field]: 10 }))
+    await assertFails(w({ [field]: 101 }))
+    await assertFails(w({ [field]: -1 }))
+  }
+  await assertSucceeds(w({ customShortcuts: [{ id: 'a', name: '折扣', percent: 5, kind: 'deduct' }] }))
+  await assertFails(w({ customShortcuts: Array.from({ length: 9 }, (_, i) => ({ id: `i${i}`, name: 'n', percent: 1, kind: 'add' })) }))
+  await assertFails(w({ customShortcuts: 'x' }))
   await assertSucceeds(w({ rows: ['TWD', 'JPY', 'USD'] }))
   await assertSucceeds(w({ rows: ['JPY'] }))
   await assertFails(w({ rows: [] }))

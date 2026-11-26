@@ -1,12 +1,13 @@
 // /fx/trips — 管理旅程：進行中與已封存的旅程。點旅程列＝設成目前旅程並回計算機，列右側的箭頭進旅程明細。
-// 底部列：首頁／新增旅程（中間凸起）／垃圾桶（右下角）。
+// 底部列：匯率（回計算機）／新增旅程（中間凸起）／垃圾桶（右下角）；首頁在右上角。
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plane, Check, ChevronRight, Trash2 } from 'lucide-react'
+import { Plane, Check, ChevronRight, Trash2, ArrowLeftRight } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import FeatureTabBar from '../../components/FeatureTabBar'
 import UserHeader from '../../components/UserHeader'
 import { useLedger } from '../ledger/LedgerContext'
+import FxHomeButton from './FxHomeButton'
 import TripSheet from './TripSheet'
 import { splitTrips, tripRange } from './trips'
 import { readCurrentTripId, writeCurrentTripId } from './fxLocalPrefs'
@@ -57,7 +58,7 @@ const TripListPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
-      <UserHeader />
+      <UserHeader right={<FxHomeButton />} />
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button onClick={() => navigate('/fx')} aria-label={t('tab.fx')} style={{ background: 'none', border: 'none', color: 'var(--cs-text)', fontSize: 26, lineHeight: 1, padding: 0, cursor: 'pointer' }}>‹</button>
@@ -86,7 +87,7 @@ const TripListPage = () => {
           </details>
         )}
       </div>
-      <FeatureTabBar action={{ label: 'fx.tab.addTrip', onClick: () => setSheet(true) }} end={{ Icon: Trash2, label: 'fx.tab.trash', onClick: () => navigate('/fx/trash') }} />
+      <FeatureTabBar start={{ Icon: ArrowLeftRight, label: 'tab.fx', onClick: () => navigate('/fx') }} action={{ label: 'fx.tab.addTrip', onClick: () => setSheet(true) }} end={{ Icon: Trash2, label: 'fx.tab.trash', onClick: () => navigate('/fx/trash') }} />
       {sheet && <TripSheet onClose={(id) => { setSheet(false); if (id) pick(id) }} />}
     </div>
   )
