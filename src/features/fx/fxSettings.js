@@ -1,6 +1,6 @@
 // 匯率換算頁的個人設定（users/{uid}/settings/fx）：輸入驗證與合併預設值，純函式。
 // 文件裡每個欄位都是選填，缺少或壞掉的欄位一律退回預設值（DEFAULT_FX_SETTINGS）。
-import { DEFAULT_FX_SETTINGS, roundTo } from './fxMath.js'
+import { DEFAULT_FX_SETTINGS, roundTo, sanitizeRows } from './fxMath.js'
 
 export const MAX_CUSTOM_RATES = 20
 const RATE_KEY = /^[A-Z]{3}_[A-Z]{3}$/
@@ -46,6 +46,7 @@ export const mergeFxSettings = (stored) => {
     taxFreePercent: pick('taxFreePercent'),
     cardFeePercent: pick('cardFeePercent'),
     customRates: cleanCustomRates(s.customRates),
+    rows: sanitizeRows(s.rows) ?? DEFAULT_FX_SETTINGS.rows,
   }
 }
 

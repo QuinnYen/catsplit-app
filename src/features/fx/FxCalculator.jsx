@@ -27,16 +27,18 @@ const chip = (on) => ({
  * @param base         帳本統計幣別（訪客是 TWD）
  * @param settings     計算機設定（fxMath 的 DEFAULT_FX_SETTINGS；第五階段改讀雲端）
  * @param currentTrip  目前選的旅程或 null
- * @param rows         換算列的幣別（1–6 個）；payCurrency 實付幣別
- * @param onRowsChange(rows)、onPayChange(code)  換算列或實付幣別改了（外層決定存哪）
+ * @param rows         換算列的幣別（1–6 個，帳號全域）
+ * @param onRowsChange(rows)  換算列改了（外層決定存哪）
  * @param onManageTrips()  開「管理旅程」頁（頂部的旅程連結；訪客沒有旅程，沒給就不顯示連結）
- * @param onOpenLedger()、onOpenCurrencies()、onOpenSettings()  底部列的記帳、幣別、設定（訪客沒有記帳與設定，沒給就不顯示）
+ * @param onOpenDetail()、onOpenCurrencies()、onOpenSettings()  底部列的明細（目前旅程的明細）、幣別、設定（訪客沒有明細與設定，沒給就不顯示）
  * @param canRecord    能不能記帳（已登入非訪客）；onRecord(preset) 開記帳面板，preset 見 LedgerEntrySheet 的 initialDraft
  */
-const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows, payCurrency, onRowsChange, onPayChange, onManageTrips, onOpenLedger, onOpenCurrencies, onOpenSettings, canRecord, onRecord }) => {
+const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows, onRowsChange, onManageTrips, onOpenDetail, onOpenCurrencies, onOpenSettings, canRecord, onRecord }) => {
   const { t } = useI18n()
   const [active, setActive] = useState(0)
   const [expr, setExpr] = useState(() => (settings.defaultAmount > 0 ? String(settings.defaultAmount) : ''))
+  // 算式還是帶入的值（預設金額或切換列帶入的換算值）：第一個按的數字鍵是取代它，不是接在後面
+  const [fresh, setFresh] = useState(() => settings.defaultAmount > 0)
   const [taxOn, setTaxOn] = useState(false)
   const [cardOn, setCardOn] = useState(false)
   const [hint, setHint] = useState('')
@@ -52,22 +54,25 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
   const activeCode = rows[activeIdx]
   const { decimals, customRates } = settings
   const value = evaluateExpression(expr) // 除以 0 是 null
-  const { rates, loading, error, retry } = useFxRates([...rows, payCurrency, base])
+  const { rates, loading, error, retry } = useFxRates([...rows, base])
   // 自訂匯率（每種幣別對基準幣）先套進匯率表，之後任兩種幣別的換算都用這一份，結果一致
   const effRates = useMemo(() => adjustRates(rates, customRates, base), [rates, customRates, base])
   const rowValues = useMemo(() => convertRows({ value, from: activeCode, codes: rows, rates: effRates }), [value, activeCode, rows, effRates])
   const pay = useMemo(
-    () => computePay({ amount: value, from: activeCode, pay: payCurrency, rates: effRates, taxFree: taxOn, taxPercent: settings.taxFreePercent, card: cardOn, cardPercent: settings.cardFeePercent }),
-    [value, activeCode, payCurrency, effRates, taxOn, cardOn, settings.taxFreePercent, settings.cardFeePercent],
+    () => computePay({ amount: value, from: activeCode, pay: activeCode, rates: effRates, taxFree: taxOn, taxPercent: settings.taxFreePercent, card: cardOn, cardPercent: settings.cardFeePercent }),
+    [value, activeCode, effRates, taxOn, cardOn, settings.taxFreePercent, settings.cardFeePercent],
   )
   const sym = (code) => (settings.showSymbol ? getCurrency(code).symbol : '')
   const cell = (v) => (loading && v == null ? '…' : formatFixed(v, decimals))
 
   const onKey = (k) => {
+    const start = fresh ? '' : expr // 帶入的值還沒動過：數字與小數點從空白開始（取代它），運算符號與刪除照常接在後面
+    const restart = fresh && /^(\d|00|\.)$/.test(k)
+    setFresh(false)
     if (k === 'C') return setExpr('')
     if (k === '=') return hasOperator(expr) ? setExpr(commitExpression(expr, 2)) : undefined
-    if (k === '00') return setExpr(pressKey(pressKey(expr, '0'), '0'))
-    setExpr(pressKey(expr, k))
+    if (k === '00') return setExpr(pressKey(pressKey(restart ? start : expr, '0'), '0'))
+    setExpr(pressKey(restart ? start : expr, k))
   }
 
   // 點別列＝改成從那一列輸入；金額帶那一列目前換算出來的數字
@@ -76,6 +81,7 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
     const v = rowValues[rows[i]]
     setActive(i)
     setExpr(v != null && v > 0 ? String(roundTo(v, decimals)) : '')
+    setFresh(v != null && v > 0)
   }
 
   // 改某一列的幣別；選到別列已有的幣別就和那一列對調（不重複）
@@ -93,15 +99,18 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
       showHint(t('fx.calc.needTrip'))
       return onManageTrips?.()
     }
-    const amount = pay && pay.total > 0 ? recordAmount(pay.total, payCurrency) : 0
+    const amount = pay && pay.total > 0 ? recordAmount(pay.total, activeCode) : 0
     if (!(amount > 0)) return showHint(t('fx.calc.needAmount'))
-    const baseRate = pairRate(effRates, payCurrency, base)
+    const baseRate = pairRate(effRates, activeCode, base)
     onRecord({
-      tripId: currentTrip.id, currency: payCurrency, expr: String(amount), sourceType: 'fx', date: todayStr(),
+      tripId: currentTrip.id, currency: activeCode, expr: String(amount), sourceType: 'fx', date: todayStr(),
       ...(baseRate && { baseRate }),
       onSaved: () => setExpr(''), // 記完清空金額，保留旅程與換算列
     })
   }
+
+  // 底部列「明細」：進目前旅程的明細；還沒選旅程就提示
+  const openDetail = () => (currentTrip ? onOpenDetail() : showHint(t('fx.calc.needTripDetail')))
 
   const pct = (n) => parseFloat(n.toFixed(2))
   const showPay = (taxOn || cardOn) && pay
@@ -114,10 +123,10 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
             <button
               onClick={onManageTrips} aria-label={t('fx.calc.pickTrip')}
-              style={{ display: 'flex', alignItems: 'center', gap: 2, maxWidth: '100%', background: 'none', border: 'none', padding: '4px 2px', color: 'var(--cs-rc-head-text)', fontSize: 15, fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 2, maxWidth: '100%', background: 'none', border: 'none', padding: '4px 2px', color: 'var(--cs-rc-head-text)', fontSize: 20, fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer' }}
             >
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentTrip?.name ?? t('fx.calc.pickTrip')}</span>
-              <ChevronRight size={16} style={{ flexShrink: 0 }} />
+              <ChevronRight size={20} style={{ flexShrink: 0 }} />
             </button>
           </div>
         )}
@@ -131,7 +140,7 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
             const on = i === activeIdx
             const preview = on && hasOperator(expr) && value != null ? `= ${formatFixed(value, decimals)}` : ''
             return (
-              <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--cs-border)', flex: '1 1 0', minHeight: 'clamp(40px, 6vh, 58px)', maxHeight: 92 }}>
+              <div key={code} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--cs-border)', padding: '0 8px', margin: '0 -8px', borderRadius: 8, background: on ? 'color-mix(in srgb, var(--cs-rc-stamp) 14%, transparent)' : 'transparent', flex: '1 1 0', minHeight: 'clamp(40px, 6vh, 58px)', maxHeight: 92 }}>
                 {/* 選擇鈕本身是撐滿寬度的，要包一層固定寬度，金額才有位置 */}
                 <div style={{ width: 96, flexShrink: 0 }}>
                   <CurrencySelect value={code} onChange={(c) => changeRow(i, c)} compact pinned={PINNED_CURRENCIES} ariaLabel={t('fx.calc.rowCurrency', { n: i + 1 })} style={{ fontWeight: 700, fontSize: 16, padding: '6px 10px' }} />
@@ -150,19 +159,18 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
 
         {error
           ? <div role="alert" style={{ fontSize: 12, color: 'var(--cs-danger)', padding: '8px 0' }}>{t('fx.calc.rateError')} <button onClick={retry} style={{ background: 'none', border: 'none', color: 'var(--cs-rc-stamp)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}>{t('fx.calc.retry')}</button></div>
-          : <div style={{ fontSize: 11, color: 'var(--cs-text-mute)', padding: '2px 0' }}>{hint || t('fx.calc.rateNote')}</div>}
+          : <div style={{ fontSize: 11, color: hint ? 'var(--cs-rc-stamp)' : 'var(--cs-text-mute)', fontWeight: hint ? 600 : 400, padding: '2px 0' }}>{hint || t('fx.calc.rateNote')}</div>}
 
         {/* 實付：免稅與刷卡打開時才出現 */}
         {showPay && (
           <div style={{ padding: '0 0 8px' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
-              {taxOn && <span style={{ ...chip(false), cursor: 'default', fontSize: 13 }}>{t('fx.calc.taxFree', { pct: pct(settings.taxFreePercent) })} −{sym(payCurrency)}{formatFixed(pay.taxDeduct, decimals)}</span>}
-              {cardOn && <span style={{ ...chip(false), cursor: 'default', fontSize: 13 }}>{t('fx.calc.card', { pct: pct(settings.cardFeePercent) })} +{sym(payCurrency)}{formatFixed(pay.fee, decimals)}</span>}
+              {taxOn && <span style={{ ...chip(false), cursor: 'default', fontSize: 13 }}>{t('fx.calc.taxFree', { pct: pct(settings.taxFreePercent) })} −{sym(activeCode)}{formatFixed(pay.taxDeduct, decimals)}</span>}
+              {cardOn && <span style={{ ...chip(false), cursor: 'default', fontSize: 13 }}>{t('fx.calc.card', { pct: pct(settings.cardFeePercent) })} +{sym(activeCode)}{formatFixed(pay.fee, decimals)}</span>}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-              {usesCustom(customRates, base, activeCode, payCurrency) && <span style={customBadge}>{t('fx.calc.custom')}</span>}
-              <span style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>{t('fx.calc.pay')} {payCurrency}</span>
-              <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--cs-rc-stamp)', fontVariantNumeric: 'tabular-nums' }}>{sym(payCurrency)}{formatFixed(pay.total, decimals)}</span>
+              <span style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>{t('fx.calc.pay')} {activeCode}</span>
+              <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--cs-rc-stamp)', fontVariantNumeric: 'tabular-nums' }}>{sym(activeCode)}{formatFixed(pay.total, decimals)}</span>
             </div>
           </div>
         )}
@@ -171,11 +179,8 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
 
       {/* 鍵盤面板：和匯率區分開，貼齊底部導覽列 */}
       <div style={{ width: '100%', maxWidth: CALC_MAX_WIDTH, margin: '0 auto', boxSizing: 'border-box', background: 'var(--cs-soft)', borderTop: '1px solid var(--cs-border)', borderRadius: '16px 16px 0 0', padding: '8px 12px 10px' }}>
-        {/* 實付幣別與修飾鈕 */}
+        {/* 修飾鈕：實付就是目前選中那一列的幣別，免稅與刷卡直接算在它上面 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px', overflowX: 'auto' }}>
-          <div style={{ width: 88, flexShrink: 0 }}>
-            <CurrencySelect value={payCurrency} onChange={onPayChange} compact pinned={PINNED_CURRENCIES} ariaLabel={t('fx.calc.payCurrency')} style={{ fontWeight: 700, padding: '6px 10px' }} />
-          </div>
           <button onClick={() => setCardOn(!cardOn)} aria-pressed={cardOn} style={chip(cardOn)}>{t('fx.calc.card', { pct: pct(settings.cardFeePercent) })}</button>
           <button onClick={() => setTaxOn(!taxOn)} aria-pressed={taxOn} style={chip(taxOn)}>{t('fx.calc.taxFree', { pct: pct(settings.taxFreePercent) })}</button>
         </div>
@@ -183,7 +188,7 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
         <FxKeypad onKey={onKey} onRecord={record} recordDisabled={!canRecord || !currentTrip} />
       </div>
 
-      <FxTabBar onLedger={onOpenLedger} onCurrencies={onOpenCurrencies} onSettings={onOpenSettings} />
+      <FxTabBar onDetail={onOpenDetail && openDetail} onCurrencies={onOpenCurrencies} onSettings={onOpenSettings} />
     </div>
   )
 }

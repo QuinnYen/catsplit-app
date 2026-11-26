@@ -39,7 +39,7 @@ test('mergeFxSettings：沒有文件或空文件用預設值', () => {
 
 test('mergeFxSettings：有的欄位用存的值，壞掉的欄位退回預設值', () => {
   const m = mergeFxSettings({ decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 999 })
-  assert.deepEqual(m, { decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 1.5, customRates: {} })
+  assert.deepEqual(m, { decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 1.5, customRates: {}, rows: ['TWD', 'JPY', 'USD'] })
   assert.equal(mergeFxSettings({ decimals: '2' }).decimals, DEFAULT_FX_SETTINGS.decimals) // 型別不對
   assert.equal(mergeFxSettings({ decimals: 9 }).decimals, DEFAULT_FX_SETTINGS.decimals)
   assert.equal(mergeFxSettings({ showSymbol: 'no' }).showSymbol, true)
@@ -52,6 +52,11 @@ test('mergeFxSettings：自訂匯率只留格式對、值為正數的項目，�
   assert.deepEqual(mergeFxSettings({ customRates: 'x' }).customRates, {})
   const many = Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`${String.fromCharCode(65 + (i % 26))}AA_TWD`, 1 + i]))
   assert.equal(Object.keys(mergeFxSettings({ customRates: many }).customRates).length, MAX_CUSTOM_RATES)
+})
+
+test('mergeFxSettings：換算列要合法才用，否則退回預設', () => {
+  assert.deepEqual(mergeFxSettings({ rows: ['JPY', 'EUR'] }).rows, ['JPY', 'EUR'])
+  for (const bad of [[], ['JPY', 'JPY'], ['XXX'], 'JPY', ['TWD', 'JPY', 'USD', 'EUR', 'CNY', 'KRW', 'HKD']]) assert.deepEqual(mergeFxSettings({ rows: bad }).rows, ['TWD', 'JPY', 'USD'])
 })
 
 test('mergeFxSettings 不改動預設值物件', () => {

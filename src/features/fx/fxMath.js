@@ -6,7 +6,11 @@ import { CURRENCIES, roundToCurrency } from '../../config/currencies.js'
 export const MAX_ROWS = 6
 
 // 設定頁（第五階段）會存到雲端；第四階段先用這份預設值
+// 預設的換算列（帳號層級的全域設定，不跟旅程或帳本走）
+export const DEFAULT_ROWS = ['TWD', 'JPY', 'USD']
+
 export const DEFAULT_FX_SETTINGS = {
+  rows: DEFAULT_ROWS, // 換算列的幣別（1–6 個，順序即顯示順序）
   decimals: 1, // 換算結果顯示幾位小數
   defaultAmount: 1, // 開啟時輸入列的預設金額
   showSymbol: true,
@@ -16,10 +20,6 @@ export const DEFAULT_FX_SETTINGS = {
 }
 
 const known = (code) => typeof code === 'string' && CURRENCIES.some((c) => c.code === code)
-
-// 預設的換算列：旅遊幣別、統計幣別，再補常用的，湊 4 列
-export const defaultRows = (tripCurrency, base) =>
-  [...new Set([tripCurrency, base, 'USD', 'JPY', 'CNY', 'EUR'].filter(known))].slice(0, 4)
 
 // 從雲端或本機讀回來的換算列：必須是不重複、認得的幣別、1–6 列，否則回 null（呼叫端改用預設）
 export const sanitizeRows = (rows) => {
@@ -88,7 +88,7 @@ export const convertRows = ({ value, from, codes, rates }) => {
  * amount 是輸入列的金額（幣別 from）。回傳未四捨五入的 { gross, taxDeduct, afterTax, fee, total }，缺匯率或金額回 null。
  */
 export const computePay = ({ amount, from, pay, rates, taxFree, taxPercent, card, cardPercent }) => {
-  const rate = pairRate(rates, from, pay)
+  const rate = from === pay ? 1 : pairRate(rates, from, pay)
   if (amount == null || rate == null) return null
   const gross = amount * rate
   const taxDeduct = taxFree ? gross - gross / (1 + taxPercent / 100) : 0

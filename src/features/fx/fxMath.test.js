@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { defaultRows, sanitizeRows, validCode, pairRate, convertRows, computePay, roundTo, formatFixed, recordAmount, adjustRates, customRateOf, usesCustom, DEFAULT_FX_SETTINGS } from './fxMath.js'
+import { sanitizeRows, validCode, pairRate, convertRows, computePay, roundTo, formatFixed, recordAmount, adjustRates, customRateOf, usesCustom, DEFAULT_FX_SETTINGS } from './fxMath.js'
 
 // 以 USD 為 1 的匯率表（數字是為了好算，不是真實匯率）
 const rates = { USD: 1, JPY: 160, TWD: 32, CNY: 7.2 }
@@ -8,14 +8,17 @@ const rates = { USD: 1, JPY: 160, TWD: 32, CNY: 7.2 }
 const close = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`)
 
 test('預設設定：截圖的預設值', () => {
-  assert.deepEqual(DEFAULT_FX_SETTINGS, { decimals: 1, defaultAmount: 1, showSymbol: true, taxFreePercent: 10, cardFeePercent: 1.5, customRates: {} })
+  assert.deepEqual(DEFAULT_FX_SETTINGS, { rows: ['TWD', 'JPY', 'USD'], decimals: 1, defaultAmount: 1, showSymbol: true, taxFreePercent: 10, cardFeePercent: 1.5, customRates: {} })
 })
 
-test('defaultRows：旅遊幣別、統計幣別在前，補常用幣別湊 4 列，不重複', () => {
-  assert.deepEqual(defaultRows('JPY', 'TWD'), ['JPY', 'TWD', 'USD', 'CNY'])
-  assert.deepEqual(defaultRows(null, 'TWD'), ['TWD', 'USD', 'JPY', 'CNY'])
-  assert.deepEqual(defaultRows('USD', 'JPY'), ['USD', 'JPY', 'CNY', 'EUR'])
-  assert.deepEqual(defaultRows('XXX', 'TWD'), ['TWD', 'USD', 'JPY', 'CNY']) // 不認得的幣別略過
+test('預設換算列是台幣、日圓、美元', () => {
+  assert.deepEqual(DEFAULT_FX_SETTINGS.rows, ['TWD', 'JPY', 'USD'])
+})
+
+test('computePay：實付幣別就是輸入的幣別時不用匯率，免稅與刷卡直接算在那個幣別上', () => {
+  const r = computePay({ amount: 1000, from: 'JPY', pay: 'JPY', rates: null, taxFree: true, taxPercent: 10, card: true, cardPercent: 1.5 })
+  close(r.afterTax, 1000 / 1.1)
+  close(r.total, (1000 / 1.1) * 1.015)
 })
 
 test('sanitizeRows：不重複、認得的幣別、1–6 列，否則 null', () => {

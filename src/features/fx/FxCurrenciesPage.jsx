@@ -1,5 +1,5 @@
 // /fx/currencies — 幣別：計算機顯示哪些幣別、順序、自訂匯率。底部列的「幣別」進來，標題列返回計算機。
-// 換算列跟著目前選的旅程（沒選旅程就是共用的那一份）；自訂匯率存在帳號設定（users/{uid}/settings/fx 的 customRates）。
+// 換算列與自訂匯率都存在帳號設定（users/{uid}/settings/fx 的 rows、customRates），不跟旅程或帳本走。
 // 訪客只能調整換算列（存本機），不能自訂匯率。
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
@@ -7,9 +7,8 @@ import { useI18n } from '../../i18n/I18nProvider'
 import { useState } from 'react'
 import CurrencyEditor from './CurrencyEditor'
 import { useFxCalc } from './useFxCalc'
-import { useFxSettings } from './hooks'
 import { saveCustomRates } from './data'
-import { defaultRows, sanitizeRows } from './fxMath'
+import { DEFAULT_ROWS, sanitizeRows } from './fxMath'
 import { readLocalCalc, writeLocalCalc } from './fxLocalPrefs'
 
 const Shell = ({ title, subtitle, children }) => {
@@ -34,12 +33,12 @@ const Shell = ({ title, subtitle, children }) => {
 const FxCurrenciesPage = () => {
   const { t } = useI18n()
   const calc = useFxCalc()
-  const { settings, ready } = useFxSettings(calc.uid)
-  if (!calc.tripsReady || !ready) return <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'grid', placeItems: 'center', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
+  const { settings } = calc
+  if (!calc.tripsReady || !calc.ready) return <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'grid', placeItems: 'center', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
   return (
-    <Shell title={t('fx.cur.title')} subtitle={calc.current ? t('fx.cur.forTrip', { name: calc.current.name }) : t('fx.cur.forAll')}>
+    <Shell title={t('fx.cur.title')}>
       <CurrencyEditor
-        base={calc.base} rows={calc.rows} onRowsChange={(rows) => calc.save({ rows })}
+        base={calc.base} rows={calc.rows} onRowsChange={calc.saveRows}
         customRates={settings.customRates}
         onCustomRatesChange={(next) => saveCustomRates(calc.uid, next).catch((e) => console.error('Failed to save custom rates', e))}
       />
@@ -52,9 +51,9 @@ export const FxCurrenciesGuest = () => {
   const { t } = useI18n()
   const { user } = useApp()
   const [local, setLocal] = useState(() => readLocalCalc(localStorage, user.uid))
-  const rows = sanitizeRows(local.rows) ?? defaultRows(null, 'TWD')
+  const rows = sanitizeRows(local.rows) ?? DEFAULT_ROWS
   return (
-    <Shell title={t('fx.cur.title')} subtitle={t('fx.cur.forAll')}>
+    <Shell title={t('fx.cur.title')}>
       <CurrencyEditor
         base="TWD" rows={rows} customRates={null} onCustomRatesChange={() => {}}
         onRowsChange={(next) => { writeLocalCalc(localStorage, user.uid, { rows: next }); setLocal((prev) => ({ ...prev, rows: next })) }}
