@@ -159,6 +159,14 @@ Google 登入用 Google Identity Services 取得 ID token，由 `authExchange` �
 - 群組預算（第一版只有整個群組，`budget = { amount, period: { type: 'trip' } }`，單位為基準幣）：已用 = 淨額（支出 − 收入），由 `src/utils/budget.js` 的 `computeBudgetStatus` 判斷，`spent` 先四捨五入到兩位，80% 起為警告、100% 起為超支。資料來源有兩種：群組頁的進度條用已訂閱的 `expenses`／`incomes` 清單加總（與總額卡的淨支出一致）；首頁的超支徽章與記帳頁的提示用群組彙總欄位 `totalAmount − totalIncome`（不額外讀帳目，編輯則以新金額替換原帳目）。彙總欄位在編輯後到重算完成前會短暫落後，兩處可能暫時不一致，以群組頁為準。
 - `npm test`（`node --test`）會跑 `expenseHelpers`、`budget`、`currencies`、`settleSuggestions`、`transferAmounts`、`pageTitle`、i18n 與 `functions/migrate.js` 等單元測試。
 
+## 快取標頭（部署後使用者拿到舊版）
+
+- Firebase Hosting 對沒有設定標頭的內容預設 `Cache-Control: max-age=3600`。這個站是單頁應用，`/`、`/ledger`、`/group/xxx` 都由 `index.html` 回應，**請求網址不是 `/index.html`**，所以只替 `/index.html` 設 `no-store` 對不上，部署後使用者最多一小時內還會拿到舊的 HTML，連到舊的 JS（曾因此出現「已修好的 bug 在正式站仍然存在」）。
+- `firebase.json` 的 `hosting.headers` 因此逐一列出每個會回傳 `index.html` 的網址（`/`、`/home`、`/ledger/**`、`/group/**`…）設 `no-cache`（每次向伺服器驗證，沒變就 304，很便宜）；`/assets/**`（檔名帶雜湊）維持 `immutable` 長期快取，兩者**互不重疊**，因為官方文件沒有說明多條規則設同一個標頭時誰優先。
+- **新增路由時要把網址加進 `firebase.json`**。`src/utils/hostingHeaders.test.js` 會讀 `App.jsx` 的路由檢查，漏了測試會失敗。
+- 驗證：部署後在瀏覽器 Console 執行 `fetch('/', {cache:'no-store'}).then(r => console.log(r.headers.get('cache-control')))`，應該是 `no-cache`。
+- 已經被快取的舊 HTML 要等它過期（最多一小時）或關閉所有無痕視窗再開；之後的部署不會再有這個問題。
+
 ## 已知取捨與未完成
 
 **取捨**
