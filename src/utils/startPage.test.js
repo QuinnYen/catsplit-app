@@ -42,3 +42,24 @@ test('takeLaunch：第一次 true，之後 false', () => {
   assert.equal(takeLaunch(s), false)
   assert.equal(takeLaunch(s), false)
 })
+
+test('launchRedirect：第一次進 / 導向預設頁；其他情況不導向；一律記下已開過', async () => {
+  const { launchRedirect } = await import('./startPage.js')
+  const at = (pathname, search = '') => ({ pathname, search })
+  // 預設記帳
+  assert.equal(launchRedirect(at('/'), memory(), memory()), '/ledger')
+  // 偏好分帳 → 不需要導向（回 null），但仍記下
+  const local = memory(); setStartPage('split', local)
+  const s1 = memory(); assert.equal(launchRedirect(at('/'), local, s1), null); assert.equal(takeLaunch(s1), false)
+  // 偏好匯率
+  setStartPage('fx', local); assert.equal(launchRedirect(at('/'), local, memory()), '/fx')
+  // 第二次（同分頁）不再導向
+  const s2 = memory(); assert.equal(launchRedirect(at('/'), local, s2), '/fx'); assert.equal(launchRedirect(at('/'), local, s2), null)
+  // 從其他網址進來：不導向，但記下已開過，之後點回 / 也不會被導走
+  const s3 = memory(); assert.equal(launchRedirect(at('/group/abc'), local, s3), null); assert.equal(launchRedirect(at('/'), local, s3), null)
+  // LIFF 參數
+  assert.equal(launchRedirect(at('/', '?liff.state=%2Fx'), local, memory()), null)
+  // storage 壞掉時不導向、不丟錯
+  const broken = { getItem() { throw new Error('x') }, setItem() { throw new Error('x') } }
+  assert.equal(launchRedirect(at('/'), local, broken), null)
+})

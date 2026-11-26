@@ -38,7 +38,7 @@ scripts/storage/            # bucket CORS 與生命週期設定（需手動套�
 
 - 入口頁 `/home`（`PortalPage`）有四個功能大按鈕：記帳 `/ledger`、分帳 `/`、目標 `/savings`、匯率 `/fx`。每個功能有自己的底部列，「首頁」一律回 `/home`，最右一格是頭像（帳號選單：設定、官方帳號、登出）。
 - 設定頁「預設開啟頁面」（首頁／記帳／分帳／目標／匯率，預設記帳）存在這台裝置的 localStorage（`cs-start-page`，`src/utils/startPage.js`）。
-- 導向規則（`App.jsx` 的 `StartRedirect`）：這個分頁／webview 第一次載入且網址是 `/` 時才依偏好導向；用 sessionStorage（`cs-launched`）記下，所以同分頁重新整理或之後點回 `/` 不會再被導走；從群組連結等其他網址進來也不導向，網址帶 `liff.` 參數時略過。訪客的記帳與目標退回分帳列表。
+- 導向規則：`main.jsx` 在 React 與登入啟動**之前**呼叫 `launchRedirect`（`src/utils/startPage.js`），這個分頁／webview 第一次載入且網址是 `/` 時，用 `history.replaceState` 先把網址換成偏好頁，所以第一個畫面就是目標頁，不會先閃出分帳列表。用 sessionStorage（`cs-launched`）記下，同分頁重新整理或之後點回 `/` 不會再導向；從群組連結等其他網址進來不導向（但一樣記下已開過），網址帶 `liff.` 參數時略過。那時還不知道是不是訪客，訪客到 `/ledger`、`/savings` 會被路由規則導回 `/`。**不要把這個導向放回 React 元件**：用 `<Navigate>` 會在每次換頁時重新觸發，把人拉回預設頁（曾發生過）。
 
 ## 網頁版版型
 

@@ -42,3 +42,14 @@ export const takeLaunch = (storage = store('sessionStorage')) => {
     return true
   } catch { return false }
 }
+
+// 開 App 時的導向：這個分頁／webview 第一次載入、網址剛好是 / 、而且不是 LIFF 帶參數的進入時，回傳預設頁路徑，否則回傳 null。
+// 在 main.jsx 於 React 與登入啟動之前呼叫，所以第一個畫面就是目標頁，不會先閃出分帳列表。
+// 那時還不知道是不是訪客，所以不處理訪客：訪客到 /ledger、/savings 會被路由規則導回 /。
+// 不論有沒有導向，第一次呼叫都會記下「已開過」，之後同分頁的重新整理與點回 / 都不會再導向。
+export const launchRedirect = ({ pathname, search }, local = store('localStorage'), session = store('sessionStorage')) => {
+  const first = takeLaunch(session)
+  if (!first || pathname !== '/' || search.includes('liff.')) return null
+  const path = startPath(getStartPage(local), false)
+  return path === '/' ? null : path
+}
