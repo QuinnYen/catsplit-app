@@ -24,3 +24,5 @@
 | P8 | 分類預算 | `2026-11-14-p8-category-budget-backlog.md` | [ ] |
 | P9 | 重複性支出 | `2026-11-14-p9-recurring-expense-backlog.md` | [ ] |
 | P17 | 群組 Bot 與 LINE 群組綁定 | `2026-11-14-p17-line-group-bot-backlog.md` | [ ] |
+| P19 | 離線使用（個人記帳優先；Firestore 離線快取、Service Worker 外殼） | `2026-11-26-p19-offline-backlog.md` | [ ] |
+| P20 | App 化：上架 Google Play（TWA） | `2026-11-26-p20-app-packaging-backlog.md` | [ ] |

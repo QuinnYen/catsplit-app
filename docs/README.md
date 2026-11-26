@@ -26,7 +26,7 @@
 
 ## superpowers — 規劃
 
-- [Specs 與 Backlog 索引](superpowers/specs/README.md)：功能路線、進行中與待辦項目（匯率頁、P18、P5、P7、P8、P9、P17）。
+- [Specs 與 Backlog 索引](superpowers/specs/README.md)：功能路線、進行中與待辦項目（匯率頁、P18、P5、P7、P8、P9、P17、P19 離線、P20 上架 Google Play）。
 - [archive](superpowers/archive/)：已完成並上線的設計與計畫。
   - P14 獨立帳號：[設計](superpowers/archive/2026-11-14-p14-identity-design.md)、[實作計畫](superpowers/archive/2026-11-23-p14-identity-plan.md)
   - P12 個人記帳：[設計](superpowers/archive/2026-11-14-p12-personal-ledger-design.md)、[實作計畫](superpowers/archive/2026-11-24-p12-ledger-plan.md)；現行說明在 [個人記帳](guides/personal-ledger.md)
