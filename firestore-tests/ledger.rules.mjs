@@ -11,6 +11,7 @@ const ledgerRef = (db, uid, id = 'l1') => doc(db, 'users', uid, 'ledgers', id)
 const accountRef = (db, uid, id = 'a1', ledger = 'l1') => doc(db, 'users', uid, 'ledgers', ledger, 'accounts', id)
 const txRef = (db, uid, id = 't1', ledger = 'l1') => doc(db, 'users', uid, 'ledgers', ledger, 'transactions', id)
 const linkRef = (db, uid, id = 'g1', ledger = 'l1') => doc(db, 'users', uid, 'ledgers', ledger, 'groupLinks', id)
+const tripRef = (db, uid, id = 'tp1', ledger = 'l1') => doc(db, 'users', uid, 'ledgers', ledger, 'trips', id)
 
 const now = () => Timestamp.now()
 const ledger = (extra = {}) => ({ name: '日本行 2026', baseCurrency: 'JPY', createdAt: now(), ...extra })
@@ -19,6 +20,7 @@ const expense = (extra = {}) => ({
   type: 'expense', accountId: 'a1', amount: 980, currency: 'JPY', exchangeRate: 1, baseAmount: 980,
   title: '拉麵', category: 'food', note: '', date: '2026-11-24', source: { type: 'manual' }, createdAt: now(), ...extra,
 })
+const trip = (extra = {}) => ({ name: '2026 大分溫泉', currency: 'JPY', createdAt: now(), ...extra })
 const transfer = (extra = {}) => ({
   type: 'transfer', accountId: 'a1', amount: 4200, currency: 'TWD', toAccountId: 'a2', toAmount: 20000,
   date: '2026-11-23', source: { type: 'manual' }, createdAt: now(), ...extra,
@@ -387,4 +389,63 @@ test('群組連結驗證：欄位與群組名稱', async () => {
   await assertFails(w({ linkedAt: now(), groupName: '日本行', extra: 1 }, 'g7'))
   // 重新連結可以改 linkedAt
   await assertSucceeds(updateDoc(linkRef(db, 'u1'), { linkedAt: now() }))
+})
+
+// ---------- 旅程（匯率頁）----------
+
+test('旅程：本人可建立、讀取、更新、刪除；別人、未登入、訪客不行', async () => {
+  const db = dbAs('u1')
+  await assertSucceeds(setDoc(ledgerRef(db, 'u1'), ledger()))
+  await assertSucceeds(setDoc(tripRef(db, 'u1'), trip()))
+  await assertSucceeds(getDoc(tripRef(db, 'u1')))
+  await assertSucceeds(updateDoc(tripRef(db, 'u1'), { name: '大分', countInStats: true }))
+  const other = dbAs('u2')
+  await assertFails(getDoc(tripRef(other, 'u1')))
+  await assertFails(setDoc(tripRef(other, 'u1', 'tp2'), trip()))
+  await assertFails(updateDoc(tripRef(other, 'u1'), { name: 'x' }))
+  await assertFails(deleteDoc(tripRef(other, 'u1')))
+  await assertFails(getDoc(tripRef(env.unauthenticatedContext().firestore(), 'u1')))
+  await assertFails(setDoc(tripRef(dbAs('u1', { guest: true }), 'u1', 'tp3'), trip()))
+  await assertSucceeds(deleteDoc(tripRef(db, 'u1')))
+})
+
+test('旅程驗證：名稱、旅遊幣別、日期、開關、垃圾桶時間、換算列、實付幣別、未知欄位', async () => {
+  const db = dbAs('u1')
+  const w = (data, id) => setDoc(tripRef(db, 'u1', id), data)
+  await assertSucceeds(w(trip({ startDate: '2026-11-07', endDate: '2026-11-10', countInStats: false, archived: true, rows: ['JPY', 'TWD', 'CNY'], payCurrency: 'JPY' }), 'ok1'))
+  await assertSucceeds(w(trip({ deletedAt: now() }), 'ok2'))
+  await assertFails(w(trip({ name: '' }), 'n1'))
+  await assertFails(w(trip({ name: 'a'.repeat(21) }), 'n2'))
+  await assertFails(w({ name: '旅程', createdAt: now() }, 'n3')) // 缺旅遊幣別
+  await assertFails(w(trip({ currency: 'JP' }), 'c1'))
+  await assertFails(w(trip({ payCurrency: 'JPYY' }), 'c2'))
+  await assertFails(w(trip({ startDate: '2026/11/07' }), 'd1'))
+  await assertFails(w(trip({ endDate: 20261110 }), 'd2'))
+  await assertFails(w(trip({ countInStats: 'yes' }), 'b1'))
+  await assertFails(w(trip({ archived: 1 }), 'b2'))
+  await assertFails(w(trip({ deletedAt: '2026-11-26' }), 't1'))
+  await assertFails(w(trip({ rows: 'JPY' }), 'r1'))
+  await assertFails(w(trip({ rows: ['JPY', 'TWD', 'CNY', 'USD', 'EUR', 'KRW', 'HKD'] }), 'r2')) // 最多 6 個
+  await assertFails(w(trip({ extra: 1 }), 'x1'))
+  await assertFails(w(trip({ createdAt: '2026-11-26' }), 'x2'))
+})
+
+test('旅程建立時間建立後不可改，其他欄位可改', async () => {
+  const db = dbAs('u1')
+  await assertSucceeds(setDoc(tripRef(db, 'u1'), trip()))
+  await assertFails(updateDoc(tripRef(db, 'u1'), { createdAt: Timestamp.fromMillis(1) }))
+  await assertSucceeds(updateDoc(tripRef(db, 'u1'), { deletedAt: now(), countInStats: true }))
+})
+
+test('帳目的 tripId：選填，字串 1–100 字；支出、收入、轉帳都可帶', async () => {
+  const db = dbAs('u1')
+  const w = (data, id) => setDoc(txRef(db, 'u1', id), data)
+  await assertSucceeds(w(expense({ tripId: 'tp1', source: { type: 'fx' } }), 'e1'))
+  await assertSucceeds(w(expense({ type: 'income', tripId: 'tp1' }), 'e2'))
+  await assertSucceeds(w(transfer({ tripId: 'tp1' }), 'e3'))
+  await assertSucceeds(w(expense(), 'e4')) // 沒有 tripId 照舊
+  await assertFails(w(expense({ tripId: '' }), 'bad1'))
+  await assertFails(w(expense({ tripId: 'x'.repeat(101) }), 'bad2'))
+  await assertFails(w(expense({ tripId: 5 }), 'bad3'))
+  await assertSucceeds(updateDoc(txRef(db, 'u1', 'e4'), { tripId: 'tp1' })) // 之後歸到旅程
 })

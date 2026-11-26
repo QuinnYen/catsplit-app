@@ -22,7 +22,7 @@ const title = { fontSize: 13, fontWeight: 500, color: 'var(--cs-text-sub)', marg
 const navBtn = { background: 'none', border: 'none', color: 'inherit', fontSize: 22, lineHeight: 1, padding: '0 10px', cursor: 'pointer' }
 
 const LedgerStatsPage = () => {
-  const { uid, ledger, selectedDate, setSelectedDate, catName, categories: ledgerCategories } = useLedger()
+  const { uid, ledger, hiddenTrips, selectedDate, setSelectedDate, catName, categories: ledgerCategories } = useLedger()
   const { t, fmt } = useI18n()
   const navigate = useNavigate()
   const base = ledger.baseCurrency
@@ -35,10 +35,10 @@ const LedgerStatsPage = () => {
   const [pickerOpen, setPickerOpen] = useState(false)
   const yearly = view === 'year'
 
-  const live = useMonthTransactions(uid, ledger.id, monthKey, monthStartDay)
+  const live = useMonthTransactions(uid, ledger.id, monthKey, monthStartDay, hiddenTrips)
   const keys = yearly ? [] : lastMonths(monthKey, TREND_MONTHS)
-  const loaded = useMonthsOnce(uid, ledger.id, keys, monthKey, monthStartDay)
-  const yearTxs = useYearTransactions(uid, ledger.id, yearly ? yearKey : null, monthStartDay, yearStartMonth)
+  const loaded = useMonthsOnce(uid, ledger.id, keys, monthKey, monthStartDay, hiddenTrips)
+  const yearTxs = useYearTransactions(uid, ledger.id, yearly ? yearKey : null, monthStartDay, yearStartMonth, hiddenTrips)
   const txs = yearly ? yearTxs : live
   const loading = yearly ? yearTxs === null : live === null || keys.some((k) => k !== monthKey && !loaded[k])
 

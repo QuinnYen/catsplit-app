@@ -18,15 +18,17 @@ const sourceLabel = (tx, t) => {
  * @param accounts     帳戶 [{ id, name }]，帳戶 id 轉成名稱；找不到（已刪除）顯示 id
  * @param transactions 帳目 [{ id, ...fields }]
  * @param categories   帳本的類別清單（resolveCategories 的結果），類別名稱用它顯示；沒給就用預設清單
+ * @param trips        旅程 [{ id, name }]，帳目的 tripId 轉成旅程名稱（最後一欄）；沒給或找不到顯示空白
  * @param t            翻譯函式
  * @returns 含 BOM 的 CSV 文字
  */
-export const buildLedgerCsv = ({ ledger, accounts, transactions, categories = resolveCategories([]), t }) => {
+export const buildLedgerCsv = ({ ledger, accounts, transactions, categories = resolveCategories([]), trips = [], t }) => {
   const nameOf = (id) => accounts.find((a) => a.id === id)?.name ?? id ?? ''
+  const tripNameOf = (id) => (id ? trips.find((x) => x.id === id)?.name ?? '' : '')
   const header = [
     t('ledger.csv.type'), t('ledger.csv.date'), t('ledger.csv.title'), t('ledger.csv.category'), t('ledger.csv.account'),
     t('ledger.csv.amount'), t('ledger.csv.currency'), t('ledger.csv.baseAmount', { currency: ledger.baseCurrency }), t('ledger.csv.chargedAmount'),
-    t('ledger.csv.toAccount'), t('ledger.csv.toAmount'), t('ledger.csv.note'), t('ledger.csv.source'),
+    t('ledger.csv.toAccount'), t('ledger.csv.toAmount'), t('ledger.csv.note'), t('ledger.csv.source'), t('ledger.csv.trip'),
   ]
   const sorted = [...transactions].sort((a, b) => (a.date === b.date ? createdMs(a) - createdMs(b) : a.date < b.date ? -1 : 1))
   const rows = sorted.map((tx) => {
@@ -45,6 +47,7 @@ export const buildLedgerCsv = ({ ledger, accounts, transactions, categories = re
       transfer ? tx.toAmount ?? '' : '',
       tx.note ?? '',
       sourceLabel(tx, t),
+      tripNameOf(tx.tripId),
     ]
   })
   return BOM + [header, ...rows].map((r) => r.map(escapeCell).join(',')).join('\n')

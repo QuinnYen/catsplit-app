@@ -146,3 +146,19 @@ test('已匯入的群組帳目編輯：保留原本的 source 與標題', () => 
   assert.deepEqual(manual.data.source, { type: 'manual' })
   assert.ok(!('title' in manual.data))
 })
+
+test('旅程：tripId 帶進支出、收入與轉帳的帳目；沒有就不放欄位', () => {
+  assert.equal(build({ tripId: 'tp1' }).data.tripId, 'tp1')
+  assert.equal(build({ kind: 'income', category: 'refund', tripId: 'tp1' }).data.tripId, 'tp1')
+  const transfer = build({ kind: 'transfer', toAccountId: 'jcard', toAmount: 200, tripId: 'tp1' })
+  assert.equal(transfer.data.tripId, 'tp1')
+  assert.ok(!('tripId' in build({}).data))
+  assert.ok(!('tripId' in build({ tripId: '' }).data))
+})
+
+test('旅程：編輯帳目時保留 tripId，來源 fx', () => {
+  const d = draftFromTransaction({ type: 'expense', amount: 980, currency: 'JPY', accountId: 'jcash', category: 'food', date: '2026-11-08', source: { type: 'fx' }, tripId: 'tp1' })
+  assert.equal(d.tripId, 'tp1')
+  assert.equal(d.sourceType, 'fx')
+  assert.ok(!('tripId' in draftFromTransaction({ type: 'expense', amount: 1, currency: 'JPY', accountId: 'jcash', date: '2026-11-08', source: { type: 'manual' } })))
+})

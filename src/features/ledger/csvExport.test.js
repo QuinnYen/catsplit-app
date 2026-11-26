@@ -6,7 +6,7 @@ const dict = {
   'ledger.csv.type': '類型', 'ledger.csv.date': '日期', 'ledger.csv.title': '標題', 'ledger.csv.category': '類別', 'ledger.csv.account': '帳戶',
   'ledger.csv.amount': '金額', 'ledger.csv.currency': '幣別', 'ledger.csv.baseAmount': '統計金額({currency})', 'ledger.csv.chargedAmount': '扣款金額',
   'ledger.csv.toAccount': '轉入帳戶', 'ledger.csv.toAmount': '轉入金額', 'ledger.csv.note': '備註', 'ledger.csv.source': '來源',
-  'ledger.csv.srcManual': '手動', 'ledger.csv.srcRecurring': '固定', 'ledger.csv.srcGroup': '群組同步', 'ledger.csv.srcImported': '群組（已匯入）',
+  'ledger.csv.srcManual': '手動', 'ledger.csv.srcRecurring': '固定', 'ledger.csv.srcGroup': '群組同步', 'ledger.csv.srcImported': '群組（已匯入）', 'ledger.csv.trip': '旅程',
   'kind.expense': '支出', 'kind.income': '收入', 'ledger.kind.transfer': '轉帳', 'category.food': '餐飲', 'category.salary': '薪資',
 }
 const t = (k, p = {}) => (dict[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => p[n])
@@ -18,7 +18,7 @@ const lines = (csv) => csv.slice(1).split('\n')
 test('表頭與 BOM，統計金額帶統計幣別', () => {
   const csv = buildLedgerCsv({ ledger, accounts, transactions: [], t })
   assert.equal(csv.charCodeAt(0), 0xFEFF)
-  assert.equal(lines(csv)[0], '"類型","日期","標題","類別","帳戶","金額","幣別","統計金額(TWD)","扣款金額","轉入帳戶","轉入金額","備註","來源"')
+  assert.equal(lines(csv)[0], '"類型","日期","標題","類別","帳戶","金額","幣別","統計金額(TWD)","扣款金額","轉入帳戶","轉入金額","備註","來源","旅程"')
 })
 
 test('支出、跨幣別收入、轉帳各自的欄位；日期由舊到新，同一天依建立時間', () => {
@@ -29,9 +29,9 @@ test('支出、跨幣別收入、轉帳各自的欄位；日期由舊到新，�
   ]
   const rows = lines(buildLedgerCsv({ ledger, accounts, transactions, t })).slice(1)
   assert.deepEqual(rows, [
-    '"收入","2026-11-02","","薪資","現金","100","TWD","100","","","","","手動"',
-    '"支出","2026-11-02","","餐飲","日圓現金","980","JPY","210","980","","","拉麵","手動"',
-    '"轉帳","2026-11-03","","","現金","1000","TWD","","","日圓現金","4800","","手動"',
+    '"收入","2026-11-02","","薪資","現金","100","TWD","100","","","","","手動",""',
+    '"支出","2026-11-02","","餐飲","日圓現金","980","JPY","210","980","","","拉麵","手動",""',
+    '"轉帳","2026-11-03","","","現金","1000","TWD","","","日圓現金","4800","","手動",""',
   ])
 })
 
@@ -41,8 +41,8 @@ test('群組同步與已匯入的來源標示、標題；帳戶已刪除時顯�
     { id: 'b', type: 'expense', accountId: 'gone', amount: 50, currency: 'TWD', baseAmount: 50, date: '2026-11-06', source: { type: 'group', groupId: 'g', detached: true } },
   ]
   const rows = lines(buildLedgerCsv({ ledger, accounts, transactions, t })).slice(1)
-  assert.equal(rows[0], '"支出","2026-11-05","拉麵","餐飲","日本行","300","TWD","300","","","","","群組同步"')
-  assert.equal(rows[1], '"支出","2026-11-06","","","gone","50","TWD","50","","","","","群組（已匯入）"')
+  assert.equal(rows[0], '"支出","2026-11-05","拉麵","餐飲","日本行","300","TWD","300","","","","","群組同步",""')
+  assert.equal(rows[1], '"支出","2026-11-06","","","gone","50","TWD","50","","","","","群組（已匯入）",""')
 })
 
 test('文字欄位以公式字元開頭時補單引號，雙引號跳脫', () => {
@@ -57,5 +57,18 @@ test('檔名：帳本名稱＋日期', () => {
 
 test('固定收支產生的帳目：來源標示為固定', () => {
   const transactions = [{ id: 'r', type: 'expense', accountId: 'cash', amount: 8000, currency: 'TWD', baseAmount: 8000, title: '房租', date: '2026-11-05', source: { type: 'recurring', ruleId: 'r1', scheduled: '2026-11-05' } }]
-  assert.ok(lines(buildLedgerCsv({ ledger, accounts, transactions, t }))[1].endsWith('"固定"'))
+  assert.ok(lines(buildLedgerCsv({ ledger, accounts, transactions, t }))[1].endsWith('"固定",""'))
+})
+
+test('旅程欄：帳目的 tripId 轉成旅程名稱；沒有旅程或找不到旅程時空白', () => {
+  const trips = [{ id: 'tp1', name: '大分溫泉' }]
+  const transactions = [
+    { id: 'a', type: 'expense', accountId: 'cash', amount: 980, currency: 'JPY', baseAmount: 210, category: 'food', date: '2026-11-08', source: { type: 'fx' }, tripId: 'tp1' },
+    { id: 'b', type: 'expense', accountId: 'cash', amount: 50, currency: 'TWD', baseAmount: 50, date: '2026-11-09', source: { type: 'manual' } },
+    { id: 'c', type: 'income', accountId: 'cash', amount: 10, currency: 'TWD', baseAmount: 10, date: '2026-11-10', source: { type: 'manual' }, tripId: 'gone' },
+  ]
+  const rows = lines(buildLedgerCsv({ ledger, accounts, transactions, trips, t })).slice(1)
+  assert.ok(rows[0].endsWith(',"大分溫泉"'))
+  assert.ok(rows[1].endsWith(',""'))
+  assert.ok(rows[2].endsWith(',""'))
 })

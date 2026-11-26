@@ -7,6 +7,8 @@ export const transactionsPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId)
 export const categoriesPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId), 'categories']
 export const recurringPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId), 'recurring']
 export const groupLinksPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId), 'groupLinks']
+// 旅程（匯率頁）：帳目用選填欄位 tripId 指向它，見 docs/superpowers/specs/2026-11-26-fx-page-design.md
+export const tripsPath = (uid, ledgerId) => [...ledgerPath(uid, ledgerId), 'trips']
 
 // 快照帳戶的 id 固定，重複連結同一個群組不會產生第二個
 export const snapshotAccountId = (groupId) => `snap_${groupId}`

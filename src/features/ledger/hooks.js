@@ -2,8 +2,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { ledgersPath, accountsPath, transactionsPath, groupLinksPath, categoriesPath, recurringPath } from './paths.js'
-import { monthDateBounds } from './summary.js'
+import { ledgersPath, accountsPath, transactionsPath, groupLinksPath, categoriesPath, recurringPath, tripsPath } from './paths.js'
+import { monthDateBounds, isPersonalTx } from './summary.js'
 import { yearBounds } from './dates.js'
 import { ensureDefaultLedger } from './data.js'
 import { pickActiveLedgerId, readActiveLedgerId, writeActiveLedgerId } from './prefs.js'
@@ -88,8 +88,28 @@ export const useCategoryDocs = (uid, ledgerId) => {
   return state.key === key ? state.list : null
 }
 
+// 帳本的旅程（匯率頁）：依建立時間；載入前是 null
+export const useTrips = (uid, ledgerId) => {
+  const key = `${uid}/${ledgerId}`
+  const [state, setState] = useState({ key: null, list: null })
+  useEffect(() => {
+    if (!ledgerId) return
+    return onSnapshot(collection(db, ...tripsPath(uid, ledgerId)), (snap) => {
+      setState({ key, list: snap.docs.map(withId).sort((a, b) => createdMs(a) - createdMs(b)) })
+    }, (err) => {
+      console.error('Failed to load trips', err)
+      setState({ key, list: [] })
+    })
+  }, [uid, ledgerId, key])
+  return state.key === key ? state.list : null
+}
+
+// 以下三個帳目 hook 供月曆與統計使用，回傳前會濾掉「不屬於個人記帳」的旅程帳目（summary.js 的 isPersonalTx）。
+// hiddenTrips 是 hiddenTripIds(trips) 的 Set；旅程還沒載入（null）時回傳 null（載入中），避免旅程帳目閃現。
+// 過濾在回傳時做，不寫進訂閱結果或快取，旅程的開關一變立即生效。
+
 // 某個月份（'YYYY-MM'）的帳目：依日期新到舊，同一天依建立時間新到舊
-export const useMonthTransactions = (uid, ledgerId, monthKey, startDay = 1) => {
+export const useMonthTransactions = (uid, ledgerId, monthKey, startDay = 1, hiddenTrips = null) => {
   const key = `${uid}/${ledgerId}/${monthKey}/${startDay}`
   const [state, setState] = useState({ key: null, list: null })
   useEffect(() => {
@@ -104,11 +124,12 @@ export const useMonthTransactions = (uid, ledgerId, monthKey, startDay = 1) => {
       setState({ key, list: [] })
     })
   }, [uid, ledgerId, monthKey, startDay, key])
-  return state.key === key ? state.list : null
+  const list = state.key === key ? state.list : null
+  return useMemo(() => (list && hiddenTrips ? list.filter((tx) => isPersonalTx(tx, hiddenTrips)) : null), [list, hiddenTrips])
 }
 
 // 年檢視用：整個年期間的帳目，一次性讀取（getDocs，不訂閱；切換年度才重讀）。yearKey 是 null 時不讀；載入前回傳 null
-export const useYearTransactions = (uid, ledgerId, yearKey, startDay = 1, yearStartMonth = 1) => {
+export const useYearTransactions = (uid, ledgerId, yearKey, startDay = 1, yearStartMonth = 1, hiddenTrips = null) => {
   const key = yearKey ? `${uid}/${ledgerId}/${yearKey}/${startDay}/${yearStartMonth}` : null
   const [state, setState] = useState({ key: null, list: null })
   useEffect(() => {
@@ -120,12 +141,13 @@ export const useYearTransactions = (uid, ledgerId, yearKey, startDay = 1, yearSt
       .catch((err) => { console.error('Failed to load year transactions', err); if (!cancelled) setState({ key, list: [] }) })
     return () => { cancelled = true }
   }, [uid, ledgerId, yearKey, startDay, yearStartMonth, key])
-  return key && state.key === key ? state.list : null
+  const list = key && state.key === key ? state.list : null
+  return useMemo(() => (list && hiddenTrips ? list.filter((tx) => isPersonalTx(tx, hiddenTrips)) : null), [list, hiddenTrips])
 }
 
 // 趨勢圖用：把 monthKeys 各讀一次（getDocs，不訂閱），結果留在這個元件的記憶體，切換月份只補讀新的月份。
 // skipKey 是已由 useMonthTransactions 即時訂閱的月份，不重複讀。回傳 { [monthKey]: 帳目[] }（尚未載入的月份沒有這個 key）
-export const useMonthsOnce = (uid, ledgerId, monthKeys, skipKey, startDay = 1) => {
+export const useMonthsOnce = (uid, ledgerId, monthKeys, skipKey, startDay = 1, hiddenTrips = null) => {
   const scope = `${uid}/${ledgerId}/${startDay}`
   const [state, setState] = useState({ scope, months: {} })
   const requested = useRef({ scope, keys: new Set() })
@@ -147,7 +169,10 @@ export const useMonthsOnce = (uid, ledgerId, monthKeys, skipKey, startDay = 1) =
       })
     }
   }, [uid, ledgerId, startDay, scope, wanted])
-  return state.scope === scope ? state.months : {}
+  return useMemo(() => {
+    if (!hiddenTrips || state.scope !== scope) return {}
+    return Object.fromEntries(Object.entries(state.months).map(([k, list]) => [k, list.filter((tx) => isPersonalTx(tx, hiddenTrips))]))
+  }, [state, scope, hiddenTrips])
 }
 
 // 沒有任何帳本時建立預設帳本（名稱由呼叫端依語言傳入）；失敗只記錄，下次進入會再試

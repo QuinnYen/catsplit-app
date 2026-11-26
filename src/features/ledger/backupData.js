@@ -2,15 +2,20 @@
 // 中途失敗時呼叫後端 deleteLedger 把已寫的部分清掉，不會留下半套資料。
 import { collection, doc, writeBatch, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { ledgersPath, ledgerPath, accountsPath, transactionsPath, categoriesPath, recurringPath } from './paths.js'
+import { ledgersPath, ledgerPath, accountsPath, transactionsPath, categoriesPath, recurringPath, tripsPath } from './paths.js'
 import { planRestore } from './backup.js'
 import { chunk } from './batch.js'
 import { deleteLedger } from '../../utils/ledgerApi'
 
-const PATHS = { categories: categoriesPath, accounts: accountsPath, recurring: recurringPath, transactions: transactionsPath }
+const PATHS = { categories: categoriesPath, trips: tripsPath, accounts: accountsPath, recurring: recurringPath, transactions: transactionsPath }
 
 // createdAt 的毫秒轉成 Timestamp；沒有就用伺服器時間
-const toFirestore = (data) => ({ ...data, createdAt: data.createdAt != null ? Timestamp.fromMillis(data.createdAt) : serverTimestamp() })
+// 旅程的 deletedAt（垃圾桶時間）也是毫秒
+const toFirestore = (data) => ({
+  ...data,
+  createdAt: data.createdAt != null ? Timestamp.fromMillis(data.createdAt) : serverTimestamp(),
+  ...(data.deletedAt != null && { deletedAt: Timestamp.fromMillis(data.deletedAt) }),
+})
 
 /**
  * 還原備份成新帳本，回傳新帳本 id。onProgress(已寫筆數, 總筆數) 可選。

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { monthGrid, monthDateBounds, summarizeEntries, datesWithEntries, entriesOfDate, sumByCategory, isCounted, lastMonths, trendByMonth, groupByMonth } from './summary.js'
+import { monthGrid, monthDateBounds, summarizeEntries, datesWithEntries, entriesOfDate, sumByCategory, isCounted, lastMonths, trendByMonth, groupByMonth, hiddenTripIds, isPersonalTx } from './summary.js'
 
 const tx = (o) => ({ type: 'expense', baseAmount: 100, date: '2026-11-24', category: 'food', ...o })
 
@@ -125,4 +125,30 @@ test('groupByMonth：依月期間分組', () => {
   assert.deepEqual(Object.keys(g1), ['2026-11', '2026-12'])
   const g5 = groupByMonth(txs, 5)
   assert.deepEqual(Object.fromEntries(Object.entries(g5).map(([k, v]) => [k, v.map((x) => x.id)])), { '2026-10': ['a'], '2026-11': ['b', 'c'] })
+})
+
+test('hiddenTripIds：沒開「計入統計」或在垃圾桶的旅程要隱藏', () => {
+  const trips = [
+    { id: 'a' }, // 沒有 countInStats：預設不計入
+    { id: 'b', countInStats: false },
+    { id: 'c', countInStats: true },
+    { id: 'd', countInStats: true, deletedAt: { toMillis: () => 1 } }, // 在垃圾桶，即使開了也隱藏
+  ]
+  assert.deepEqual([...hiddenTripIds(trips)].sort(), ['a', 'b', 'd'])
+  assert.equal(hiddenTripIds([]).size, 0)
+})
+
+test('isPersonalTx：沒有 tripId 一律計入；旅程在隱藏清單才排除；找不到旅程的 tripId 視為一般帳目', () => {
+  const hidden = hiddenTripIds([{ id: 'a' }, { id: 'c', countInStats: true }])
+  assert.equal(isPersonalTx(tx({}), hidden), true)
+  assert.equal(isPersonalTx(tx({ tripId: 'a' }), hidden), false)
+  assert.equal(isPersonalTx(tx({ tripId: 'c' }), hidden), true)
+  assert.equal(isPersonalTx(tx({ tripId: 'ghost' }), hidden), true)
+})
+
+test('排除旅程帳目後，月彙總與分類占比不含它們', () => {
+  const hidden = hiddenTripIds([{ id: 'a' }])
+  const list = [tx({ baseAmount: 100 }), tx({ baseAmount: 5000, tripId: 'a' }), tx({ type: 'income', baseAmount: 30, tripId: 'a' })].filter((x) => isPersonalTx(x, hidden))
+  assert.deepEqual(summarizeEntries(list), { expense: 100, income: 0, balance: -100 })
+  assert.deepEqual(sumByCategory(list).map((c) => c.total), [100])
 })

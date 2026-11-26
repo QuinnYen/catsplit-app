@@ -16,6 +16,7 @@ users/{uid}/ledgers/{ledgerId}                       帳本（名稱、統計幣
 users/{uid}/ledgers/{ledgerId}/accounts/{accountId}  帳戶（單一幣別、餘額）
 users/{uid}/ledgers/{ledgerId}/transactions/{id}     帳目（收入、支出、轉帳）
 users/{uid}/ledgers/{ledgerId}/groupLinks/{groupId}  連結的分帳群組
+users/{uid}/ledgers/{ledgerId}/trips/{tripId}        旅程（匯率頁；帳目用 tripId 歸在旅程底下）
 users/{uid}/ledgers/{ledgerId}/categories/{id}       類別（自訂與改過的清單，支出類別可帶月預算）
 users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳的規則
 ```
@@ -59,6 +60,15 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 - 轉帳記轉出金額 `amount` 與轉入金額 `toAmount`，不計入收支，跨幣別時兩者不同。
 - 帳戶 `balance` 在記帳、編輯、刪除時於同一個 batch 用 `increment` 更新（增量由 `balance.js` 算）。設定頁「資料」分頁的「重新計算餘額」會讀取整個帳本的帳目，依「期初餘額＋帳目」重算每個帳戶並寫回（快照帳戶不處理）。
 - 匯率用 `useExchangeRate`（open.er-api.com），抓取失敗時要手動輸入。
+
+## 旅程帳目（匯率頁，進行中）
+
+匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一階段（資料層）已完成，畫面還沒有：
+
+- 帳目可帶選填欄位 `tripId`，指向 `trips/{tripId}`（`name`、`currency`、`countInStats`、`deletedAt`、`rows`、`payCurrency`…）。沒有這個欄位就是一般帳目，既有資料不用遷移。
+- **旅程帳目預設不出現在月曆與個人統計**：`hooks.js` 的 `useMonthTransactions`、`useYearTransactions`、`useMonthsOnce` 在回傳前用 `summary.js` 的 `isPersonalTx(tx, hiddenTrips)` 過濾。要隱藏的旅程（`hiddenTripIds`）＝沒開 `countInStats` 或有 `deletedAt`；找不到旅程的 `tripId` 視為一般帳目。旅程載入前三個 hook 回傳 `null`（載入中）。`LedgerShell` 訂閱 `trips` 並把 `hiddenTrips` 放進 Context。
+- **帳戶餘額照常計算**，「重新計算餘額」也包含旅程帳目。
+- 備份帶 `trips` 與 `tripId`（舊備份沒有 `trips` 仍可還原）；CSV 最後多一欄「旅程」。
 
 ## 記帳面板
 

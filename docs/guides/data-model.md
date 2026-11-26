@@ -35,6 +35,7 @@
 | `users/{uid}/ledgers/{id}/recurring/{id}` | 固定收支與固定轉帳的規則 | 本人 | 本人（非訪客） | 隨帳本搬移 |
 | `users/{uid}/ledgers/{id}/categories/{id}` | 帳本的類別（自訂與改過的清單；沒有文件時用預設清單） | 本人 | 本人（非訪客） | 隨帳本搬移 |
 | `users/{uid}/ledgers/{id}/transactions/{id}` | 帳目（收入、支出、轉帳） | 本人 | 本人（非訪客） | 隨帳本搬移 |
+| `users/{uid}/ledgers/{id}/trips/{auto}` | 旅程（匯率頁）：名稱、旅遊幣別、是否計入個人統計、垃圾桶時間、換算列；帳目以選填欄位 `tripId` 指向它 | 本人 | 本人（非訪客） | 隨帳本搬移 |
 | `users/{uid}/ledgers/{id}/groupLinks/{groupId}` | 帳本連結的分帳群組 | 本人 | 本人（非訪客） | 隨帳本搬移（同群組衝突時取較早的 `linkedAt`） |
 | `groups/{auto}` | 群組 | 見下 | 見下 | 搬移成員、刪除成員 |
 | `groups/{id}/expenses/{auto}` | 支出 | 群組成員 | 群組成員 | 搬移成員 |

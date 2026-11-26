@@ -105,7 +105,7 @@ const LedgerEntrySheet = ({ editing, onClose }) => {
     draft: {
       kind: d.kind, amount: op ? null : amount, date: d.date, note: d.note, accountId: d.accountId, currency, category: d.category,
       baseRate: baseRate.exchangeRate, accountRate: accountRateValue, accountAmount: d.accountAmount,
-      toAccountId: d.toAccountId, toAmount: d.toAmount, transferRate: transferRate.exchangeRate, sourceType: d.sourceType, keepSource: d.keepSource, title: d.title,
+      toAccountId: d.toAccountId, toAmount: d.toAmount, transferRate: transferRate.exchangeRate, sourceType: d.sourceType, keepSource: d.keepSource, title: d.title, tripId: d.tripId,
     },
     accounts: selectable,
     ledgerBaseCurrency: base,

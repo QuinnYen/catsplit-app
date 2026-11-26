@@ -5,7 +5,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nProvider'
 import { LedgerContext } from './LedgerContext'
-import { useLedgers, useAccounts, useGroupLinks, useCategoryDocs, useRecurringRules, useEnsureDefaultLedger, useActiveLedger } from './hooks'
+import { useLedgers, useAccounts, useGroupLinks, useCategoryDocs, useRecurringRules, useTrips, useEnsureDefaultLedger, useActiveLedger } from './hooks'
+import { hiddenTripIds } from './summary'
 import { resolveCategories, categoryKeys, categoryName } from './categories'
 import { useLedgerSync } from './useLedgerSync'
 import { useRecurringRun } from './useRecurringRun'
@@ -32,6 +33,9 @@ const LedgerShell = () => {
   const links = useGroupLinks(uid, ledger?.id)
   const categoryDocs = useCategoryDocs(uid, ledger?.id)
   const recurringRules = useRecurringRules(uid, ledger?.id)
+  const trips = useTrips(uid, ledger?.id)
+  // 不屬於個人記帳的旅程 id；旅程載入前是 null（月曆與統計顯示載入中）
+  const hiddenTrips = useMemo(() => (trips ? hiddenTripIds(trips) : null), [trips])
   const categories = useMemo(() => resolveCategories(categoryDocs ?? []), [categoryDocs])
   const catName = useCallback((kind, key) => categoryName(categories, kind, key, t), [categories, t])
   const [selectedDate, setSelectedDate] = useState(() => todayStr())
@@ -56,8 +60,8 @@ const LedgerShell = () => {
 
   const openEntry = useCallback((tx) => setEntry({ tx }), [])
   const ctx = useMemo(
-    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, categories, categoryDocs: categoryDocs ?? [], catName, recurringRules: recurringRules ?? [], runRecurringNow, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
-    [uid, ledger, ledgers, accounts, links, sync, categories, categoryDocs, catName, recurringRules, runRecurringNow, setActiveLedger, selectedDate, openEntry, showToast],
+    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, categories, categoryDocs: categoryDocs ?? [], catName, recurringRules: recurringRules ?? [], trips: trips ?? [], hiddenTrips, runRecurringNow, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
+    [uid, ledger, ledgers, accounts, links, sync, categories, categoryDocs, catName, recurringRules, trips, hiddenTrips, runRecurringNow, setActiveLedger, selectedDate, openEntry, showToast],
   )
 
   if (!ledger || !accounts) {

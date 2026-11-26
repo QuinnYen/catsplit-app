@@ -23,7 +23,8 @@ const findAccount = (accounts, id) => accounts.find((a) => a.id === id && a.kind
  *   kind: 'expense' | 'income' | 'transfer', amount: number（已由算式算好）, date: 'YYYY-MM-DD', note?: string,
  *   accountId, currency?（實際花的幣別，預設帳戶幣別）, category?,
  *   baseRate?（1 currency = ? 統計幣別）, accountRate?（1 currency = ? 帳戶幣別）, accountAmount?（實際扣款金額，覆寫估算）,
- *   toAccountId?, toAmount?, transferRate?（轉帳跨幣別：1 轉出幣別 = ? 轉入幣別）, sourceType?: 'manual' | 'fx', keepSource?（已匯入的群組帳目原本的 source）, title?（群組帳目的標題，編輯時保留）
+ *   toAccountId?, toAmount?, transferRate?（轉帳跨幣別：1 轉出幣別 = ? 轉入幣別）, sourceType?: 'manual' | 'fx', keepSource?（已匯入的群組帳目原本的 source）, title?（群組帳目的標題，編輯時保留）,
+ *   tripId?（歸在哪一趟旅程，匯率頁帶入；編輯時保留）
  * }
  * @returns { ok: true, data } | { ok: false, reason }
  *   reason：amount、date、account、sameAccount、category、baseRate、accountRate、transferRate
@@ -54,7 +55,7 @@ export const buildTransactionData = ({ draft, accounts, ledgerBaseCurrency }) =>
     if (!(toAmount > 0)) return { ok: false, reason: 'amount' }
     return {
       ok: true,
-      data: { type: 'transfer', accountId: account.id, toAccountId: to.id, amount: rounded, currency: account.currency, toAmount, ...(note && { note }), date: draft.date, source },
+      data: { type: 'transfer', accountId: account.id, toAccountId: to.id, amount: rounded, currency: account.currency, toAmount, ...(note && { note }), date: draft.date, source, ...(draft.tripId && { tripId: draft.tripId }) },
     }
   }
 
@@ -75,7 +76,7 @@ export const buildTransactionData = ({ draft, accounts, ledgerBaseCurrency }) =>
   }
   return {
     ok: true,
-    data: { type: kind, accountId: account.id, currency, ...amounts, category, ...(draft.title && { title: draft.title }), ...(note && { note }), date: draft.date, source },
+    data: { type: kind, accountId: account.id, currency, ...amounts, category, ...(draft.title && { title: draft.title }), ...(note && { note }), date: draft.date, source, ...(draft.tripId && { tripId: draft.tripId }) },
   }
 }
 
@@ -94,6 +95,7 @@ export const draftFromTransaction = (tx) => ({
   sourceType: tx.source?.type === 'fx' ? 'fx' : 'manual',
   ...(tx.source?.type === 'group' && { keepSource: tx.source }),
   ...(tx.title && { title: tx.title }),
+  ...(tx.tripId && { tripId: tx.tripId }),
 })
 
 // 帳目要顯示的標題：群組同步來的有 title；手動帳目沒有標題，先用備註，再用分類（呼叫端轉成目前語言）

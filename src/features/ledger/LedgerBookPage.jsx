@@ -17,7 +17,7 @@ import { todayStr, monthKeyOf, weekdayOf, shiftMonthDate, dateForMonth, shortDat
 const circleBtn = { width: 36, height: 36, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.65)', background: 'none', color: 'var(--cs-rc-head-text)', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0 }
 
 const LedgerBookPage = () => {
-  const { uid, ledger, accounts, selectedDate, setSelectedDate, openEntry, catName } = useLedger()
+  const { uid, ledger, accounts, hiddenTrips, selectedDate, setSelectedDate, openEntry, catName } = useLedger()
   const { t, fmt } = useI18n()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -25,7 +25,7 @@ const LedgerBookPage = () => {
 
   const { monthStartDay, weekStartDay } = periodSettings(ledger)
   const monthKey = monthKeyOf(selectedDate, monthStartDay)
-  const txs = useMonthTransactions(uid, ledger.id, monthKey, monthStartDay)
+  const txs = useMonthTransactions(uid, ledger.id, monthKey, monthStartDay, hiddenTrips)
   const list = useMemo(() => txs ?? [], [txs])
   const base = ledger.baseCurrency
   const today = todayStr()

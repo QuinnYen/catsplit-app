@@ -41,7 +41,7 @@ test('buildBackup：快照帳戶與快照帳目不備份，已匯入的群組帳
 test('備份能完整通過驗證（來回一次 JSON），摘要正確', () => {
   const r = parseBackup(JSON.parse(JSON.stringify(build())))
   assert.equal(r.ok, true, JSON.stringify(r))
-  assert.deepEqual(r.summary, { name: '大阪', baseCurrency: 'TWD', accounts: 2, transactions: 5, categories: 2, recurring: 1, minDate: '2026-11-02', maxDate: '2026-11-06', exportedAt: 9999 })
+  assert.deepEqual(r.summary, { name: '大阪', baseCurrency: 'TWD', accounts: 2, transactions: 5, categories: 2, recurring: 1, trips: 0, minDate: '2026-11-02', maxDate: '2026-11-06', exportedAt: 9999 })
 })
 
 const bad = (mutate) => { const b = JSON.parse(JSON.stringify(build())); mutate(b); return parseBackup(b) }
@@ -104,4 +104,56 @@ test('planRestore：可指定新名稱（最多 20 字）', () => {
 
 test('backupFileName', () => {
   assert.equal(backupFileName(ledger, new Date(2026, 10, 5)), '大阪_backup_20261105.json')
+})
+
+// ---------- 旅程（匯率頁）----------
+const trips = [
+  { id: 'tp1', name: '大分溫泉', currency: 'JPY', countInStats: true, rows: ['JPY', 'TWD'], payCurrency: 'JPY', createdAt: ts(4000) },
+  { id: 'tp2', name: '舊旅程', currency: 'USD', deletedAt: ts(5000), createdAt: ts(4100) },
+]
+const withTrips = () => buildBackup({
+  ledger, accounts, categories, recurring, now: 9999, trips,
+  transactions: [...transactions, { id: 't9', type: 'expense', accountId: 'cash', amount: 980, currency: 'JPY', exchangeRate: 0.21, baseAmount: 205.8, category: 'food', date: '2026-11-08', source: { type: 'fx' }, tripId: 'tp1', createdAt: ts(6000) }],
+})
+
+test('旅程：備份帶 trips 與 tripId，時間轉成毫秒，通過驗證', () => {
+  const b = withTrips()
+  assert.deepEqual(b.trips.map((t) => t.id), ['tp1', 'tp2'])
+  assert.equal(b.trips[0].countInStats, true)
+  assert.deepEqual(b.trips[0].rows, ['JPY', 'TWD'])
+  assert.equal(b.trips[0].createdAt, 4000)
+  assert.equal(b.trips[1].deletedAt, 5000)
+  assert.ok(!('deletedAt' in b.trips[0]))
+  assert.equal(b.transactions.find((t) => t.id === 't9').tripId, 'tp1')
+  const r = parseBackup(JSON.parse(JSON.stringify(b)))
+  assert.equal(r.ok, true, JSON.stringify(r))
+  assert.equal(r.summary.trips, 2)
+})
+
+test('旅程：舊備份沒有 trips 仍可通過；沒有旅程時 trips 是空陣列', () => {
+  const old = JSON.parse(JSON.stringify(build()))
+  assert.deepEqual(old.trips, [])
+  delete old.trips
+  assert.equal(parseBackup(old).ok, true)
+})
+
+test('旅程：壞資料（重複 id、名稱、幣別、tripId 指向不存在的旅程、數量上限）', () => {
+  const mk = (mutate) => { const b = JSON.parse(JSON.stringify(withTrips())); mutate(b); return parseBackup(b) }
+  assert.equal(mk((b) => { b.trips[1].id = 'tp1' }).reason, 'duplicate')
+  assert.equal(mk((b) => { b.trips[0].name = '' }).reason, 'trip')
+  assert.equal(mk((b) => { b.trips[0].currency = 'JP' }).reason, 'trip')
+  assert.equal(mk((b) => { b.transactions.at(-1).tripId = 'nope' }).reason, 'reference')
+  assert.equal(mk((b) => { b.trips = {} }).reason, 'format')
+  assert.equal(mk((b) => { b.trips = Array.from({ length: LIMITS.trips + 1 }, (_, i) => ({ id: `x${i}`, name: 'a', currency: 'JPY' })) }).reason, 'limit')
+})
+
+test('旅程：還原計畫在帳戶與帳目之前寫旅程，deletedAt 保留', () => {
+  const plan = planRestore(JSON.parse(JSON.stringify(withTrips())))
+  const order = plan.ops.map((o) => o.collection)
+  assert.ok(order.indexOf('trips') > order.lastIndexOf('categories'))
+  assert.ok(order.lastIndexOf('trips') < order.indexOf('accounts'))
+  const tp2 = plan.ops.find((o) => o.collection === 'trips' && o.id === 'tp2')
+  assert.equal(tp2.data.deletedAt, 5000)
+  assert.equal(tp2.data.createdAt, 4100)
+  assert.equal(plan.ops.find((o) => o.id === 't9').data.tripId, 'tp1')
 })

@@ -6,6 +6,14 @@ const pad = (n) => String(n).padStart(2, '0')
 
 export const isCounted = (tx) => tx.type === 'income' || tx.type === 'expense'
 
+// 旅程（匯率頁）的帳目歸在 tripId 底下，預設不出現在月曆與個人統計。
+// 要隱藏的旅程：沒有開「計入個人統計」（countInStats）或在垃圾桶（deletedAt）。回傳 Set of tripId
+export const hiddenTripIds = (trips) => new Set(trips.filter((t) => !t.countInStats || t.deletedAt).map((t) => t.id))
+
+// 帳目是否屬於個人記帳（月曆、圖表、預算）：沒有 tripId，或它的旅程不在隱藏清單；
+// 找不到旅程的 tripId（旅程文件不存在）視為一般帳目，不讓帳目憑空消失
+export const isPersonalTx = (tx, hiddenTrips) => !tx.tripId || !hiddenTrips.has(tx.tripId)
+
 // 某期間（'YYYY-MM'，見 dates.js）的查詢範圍：date >= start 且 date < end（字串比較即可，不需要複合索引）
 export const monthDateBounds = (monthKey, startDay = 1) => periodBounds(monthKey, startDay)
 

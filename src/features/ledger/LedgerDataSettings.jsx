@@ -21,7 +21,7 @@ const hint = { fontSize: 11.5, color: 'var(--cs-text-mute)', lineHeight: 1.6, ma
 const button = (busy) => ({ width: '100%', padding: '10px 0', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'transparent', color: 'var(--cs-text)', fontSize: 14, cursor: busy ? 'not-allowed' : 'pointer' })
 
 const LedgerDataSettings = () => {
-  const { uid, ledger, ledgers, accounts, categories, categoryDocs, recurringRules, setActiveLedger, showToast } = useLedger()
+  const { uid, ledger, ledgers, accounts, categories, categoryDocs, recurringRules, trips, setActiveLedger, showToast } = useLedger()
   const { liffInstance } = useApp()
   const { t } = useI18n()
   const navigate = useNavigate()
@@ -70,12 +70,12 @@ const LedgerDataSettings = () => {
   }
 
   const exportCsv = () => run(async () => {
-    const csv = buildLedgerCsv({ ledger, accounts, categories, transactions: await loadTransactions(), t })
+    const csv = buildLedgerCsv({ ledger, accounts, categories, trips, transactions: await loadTransactions(), t })
     await deliver({ content: csv, filename: ledgerCsvFileName(ledger), mime: 'text/csv;charset=utf-8;', format: 'csv' })
   })
 
   const downloadBackup = () => run(async () => {
-    const backup = buildBackup({ ledger, accounts, transactions: await loadTransactions(), categories: categoryDocs, recurring: recurringRules })
+    const backup = buildBackup({ ledger, accounts, transactions: await loadTransactions(), categories: categoryDocs, recurring: recurringRules, trips })
     await deliver({ content: JSON.stringify(backup), filename: backupFileName(ledger), mime: 'application/json;charset=utf-8;', format: 'json' })
   })
 
