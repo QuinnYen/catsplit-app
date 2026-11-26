@@ -1,5 +1,5 @@
 import { Fragment, lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from './context/AppContext'
 import GuestJoin from './components/GuestJoin'
 import GoogleSignInButton from './components/GoogleSignInButton'
@@ -147,13 +147,18 @@ const OfficialAccountPrompt = () => {
 const StartRedirect = () => {
   const { user } = useApp()
   const location = useLocation()
+  const navigate = useNavigate()
   const [target] = useState(() => {
     const first = takeLaunch()
     if (!first || location.pathname !== '/' || location.search.includes('liff.')) return null
     const path = startPath(getStartPage(), !!user.guest)
     return path === '/' ? null : path
   })
-  return target ? <Navigate to={target} replace /> : null
+  // 只在掛載時導向一次。不能一直回傳 <Navigate>：它會在每次換頁時重新觸發，把使用者拉回預設頁
+  useEffect(() => {
+    if (target) navigate(target, { replace: true })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return null
 }
 
 const ProtectedRoutes = () => {
