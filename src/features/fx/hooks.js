@@ -1,6 +1,6 @@
 // 匯率頁（旅程）的即時訂閱。旅程列表本身用 ledger/hooks.js 的 useTrips（LedgerProvider 已訂閱，放在 Context）。
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
+import { collection, doc, getCountFromServer, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { transactionsPath } from '../ledger/paths.js'
 import { fetchExchangeRate } from '../../config/currencies'
@@ -68,4 +68,23 @@ export const useFxSettings = (uid) => {
   const ready = state.uid === uid
   const settings = useMemo(() => mergeFxSettings(ready ? state.data : {}), [ready, state])
   return { settings, ready }
+}
+
+/**
+ * 垃圾桶頁每趟旅程有幾筆帳目：{ [tripId]: 筆數 | null }（null 是還沒讀到或讀取失敗）。
+ * 用聚合查詢 count（不用把帳目全讀下來）；每趟旅程只讀一次，旅程清單變了只補讀新的。
+ */
+export const useTripTxCounts = (uid, ledgerId, tripIds) => {
+  const [counts, setCounts] = useState({})
+  const key = tripIds.join(',')
+  useEffect(() => {
+    let cancelled = false
+    for (const id of key ? key.split(',') : []) {
+      getCountFromServer(query(collection(db, ...transactionsPath(uid, ledgerId)), where('tripId', '==', id)))
+        .then((snap) => { if (!cancelled) setCounts((prev) => ({ ...prev, [id]: snap.data().count })) })
+        .catch((err) => { console.error('Failed to count trip transactions', err); if (!cancelled) setCounts((prev) => ({ ...prev, [id]: null })) })
+    }
+    return () => { cancelled = true }
+  }, [uid, ledgerId, key])
+  return counts
 }

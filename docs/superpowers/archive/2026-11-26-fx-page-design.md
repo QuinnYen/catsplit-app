@@ -1,7 +1,7 @@
 # 匯率頁與旅程記帳（設計草稿）
 
-日期：2026-11-26　狀態：**已確認，可動工**（第一～五階段先做，垃圾桶為最後的第六階段）
-前置：P14 獨立帳號、P12 個人記帳已上線。取代 [`2026-11-14-fx-page-and-misc-backlog.md`](2026-11-14-fx-page-and-misc-backlog.md) 的匯率頁部分（該檔其餘小功能維持 backlog）。
+日期：2026-11-26　狀態：**已完成並上線（2026-11-26）**，現行說明見 [個人記帳](../../guides/personal-ledger.md)「旅程帳目與匯率頁」
+前置：P14 獨立帳號、P12 個人記帳已上線。取代 [`2026-11-14-fx-page-and-misc-backlog.md`](../specs/2026-11-14-fx-page-and-misc-backlog.md) 的匯率頁部分（該檔其餘小功能維持 backlog）。
 參考：使用者提供的四張 App 截圖（多列換算計算機、計算機設定、旅程明細、實付計算）。
 
 ## 1. 目標
@@ -119,7 +119,7 @@ return useMemo(() => state.list?.filter((tx) => isPersonalTx(tx, hiddenTrips)) ?
 - **垃圾桶頁**（`TripTrashPage`，從匯率設定頁進入）：列出旅程、筆數、刪除日期與**剩餘天數**；每列「還原」與「永久刪除」。手動永久刪除要二次確認（顯示筆數與會退回的餘額）。
 - **永久刪除的做法**（手動與自動共用 `purgeTrip`）：帳目分批處理（每批 ≤ 200 筆），**每批在一個 Firestore 交易裡**先讀取帳目、只對「還存在」的帳目刪除並以 `increment` 退回帳戶餘額，全部處理完最後才刪旅程文件。用交易是為了避免兩個分頁或自動與手動同時執行時重複退款；中途失敗時旅程仍在垃圾桶，下次可繼續（已刪的帳目不會再退一次）。
 - **滿 30 天自動永久刪除**：專案沒有後端排程（見個人記帳 guide「為什麼不用排程」），所以和固定收支一樣在**開啟匯率頁時補做**（`useTrashPurge`）：
-  - 條件：`deletedAt` 已有伺服器時間（剛寫入、時間未確認的略過），且距今 ≥ 30 天（以裝置時間比對）。
+  - 條件：`deletedAt` 距今 ≥ 30 天（以裝置時間比對）。`deletedAt` 用客戶端時間（`Timestamp.now()`）寫入而不是 `serverTimestamp()`，寫入當下就有值，旅程不會在列表上閃一下又消失。
   - 每次最多處理 1,000 筆帳目，其餘下次開啟再處理；每個旅程獨立處理，一個失敗不影響其他，只記錄錯誤。
   - 只處理目前帳本的旅程；沒開匯率頁就不會刪，這是可接受的（垃圾桶本來就是安全網）。
   - 自動刪除不另外跳提示，垃圾桶頁的剩餘天數就是預告；刪除後若有退回餘額，顯示一則提示「已自動清除 N 趟過期旅程」。
@@ -233,4 +233,4 @@ data: { type: kind, accountId: account.id, currency, ...amounts, category, ..., 
 - 自訂匯率：有自訂就優先於 API 匯率；設定畫面細節（新增、刪除）在第五階段實作前再給使用者看畫面。
 
 ## 9. 完成後要更新的文件
-`README.md` 功能清單、`docs/guides/currency.md`、`docs/guides/personal-ledger.md`（結構、帳目欄位、備份、CSV、移除「尚未做」裡的匯率頁入口）、`docs/guides/data-model.md`、`docs/guides/architecture.md`；本 spec 與 backlog 的匯率頁部分搬到 `archive/`，更新 [`README.md`](README.md) 索引。
+`README.md` 功能清單、`docs/guides/currency.md`、`docs/guides/personal-ledger.md`（結構、帳目欄位、備份、CSV、移除「尚未做」裡的匯率頁入口）、`docs/guides/data-model.md`、`docs/guides/architecture.md`；本 spec 與 backlog 的匯率頁部分搬到 `archive/`，更新 [`README.md`](../specs/README.md) 索引。

@@ -62,9 +62,13 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 - 帳戶 `balance` 在記帳、編輯、刪除時於同一個 batch 用 `increment` 更新（增量由 `balance.js` 算）。設定頁「資料」分頁的「重新計算餘額」會讀取整個帳本的帳目，依「期初餘額＋帳目」重算每個帳戶並寫回（快照帳戶不處理）。
 - 匯率用 `useExchangeRate`（open.er-api.com），抓取失敗時要手動輸入。
 
-## 旅程帳目（匯率頁，進行中）
+## 旅程帳目與匯率頁
 
-匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一～五階段（資料層、`LedgerProvider` 抽出、旅程頁、計算機、設定頁、自訂匯率）已完成，垃圾桶還沒有：
+匯率頁（`/fx`）的設計與取捨見 [`2026-11-26-fx-page-design.md`](../superpowers/archive/2026-11-26-fx-page-design.md)（已封存；以本節為準）。已上線（2026-11-26）：
+
+- **旅程垃圾桶**：旅程編輯面板的「刪除旅程」只在旅程文件寫入 `deletedAt`（客戶端時間，`trashTrip`），帳目不動、可隨時還原（`restoreTrip`）。垃圾桶中的旅程不出現在旅程列表與旅程選單、不能記帳，帳目一律不計入個人統計（即使開了「計入個人統計」），但**帳戶餘額仍包含這些帳目**，永久刪除時才退回。垃圾桶頁（`/fx/trash`，從設定頁或旅程列表進入）列出旅程、帳目筆數（`getCountFromServer`）、刪除日期與剩餘天數，每趟可「還原」或「永久刪除」（先預覽筆數與各帳戶退回多少，`planTripPurge`）。
+- **永久刪除（`trashPurge.js` 的 `purgeTrip`）**：帳目分批（100 筆）處理，**每批在一個 Firestore 交易裡**：先讀旅程確認還在垃圾桶（別處還原了就停手），再讀這批帳目、只對還存在的刪除並以 `increment` 退回帳戶餘額（帳戶已不存在就略過），全部刪完才刪旅程文件。因此兩個分頁或自動與手動同時執行也只會退一次，中途失敗或預算用完時旅程仍在垃圾桶、下次接著處理。`db` 以參數傳入，整合測試 `firestore-tests/tripPurge.rules.mjs` 用模擬器加真正的 rules 跑（退款、分批、並發、中途還原、帳戶不存在、別人不能刪）。
+- **滿 30 天自動永久刪除**：沒有後端排程，所以和固定收支一樣在開啟匯率頁時補做（`TrashAutoPurge`）：只處理目前帳本、最早刪除的先處理、每次最多刪 1,000 筆帳目（其餘下次開啟再處理）、每趟旅程獨立處理，刪除後提示「已自動清除 N 趟過期的旅程」。沒開匯率頁就不會刪，垃圾桶本來就是安全網。
 
 - **計算機設定（`/fx/settings`）**：小數位數（0–3）、預設金額、顯示幣別符號、免稅百分比（預設 10）、刷卡手續費百分比（預設 1.5），選了或輸入完立刻儲存到雲端 `users/{uid}/settings/fx`（`useFxSettings` 即時訂閱、`saveFxSettings` 以 merge 只寫有改的欄位）；輸入不合法會提示並還原。「還原預設值」刪掉整份文件。欄位驗證與合併預設值是 `fxSettings.js` 的純函式（缺少或壞掉的欄位一律退回預設值），rules 逐欄驗證（`firestore-tests/fxSettings.rules.mjs`）。文件讀取失敗（例如 rules 還沒部署）時用預設值，不擋住計算機。訪客沒有設定頁，用預設值。
 - **自訂匯率（`/fx/settings/rates`）**：設定頁的「自訂匯率 N 種」進入，列表點一筆改匯率、垃圾桶鈕刪除、「新增」開底部面板（`CustomRateSheet`：從、換成、匯率；選到和另一邊相同的幣別會自動對調）。資料是 `customRates`（鍵 `JPY_TWD` 表示 1 JPY = ? TWD，優先於 API 匯率，最多 20 組；rules 只檢查數量，值是否為正數由前端驗證）。**同一組幣別只留一筆**：新增 A→B 會移除 B→A，因為反向本來就自動取倒數，兩筆並存會互相矛盾（`setCustomRate`）。整個 `customRates` 欄位以 `mergeFields` 一起寫入，才能真的刪掉一組（單純 merge 會留下舊的鍵）。計算機上用到自訂匯率的列（輸入列與該列之間，或與實付幣別之間）會標示「自訂」（`isCustomPair`）。
@@ -75,7 +79,7 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 - **存放位置**：目前選的旅程存本機（`fxLocalPrefs.js`）；換算列與實付幣別有旅程時存在旅程文件上（`rows`、`payCurrency`），沒有旅程或訪客時存本機。
 
 - **旅程頁在 `src/features/fx/`**：`/fx` 目前是旅程列表（`TripListPage`，進行中與已封存）、`/fx/trips/:tripId` 是旅程明細（`TripDetailPage`：總花費卡、依日期分組、每日小計）。`FxShell` 用 `LedgerProvider lite` 包住路由，訪客只看到提示。新增與編輯旅程用 `TripSheet`（名稱、旅遊幣別、出發與回程日、是否計入個人統計、封存）；寫入在 `fx/data.js`，驗證與列表整理在 `fx/trips.js`，總花費與分組在 `fx/tripSummary.js`（皆為純函式，有測試）。
-- **旅程記帳**：明細頁底部「記帳」呼叫 `openEntry(undefined, { tripId, currency, date })`，同一個記帳面板預填旅程與旅遊幣別，面板上方標示「旅程：名稱」；點帳目列用同一個面板編輯。垃圾桶（刪除旅程）要到第六階段才有，現在只能封存。
+- **旅程記帳**：明細頁底部「記帳」呼叫 `openEntry(undefined, { tripId, currency, date })`，同一個記帳面板預填旅程與旅遊幣別，面板上方標示「旅程：名稱」；點帳目列用同一個面板編輯。旅程可封存（收到列表最下方）或刪除（移到垃圾桶）。
 - **總花費**＝旅程內支出扣掉收入（統計幣別）；旅遊幣別的小計只加幣別相同的帳目。
 
 - 帳目可帶選填欄位 `tripId`，指向 `trips/{tripId}`（`name`、`currency`、`countInStats`、`deletedAt`、`rows`、`payCurrency`…）。沒有這個欄位就是一般帳目，既有資料不用遷移。

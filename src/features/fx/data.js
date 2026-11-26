@@ -1,8 +1,9 @@
 // 旅程的 Firestore 讀寫（資料存取層）：畫面不直接組路徑。旅程文件欄位見 docs/superpowers/specs/2026-11-26-fx-page-design.md 2.1。
-import { collection, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField } from 'firebase/firestore'
+import { collection, doc, setDoc, updateDoc, deleteDoc, getDocs, query, where, serverTimestamp, deleteField, Timestamp } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { tripsPath } from '../ledger/paths.js'
+import { tripsPath, transactionsPath } from '../ledger/paths.js'
 import { fxSettingsPath } from './paths.js'
+import { purgeTrip as purgeTripCore } from './trashPurge.js'
 
 const OPTIONAL_DATES = ['startDate', 'endDate']
 
@@ -37,3 +38,19 @@ export const saveCustomRates = (uid, customRates) => setDoc(doc(db, ...fxSetting
 
 // 還原預設值：刪掉整份設定文件
 export const resetFxSettings = (uid) => deleteDoc(doc(db, ...fxSettingsPath(uid)))
+
+// ---------- 旅程垃圾桶（見 trash.js、trashPurge.js）----------
+
+// 移到垃圾桶：只寫 deletedAt，帳目不動。用客戶端時間（不是 serverTimestamp），寫入當下就有值，旅程不會在列表上閃一下又消失
+export const trashTrip = (uid, ledgerId, tripId) =>
+  updateDoc(doc(db, ...tripsPath(uid, ledgerId), tripId), { deletedAt: Timestamp.now() })
+
+export const restoreTrip = (uid, ledgerId, tripId) =>
+  updateDoc(doc(db, ...tripsPath(uid, ledgerId), tripId), { deletedAt: deleteField() })
+
+// 旅程的全部帳目（永久刪除前預覽筆數與要退回的餘額用）
+export const loadTripTxs = async (uid, ledgerId, tripId) =>
+  (await getDocs(query(collection(db, ...transactionsPath(uid, ledgerId)), where('tripId', '==', tripId)))).docs.map((d) => ({ id: d.id, ...d.data() }))
+
+// 永久刪除：連同帳目刪除並退回餘額，見 trashPurge.js；opts.maxTxs 限制這次最多刪幾筆
+export const purgeTrip = (uid, ledgerId, tripId, opts) => purgeTripCore(db, uid, ledgerId, tripId, opts)

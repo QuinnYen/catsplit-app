@@ -8,6 +8,8 @@ import TripListPage from './TripListPage'
 import TripDetailPage from './TripDetailPage'
 import FxSettingsPage from './FxSettingsPage'
 import FxRatesPage from './FxRatesPage'
+import TripTrashPage from './TripTrashPage'
+import TrashAutoPurge from './TrashAutoPurge'
 
 const FxShell = () => {
   const { user } = useApp()
@@ -21,12 +23,14 @@ const FxShell = () => {
   }
   return (
     <LedgerProvider lite>
+      <TrashAutoPurge />
       <Routes>
         <Route index element={<FxCalculatorPage />} />
         <Route path="trips" element={<TripListPage />} />
         <Route path="trips/:tripId" element={<TripDetailPage />} />
         <Route path="settings" element={<FxSettingsPage />} />
         <Route path="settings/rates" element={<FxRatesPage />} />
+        <Route path="trash" element={<TripTrashPage />} />
         <Route path="*" element={<Navigate to="/fx" replace />} />
       </Routes>
     </LedgerProvider>

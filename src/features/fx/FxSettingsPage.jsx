@@ -8,6 +8,8 @@ import { useFxSettings } from './hooks'
 import { saveFxSettings, resetFxSettings } from './data'
 import { parseSetting, listCustomRates } from './fxSettings'
 import { DEFAULT_FX_SETTINGS } from './fxMath'
+import { useLedger } from '../ledger/LedgerContext'
+import { trashedTrips } from './trash'
 
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)' }
 const rowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px', borderBottom: '0.5px solid var(--cs-border)' }
@@ -55,6 +57,7 @@ const FxSettingsPage = () => {
   const { t } = useI18n()
   const navigate = useNavigate()
   const { settings, ready } = useFxSettings(uid)
+  const { trips } = useLedger()
   const [error, setError] = useState('')
 
   const save = async (patch) => {
@@ -107,6 +110,10 @@ const FxSettingsPage = () => {
               <button onClick={() => navigate('/fx/settings/rates')} style={{ ...rowStyle, width: '100%', background: 'none', border: 'none', cursor: 'pointer', borderBottom: 'none', textAlign: 'left' }}>
                 <span style={labelStyle}>{t('fx.settings.customRates')}</span>
                 <span style={{ fontSize: 14, color: 'var(--cs-text-sub)' }}>{t('fx.settings.customRatesCount', { n: listCustomRates(settings.customRates).length })} ›</span>
+              </button>
+              <button onClick={() => navigate('/fx/trash')} style={{ ...rowStyle, width: '100%', background: 'none', border: 'none', cursor: 'pointer', borderBottom: 'none', borderTop: '0.5px solid var(--cs-border)', textAlign: 'left' }}>
+                <span style={labelStyle}>{t('fx.settings.trash')}</span>
+                <span style={{ fontSize: 14, color: 'var(--cs-text-sub)' }}>{t('fx.settings.trashCount', { n: trashedTrips(trips).length })} ›</span>
               </button>
             </div>
             {error && <div role="alert" style={{ fontSize: 12, color: 'var(--cs-danger)' }}>{error}</div>}

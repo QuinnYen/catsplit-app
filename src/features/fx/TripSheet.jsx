@@ -1,5 +1,5 @@
 // 新增／編輯旅程的底部面板：名稱、旅遊幣別、出發與回程日（選填）、是否計入個人統計；編輯時可封存。
-// 刪除旅程（垃圾桶）之後的階段才做，這裡還沒有。
+// 「刪除旅程」只是移到垃圾桶（見 trash.js），30 天內可以還原。
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
@@ -7,7 +7,8 @@ import CurrencySelect from '../../components/CurrencySelect'
 import { PINNED_CURRENCIES } from '../../config/currencies'
 import { useLedger } from '../ledger/LedgerContext'
 import { buildTripData, TRIP_NAME_MAX } from './trips'
-import { createTrip, updateTrip, setTripArchived } from './data'
+import { createTrip, updateTrip, setTripArchived, trashTrip } from './data'
+import { TRASH_DAYS } from './trash'
 
 const inputStyle = { display: 'block', width: '100%', marginTop: 6, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', background: 'var(--cs-card)', outline: 'none', boxSizing: 'border-box' }
 const labelStyle = { fontSize: 12, color: 'var(--cs-text-sub)' }
@@ -16,8 +17,8 @@ const hintStyle = { fontSize: 11.5, color: 'var(--cs-text-mute)', marginTop: 6, 
 // 預設旅遊幣別：日圓；帳本統計幣別本身就是日圓時改美元
 const defaultCurrency = (base) => (base === 'JPY' ? 'USD' : 'JPY')
 
-// trip：編輯時傳旅程文件；新增不傳。onClose(newTripId?)：新增成功時帶回新旅程 id
-const TripSheet = ({ trip, onClose }) => {
+// trip：編輯時傳旅程文件；新增不傳。onClose(newTripId?)：新增成功時帶回新旅程 id。onTrashed：旅程移到垃圾桶後呼叫（明細頁用來離開這一頁）
+const TripSheet = ({ trip, onClose, onTrashed }) => {
   const { uid, ledger, showToast } = useLedger()
   const { t } = useI18n()
   const editing = !!trip
@@ -60,6 +61,22 @@ const TripSheet = ({ trip, onClose }) => {
       onClose()
     } catch (e) {
       console.error('Failed to archive trip', e)
+      setError(t('fx.trip.failed'))
+      setBusy(false)
+    }
+  }
+
+  const moveToTrash = async () => {
+    if (!window.confirm(t('fx.trip.deleteConfirm', { name: trip.name, days: TRASH_DAYS }))) return
+    setBusy(true)
+    setError('')
+    try {
+      await trashTrip(uid, ledger.id, trip.id)
+      showToast(t('fx.trip.trashed'))
+      onTrashed?.()
+      onClose()
+    } catch (e) {
+      console.error('Failed to move trip to trash', e)
       setError(t('fx.trip.failed'))
       setBusy(false)
     }
@@ -120,6 +137,8 @@ const TripSheet = ({ trip, onClose }) => {
               {t(trip.archived ? 'fx.trip.unarchive' : 'fx.trip.archive')}
             </button>
             <div style={{ ...hintStyle, marginTop: -6 }}>{t('fx.trip.archiveHint')}</div>
+            <button onClick={moveToTrash} disabled={busy} style={{ width: '100%', padding: '10px 0', borderRadius: 6, border: '1px solid var(--cs-danger)', background: 'transparent', color: 'var(--cs-danger)', fontSize: 14, cursor: busy ? 'not-allowed' : 'pointer' }}>{t('fx.trip.delete')}</button>
+            <div style={{ ...hintStyle, marginTop: -6 }}>{t('fx.trip.deleteHint', { days: TRASH_DAYS })}</div>
           </>
         )}
       </div>

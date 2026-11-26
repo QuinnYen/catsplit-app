@@ -108,7 +108,7 @@ const TripDetailPage = () => {
       </div>
 
       <FeatureTabBar action={{ label: 'fx.trip.addEntry', onClick: () => openEntry(undefined, { tripId: trip.id, currency: trip.currency, date: todayStr() }) }} />
-      {editing && <TripSheet trip={trip} onClose={() => setEditing(false)} />}
+      {editing && <TripSheet trip={trip} onClose={() => setEditing(false)} onTrashed={() => navigate('/fx/trips')} />}
     </div>
   )
 }

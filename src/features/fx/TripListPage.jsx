@@ -8,6 +8,7 @@ import UserHeader from '../../components/UserHeader'
 import { useLedger } from '../ledger/LedgerContext'
 import TripSheet from './TripSheet'
 import { splitTrips, tripRange } from './trips'
+import { trashedTrips } from './trash'
 
 const card = { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14, cursor: 'pointer' }
 
@@ -33,6 +34,7 @@ const TripListPage = () => {
   const navigate = useNavigate()
   const [sheet, setSheet] = useState(false)
   const { active, archived } = splitTrips(trips)
+  const trashCount = trashedTrips(trips).length
   const open = (id) => navigate(`/fx/trips/${id}`)
 
   return (
@@ -55,6 +57,11 @@ const TripListPage = () => {
               {archived.map((trip) => <TripCard key={trip.id} trip={trip} base={ledger.baseCurrency} onOpen={() => open(trip.id)} />)}
             </div>
           </details>
+        )}
+        {trashCount > 0 && (
+          <button onClick={() => navigate('/fx/trash')} style={{ background: 'none', border: 'none', color: 'var(--cs-text-sub)', fontSize: 13, cursor: 'pointer', textAlign: 'left', padding: '4px 0' }}>
+            {t('fx.trash.link', { n: trashCount })} ›
+          </button>
         )}
       </div>
       <FeatureTabBar action={{ label: 'fx.tab.addTrip', onClick: () => setSheet(true) }} />

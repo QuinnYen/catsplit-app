@@ -1,12 +1,9 @@
 # 匯率頁與其他小功能
 
-日期：2026-11-14　狀態：backlog（自 todo.md 搬入，尚未 brainstorm；動工前先走設計流程產出正式 spec）
+日期：2026-11-14　狀態：backlog（自 todo.md 搬入，尚未 brainstorm；動工前先走設計流程產出正式 spec）。匯率換算頁已完成，只剩下面的預算、網頁版與已知小問題。
 
 
-**匯率換算頁（P12 之後、P18 之前；尚無 spec）**
-- [ ] 等使用者提供喜歡的 App 截圖，依截圖寫 spec；視覺沿用專案 `--cs-*` 主題變數（暗黑模式、`check:colors`）。
-- [ ] 「記一筆」接到 P12 約定的 `/ledger/new?amount=…&currency=…&rate=…&source=fx`。
-- [ ] 目前 `CURRENCIES` 只有 TWD、JPY、USD、EUR、CNY，匯率來源 open.er-api.com；截圖的 App 若支援更多幣別或歷史匯率，寫 spec 時決定是否擴充。
+**匯率換算頁**：已完成（2026-11-26），見 [設計](../archive/2026-11-26-fx-page-design.md)。
 
 **預算（第一版之後）**
 - 分類預算：已移到 P8。

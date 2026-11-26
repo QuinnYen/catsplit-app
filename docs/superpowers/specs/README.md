@@ -1,6 +1,6 @@
 # Specs 與 Backlog 索引
 
-取代原 `todo.md`（2026-11-14 移除）。已完成並上線的設計與計畫（P14、P12）搬到 [`../archive/`](../archive/)。文件總索引見 [`docs/README.md`](../../README.md)。`[ ]` 未開始　`[~]` 進行中。已完成的功能（P0 共用基礎、P1 多國語言、P2 網頁版置中、P3 收入、P4 預算第一版、P10 統計趨勢範圍、P11 CSV 匯出美化、P13 群組頁改版）見 `README.md` 與 `docs/`。
+取代原 `todo.md`（2026-11-14 移除）。已完成並上線的設計與計畫（P14、P12、匯率頁）搬到 [`../archive/`](../archive/)。文件總索引見 [`docs/README.md`](../../README.md)。`[ ]` 未開始　`[~]` 進行中。已完成的功能（P0 共用基礎、P1 多國語言、P2 網頁版置中、P3 收入、P4 預算第一版、P10 統計趨勢範圍、P11 CSV 匯出美化、P13 群組頁改版）見 `README.md` 與 `docs/`。
 
 **每項完成時都要做**：`npm run lint`、`npm test`、`npm run build`；更新 `README.md` 功能清單與相關 `docs/`；涉及 rules 或 functions 的，**rules 與前端放在同一個 PR**（CI 推 `main` 就部署，新欄位沒有 rules 會在正式環境被拒絕）；rules 改動要有測試（`npm run test:rules`）並用兩個帳號實測（見 `docs/guides/operations.md`）。
 
@@ -12,8 +12,8 @@
 |---|---|---|---|
 | P14 | 獨立帳號：多種登入方式與帳號綁定 | [設計](../archive/2026-11-14-p14-identity-design.md)、[計畫](../archive/2026-11-23-p14-identity-plan.md) | 已完成並上線（2026-11-23） |
 | P12 | 個人記帳（多帳本、帳戶、群組快照同步） | [設計](../archive/2026-11-14-p12-personal-ledger-design.md)、[計畫](../archive/2026-11-24-p12-ledger-plan.md)、現行說明 [個人記帳](../../guides/personal-ledger.md) | 已完成並上線（2026-11-25）：含設定頁四個分頁（基本、進階、分帳、資料）、固定收支、預算、年度檢視、CSV 與備份；待做項目見 guide 最後的「尚未做」 |
-| — | 匯率頁與旅程記帳 | [設計草稿](2026-11-26-fx-page-design.md)（已確認）；其他小功能仍在 `2026-11-14-fx-page-and-misc-backlog.md` | [~] 設計已確認；第一～五階段（資料層、`LedgerProvider` 抽出、旅程頁、計算機、設定頁、自訂匯率）已完成（2026-11-26）；第六階段（垃圾桶）待做 |
-| P18 | 首頁大改版：四大功能整合 | `2026-11-14-p18-home-redesign-backlog.md` | 第一階段已完成（2026-11-24）：主導覽列與 `/fx` 佔位頁；摘要卡片、`src/features/*` 搬移待匯率頁（P12 已完成） |
+| — | 匯率頁與旅程記帳 | [設計](../archive/2026-11-26-fx-page-design.md)、現行說明 [個人記帳](../../guides/personal-ledger.md)「旅程帳目與匯率頁」；其他小功能仍在 `2026-11-14-fx-page-and-misc-backlog.md` | 已完成並上線（2026-11-26）：多列換算計算機、實付（免稅與刷卡）、旅程記帳、設定與自訂匯率、旅程垃圾桶（30 天自動清除） |
+| P18 | 首頁大改版：四大功能整合 | `2026-11-14-p18-home-redesign-backlog.md` | 第一階段已完成（2026-11-24）：主導覽列與 `/fx` 佔位頁；摘要卡片、`src/features/*` 搬移可以開始 brainstorm（P12、匯率頁都已完成） |
 
 ## 其他 Backlog
 
