@@ -8,8 +8,6 @@ import { useFxSettings } from './hooks'
 import { saveFxSettings, resetFxSettings } from './data'
 import { parseSetting } from './fxSettings'
 import { DEFAULT_FX_SETTINGS } from './fxMath'
-import { useLedger } from '../ledger/LedgerContext'
-import { trashedTrips } from './trash'
 
 const card = { background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)' }
 const rowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px', borderBottom: '0.5px solid var(--cs-border)' }
@@ -57,7 +55,6 @@ const FxSettingsPage = () => {
   const { t } = useI18n()
   const navigate = useNavigate()
   const { settings, ready } = useFxSettings(uid)
-  const { trips } = useLedger()
   const [error, setError] = useState('')
 
   const save = async (patch) => {
@@ -107,10 +104,6 @@ const FxSettingsPage = () => {
               </label>
               <NumberRow key={`taxFreePercent:${settings.taxFreePercent}`} field="taxFreePercent" label={t('fx.settings.taxFree')} hint={t('fx.settings.taxFreeHint')} value={settings.taxFreePercent} suffix="%" onSave={save} />
               <NumberRow key={`cardFeePercent:${settings.cardFeePercent}`} field="cardFeePercent" label={t('fx.settings.cardFee')} hint={t('fx.settings.cardFeeHint')} value={settings.cardFeePercent} suffix="%" onSave={save} />
-              <button onClick={() => navigate('/fx/trash')} style={{ ...rowStyle, width: '100%', background: 'none', border: 'none', cursor: 'pointer', borderBottom: 'none', borderTop: '0.5px solid var(--cs-border)', textAlign: 'left' }}>
-                <span style={labelStyle}>{t('fx.settings.trash')}</span>
-                <span style={{ fontSize: 14, color: 'var(--cs-text-sub)' }}>{t('fx.settings.trashCount', { n: trashedTrips(trips).length })} ›</span>
-              </button>
             </div>
             {error && <div role="alert" style={{ fontSize: 12, color: 'var(--cs-danger)' }}>{error}</div>}
             <button onClick={reset} style={{ width: '100%', padding: '10px 0', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'transparent', color: 'var(--cs-text)', fontSize: 14, cursor: 'pointer' }}>{t('fx.settings.reset')}</button>

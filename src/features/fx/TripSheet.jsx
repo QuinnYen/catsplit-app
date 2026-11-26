@@ -19,7 +19,7 @@ const defaultCurrency = (base) => (base === 'JPY' ? 'USD' : 'JPY')
 
 // trip：編輯時傳旅程文件；新增不傳。onClose(newTripId?)：新增成功時帶回新旅程 id。onTrashed：旅程移到垃圾桶後呼叫（明細頁用來離開這一頁）
 const TripSheet = ({ trip, onClose, onTrashed }) => {
-  const { uid, ledger, showToast } = useLedger()
+  const { uid, ledger } = useLedger()
   const { t } = useI18n()
   const editing = !!trip
   const [name, setName] = useState(trip?.name ?? '')
@@ -38,11 +38,9 @@ const TripSheet = ({ trip, onClose, onTrashed }) => {
     try {
       if (editing) {
         await updateTrip(uid, ledger.id, trip.id, built.data)
-        showToast(t('fx.trip.saved'))
         onClose()
       } else {
         const id = await createTrip(uid, ledger.id, built.data)
-        showToast(t('fx.trip.created'))
         onClose(id)
       }
     } catch (e) {
@@ -57,7 +55,6 @@ const TripSheet = ({ trip, onClose, onTrashed }) => {
     setError('')
     try {
       await setTripArchived(uid, ledger.id, trip.id, !trip.archived)
-      showToast(t(trip.archived ? 'fx.trip.unarchived' : 'fx.trip.archivedDone'))
       onClose()
     } catch (e) {
       console.error('Failed to archive trip', e)
@@ -72,7 +69,6 @@ const TripSheet = ({ trip, onClose, onTrashed }) => {
     setError('')
     try {
       await trashTrip(uid, ledger.id, trip.id)
-      showToast(t('fx.trip.trashed'))
       onTrashed?.()
       onClose()
     } catch (e) {

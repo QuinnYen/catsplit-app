@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useLedger } from '../ledger/LedgerContext'
 import { defaultRows, sanitizeRows, validCode } from './fxMath'
-import { readCurrentTripId, writeCurrentTripId, readLocalCalc, writeLocalCalc } from './fxLocalPrefs'
+import { readCurrentTripId, readLocalCalc, writeLocalCalc } from './fxLocalPrefs'
 import { setTripCalc } from './data'
 
 export const useFxCalc = () => {
@@ -13,17 +13,14 @@ export const useFxCalc = () => {
   const base = ledger.baseCurrency
   // 封存與垃圾桶中的旅程不能選
   const pickable = useMemo(() => trips.filter((x) => !x.deletedAt && !x.archived), [trips])
-  const [currentId, setCurrentId] = useState(() => readCurrentTripId(localStorage, uid, ledger.id))
+  // 目前旅程在「管理旅程」頁選，回到這裡時重新讀（頁面是重新掛載的）
+  const [currentId] = useState(() => readCurrentTripId(localStorage, uid, ledger.id))
   const [local, setLocal] = useState(() => readLocalCalc(localStorage, uid))
   const current = pickable.find((x) => x.id === currentId) ?? null
 
   const rows = current ? (sanitizeRows(current.rows) ?? defaultRows(current.currency, base)) : (sanitizeRows(local.rows) ?? defaultRows(null, base))
   const payCurrency = current ? (validCode(current.payCurrency) ?? current.currency) : (validCode(local.pay) ?? rows[0])
 
-  const pick = (id) => {
-    setCurrentId(id)
-    writeCurrentTripId(localStorage, uid, ledger.id, id)
-  }
   // patch：{ rows } 或 { pay }
   const save = (patch) => {
     if (current) {
@@ -35,5 +32,5 @@ export const useFxCalc = () => {
     }
   }
 
-  return { uid, ledger, base, tripsReady, pickable, current, rows, payCurrency, pick, save }
+  return { uid, ledger, base, tripsReady, current, rows, payCurrency, save }
 }

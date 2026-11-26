@@ -24,7 +24,6 @@ const TripTrashPage = () => {
     setBusyId(trip.id)
     try {
       await restoreTrip(uid, ledger.id, trip.id)
-      showToast(t('fx.trash.restored'))
     } catch (e) {
       console.error('Failed to restore trip', e)
       showToast(t('fx.trash.failed'))
@@ -46,7 +45,8 @@ const TripTrashPage = () => {
         : t('fx.trash.purgeConfirm', { name: trip.name, n: plan.count, lines: lines.join('\n') || t('fx.trash.noRefund') })
       if (!window.confirm(message)) return setBusyId(null)
       const r = await purgeTrip(uid, ledger.id, trip.id)
-      showToast(r.finished ? t('fx.trash.purged') : r.reason === 'restored' ? t('fx.trash.purgeRestored') : t('fx.trash.failed'))
+      // 成功、或剛好被還原（旅程會回到列表）都不提示；其他原因才是失敗
+      if (!r.finished && r.reason !== 'restored') showToast(t('fx.trash.failed'))
     } catch (e) {
       console.error('Failed to purge trip', e)
       showToast(t('fx.trash.failed'))

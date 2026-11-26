@@ -1,11 +1,12 @@
 // 目標、匯率共用的簡單底部導覽列：首頁（回入口頁 /home）／可選的中間凸起動作鈕。
 // 格子固定落在 5 欄的第 1、3 欄，和其他底部列的首頁、中間凸起鈕位置一致。
 // action：{ label（i18n key）, to } 或 { label, onClick }（不跳頁、開面板時用）。
+// end：最右下角（第 5 欄）的一般項目 { Icon, label, onClick }，例如旅程管理頁的垃圾桶。
 import { useNavigate } from 'react-router-dom'
 import { House, Plus } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
 
-const FeatureTabBar = ({ action }) => {
+const FeatureTabBar = ({ action, end }) => {
   const navigate = useNavigate()
   const { t } = useI18n()
   const cell = { background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', WebkitTapHighlightColor: 'transparent' }
@@ -28,6 +29,12 @@ const FeatureTabBar = ({ action }) => {
             <Plus size={26} color="var(--cs-rc-stamp-text)" strokeWidth={2.4} />
           </span>
           <span style={{ fontSize: 11, lineHeight: '14px', fontWeight: 600, color: 'var(--cs-rc-stamp)' }}>{t(action.label)}</span>
+        </button>
+      )}
+      {end && (
+        <button onClick={end.onClick} aria-label={t(end.label)} style={{ ...cell, gridColumn: 5, cursor: 'pointer' }}>
+          <end.Icon size={22} color="var(--cs-text-sub)" strokeWidth={1.8} />
+          <span style={{ fontSize: 11, lineHeight: '14px', fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t(end.label)}</span>
         </button>
       )}
     </nav>

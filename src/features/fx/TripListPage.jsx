@@ -1,41 +1,59 @@
-// /fx/trips — 旅程列表（進行中與已封存）。從計算機頁首的旅程選單「管理旅程」進來。
+// /fx/trips — 管理旅程：進行中與已封存的旅程。點旅程列＝設成目前旅程並回計算機，列右側的箭頭進旅程明細。
+// 底部列：首頁／新增旅程（中間凸起）／垃圾桶（右下角）。
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plane } from 'lucide-react'
+import { Plane, Check, ChevronRight, Trash2 } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import FeatureTabBar from '../../components/FeatureTabBar'
 import UserHeader from '../../components/UserHeader'
 import { useLedger } from '../ledger/LedgerContext'
 import TripSheet from './TripSheet'
 import { splitTrips, tripRange } from './trips'
-import { trashedTrips } from './trash'
+import { readCurrentTripId, writeCurrentTripId } from './fxLocalPrefs'
 
-const card = { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', background: 'var(--cs-card)', borderRadius: 6, border: '0.5px solid var(--cs-border)', padding: 14, cursor: 'pointer' }
+const card = { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', background: 'none', border: 'none', padding: 14, cursor: 'pointer' }
+const rowBox = (on) => ({ display: 'flex', alignItems: 'stretch', background: 'var(--cs-card)', borderRadius: 6, border: `${on ? 1.5 : 0.5}px solid ${on ? 'var(--cs-rc-stamp)' : 'var(--cs-border)'}` })
+const iconCircle = { width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--cs-soft)', color: 'var(--cs-text-sub)', flexShrink: 0 }
 
-const TripCard = ({ trip, base, onOpen }) => {
+// 一列旅程：onPick 沒給（封存的旅程不能當目前旅程）時整列進明細
+const TripRow = ({ trip, base, current, onPick, onDetail }) => {
   const { t } = useI18n()
   const range = tripRange(trip)
   return (
-    <button onClick={onOpen} style={card}>
-      <span aria-hidden="true" style={{ width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--cs-soft)', color: 'var(--cs-text-sub)', flexShrink: 0 }}><Plane size={18} /></span>
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trip.name}</span>
-        <span style={{ display: 'block', fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>
-          {[`${trip.currency} → ${base}`, range, trip.countInStats ? t('fx.trip.statsBadge') : null].filter(Boolean).join(' · ')}
+    <div style={rowBox(current)}>
+      <button onClick={onPick ?? onDetail} aria-pressed={onPick ? current : undefined} style={card}>
+        <span aria-hidden="true" style={iconCircle}><Plane size={18} /></span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: 'block', fontSize: 15, fontWeight: 500, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trip.name}</span>
+          <span style={{ display: 'block', fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>
+            {[`${trip.currency} → ${base}`, range, trip.countInStats ? t('fx.trip.statsBadge') : null].filter(Boolean).join(' · ')}
+          </span>
         </span>
-      </span>
-    </button>
+        {current && <Check size={18} color="var(--cs-rc-stamp)" aria-label={t('fx.trips.current')} style={{ flexShrink: 0 }} />}
+      </button>
+      {onPick && (
+        <button onClick={onDetail} aria-label={t('fx.calc.detail')} style={{ background: 'none', border: 'none', borderLeft: '0.5px solid var(--cs-border)', padding: '0 12px', color: 'var(--cs-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <ChevronRight size={20} />
+        </button>
+      )}
+    </div>
   )
 }
 
 const TripListPage = () => {
-  const { ledger, trips, tripsReady } = useLedger()
+  const { uid, ledger, trips, tripsReady } = useLedger()
   const { t } = useI18n()
   const navigate = useNavigate()
   const [sheet, setSheet] = useState(false)
   const { active, archived } = splitTrips(trips)
-  const trashCount = trashedTrips(trips).length
-  const open = (id) => navigate(`/fx/trips/${id}`)
+  const currentId = readCurrentTripId(localStorage, uid, ledger.id)
+  const detail = (id) => navigate(`/fx/trips/${id}`)
+  // 設成目前旅程（null＝不選旅程，只換算）後回計算機
+  const pick = (id) => {
+    writeCurrentTripId(localStorage, uid, ledger.id, id)
+    navigate('/fx')
+  }
+  const noneOn = !active.some((x) => x.id === currentId)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
@@ -46,26 +64,30 @@ const TripListPage = () => {
           <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-text)' }}>{t('fx.trips.title')}</div>
         </div>
         {!tripsReady && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
-        {tripsReady && active.length === 0 && archived.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '32px 8px', color: 'var(--cs-text-sub)', fontSize: 14, lineHeight: 1.7 }}>{t('fx.trips.empty')}</div>
+        {tripsReady && (
+          <div style={rowBox(noneOn)}>
+            <button onClick={() => pick(null)} aria-pressed={noneOn} style={card}>
+              <span aria-hidden="true" style={iconCircle}><Plane size={18} /></span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 500, color: 'var(--cs-text)' }}>{t('fx.calc.noTripOption')}</span>
+              {noneOn && <Check size={18} color="var(--cs-rc-stamp)" aria-label={t('fx.trips.current')} style={{ flexShrink: 0 }} />}
+            </button>
+          </div>
         )}
-        {active.map((trip) => <TripCard key={trip.id} trip={trip} base={ledger.baseCurrency} onOpen={() => open(trip.id)} />)}
+        {tripsReady && active.length === 0 && archived.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '24px 8px', color: 'var(--cs-text-sub)', fontSize: 14, lineHeight: 1.7 }}>{t('fx.trips.empty')}</div>
+        )}
+        {active.map((trip) => <TripRow key={trip.id} trip={trip} base={ledger.baseCurrency} current={trip.id === currentId} onPick={() => pick(trip.id)} onDetail={() => detail(trip.id)} />)}
         {archived.length > 0 && (
           <details>
             <summary style={{ fontSize: 13, color: 'var(--cs-text-sub)', cursor: 'pointer', padding: '4px 0 10px' }}>{t('fx.trips.archived', { n: archived.length })}</summary>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {archived.map((trip) => <TripCard key={trip.id} trip={trip} base={ledger.baseCurrency} onOpen={() => open(trip.id)} />)}
+              {archived.map((trip) => <TripRow key={trip.id} trip={trip} base={ledger.baseCurrency} onDetail={() => detail(trip.id)} />)}
             </div>
           </details>
         )}
-        {trashCount > 0 && (
-          <button onClick={() => navigate('/fx/trash')} style={{ background: 'none', border: 'none', color: 'var(--cs-text-sub)', fontSize: 13, cursor: 'pointer', textAlign: 'left', padding: '4px 0' }}>
-            {t('fx.trash.link', { n: trashCount })} ›
-          </button>
-        )}
       </div>
-      <FeatureTabBar action={{ label: 'fx.tab.addTrip', onClick: () => setSheet(true) }} />
-      {sheet && <TripSheet onClose={(id) => { setSheet(false); if (id) open(id) }} />}
+      <FeatureTabBar action={{ label: 'fx.tab.addTrip', onClick: () => setSheet(true) }} end={{ Icon: Trash2, label: 'fx.tab.trash', onClick: () => navigate('/fx/trash') }} />
+      {sheet && <TripSheet onClose={(id) => { setSheet(false); if (id) pick(id) }} />}
     </div>
   )
 }

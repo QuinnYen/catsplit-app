@@ -6,7 +6,6 @@ import { useApp } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nProvider'
 import { useLedger } from '../ledger/LedgerContext'
 import FxCalculator from './FxCalculator'
-import TripSheet from './TripSheet'
 import { DEFAULT_FX_SETTINGS, defaultRows, sanitizeRows, validCode } from './fxMath'
 import { useFxSettings } from './hooks'
 import { useFxCalc } from './useFxCalc'
@@ -18,22 +17,18 @@ const FxCalculatorPage = () => {
   const navigate = useNavigate()
   const calc = useFxCalc()
   const { settings, ready: settingsReady } = useFxSettings(calc.uid)
-  const [creating, setCreating] = useState(false)
 
   // 預設金額只在計算機一開始帶入，所以要等設定載入完才顯示
   if (!calc.tripsReady || !settingsReady) return <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'grid', placeItems: 'center', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
 
   return (
-    <>
-      <FxCalculator
-        base={calc.base} settings={settings} trips={calc.pickable} currentTrip={calc.current} rows={calc.rows} payCurrency={calc.payCurrency}
-        onRowsChange={(next) => calc.save({ rows: next })} onPayChange={(code) => calc.save({ pay: code })}
-        onPickTrip={calc.pick} onCreateTrip={() => setCreating(true)} onManageTrips={() => navigate('/fx/trips')}
-        onOpenDetail={() => navigate(`/fx/trips/${calc.current.id}`)} onOpenCurrencies={() => navigate('/fx/currencies')} onOpenSettings={() => navigate('/fx/settings')}
-        canRecord onRecord={(preset) => openEntry(undefined, preset)}
-      />
-      {creating && <TripSheet onClose={(id) => { setCreating(false); if (id) calc.pick(id) }} />}
-    </>
+    <FxCalculator
+      base={calc.base} settings={settings} currentTrip={calc.current} rows={calc.rows} payCurrency={calc.payCurrency}
+      onRowsChange={(next) => calc.save({ rows: next })} onPayChange={(code) => calc.save({ pay: code })}
+      onManageTrips={() => navigate('/fx/trips')}
+      onOpenLedger={() => navigate('/ledger')} onOpenCurrencies={() => navigate('/fx/currencies')} onOpenSettings={() => navigate('/fx/settings')}
+      canRecord onRecord={(preset) => openEntry(undefined, preset)}
+    />
   )
 }
 
@@ -49,7 +44,7 @@ export const FxCalculatorGuest = () => {
   }
   return (
     <FxCalculator
-      base="TWD" settings={DEFAULT_FX_SETTINGS} trips={[]} currentTrip={null} rows={rows} payCurrency={validCode(local.pay) ?? rows[0]}
+      base="TWD" settings={DEFAULT_FX_SETTINGS} currentTrip={null} rows={rows} payCurrency={validCode(local.pay) ?? rows[0]}
       onRowsChange={(next) => save({ rows: next })} onPayChange={(code) => save({ pay: code })}
       onOpenCurrencies={() => navigate('/fx/currencies')}
       canRecord={false} onRecord={() => {}}
