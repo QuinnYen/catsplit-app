@@ -40,6 +40,13 @@ scripts/storage/            # bucket CORS 與生命週期設定（需手動套�
 - 設定頁「預設開啟頁面」（首頁／記帳／分帳／目標／匯率，預設記帳）存在這台裝置的 localStorage（`cs-start-page`，`src/utils/startPage.js`）。
 - 導向規則：`main.jsx` 在 React 與登入啟動**之前**呼叫 `launchRedirect`（`src/utils/startPage.js`），這個分頁／webview 第一次載入且網址是 `/` 時，用 `history.replaceState` 先把網址換成偏好頁，所以第一個畫面就是目標頁，不會先閃出分帳列表。用 sessionStorage（`cs-launched`）記下，同分頁重新整理或之後點回 `/` 不會再導向；從群組連結等其他網址進來不導向（但一樣記下已開過），網址帶 `liff.` 參數時略過。那時還不知道是不是訪客，訪客到 `/ledger`、`/savings` 會被路由規則導回 `/`。**不要把這個導向放回 React 元件**：用 `<Navigate>` 會在每次換頁時重新觸發，把人拉回預設頁（曾發生過）。
 
+## 新版本提示
+
+- 單頁應用只在第一次載入時抓程式碼，已安裝的 PWA 或一直開著的分頁會停在舊版，所以 `App.jsx` 掛了 `UpdateBanner`（`src/components/UpdateBanner.jsx`，邏輯在 `src/utils/versionCheck.js`）。
+- 做法：背景以 `cache: 'no-store'` 請求 `/`，比對 HTML 裡入口 JS（`/assets/index-雜湊.js`）和目前載入的是否相同；不同就在畫面下方顯示「有新版本可以使用　立即更新／稍後」。App 回到前景時（距上次檢查至少 5 分鐘）與前景每 30 分鐘檢查一次。
+- 不自動重新載入（可能正在填資料），按「立即更新」才 `location.reload()`；「稍後」只收起這一版，更新的版本出現時會再提示。檢查失敗（離線等）一律靜默。開發模式沒有雜湊檔名，不檢查。
+- 這個機制依賴 `/` 不被快取（`firebase.json` 的標頭，見[維運](operations.md)的「快取標頭」），否則請求拿到的也是舊 HTML。
+
 ## 網頁版版型
 
 全站是 inline style，桌機置中的規則集中在 `src/index.css` 的單一 `@media (min-width: 481px)`，手機（≤480）不命中，版面完全不變。

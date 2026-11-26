@@ -11,6 +11,7 @@ import useMyGroups from './hooks/useMyGroups'
 import useSyncMemberProfile from './hooks/useSyncMemberProfile'
 import useOfficialAccountPrompt from './hooks/useOfficialAccountPrompt'
 import { pageTitleKey } from './utils/pageTitle'
+import UpdateBanner from './components/UpdateBanner'
 
 // 首頁與群組頁是主要落地頁（含邀請連結），直接載入；其餘頁面用到才下載
 import HomePage from './pages/HomePage'
@@ -232,6 +233,7 @@ const PageTitle = () => {
 const App = () => (
   <BrowserRouter>
     <PageTitle />
+    <UpdateBanner />
     <Suspense fallback={<LoadingScreen />}>
       <AppRoutes />
     </Suspense>
