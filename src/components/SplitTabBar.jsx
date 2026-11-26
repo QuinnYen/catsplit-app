@@ -1,8 +1,8 @@
-// 分帳列表（/）的底部導覽列：首頁／收款／建立群組（中間凸起）／付款／設定（帳號設定頁）。
+// 分帳列表（/）的底部導覽列：首頁／收款／建立群組（中間凸起）／付款／匯率。
 // 訪客不能建立群組，也沒有收款與付款方式：這三格變灰，點了提示。
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, QrCode, Plus, CreditCard, Settings } from 'lucide-react'
+import { House, QrCode, Plus, CreditCard, ArrowLeftRight } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useI18n } from '../i18n/I18nProvider'
 
@@ -11,7 +11,7 @@ const TABS = [
   { id: 'receive', Icon: QrCode, label: 'tab.receive', to: '/payment-methods', needsAccount: true },
   { id: 'create', Icon: Plus, label: 'tab.createGroup', to: '/create', needsAccount: true },
   { id: 'pay', Icon: CreditCard, label: 'tab.pay', to: '/spend-methods', needsAccount: true },
-  { id: 'settings', Icon: Settings, label: 'group.settings', to: '/settings' },
+  { id: 'fx', Icon: ArrowLeftRight, label: 'tab.fx', to: '/fx' },
 ]
 
 const SplitTabBar = () => {

@@ -1,4 +1,4 @@
-// / — 分帳首頁：使用者資訊與我的群組列表，頂部是使用者列（頭像點開帳號選單）；底部是 SplitTabBar（首頁／收款／建立群組／付款／設定）。未登入由 App.jsx 的 LoginScreen 處理。
+// / — 分帳首頁：使用者資訊與我的群組列表，頂部是使用者列（頭像點開帳號選單）；右上角是 LINE 官方帳號；底部是 SplitTabBar（首頁／收款／建立群組／付款／匯率）。未登入由 App.jsx 的 LoginScreen 處理。
 import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check } from 'lucide-react'
@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import useMyGroups from '../hooks/useMyGroups'
 import Avatar from '../components/Avatar'
 import UserHeader from '../components/UserHeader'
+import OfficialAccountButton from '../components/OfficialAccountButton'
 import GroupIcon from '../components/GroupIcon'
 import SplitTabBar from '../components/SplitTabBar'
 import { computeBudgetStatus } from '../utils/budget'
@@ -37,7 +38,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--cs-rc-bg)' }}>
 
-      <UserHeader />
+      <UserHeader right={<OfficialAccountButton />} />
 
       {/* 內容 */}
       <div className="cs-body" style={{ padding: '16px', flex: 1, paddingBottom: 'calc(var(--tabbar-h) + 24px)', display: 'flex', flexDirection: 'column' }}>

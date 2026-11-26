@@ -19,6 +19,7 @@ import SearchSheet from '../components/SearchSheet'
 import MonthPicker from '../components/MonthPicker'
 import { spendTypeBg, spendTypeColor } from '../utils/spendMethods'
 import LineIcon from '../components/LineIcon'
+import OfficialAccountButton from '../components/OfficialAccountButton'
 import GroupIcon from '../components/GroupIcon'
 import { getCurrency } from '../config/currencies'
 import { payerLabel, expenseTimeStr } from '../utils/expenseHelpers'
@@ -513,6 +514,8 @@ const GroupPage = () => {
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</span>
           </div>
 
+          <OfficialAccountButton />
+
           <button
             onClick={e => {
               const r = e.currentTarget.getBoundingClientRect()
@@ -545,12 +548,6 @@ const GroupPage = () => {
           <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginLeft: 8 }}>
             {t('group.memberCount', { n: group.members?.length })}
           </span>
-          <button
-            onClick={() => navigate(`/group/${id}/settle`)}
-            style={{ marginLeft: 'auto', background: 'var(--cs-rc-stamp)', color: 'var(--cs-rc-stamp-text)', border: 'none', borderRadius: 6, padding: '7px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
-          >
-            {t('tab.settle')}
-          </button>
         </div>
 
         {/* 總金額卡片 */}
