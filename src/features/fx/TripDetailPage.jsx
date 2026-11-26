@@ -136,7 +136,7 @@ const TripDetailPage = () => {
       </div>
 
       <FeatureTabBar start={{ Icon: ArrowLeftRight, label: 'tab.fx', onClick: () => navigate('/fx') }} action={{ label: 'fx.trip.addEntry', onClick: () => openEntry(undefined, { tripId: trip.id, currency: trip.currency, date: todayStr() }) }} end={{ Icon: Pencil, label: 'fx.tab.edit', onClick: () => setEditing(true) }} />
-      {editing && <TripSheet trip={trip} onClose={() => setEditing(false)} onTrashed={() => navigate('/fx/trips')} />}
+      {editing && <TripSheet trip={trip} onClose={() => setEditing(false)} onTrashed={() => navigate('/fx/trips', { replace: true })} />}
     </div>
   )
 }

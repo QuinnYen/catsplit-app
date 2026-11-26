@@ -7,6 +7,7 @@ import { PINNED_CURRENCIES, roundToCurrency } from '../../config/currencies'
 import { useLedger } from './LedgerContext'
 import { createAccount, updateAccount, setAccountArchived, deleteAccount, accountHasTransactions } from './data'
 import { ACCOUNT_TYPES, ACCOUNT_NAME_MAX } from './constants'
+import BackClose from '../../components/BackClose'
 
 const inputStyle = { display: 'block', width: '100%', marginTop: 6, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', background: 'var(--cs-card)', outline: 'none', boxSizing: 'border-box' }
 const labelStyle = { fontSize: 12, color: 'var(--cs-text-sub)' }
@@ -91,6 +92,7 @@ const AccountSheet = ({ account, activeNormalCount, onClose }) => {
 
   return (
     <>
+      <BackClose onClose={onClose} />
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--cs-overlay)' }} />
       <div
         role="dialog" aria-modal="true" aria-label={t(editing ? 'ledger.account.editTitle' : 'ledger.account.newTitle')}

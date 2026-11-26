@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import CurrencySelect from '../../components/CurrencySelect'
+import BackClose from '../../components/BackClose'
 import { PINNED_CURRENCIES } from '../../config/currencies'
 import { useLedger } from '../ledger/LedgerContext'
 import { buildTripData, tripHome, TRIP_NAME_MAX } from './trips'
@@ -69,6 +70,7 @@ const TripSheet = ({ trip, onClose, onTrashed }) => {
   const title = t(editing ? 'fx.trip.edit' : 'fx.trip.new')
   return (
     <>
+      <BackClose onClose={() => onClose()} />
       <div onClick={() => onClose()} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--cs-overlay)' }} />
       <div
         role="dialog" aria-modal="true" aria-label={title}

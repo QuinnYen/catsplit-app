@@ -8,6 +8,7 @@ import { useLedger } from './LedgerContext'
 import { createLedger, renameLedger } from './data'
 import { deleteLedger } from '../../utils/ledgerApi'
 import { MAX_LEDGERS, LEDGER_NAME_MAX } from './constants'
+import BackClose from '../../components/BackClose'
 
 const LedgerMenu = ({ onClose }) => {
   const { uid, ledgers, ledger, setActiveLedger, showToast } = useLedger()
@@ -75,6 +76,7 @@ const LedgerMenu = ({ onClose }) => {
 
   return (
     <>
+      <BackClose onClose={onClose} />
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--cs-overlay)' }} />
       <div
         role="dialog" aria-label={t('ledger.switch')}

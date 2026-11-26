@@ -47,9 +47,10 @@ const TripListPage = () => {
   const currentId = readCurrentTripId(localStorage, uid, ledger.id)
   const detail = (id) => navigate(`/fx/trips/${id}`)
   // 設成目前旅程（null＝不選旅程，只換算）後回計算機
-  const pick = (id) => {
+  // replace：從新增旅程面板來的時候，用「取代」換頁，蓋掉面板為了手機返回鍵多推的那一筆記錄（見 hooks/useBackClose.js）
+  const pick = (id, replace = false) => {
     writeCurrentTripId(localStorage, uid, ledger.id, id)
-    navigate('/fx')
+    navigate('/fx', { replace })
   }
   const noneOn = !list.some((x) => x.id === currentId)
 
@@ -77,7 +78,7 @@ const TripListPage = () => {
         {list.map((trip) => <TripRow key={trip.id} trip={trip} base={ledger.baseCurrency} current={trip.id === currentId} onPick={() => pick(trip.id)} onDetail={() => detail(trip.id)} />)}
       </div>
       <FeatureTabBar start={{ Icon: ArrowLeftRight, label: 'tab.fx', onClick: () => navigate('/fx') }} action={{ label: 'fx.tab.addTrip', onClick: () => setSheet(true) }} end={{ Icon: Trash2, label: 'fx.tab.trash', onClick: () => navigate('/fx/trash') }} />
-      {sheet && <TripSheet onClose={(id) => { setSheet(false); if (id) pick(id) }} />}
+      {sheet && <TripSheet onClose={(id) => { setSheet(false); if (id) pick(id, true) }} />}
     </div>
   )
 }

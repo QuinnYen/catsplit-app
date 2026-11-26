@@ -14,6 +14,7 @@ import { saveTransaction, deleteTransaction } from './data'
 import { readLastUsed, writeLastUsed, pickEntryDefaults } from './prefs'
 import { NOTE_MAX } from './constants'
 import { todayStr, weekdayOf } from './dates'
+import BackClose from '../../components/BackClose'
 
 const accountLabel = (a) => `${a.name} (${a.currency})`
 
@@ -204,6 +205,7 @@ const LedgerEntrySheet = ({ editing, preset, onClose }) => {
 
   return (
     <>
+      <BackClose onClose={onClose} />
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--cs-overlay)' }} />
       <div
         role="dialog" aria-modal="true" aria-label={t(editing ? 'ledger.entry.editTitle' : 'ledger.entry.title')}

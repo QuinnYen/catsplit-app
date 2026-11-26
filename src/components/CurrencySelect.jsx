@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
 import { CURRENCIES, getCurrency, currencyName } from '../config/currencies'
+import BackClose from './BackClose'
 
 const RECENT_KEY = 'cs-recent-currencies'
 const RECENT_MAX = 4
@@ -100,6 +101,7 @@ const CurrencySelect = ({ value, onChange, exclude = [], pinned = [], noneLabel,
 
       {open && (
         <>
+          <BackClose onClose={close} />
           <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.35)', touchAction: 'none' }} />
           <div style={{
             position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 71, maxHeight: '80vh', display: 'flex', flexDirection: 'column',
