@@ -105,12 +105,20 @@ const profileConflict = { path: 'settings/profile', keepUpdatedMs: 100, dropUpda
 const promptConflict = { path: 'settings/oaPrompt', keepUpdatedMs: 300, dropUpdatedMs: 200 }
 const ledgerConflict = { path: 'transactions/group_g1', keepUpdatedMs: 100, dropUpdatedMs: 50 }
 
-test('classifyPersonalConflicts：oaPrompt 自動處理，其他需要使用者決定，各附預設建議', () => {
-  assert.deepEqual(AUTO_RESOLVED_PATHS, ['settings/oaPrompt'])
+test('classifyPersonalConflicts：oaPrompt 與 fx 設定自動處理，其他需要使用者決定，各附預設建議', () => {
+  assert.deepEqual(AUTO_RESOLVED_PATHS, ['settings/oaPrompt', 'settings/fx'])
   const { auto, needsChoice } = classifyPersonalConflicts([profileConflict, promptConflict, ledgerConflict])
   assert.deepEqual(auto.map((c) => [c.path, c.suggested]), [['settings/oaPrompt', 'keep']])
   // 要使用者決定的一律預設保留 keepUid，即使被併入帳號的資料比較新（profileConflict 的 drop 較新）
   assert.deepEqual(needsChoice.map((c) => [c.path, c.suggested]), [['settings/profile', 'keep'], ['transactions/group_g1', 'keep']])
+})
+
+test('匯率換算設定（settings/fx）合併時自動保留較新的，不問使用者', () => {
+  const fx = (keepUpdatedMs, dropUpdatedMs) => ({ path: 'settings/fx', keepUpdatedMs, dropUpdatedMs })
+  assert.deepEqual(classifyPersonalConflicts([fx(1, 9)]).needsChoice, [])
+  assert.deepEqual(buildResolutions([fx(1, 9)]), { 'settings/fx': 'drop' }) // 被併入帳號的較新
+  assert.deepEqual(buildResolutions([fx(9, 1)]), { 'settings/fx': 'keep' })
+  assert.throws(() => buildResolutions([fx(1, 9)], { 'settings/fx': 'keep' }), /unknown_conflict_path/)
 })
 
 test('buildResolutions：沒指定就用預設建議，指定的以使用者為準，自動處理的一律用預設建議', () => {

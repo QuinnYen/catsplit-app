@@ -354,6 +354,29 @@ service cloud.firestore {
       allow delete: if isMember() && request.auth.uid == userId;
     }
 
+    // 匯率換算頁的個人設定（users/{uid}/settings/fx）：全部欄位選填，沒有的欄位用預設值。
+    // customRates（鍵 'JPY_TWD' → 匯率）最多 20 組；rules 無法逐項檢查值是否為正數，由前端驗證。
+    function validPercent(v) {
+      return v is number && v >= 0 && v <= 100;
+    }
+    function validFxSettings(d) {
+      return d.keys().hasOnly(['decimals', 'defaultAmount', 'showSymbol', 'taxFreePercent', 'cardFeePercent', 'customRates'])
+        && (!('decimals' in d) || (d.decimals is int && d.decimals >= 0 && d.decimals <= 3))
+        && (!('defaultAmount' in d) || (d.defaultAmount is number && d.defaultAmount >= 0 && d.defaultAmount < 1000000000))
+        && (!('showSymbol' in d) || d.showSymbol is bool)
+        && (!('taxFreePercent' in d) || validPercent(d.taxFreePercent))
+        && (!('cardFeePercent' in d) || validPercent(d.cardFeePercent))
+        && (!('customRates' in d) || (d.customRates is map && d.customRates.size() <= 20));
+    }
+
+    match /users/{userId}/settings/fx {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if isMember()
+        && request.auth.uid == userId
+        && validFxSettings(request.resource.data);
+      allow delete: if isMember() && request.auth.uid == userId;
+    }
+
     // 官方帳號加好友提示旗標：只記「已提示過」的時間，換裝置或清掉瀏覽器資料後也不會再跳
     match /users/{userId}/settings/oaPrompt {
       allow read: if request.auth != null && request.auth.uid == userId;

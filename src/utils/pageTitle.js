@@ -11,6 +11,7 @@ const ROUTES = [
   [/^\/ledger\/settings\/categories$/, 'ledger.set.categories'],
   [/^\/fx$/, 'tab.fx'],
   [/^\/fx\/trips$/, 'fx.trips.title'],
+  [/^\/fx\/settings$/, 'fx.settings.title'],
   [/^\/fx\/trips\/[^/]+$/, 'fx.trips.title'],
   [/^\/create$/, 'cg.title'],
   [/^\/settings$/, 'group.settings'],

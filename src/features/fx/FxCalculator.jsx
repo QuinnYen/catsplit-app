@@ -1,7 +1,7 @@
 // 匯率計算機（截圖 1、4）：多列換算、實付（免稅與刷卡）、數字鍵盤、收據鍵記帳。
 // 這個元件只管計算與畫面，不碰 Firestore 或帳本：旅程、換算列的存取與「記帳」由外層（FxCalculatorPage）以 props 傳入。
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, List } from 'lucide-react'
+import { BookOpen, List, SlidersHorizontal } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import CurrencySelect from '../../components/CurrencySelect'
 import FeatureTabBar from '../../components/FeatureTabBar'
@@ -26,10 +26,10 @@ const chip = (on) => ({
  * @param currentTrip  目前選的旅程或 null
  * @param rows         換算列的幣別（1–6 個）；payCurrency 實付幣別
  * @param onRowsChange(rows)、onPayChange(code)  換算列或實付幣別改了（外層決定存哪）
- * @param onPickTrip(id|null)、onCreateTrip()、onManageTrips()、onOpenDetail()  旅程相關
+ * @param onPickTrip(id|null)、onCreateTrip()、onManageTrips()、onOpenDetail()  旅程相關；onOpenSettings() 開設定頁（沒給就不顯示齒輪）
  * @param canRecord    能不能記帳（已登入非訪客）；onRecord(preset) 開記帳面板，preset 見 LedgerEntrySheet 的 initialDraft
  */
-const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip, rows, payCurrency, onRowsChange, onPayChange, onPickTrip, onCreateTrip, onManageTrips, onOpenDetail, canRecord, onRecord }) => {
+const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip, rows, payCurrency, onRowsChange, onPayChange, onPickTrip, onCreateTrip, onManageTrips, onOpenDetail, onOpenSettings, canRecord, onRecord }) => {
   const { t } = useI18n()
   const [active, setActive] = useState(0)
   const [expr, setExpr] = useState(() => (settings.defaultAmount > 0 ? String(settings.defaultAmount) : ''))
@@ -112,7 +112,10 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip
               <span style={{ fontSize: 18, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentTrip?.name ?? t('fx.calc.noTrip')}</span>
             </button>
           ) : <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--cs-text)', padding: 6 }}>{t('fx.calc.title')}</div>}
-          {currentTrip && <button onClick={onOpenDetail} aria-label={t('fx.calc.detail')} style={iconBtn}><List size={22} /></button>}
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            {currentTrip && <button onClick={onOpenDetail} aria-label={t('fx.calc.detail')} style={iconBtn}><List size={22} /></button>}
+            {onOpenSettings && <button onClick={onOpenSettings} aria-label={t('fx.calc.settings')} style={iconBtn}><SlidersHorizontal size={22} /></button>}
+          </div>
         </div>
 
         {/* 換算列：點金額從那一列輸入，點幣別代碼換幣別 */}

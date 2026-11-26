@@ -67,7 +67,8 @@ export const countMigrationImpact = ({ expenses = [], settlements = [], incomes 
 // ---------- 個人資料衝突 ----------
 
 // 兩個帳號都有、且使用者不需要決定的固定 id 文件（相對於 users/{uid} 的路徑）：一律保留較新的
-export const AUTO_RESOLVED_PATHS = ['settings/oaPrompt']
+// settings/fx：匯率換算頁的個人設定，不值得讓使用者決定，保留較新的（較新的通常是最近調過的那份）
+export const AUTO_RESOLVED_PATHS = ['settings/oaPrompt', 'settings/fx']
 
 /**
  * 衝突的預設建議：較新的那份（以文件的最後更新時間比較），一樣新就保留 keepUid 的。

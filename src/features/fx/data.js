@@ -1,7 +1,8 @@
 // 旅程的 Firestore 讀寫（資料存取層）：畫面不直接組路徑。旅程文件欄位見 docs/superpowers/specs/2026-11-26-fx-page-design.md 2.1。
-import { collection, doc, setDoc, updateDoc, serverTimestamp, deleteField } from 'firebase/firestore'
+import { collection, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { tripsPath } from '../ledger/paths.js'
+import { fxSettingsPath } from './paths.js'
 
 const OPTIONAL_DATES = ['startDate', 'endDate']
 
@@ -25,3 +26,11 @@ export const setTripCalc = (uid, ledgerId, tripId, patch) =>
 
 export const setTripArchived = (uid, ledgerId, tripId, archived) =>
   updateDoc(doc(db, ...tripsPath(uid, ledgerId), tripId), { archived })
+
+// ---------- 計算機設定（users/{uid}/settings/fx）----------
+
+// 只寫有改的欄位（merge）；patch 的欄位與驗證見 fxSettings.js 的 parseSetting
+export const saveFxSettings = (uid, patch) => setDoc(doc(db, ...fxSettingsPath(uid)), patch, { merge: true })
+
+// 還原預設值：刪掉整份設定文件
+export const resetFxSettings = (uid) => deleteDoc(doc(db, ...fxSettingsPath(uid)))

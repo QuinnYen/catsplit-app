@@ -8,6 +8,7 @@ import { useLedger } from '../ledger/LedgerContext'
 import FxCalculator from './FxCalculator'
 import TripSheet from './TripSheet'
 import { DEFAULT_FX_SETTINGS, defaultRows, sanitizeRows, validCode } from './fxMath'
+import { useFxSettings } from './hooks'
 import { readCurrentTripId, writeCurrentTripId, readLocalCalc, writeLocalCalc } from './fxLocalPrefs'
 import { setTripCalc } from './data'
 
@@ -15,6 +16,7 @@ const FxCalculatorPage = () => {
   const { uid, ledger, trips, tripsReady, openEntry, showToast } = useLedger()
   const { t } = useI18n()
   const navigate = useNavigate()
+  const { settings, ready: settingsReady } = useFxSettings(uid)
   const base = ledger.baseCurrency
   // 封存與垃圾桶中的旅程不能選
   const pickable = useMemo(() => trips.filter((x) => !x.deletedAt && !x.archived), [trips])
@@ -23,7 +25,8 @@ const FxCalculatorPage = () => {
   const [creating, setCreating] = useState(false)
   const current = pickable.find((x) => x.id === currentId) ?? null
 
-  if (!tripsReady) return <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'grid', placeItems: 'center', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
+  // 預設金額只在計算機一開始帶入，所以要等設定載入完才顯示
+  if (!tripsReady || !settingsReady) return <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'grid', placeItems: 'center', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
 
   const rows = current ? (sanitizeRows(current.rows) ?? defaultRows(current.currency, base)) : (sanitizeRows(local.rows) ?? defaultRows(null, base))
   const payCurrency = current ? (validCode(current.payCurrency) ?? current.currency) : (validCode(local.pay) ?? rows[0])
@@ -46,10 +49,10 @@ const FxCalculatorPage = () => {
   return (
     <>
       <FxCalculator
-        base={base} settings={DEFAULT_FX_SETTINGS} trips={pickable} currentTrip={current} rows={rows} payCurrency={payCurrency}
+        base={base} settings={settings} trips={pickable} currentTrip={current} rows={rows} payCurrency={payCurrency}
         onRowsChange={(next) => save({ rows: next })} onPayChange={(code) => save({ pay: code })}
         onPickTrip={pick} onCreateTrip={() => setCreating(true)} onManageTrips={() => navigate('/fx/trips')}
-        onOpenDetail={() => navigate(`/fx/trips/${current.id}`)}
+        onOpenDetail={() => navigate(`/fx/trips/${current.id}`)} onOpenSettings={() => navigate('/fx/settings')}
         canRecord onRecord={(preset) => openEntry(undefined, preset)}
       />
       {creating && <TripSheet onClose={(id) => { setCreating(false); if (id) pick(id) }} />}

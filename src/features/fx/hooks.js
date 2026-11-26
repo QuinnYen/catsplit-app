@@ -1,9 +1,11 @@
 // 匯率頁（旅程）的即時訂閱。旅程列表本身用 ledger/hooks.js 的 useTrips（LedgerProvider 已訂閱，放在 Context）。
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { collection, doc, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { transactionsPath } from '../ledger/paths.js'
 import { fetchExchangeRate } from '../../config/currencies'
+import { fxSettingsPath } from './paths.js'
+import { mergeFxSettings } from './fxSettings.js'
 
 // 某趟旅程的全部帳目（單一欄位等值查詢，不需要複合索引）；載入前是 null。排序與分組在 tripSummary.js
 export const useTripTransactions = (uid, ledgerId, tripId) => {
@@ -47,4 +49,23 @@ export const useFxRates = (codes) => {
   }, [key, tick])
   const retry = useCallback(() => setTick((n) => n + 1), [])
   return { rates: state.rates, loading: state.key !== key, error: state.key === key && state.error, retry }
+}
+
+/**
+ * 計算機設定（users/{uid}/settings/fx）：即時訂閱，合併預設值後回傳 { settings, ready }。
+ * 讀取失敗（例如 rules 還沒部署）也視為 ready，用預設值，不擋住計算機。
+ */
+export const useFxSettings = (uid) => {
+  const [state, setState] = useState({ uid: null, data: {} })
+  useEffect(() => {
+    return onSnapshot(doc(db, ...fxSettingsPath(uid)), (snap) => {
+      setState({ uid, data: snap.exists() ? snap.data() : {} })
+    }, (err) => {
+      console.error('Failed to load fx settings', err)
+      setState({ uid, data: {} })
+    })
+  }, [uid])
+  const ready = state.uid === uid
+  const settings = useMemo(() => mergeFxSettings(ready ? state.data : {}), [ready, state])
+  return { settings, ready }
 }
