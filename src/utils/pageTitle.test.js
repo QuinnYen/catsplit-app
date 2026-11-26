@@ -15,6 +15,7 @@ test('pageTitleKey：各頁路徑對到頁面名稱 key', () => {
   assert.equal(pageTitleKey('/fx'), 'tab.fx')
   assert.equal(pageTitleKey('/fx/trips/abc123'), 'fx.trips.title')
   assert.equal(pageTitleKey('/fx/settings'), 'fx.settings.title')
+  assert.equal(pageTitleKey('/fx/settings/rates'), 'fx.rates.title')
   assert.equal(pageTitleKey('/merge'), 'merge.title')
   assert.equal(pageTitleKey('/group/abc'), 'tab.group')
   assert.equal(pageTitleKey('/group/abc/'), 'tab.group')

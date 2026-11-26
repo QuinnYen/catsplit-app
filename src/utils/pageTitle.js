@@ -12,6 +12,7 @@ const ROUTES = [
   [/^\/fx$/, 'tab.fx'],
   [/^\/fx\/trips$/, 'fx.trips.title'],
   [/^\/fx\/settings$/, 'fx.settings.title'],
+  [/^\/fx\/settings\/rates$/, 'fx.rates.title'],
   [/^\/fx\/trips\/[^/]+$/, 'fx.trips.title'],
   [/^\/create$/, 'cg.title'],
   [/^\/settings$/, 'group.settings'],

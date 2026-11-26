@@ -48,3 +48,36 @@ export const mergeFxSettings = (stored) => {
     customRates: cleanCustomRates(s.customRates),
   }
 }
+
+// ---------- 自訂匯率的編輯（設定頁「自訂匯率」）----------
+// customRates 的鍵是 'FROM_TO'，值是 1 FROM = ? TO。同一組幣別只留一筆：新增 A→B 時會移除 B→A（反向本來就自動取倒數，兩筆並存會互相矛盾）。
+
+export const customRateKey = (from, to) => `${from}_${to}`
+
+// 列表用：[{ key, from, to, rate }]，依鍵排序
+export const listCustomRates = (custom) =>
+  Object.entries(custom ?? {})
+    .map(([key, rate]) => ({ key, from: key.slice(0, 3), to: key.slice(4), rate }))
+    .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+
+/**
+ * 新增或修改一組自訂匯率，回傳新的 customRates（不改動傳入的物件）。
+ * @returns { ok: true, customRates } | { ok: false, reason }   reason：same（兩個幣別相同）、rate（要大於 0）、limit（超過上限）
+ */
+export const setCustomRate = (custom, from, to, rawRate) => {
+  if (from === to) return { ok: false, reason: 'same' }
+  const rate = Number(String(rawRate ?? '').trim())
+  if (!Number.isFinite(rate) || !(rate > 0) || rate >= 1e9) return { ok: false, reason: 'rate' }
+  const next = { ...custom }
+  delete next[customRateKey(to, from)]
+  const key = customRateKey(from, to)
+  if (!(key in next) && Object.keys(next).length >= MAX_CUSTOM_RATES) return { ok: false, reason: 'limit' }
+  next[key] = parseFloat(rate.toPrecision(8))
+  return { ok: true, customRates: next }
+}
+
+export const removeCustomRate = (custom, key) => {
+  const next = { ...custom }
+  delete next[key]
+  return next
+}

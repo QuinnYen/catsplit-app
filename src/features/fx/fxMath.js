@@ -42,6 +42,9 @@ export const pairRate = (rates, custom, from, to) => {
   return rf > 0 && rt > 0 ? rt / rf : null
 }
 
+// 這兩種幣別之間的匯率是不是用了使用者的自訂匯率（畫面上標示「自訂」用；規則同 pairRate）
+export const isCustomPair = (custom, from, to) => from !== to && (custom?.[`${from}_${to}`] > 0 || custom?.[`${to}_${from}`] > 0)
+
 // 把 value（幣別 from）換成每一列的幣別：{ [code]: number | null }（null 是這個幣別沒有匯率）
 export const convertRows = ({ value, from, codes, rates, custom }) => {
   const out = {}

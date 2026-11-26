@@ -7,6 +7,7 @@ import FxCalculatorPage, { FxCalculatorGuest } from './FxCalculatorPage'
 import TripListPage from './TripListPage'
 import TripDetailPage from './TripDetailPage'
 import FxSettingsPage from './FxSettingsPage'
+import FxRatesPage from './FxRatesPage'
 
 const FxShell = () => {
   const { user } = useApp()
@@ -25,6 +26,7 @@ const FxShell = () => {
         <Route path="trips" element={<TripListPage />} />
         <Route path="trips/:tripId" element={<TripDetailPage />} />
         <Route path="settings" element={<FxSettingsPage />} />
+        <Route path="settings/rates" element={<FxRatesPage />} />
         <Route path="*" element={<Navigate to="/fx" replace />} />
       </Routes>
     </LedgerProvider>

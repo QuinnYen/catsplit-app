@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { defaultRows, sanitizeRows, validCode, pairRate, convertRows, computePay, roundTo, formatFixed, recordAmount, DEFAULT_FX_SETTINGS } from './fxMath.js'
+import { defaultRows, sanitizeRows, validCode, pairRate, convertRows, computePay, roundTo, formatFixed, recordAmount, isCustomPair, DEFAULT_FX_SETTINGS } from './fxMath.js'
 
 // 以 USD 為 1 的匯率表（數字是為了好算，不是真實匯率）
 const rates = { USD: 1, JPY: 160, TWD: 32, CNY: 7.2 }
@@ -90,4 +90,15 @@ test('formatFixed：固定小數位數與千分位，沒有值顯示 —', () =>
 test('recordAmount：記帳金額照實付幣別的小數位數（日圓整數、美元到分）', () => {
   assert.equal(recordAmount(11749.73, 'JPY'), 11750)
   assert.equal(recordAmount(80.456, 'USD'), 80.46)
+})
+
+test('isCustomPair：正向或反向有自訂匯率才算，同幣別與沒設定不算', () => {
+  const custom = { JPY_TWD: 0.25 }
+  assert.equal(isCustomPair(custom, 'JPY', 'TWD'), true)
+  assert.equal(isCustomPair(custom, 'TWD', 'JPY'), true)
+  assert.equal(isCustomPair(custom, 'JPY', 'USD'), false)
+  assert.equal(isCustomPair(custom, 'JPY', 'JPY'), false)
+  assert.equal(isCustomPair({}, 'JPY', 'TWD'), false)
+  assert.equal(isCustomPair(undefined, 'JPY', 'TWD'), false)
+  assert.equal(isCustomPair({ JPY_TWD: 0 }, 'JPY', 'TWD'), false) // 與 pairRate 一致：0 無效
 })

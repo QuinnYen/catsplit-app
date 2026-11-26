@@ -8,11 +8,13 @@ import FeatureTabBar from '../../components/FeatureTabBar'
 import { PINNED_CURRENCIES, getCurrency } from '../../config/currencies'
 import { pressKey, evaluateExpression, commitExpression, hasOperator } from '../ledger/expression'
 import { todayStr } from '../ledger/dates'
-import { DEFAULT_FX_SETTINGS, convertRows, computePay, pairRate, formatFixed, roundTo, recordAmount } from './fxMath'
+import { DEFAULT_FX_SETTINGS, convertRows, computePay, pairRate, isCustomPair, formatFixed, roundTo, recordAmount } from './fxMath'
 import { useFxRates } from './hooks'
 import FxKeypad from './FxKeypad'
 import TripPicker from './TripPicker'
 
+// 這個匯率用的是使用者的自訂匯率（不是網路匯率）
+const customBadge = { fontSize: 10, fontWeight: 600, color: 'var(--cs-rc-stamp)', border: '1px solid var(--cs-rc-stamp)', borderRadius: 999, padding: '1px 6px', marginRight: 6, verticalAlign: 'middle', whiteSpace: 'nowrap' }
 const iconBtn = { background: 'none', border: 'none', color: 'var(--cs-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 6, minWidth: 0 }
 const chip = (on) => ({
   border: `1px solid ${on ? 'var(--cs-rc-stamp)' : 'var(--cs-border)'}`, borderRadius: 999, padding: '9px 14px', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
@@ -132,6 +134,7 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip
                 <button onClick={() => activate(i)} aria-pressed={on} aria-label={`${code} ${on ? (expr || '0') : cell(rowValues[code])}`} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right', padding: '6px 0', color: on ? 'var(--cs-text)' : 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>
                   <span style={{ fontSize: (on ? (expr || '0') : cell(rowValues[code])).length > 11 ? 20 : 28, fontWeight: 700, wordBreak: 'break-all' }}>{on ? (expr || '0') : cell(rowValues[code])}</span>
                   {on && <span aria-hidden="true" style={{ display: 'inline-block', width: 2, height: 28, marginLeft: 3, background: 'var(--cs-rc-stamp)', verticalAlign: 'middle' }} />}
+                  {!on && isCustomPair(customRates, activeCode, code) && <span style={{ ...customBadge, marginLeft: 8 }}>{t('fx.calc.custom')}</span>}
                   <span style={{ fontSize: 14, fontWeight: 600, marginLeft: 6, color: 'var(--cs-text-sub)' }}>{sym(code)}</span>
                   {preview && <span style={{ display: 'block', fontSize: 12, color: 'var(--cs-text-sub)' }}>{preview}</span>}
                 </button>
@@ -152,6 +155,7 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, trips, currentTrip
               {cardOn && <span style={{ ...chip(false), cursor: 'default', fontSize: 13 }}>{t('fx.calc.card', { pct: pct(settings.cardFeePercent) })} +{sym(payCurrency)}{formatFixed(pay.fee, decimals)}</span>}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+              {isCustomPair(customRates, activeCode, payCurrency) && <span style={customBadge}>{t('fx.calc.custom')}</span>}
               <span style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>{t('fx.calc.pay')} {payCurrency}</span>
               <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--cs-rc-stamp)', fontVariantNumeric: 'tabular-nums' }}>{sym(payCurrency)}{formatFixed(pay.total, decimals)}</span>
             </div>

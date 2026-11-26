@@ -32,5 +32,8 @@ export const setTripArchived = (uid, ledgerId, tripId, archived) =>
 // 只寫有改的欄位（merge）；patch 的欄位與驗證見 fxSettings.js 的 parseSetting
 export const saveFxSettings = (uid, patch) => setDoc(doc(db, ...fxSettingsPath(uid)), patch, { merge: true })
 
+// 自訂匯率：整個 customRates 欄位一起寫（mergeFields 會取代整個欄位，單純 merge 會留下已刪除的鍵）
+export const saveCustomRates = (uid, customRates) => setDoc(doc(db, ...fxSettingsPath(uid)), { customRates }, { mergeFields: ['customRates'] })
+
 // 還原預設值：刪掉整份設定文件
 export const resetFxSettings = (uid) => deleteDoc(doc(db, ...fxSettingsPath(uid)))

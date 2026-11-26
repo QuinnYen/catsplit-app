@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseSetting, mergeFxSettings, MAX_CUSTOM_RATES } from './fxSettings.js'
+import { parseSetting, mergeFxSettings, MAX_CUSTOM_RATES, customRateKey, listCustomRates, setCustomRate, removeCustomRate } from './fxSettings.js'
 import { DEFAULT_FX_SETTINGS } from './fxMath.js'
 
 test('parseSetting：小數位數是 0–3 的整數', () => {
@@ -58,4 +58,48 @@ test('mergeFxSettings 不改動預設值物件', () => {
   const before = JSON.stringify(DEFAULT_FX_SETTINGS)
   mergeFxSettings({ decimals: 3, customRates: { JPY_TWD: 1 } })
   assert.equal(JSON.stringify(DEFAULT_FX_SETTINGS), before)
+})
+
+test('customRateKey、listCustomRates：依鍵排序，拆出幣別與匯率', () => {
+  assert.equal(customRateKey('JPY', 'TWD'), 'JPY_TWD')
+  assert.deepEqual(listCustomRates({ USD_TWD: 31.5, JPY_TWD: 0.21 }), [
+    { key: 'JPY_TWD', from: 'JPY', to: 'TWD', rate: 0.21 },
+    { key: 'USD_TWD', from: 'USD', to: 'TWD', rate: 31.5 },
+  ])
+  assert.deepEqual(listCustomRates({}), [])
+  assert.deepEqual(listCustomRates(undefined), [])
+})
+
+test('setCustomRate：新增與修改，輸入的物件不被改動，匯率最多 8 位有效數字', () => {
+  const before = { JPY_TWD: 0.2 }
+  const added = setCustomRate(before, 'USD', 'TWD', ' 31.5 ')
+  assert.deepEqual(added, { ok: true, customRates: { JPY_TWD: 0.2, USD_TWD: 31.5 } })
+  assert.deepEqual(before, { JPY_TWD: 0.2 })
+  assert.deepEqual(setCustomRate(before, 'JPY', 'TWD', '0.21').customRates, { JPY_TWD: 0.21 }) // 同一組是修改
+  assert.equal(setCustomRate({}, 'JPY', 'TWD', '0.123456789123').customRates.JPY_TWD, 0.12345679)
+})
+
+test('setCustomRate：新增 A→B 會移除反向的 B→A，一組幣別只留一筆', () => {
+  assert.deepEqual(setCustomRate({ TWD_JPY: 5, USD_TWD: 31 }, 'JPY', 'TWD', '0.2').customRates, { JPY_TWD: 0.2, USD_TWD: 31 })
+})
+
+test('setCustomRate：錯誤的輸入', () => {
+  assert.equal(setCustomRate({}, 'JPY', 'JPY', '1').reason, 'same')
+  for (const bad of ['', 'abc', '0', '-1', '1e9', 'Infinity', null, undefined]) assert.equal(setCustomRate({}, 'JPY', 'TWD', bad).reason, 'rate', String(bad))
+})
+
+test('setCustomRate：超過上限不能再新增，但可以修改既有的，或用反向取代', () => {
+  const full = Object.fromEntries(Array.from({ length: MAX_CUSTOM_RATES }, (_, i) => [`${String.fromCharCode(65 + (i % 26))}AA_TWD`, 1 + i]))
+  assert.equal(setCustomRate(full, 'JPY', 'KRW', '1').reason, 'limit')
+  assert.equal(setCustomRate(full, 'AAA', 'TWD', '2').ok, true) // 修改既有
+  const withReverse = { ...full, TWD_JPY: 5 }
+  delete withReverse.TAA_TWD // 騰出一個位置，再讓反向取代
+  assert.equal(setCustomRate(withReverse, 'JPY', 'TWD', '0.2').ok, true)
+})
+
+test('removeCustomRate：移除一組，輸入的物件不被改動', () => {
+  const before = { JPY_TWD: 0.2, USD_TWD: 31.5 }
+  assert.deepEqual(removeCustomRate(before, 'JPY_TWD'), { USD_TWD: 31.5 })
+  assert.deepEqual(before, { JPY_TWD: 0.2, USD_TWD: 31.5 })
+  assert.deepEqual(removeCustomRate(before, 'XXX_YYY'), before)
 })

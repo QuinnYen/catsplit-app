@@ -64,10 +64,10 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 
 ## 旅程帳目（匯率頁，進行中）
 
-匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一～五階段（資料層、`LedgerProvider` 抽出、旅程頁、計算機、設定頁）已完成，自訂匯率的畫面與垃圾桶還沒有：
+匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一～五階段（資料層、`LedgerProvider` 抽出、旅程頁、計算機、設定頁、自訂匯率）已完成，垃圾桶還沒有：
 
 - **計算機設定（`/fx/settings`）**：小數位數（0–3）、預設金額、顯示幣別符號、免稅百分比（預設 10）、刷卡手續費百分比（預設 1.5），選了或輸入完立刻儲存到雲端 `users/{uid}/settings/fx`（`useFxSettings` 即時訂閱、`saveFxSettings` 以 merge 只寫有改的欄位）；輸入不合法會提示並還原。「還原預設值」刪掉整份文件。欄位驗證與合併預設值是 `fxSettings.js` 的純函式（缺少或壞掉的欄位一律退回預設值），rules 逐欄驗證（`firestore-tests/fxSettings.rules.mjs`）。文件讀取失敗（例如 rules 還沒部署）時用預設值，不擋住計算機。訪客沒有設定頁，用預設值。
-- **自訂匯率**：資料格式與計算已支援（`customRates`，鍵 `JPY_TWD` 表示 1 JPY = ? TWD，反向自動取倒數，優先於 API 匯率，最多 20 組；rules 只檢查數量，值是否為正數由前端驗證），設定頁的編輯畫面還沒做。
+- **自訂匯率（`/fx/settings/rates`）**：設定頁的「自訂匯率 N 種」進入，列表點一筆改匯率、垃圾桶鈕刪除、「新增」開底部面板（`CustomRateSheet`：從、換成、匯率；選到和另一邊相同的幣別會自動對調）。資料是 `customRates`（鍵 `JPY_TWD` 表示 1 JPY = ? TWD，優先於 API 匯率，最多 20 組；rules 只檢查數量，值是否為正數由前端驗證）。**同一組幣別只留一筆**：新增 A→B 會移除 B→A，因為反向本來就自動取倒數，兩筆並存會互相矛盾（`setCustomRate`）。整個 `customRates` 欄位以 `mergeFields` 一起寫入，才能真的刪掉一組（單純 merge 會留下舊的鍵）。計算機上用到自訂匯率的列（輸入列與該列之間，或與實付幣別之間）會標示「自訂」（`isCustomPair`）。
 
 - **計算機（`/fx`）**：`FxCalculator`（畫面與計算）、`FxCalculatorPage`（外層：目前旅程、換算列、記帳）、`FxKeypad`（鍵盤，算式規則沿用 `ledger/expression.js`）、`TripPicker`（頁首旅程選單）、`fxMath.js`（匯率換算與實付計算，純函式）。匯率用 `useFxRates`：以 USD 為 1 的一份 open.er-api.com 表（記憶體快取 1 小時）算出任兩種幣別，抓不到的列顯示「—」並可重試；這是參考匯率，不是銀行或信用卡實際的結匯價。
 - **實付**：換算列下方的「免稅 −10%」與「刷卡 +1.5%」兩個鈕，先免稅、後刷卡：免稅 = 金額 − 金額 ÷ 1.1（價格含稅 10%，不是乘 0.9）、刷卡手續費 = 免稅後金額 × 1.5%，實付幣別用鍵盤上方的幣別鈕選。百分比目前是預設值，第五階段才可在設定頁修改。

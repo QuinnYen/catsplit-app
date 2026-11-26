@@ -1,6 +1,7 @@
 // 匯率換算頁個人設定（users/{uid}/settings/fx）的 rules 測試；需要 firestore emulator，用 npm run test:rules 執行
 import { test, before, beforeEach, after } from 'node:test'
 import { readFileSync } from 'node:fs'
+import assert from 'node:assert/strict'
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing'
 import { doc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore'
 
@@ -69,4 +70,14 @@ test('欄位驗證：小數位數、預設金額、符號、百分比、自訂�
   await assertFails(w({ customRates: rates(21) }))
   await assertFails(w({ customRates: [1, 2] }))
   await assertFails(w({ customRates: 'JPY_TWD' }))
+})
+
+test('自訂匯率整個欄位以 mergeFields 寫入：可以刪掉其中一組，也可以清空，不影響其他欄位', async () => {
+  const db = dbAs('u1')
+  await assertSucceeds(setDoc(fxDoc(db, 'u1'), { decimals: 2, customRates: { JPY_TWD: 0.2, USD_TWD: 31.5 } }))
+  await assertSucceeds(setDoc(fxDoc(db, 'u1'), { customRates: { USD_TWD: 31.5 } }, { mergeFields: ['customRates'] }))
+  const after = (await getDoc(fxDoc(db, 'u1'))).data()
+  assert.deepEqual(after, { decimals: 2, customRates: { USD_TWD: 31.5 } }) // JPY_TWD 真的被刪掉，decimals 還在
+  await assertSucceeds(setDoc(fxDoc(db, 'u1'), { customRates: {} }, { mergeFields: ['customRates'] }))
+  assert.deepEqual((await getDoc(fxDoc(db, 'u1'))).data(), { decimals: 2, customRates: {} })
 })
