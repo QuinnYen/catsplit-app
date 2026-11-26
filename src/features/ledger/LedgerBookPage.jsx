@@ -1,9 +1,10 @@
 // /ledger — 帳本主頁：header（帳本切換、月份、圖表、支出收入結餘）、月曆（有帳目的日期標點）、選取日期的明細。
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Layers, BarChart3, Settings } from 'lucide-react'
+import { Layers, BarChart3 } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import MonthPicker from '../../components/MonthPicker'
+import UserHeader from '../../components/UserHeader'
 import { useLedger } from './LedgerContext'
 import LedgerMenu from './LedgerMenu'
 import { useMonthTransactions } from './hooks'
@@ -88,23 +89,13 @@ const LedgerBookPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--cs-bg)' }}>
-      <div className="cs-header" style={{ background: 'var(--cs-rc-head)', color: 'var(--cs-rc-head-text)', padding: '14px 16px 24px', position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 6, width: 78, flexShrink: 0 }}>
-            <button onClick={() => setMenuOpen(true)} aria-label={t('ledger.switch')} aria-haspopup="dialog" style={circleBtn}><Layers size={18} /></button>
-            <button onClick={() => navigate('/ledger/stats')} aria-label={t('ledger.chart')} style={circleBtn}><BarChart3 size={18} /></button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, -1, todayStr(), monthStartDay))} aria-label={t('month.prev')} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 22, lineHeight: 1, padding: '0 10px', cursor: 'pointer' }}>‹</button>
-            <button onClick={() => setPickerOpen(true)} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 15, fontWeight: 600, padding: '4px 6px', cursor: 'pointer' }}>
-              {t('ledger.month.label', { year, month })} ▾
-            </button>
-            <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, 1, todayStr(), monthStartDay))} aria-label={t('month.next')} style={{ background: 'none', border: 'none', color: 'inherit', fontSize: 22, lineHeight: 1, padding: '0 10px', cursor: 'pointer' }}>›</button>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', width: 78, flexShrink: 0 }}>
-            <button onClick={() => navigate('/ledger/settings')} aria-label={t('ledger.tab.settings')} style={circleBtn}><Settings size={18} /></button>
-          </div>
+      <UserHeader right={(
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          <button onClick={() => setMenuOpen(true)} aria-label={t('ledger.switch')} aria-haspopup="dialog" style={circleBtn}><Layers size={18} /></button>
+          <button onClick={() => navigate('/ledger/stats')} aria-label={t('ledger.chart')} style={circleBtn}><BarChart3 size={18} /></button>
         </div>
+      )}
+      >
         <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.75, marginTop: 6 }}>{monthStartDay !== 1 && `${shortDate(periodBounds(monthKey, monthStartDay).start)}–${shortDate(periodLastDay(monthKey, monthStartDay))} · `}{ledger.name} · {t('ledger.baseCaption', { currency: base })}</div>
         {monthBudget && (
           <div data-budget-level={monthBudget.level} style={{ marginTop: 10 }}>
@@ -121,9 +112,16 @@ const LedgerBookPage = () => {
           {stat(t('kind.income'), totals.income)}
           {stat(t('ledger.stat.balance'), totals.balance)}
         </div>
-      </div>
+      </UserHeader>
 
       <div className="cs-body" style={{ padding: '8px 10px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0 8px' }}>
+          <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, -1, todayStr(), monthStartDay))} aria-label={t('month.prev')} style={{ background: 'none', border: 'none', color: 'var(--cs-text)', fontSize: 22, lineHeight: 1, padding: '0 14px', cursor: 'pointer' }}>‹</button>
+          <button onClick={() => setPickerOpen(true)} style={{ background: 'none', border: 'none', color: 'var(--cs-text)', fontSize: 16, fontWeight: 600, padding: '4px 6px', cursor: 'pointer' }}>
+            {t('ledger.month.label', { year, month })} ▾
+          </button>
+          <button onClick={() => setSelectedDate(shiftMonthDate(selectedDate, 1, todayStr(), monthStartDay))} aria-label={t('month.next')} style={{ background: 'none', border: 'none', color: 'var(--cs-text)', fontSize: 22, lineHeight: 1, padding: '0 14px', cursor: 'pointer' }}>›</button>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
           {[0, 1, 2, 3, 4, 5, 6].map((i) => <span key={i} style={{ textAlign: 'center', fontSize: 11, color: 'var(--cs-text-mute)', padding: '2px 0 4px' }}>{t(`date.weekday.${(weekStartDay + i) % 7}`)}</span>)}
         </div>

@@ -4,7 +4,7 @@
 // 不另外建彙總資料。
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, Settings } from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
 import { useI18n } from '../../i18n/I18nProvider'
 import { CATEGORY_COLORS } from '../../config/chartColors'
 import DonutChart from '../../components/DonutChart'
@@ -76,7 +76,7 @@ const LedgerStatsPage = () => {
             )}
             <button onClick={() => setSelectedDate(yearly ? shiftYearDate(selectedDate, 1, todayStr(), monthStartDay, yearStartMonth) : shiftMonthDate(selectedDate, 1, todayStr(), monthStartDay))} aria-label={t(yearly ? 'month.nextYear' : 'month.next')} style={navBtn}>›</button>
           </div>
-          <button onClick={() => navigate('/ledger/settings')} aria-label={t('ledger.tab.settings')} style={{ ...navBtn, width: 32, padding: 0, display: 'grid', placeItems: 'center' }}><Settings size={18} /></button>
+          <span style={{ width: 32 }} />
         </div>
         <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.75, marginTop: 6 }}>{yearly
           ? (monthStartDay !== 1 || yearStartMonth !== 1) && `${yearBounds(yearKey, monthStartDay, yearStartMonth).start.replace(/-/g, '/')}–${yearLastDay(yearKey, monthStartDay, yearStartMonth).replace(/-/g, '/')} · `

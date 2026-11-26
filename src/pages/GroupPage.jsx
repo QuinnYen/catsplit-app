@@ -513,15 +513,6 @@ const GroupPage = () => {
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</span>
           </div>
 
-          {/* 直接導向（同首頁的 <a href>）；liff.openWindow 在三星雙開 LINE 的副本會被導回主 LINE */}
-          <button
-            onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
-            aria-label={t('group.menu.official')}
-            style={{ background: 'var(--cs-on-brand)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-          >
-            <LineIcon size={22} />
-          </button>
-
           <button
             onClick={e => {
               const r = e.currentTarget.getBoundingClientRect()

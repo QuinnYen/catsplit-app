@@ -9,7 +9,7 @@ src/
 ├── theme/                   # 暗黑模式：ThemeProvider、useTheme、主題判斷（theme.js）
 ├── hooks/                   # 匯率（useExchangeRate）、Storage 圖片（以登入身分下載）、我的群組（useMyGroups）
 ├── utils/                   # 登入工作階段判斷（authSession.js）、綁定與合併的 API 呼叫（identityApi.js）與確認頁顯示邏輯（mergeUi.js）、分帳計算、結算建議（settleSuggestions.js）、轉帳金額換算（transferAmounts.js）、頁面標題對照（pageTitle.js）、群組彙總重算、預算狀態（budget.js）、刪除我的資料、Storage 清理、封面裁切
-├── components/              # Avatar、GroupTabBar（群組內頁導覽：首頁／帳目／新增／結算／頭像）、SplitTabBar（分帳列表：首頁／收款／建立群組／付款／設定）、UserHeader（一級頁面頂部的使用者列：頭像、招呼語、姓名，點頭像展開帳號選單；選單要放在 `.cs-header` 外面，否則被鋸齒 mask 裁掉）、AvatarMenu（過渡中：群組與記帳底部列的頭像，之後會移除）、TabBar（建立群組與設定頁，只有首頁）、FeatureTabBar（目標、匯率：首頁／動作鈕）、ExpenseForm、CurrencySelect（選貨幣）、GuestJoin（訪客入口）、GoogleSignInButton（Google 登入按鈕）、LoginMethodsCard（設定頁登入方式）、BankPicker、PaymentMethodModal…
+├── components/              # Avatar、GroupTabBar（群組內頁導覽：首頁／帳目／新增／結算／官方帳號）、SplitTabBar（分帳列表：首頁／收款／建立群組／付款／設定）、UserHeader（一級頁面頂部的使用者列：頭像、招呼語、姓名，點頭像展開帳號選單；選單要放在 `.cs-header` 外面，否則被鋸齒 mask 裁掉）、TabBar（建立群組與設定頁，只有首頁）、FeatureTabBar（目標、匯率：首頁／動作鈕）、ExpenseForm、CurrencySelect（選貨幣）、GuestJoin（訪客入口）、GoogleSignInButton（Google 登入按鈕）、LoginMethodsCard（設定頁登入方式）、BankPicker、PaymentMethodModal…
 └── pages/                   # Home、Group、AddExpense、Settle、Transfer、EditGroup、PaymentMethods、NicknameSetup（Google 帳號首次設定暱稱）、Merge（帳號合併確認）、Link（外部瀏覽器兌換連結碼登入）…
 functions/index.js           # lineLogin、verifyLiffToken、authExchange、listIdentities、bindIdentity、executeMerge、unbindIdentity、createLinkCode、redeemLinkCode、guestLogin、claimMember、detachMember、exportCsv、sharePage
 functions/identity.js        # 身分對照純函式（identities 的 key、內部 uid、LINE／Google 查表決策、Google 登入換發流程），測試在 identity.test.js
@@ -36,7 +36,7 @@ scripts/storage/            # bucket CORS 與生命週期設定（需手動套�
 
 ## 導覽與預設開啟頁面
 
-- 入口頁 `/home`（`PortalPage`）有四個功能大按鈕：記帳 `/ledger`、分帳 `/`、目標 `/savings`、匯率 `/fx`，沒有底部列。各功能有自己的底部列，「首頁」一律回 `/home`。入口、分帳列表、目標、匯率頂部是 `UserHeader`（頭像 38px＋招呼語＋姓名，點頭像開帳號選單：設定、官方帳號、登出）。
+- 入口頁 `/home`（`PortalPage`）有四個功能大按鈕：記帳 `/ledger`、分帳 `/`、目標 `/savings`、匯率 `/fx`，沒有底部列。各功能有自己的底部列，「首頁」一律回 `/home`。入口、分帳列表、目標、匯率頂部是 `UserHeader`（頭像 38px＋招呼語＋姓名，點頭像開帳號選單：設定、官方帳號、登出）；記帳主頁也用它，右邊放帳本切換與圖表兩顆圓鈕。群組內頁、帳戶、圖表、設定頁維持自己的標題列（沒有帳號選單，要回首頁）。
 - 設定頁「預設開啟頁面」（首頁／記帳／分帳／目標／匯率，預設記帳）存在這台裝置的 localStorage（`cs-start-page`，`src/utils/startPage.js`）。
 - 導向規則：`main.jsx` 在 React 與登入啟動**之前**呼叫 `launchRedirect`（`src/utils/startPage.js`），這個分頁／webview 第一次載入且網址是 `/` 時，用 `history.replaceState` 先把網址換成偏好頁，所以第一個畫面就是目標頁，不會先閃出分帳列表。用 sessionStorage（`cs-launched`）記下，同分頁重新整理或之後點回 `/` 不會再導向；從群組連結等其他網址進來不導向（但一樣記下已開過），網址帶 `liff.` 參數時略過。那時還不知道是不是訪客，訪客到 `/ledger`、`/savings` 會被路由規則導回 `/`。**不要把這個導向放回 React 元件**：用 `<Navigate>` 會在每次換頁時重新觸發，把人拉回預設頁（曾發生過）。
 
@@ -53,7 +53,7 @@ scripts/storage/            # bucket CORS 與生命週期設定（需手動套�
 
 - 頁面頂部與主體分別加 `cs-header`、`cs-body`、`cs-tabbar` class；規則用 `!important` 蓋過 inline style。
 - header 與背景撐滿視窗；內容（`cs-body`）最寬 720 置中、單欄；TabBar 白底撐滿，按鈕群組置中 480。
-- 數字要同步的地方：720（`.cs-header`、`.cs-body`、`AvatarMenu` 頭像選單的 `right`）、480（`.cs-tabbar`、`CalculatorModal`、`InviteModal`、`GroupPage` 詳情面板）。
+- 數字要同步的地方：720（`.cs-header`、`.cs-body`；`UserHeader` 的帳號選單取頭像按鈕的實際座標，不寫死）、480（`.cs-tabbar`、`CalculatorModal`、`InviteModal`、`GroupPage` 詳情面板）。
 - 不要在 `#root` 或 `.cs-body` 加 `overflow`、`transform`、`contain`、`filter`，會破壞 `fixed` 的底部導覽列與浮層。
 - 新頁面照既有頁面加上 `cs-header`／`cs-body` 即可。
 

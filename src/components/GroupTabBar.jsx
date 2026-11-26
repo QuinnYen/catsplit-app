@@ -1,9 +1,10 @@
-// 群組內頁共用底部導覽列：首頁／帳目／新增（中間凸起）／結算／頭像（帳號選單）。樣式比照個人記帳的 LedgerTabBar。
+// 群組內頁共用底部導覽列：首頁／帳目／新增（中間凸起）／結算／官方帳號（LINE 官方帳號連結）。樣式比照個人記帳的 LedgerTabBar。
 // active：目前頁對應的格子（'book' | 'add' | 'settle'），編輯頁等不屬於任何一格時傳 null。
 import { useNavigate } from 'react-router-dom'
 import { House, BookOpen, Plus, Scale } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
-import AvatarMenuTab from './AvatarMenu'
+import { OFFICIAL_ACCOUNT_URL } from '../config/liff'
+import LineIcon from './LineIcon'
 
 const GroupTabBar = ({ groupId, active = null }) => {
   const navigate = useNavigate()
@@ -57,7 +58,15 @@ const GroupTabBar = ({ groupId, active = null }) => {
           </button>
         )
       })}
-      <AvatarMenuTab />
+      {/* 直接導向（同首頁的 <a href>）；liff.openWindow 在三星雙開 LINE 的副本會被導回主 LINE */}
+      <button
+        onClick={() => { window.location.href = OFFICIAL_ACCOUNT_URL }}
+        aria-label={t('group.menu.official')}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '2px 0', WebkitTapHighlightColor: 'transparent' }}
+      >
+        <LineIcon size={22} />
+        <span style={{ fontSize: 11, lineHeight: '14px', fontWeight: 500, color: 'var(--cs-text-sub)' }}>{t('group.menu.official')}</span>
+      </button>
     </nav>
   )
 }

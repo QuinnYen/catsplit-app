@@ -5,7 +5,7 @@
 
 目標：首頁整合個人記帳、旅遊分帳、儲蓄目標、匯率計算四大功能，且不依賴 LINE 登入。**尚無獨立 spec，P14、P12 已完成，等匯率頁完成後再 brainstorm。**架構決策已定（同一專案、`src/features/*` 功能模組分界、不拆微服務），見 `docs/superpowers/archive/2026-11-14-p14-identity-design.md` 開頭。
 
-**第一階段（2026-11-24 完成）**：全站底部主導覽列 `MainTabBar`（記帳／分帳／目標／匯率，首頁即分帳）、`/fx` 佔位頁（`ComingSoonPage`；`/ledger` 已由 P12 取代）、儲蓄入口移出頭像選單、移除 HomePage 內未使用的未登入區塊。訪客可見全部 Tab，記帳與目標灰色並提示。群組內頁後來改用 `GroupTabBar`（首頁／帳目／新增／結算／統計，樣式比照個人記帳的導覽列）；`TabBar` 只剩建立群組與設定頁的「首頁」一格。**後續（2026-11-25）**：`MainTabBar` 已退役，改為入口頁 `/home`（`PortalPage`，四個功能大按鈕）加各功能自己的底部列（分帳 `SplitTabBar`、群組 `GroupTabBar`、記帳 `LedgerTabBar`、目標與匯率 `FeatureTabBar`），帳號選單統一在底部列最右的頭像（`AvatarMenu`）。
+**第一階段（2026-11-24 完成）**：全站底部主導覽列 `MainTabBar`（記帳／分帳／目標／匯率，首頁即分帳）、`/fx` 佔位頁（`ComingSoonPage`；`/ledger` 已由 P12 取代）、儲蓄入口移出頭像選單、移除 HomePage 內未使用的未登入區塊。訪客可見全部 Tab，記帳與目標灰色並提示。群組內頁後來改用 `GroupTabBar`（首頁／帳目／新增／結算／統計，樣式比照個人記帳的導覽列）；`TabBar` 只剩建立群組與設定頁的「首頁」一格。**後續（2026-11-25）**：`MainTabBar` 已退役，改為入口頁 `/home`（`PortalPage`，四個功能大按鈕）加各功能自己的底部列（分帳 `SplitTabBar`、群組 `GroupTabBar`、記帳 `LedgerTabBar`、目標與匯率 `FeatureTabBar`），帳號選單在一級頁面頂部的使用者列（`UserHeader`，頭像點開）。
 
 - [ ] 首頁改為四功能入口與摘要卡片（各功能模組提供摘要，首頁只負責整合）。
 - [ ] 現有頁面依功能搬進 `src/features/*`，路由維持 lazy load。
