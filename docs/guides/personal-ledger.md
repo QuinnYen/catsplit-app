@@ -28,7 +28,8 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 | 路徑 | 內容 |
 |---|---|
 | `src/features/ledger/` | 全部個人帳本的程式 |
-| `LedgerShell.jsx` | `/ledger/*` 的殼層：載入帳本與帳戶、導覽列、記帳面板、提示 |
+| `LedgerProvider.jsx` | 資料提供者：載入帳本、帳戶、類別、旅程，提供 `LedgerContext`，放記帳面板與提示。`/ledger/*` 與匯率頁共用；`lite` 模式（匯率頁用）不訂閱群組連結與固定收支，也不跑群組同步與固定收支補入 |
+| `LedgerShell.jsx` | `/ledger/*` 的殼層：路由與底部導覽列（資料與記帳面板由 `LedgerProvider` 提供） |
 | `LedgerBookPage.jsx`、`LedgerMenu.jsx`、`useHolidays.js` | 帳本主頁（月曆與當日明細、月預算進度、假日）、帳本切換、新增、改名與刪除 |
 | `LedgerEntrySheet.jsx`、`NumberPad.jsx` | 記帳面板與常駐數字鍵盤 |
 | `LedgerAccountsPage.jsx`、`AccountSheet.jsx`、`netWorth.js` | 帳戶頁（淨資產、清單、封存區）、新增與編輯帳戶、淨資產計算（純函式） |
@@ -63,7 +64,7 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 
 ## 旅程帳目（匯率頁，進行中）
 
-匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一階段（資料層）已完成，畫面還沒有：
+匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一、二階段（資料層、`LedgerProvider` 抽出）已完成，畫面還沒有：
 
 - 帳目可帶選填欄位 `tripId`，指向 `trips/{tripId}`（`name`、`currency`、`countInStats`、`deletedAt`、`rows`、`payCurrency`…）。沒有這個欄位就是一般帳目，既有資料不用遷移。
 - **旅程帳目預設不出現在月曆與個人統計**：`hooks.js` 的 `useMonthTransactions`、`useYearTransactions`、`useMonthsOnce` 在回傳前用 `summary.js` 的 `isPersonalTx(tx, hiddenTrips)` 過濾。要隱藏的旅程（`hiddenTripIds`）＝沒開 `countInStats` 或有 `deletedAt`；找不到旅程的 `tripId` 視為一般帳目。旅程載入前三個 hook 回傳 `null`（載入中）。`LedgerShell` 訂閱 `trips` 並把 `hiddenTrips` 放進 Context。

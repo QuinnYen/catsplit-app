@@ -1,75 +1,19 @@
-// /ledger/* 的殼層：載入帳本與帳戶、提供共用資料、放底部導覽列與記帳面板。
-// 沒有任何帳本時先建立預設帳本（見 hooks.js 的 useEnsureDefaultLedger）。
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+// /ledger/* 的殼層：路由與底部導覽列。載入帳本與帳戶、記帳面板、提示由 LedgerProvider 提供（匯率頁也用它）。
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useApp } from '../../context/AppContext'
-import { useI18n } from '../../i18n/I18nProvider'
-import { LedgerContext } from './LedgerContext'
-import { useLedgers, useAccounts, useGroupLinks, useCategoryDocs, useRecurringRules, useTrips, useEnsureDefaultLedger, useActiveLedger } from './hooks'
-import { hiddenTripIds } from './summary'
-import { resolveCategories, categoryKeys, categoryName } from './categories'
-import { useLedgerSync } from './useLedgerSync'
-import { useRecurringRun } from './useRecurringRun'
-import { todayStr } from './dates'
+import { useLedger } from './LedgerContext'
+import LedgerProvider from './LedgerProvider'
 import LedgerTabBar from './LedgerTabBar'
 import LedgerBookPage from './LedgerBookPage'
 import LedgerSettingsPage from './LedgerSettingsPage'
 import LedgerSettingsSubPage from './LedgerSettingsSubPage'
 import LedgerAccountsPage from './LedgerAccountsPage'
 import LedgerStatsPage from './LedgerStatsPage'
-import LedgerEntrySheet from './LedgerEntrySheet'
-import SnapshotTxSheet from './SnapshotTxSheet'
-import { isSnapshotTx } from './source'
 
-const LedgerShell = () => {
-  const { user } = useApp()
-  const { t } = useI18n()
-  const uid = user.uid
-  const ledgers = useLedgers(uid)
-  const labels = useMemo(() => ({ name: t('ledger.default.name'), baseCurrency: 'TWD', cashName: t('ledger.default.cash') }), [t])
-  useEnsureDefaultLedger(uid, ledgers, labels)
-  const [ledger, setActiveLedger] = useActiveLedger(uid, ledgers)
-  const accounts = useAccounts(uid, ledger?.id)
-  const links = useGroupLinks(uid, ledger?.id)
-  const categoryDocs = useCategoryDocs(uid, ledger?.id)
-  const recurringRules = useRecurringRules(uid, ledger?.id)
-  const trips = useTrips(uid, ledger?.id)
-  // 不屬於個人記帳的旅程 id；旅程載入前是 null（月曆與統計顯示載入中）
-  const hiddenTrips = useMemo(() => (trips ? hiddenTripIds(trips) : null), [trips])
-  const categories = useMemo(() => resolveCategories(categoryDocs ?? []), [categoryDocs])
-  const catName = useCallback((kind, key) => categoryName(categories, kind, key, t), [categories, t])
-  const [selectedDate, setSelectedDate] = useState(() => todayStr())
-  const [entry, setEntry] = useState(null) // null | { tx?: 編輯中的帳目 }
-  const [toast, setToast] = useState('')
-  const toastTimer = useRef(null)
-
-  const showToast = useCallback((message) => {
-    setToast(message)
-    clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(''), 2200)
-  }, [])
-  useEffect(() => () => clearTimeout(toastTimer.current), [])
-
-  const onUnreadable = useCallback((list) => showToast(t('ledger.sync.unreadable', { name: list.map((l) => l.groupName).join(', ') })), [showToast, t])
-  const sync = useLedgerSync({ uid, ledger, links, accounts, categories: categoryKeys(categories), onUnreadable })
-
-  const onRecurringDone = useCallback(({ added, capped }) => {
-    if (added > 0) showToast(t(capped ? 'ledger.recurring.addedMore' : 'ledger.recurring.added', { n: added }))
-  }, [showToast, t])
-  const { runNow: runRecurringNow } = useRecurringRun({ uid, ledger, rules: recurringRules, accounts, onDone: onRecurringDone })
-
-  const openEntry = useCallback((tx) => setEntry({ tx }), [])
-  const ctx = useMemo(
-    () => ({ uid, ledger, ledgers, accounts, links: links ?? [], sync, categories, categoryDocs: categoryDocs ?? [], catName, recurringRules: recurringRules ?? [], trips: trips ?? [], hiddenTrips, runRecurringNow, setActiveLedger, selectedDate, setSelectedDate, openEntry, showToast }),
-    [uid, ledger, ledgers, accounts, links, sync, categories, categoryDocs, catName, recurringRules, trips, hiddenTrips, runRecurringNow, setActiveLedger, selectedDate, openEntry, showToast],
-  )
-
-  if (!ledger || !accounts) {
-    return <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'grid', placeItems: 'center', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>
-  }
-
+// 要在 Provider 底下才拿得到 openEntry（底部「記帳」鈕）
+const LedgerRoutes = () => {
+  const { openEntry } = useLedger()
   return (
-    <LedgerContext.Provider value={ctx}>
+    <>
       <Routes>
         <Route index element={<LedgerBookPage />} />
         <Route path="accounts" element={<LedgerAccountsPage />} />
@@ -79,16 +23,14 @@ const LedgerShell = () => {
         <Route path="*" element={<Navigate to="/ledger" replace />} />
       </Routes>
       <LedgerTabBar onAdd={() => openEntry(undefined)} />
-      {entry && (isSnapshotTx(entry.tx)
-        ? <SnapshotTxSheet key={`${ledger.id}/${entry.tx.id}`} tx={entry.tx} onClose={() => setEntry(null)} />
-        : <LedgerEntrySheet key={`${ledger.id}/${entry.tx?.id ?? 'new'}`} editing={entry.tx} onClose={() => setEntry(null)} />)}
-      {toast && (
-        <div role="status" style={{ position: 'fixed', left: 16, right: 16, top: 'calc(env(safe-area-inset-top, 0px) + 72px)', zIndex: 300, margin: '0 auto', maxWidth: 360, background: 'var(--cs-text)', color: 'var(--cs-bg)', borderRadius: 6, padding: '10px 14px', fontSize: 13, lineHeight: 1.5, textAlign: 'center' }}>
-          {toast}
-        </div>
-      )}
-    </LedgerContext.Provider>
+    </>
   )
 }
+
+const LedgerShell = () => (
+  <LedgerProvider>
+    <LedgerRoutes />
+  </LedgerProvider>
+)
 
 export default LedgerShell
