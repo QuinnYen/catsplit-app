@@ -22,7 +22,7 @@ const fieldLabel = { fontSize: 11.5, color: 'var(--cs-text-sub)', flexShrink: 0 
 const selectStyle = { flex: 1, minWidth: 0, border: 'none', background: 'transparent', color: 'var(--cs-text)', fontSize: 14, padding: '10px 0', outline: 'none' }
 const smallInput = { border: '0.5px solid var(--cs-border)', background: 'var(--cs-bg)', color: 'var(--cs-text)', borderRadius: 6, padding: '6px 8px', fontSize: 14, outline: 'none', textAlign: 'right' }
 
-// preset（新增時預填，匯率頁用）：{ tripId?, currency?, date?, sourceType?, expr? }
+// preset（新增時預填，匯率頁用）：{ tripId?, currency?, date?, sourceType?, expr?, baseRate?（1 currency = ? 統計幣別）, onSaved?（儲存成功後呼叫）}
 const initialDraft = ({ editing, preset, uid, ledgerId, selectable, selectedDate, expenseKeys }) => {
   if (editing) return { ...draftFromTransaction(editing), currencyTouched: true }
   const last = readLastUsed(localStorage, uid, ledgerId)
@@ -102,7 +102,9 @@ const LedgerEntrySheet = ({ editing, preset, onClose }) => {
   const op = hasOperator(d.expr)
 
   // 匯率：統計幣別、扣款帳戶幣別（跨幣別帳目）、轉入帳戶幣別（跨幣別轉帳）。編輯舊帳時先沿用當時存的匯率
-  const savedBase = editing && !transfer && editing.currency === currency ? { currency, rate: editing.exchangeRate } : undefined
+  // 匯率頁帶進來的匯率（preset.baseRate）：幣別沒改就沿用，和計算機上看到的一致；改了幣別就重抓
+  const presetBase = !editing && preset?.baseRate && preset.currency === currency ? { currency, rate: preset.baseRate } : undefined
+  const savedBase = editing && !transfer && editing.currency === currency ? { currency, rate: editing.exchangeRate } : presetBase
   const savedAccount = editing?.accountRate && editing.currency === currency ? { currency, rate: editing.accountRate } : undefined
   const baseRate = useExchangeRate(currency, transfer ? currency : base, savedBase)
   // 帳戶幣別等於統計幣別時，扣款匯率就是統計匯率（同一組幣別），不另外抓、也不用輸入第二次
@@ -161,6 +163,7 @@ const LedgerEntrySheet = ({ editing, preset, onClose }) => {
     setError('')
     try {
       await saveTransaction(uid, ledger.id, { id: editing?.id, data: built.data, oldTx: editing ?? undefined })
+      if (!editing) preset?.onSaved?.() // 匯率頁：記完清空計算機
       if (!transfer) writeLastUsed(localStorage, uid, ledger.id, { accountId: d.accountId, [d.kind === 'income' ? 'incomeCategory' : 'expenseCategory']: d.category })
       else writeLastUsed(localStorage, uid, ledger.id, { accountId: d.accountId })
       setSelectedDate(d.date)

@@ -1,4 +1,4 @@
-// /fx — 旅程列表（匯率頁的第一版首頁；第四階段計算機完成後，計算機會成為首頁，列表改由頁首的旅程切換進入）。
+// /fx/trips — 旅程列表（進行中與已封存）。從計算機頁首的旅程選單「管理旅程」進來。
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plane } from 'lucide-react'
@@ -39,7 +39,10 @@ const TripListPage = () => {
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', paddingBottom: 'calc(var(--tabbar-h) + 24px)' }}>
       <UserHeader />
       <div className="cs-body" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-text)' }}>{t('fx.trips.title')}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => navigate('/fx')} aria-label={t('tab.fx')} style={{ background: 'none', border: 'none', color: 'var(--cs-text)', fontSize: 26, lineHeight: 1, padding: 0, cursor: 'pointer' }}>‹</button>
+          <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-text)' }}>{t('fx.trips.title')}</div>
+        </div>
         {!tripsReady && <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--cs-text-sub)' }}>{t('common.loading')}</div>}
         {tripsReady && active.length === 0 && archived.length === 0 && (
           <div style={{ textAlign: 'center', padding: '32px 8px', color: 'var(--cs-text-sub)', fontSize: 14, lineHeight: 1.7 }}>{t('fx.trips.empty')}</div>

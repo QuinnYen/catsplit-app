@@ -27,7 +27,7 @@ const TripDetailPage = () => {
   const groups = useMemo(() => (txs ? groupByDate(txs) : []), [txs])
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
 
-  const back = <button onClick={() => navigate('/fx')} aria-label={t('fx.trip.back')} style={{ ...iconBtn, fontSize: 26, lineHeight: 1, padding: 0 }}>‹</button>
+  const back = <button onClick={() => navigate('/fx/trips')} aria-label={t('fx.trip.back')} style={{ ...iconBtn, fontSize: 26, lineHeight: 1, padding: 0 }}>‹</button>
 
   if (!tripsReady || !trip) {
     return (

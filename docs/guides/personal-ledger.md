@@ -64,7 +64,12 @@ users/{uid}/ledgers/{ledgerId}/recurring/{id}        固定收支與固定轉帳
 
 ## 旅程帳目（匯率頁，進行中）
 
-匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一～三階段（資料層、`LedgerProvider` 抽出、旅程頁）已完成，計算機與設定頁還沒有：
+匯率頁（`/fx`）的設計見 [`2026-11-26-fx-page-design.md`](../superpowers/specs/2026-11-26-fx-page-design.md)。第一～四階段（資料層、`LedgerProvider` 抽出、旅程頁、計算機）已完成，設定頁與垃圾桶還沒有：
+
+- **計算機（`/fx`）**：`FxCalculator`（畫面與計算）、`FxCalculatorPage`（外層：目前旅程、換算列、記帳）、`FxKeypad`（鍵盤，算式規則沿用 `ledger/expression.js`）、`TripPicker`（頁首旅程選單）、`fxMath.js`（匯率換算與實付計算，純函式）。匯率用 `useFxRates`：以 USD 為 1 的一份 open.er-api.com 表（記憶體快取 1 小時）算出任兩種幣別，抓不到的列顯示「—」並可重試；這是參考匯率，不是銀行或信用卡實際的結匯價。
+- **實付**：換算列下方的「免稅 −10%」與「刷卡 +1.5%」兩個鈕，先免稅、後刷卡：免稅 = 金額 − 金額 ÷ 1.1（價格含稅 10%，不是乘 0.9）、刷卡手續費 = 免稅後金額 × 1.5%，實付幣別用鍵盤上方的幣別鈕選。百分比目前是預設值，第五階段才可在設定頁修改。
+- **記帳（收據鍵）**：實付金額（含免稅與手續費）、實付幣別、計算機上的匯率（`preset.baseRate`）、來源 `fx` 預填到同一個記帳面板；儲存後計算機清空（`preset.onSaved`），保留旅程與換算列。沒選旅程時收據鍵灰色，按了會提示並開旅程選單；訪客只有純換算。
+- **存放位置**：目前選的旅程存本機（`fxLocalPrefs.js`）；換算列與實付幣別有旅程時存在旅程文件上（`rows`、`payCurrency`），沒有旅程或訪客時存本機。
 
 - **旅程頁在 `src/features/fx/`**：`/fx` 目前是旅程列表（`TripListPage`，進行中與已封存）、`/fx/trips/:tripId` 是旅程明細（`TripDetailPage`：總花費卡、依日期分組、每日小計）。`FxShell` 用 `LedgerProvider lite` 包住路由，訪客只看到提示。新增與編輯旅程用 `TripSheet`（名稱、旅遊幣別、出發與回程日、是否計入個人統計、封存）；寫入在 `fx/data.js`，驗證與列表整理在 `fx/trips.js`，總花費與分組在 `fx/tripSummary.js`（皆為純函式，有測試）。
 - **旅程記帳**：明細頁底部「記帳」呼叫 `openEntry(undefined, { tripId, currency, date })`，同一個記帳面板預填旅程與旅遊幣別，面板上方標示「旅程：名稱」；點帳目列用同一個面板編輯。垃圾桶（刪除旅程）要到第六階段才有，現在只能封存。

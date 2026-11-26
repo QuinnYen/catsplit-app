@@ -144,6 +144,9 @@ return useMemo(() => state.list?.filter((tx) => isPersonalTx(tx, hiddenTrips)) ?
 | `FxCalculatorPage.jsx` | 計算機主頁（截圖 1）：頁首旅程名稱（點開切換旅程）、多列換算、常用修飾 chips、鍵盤、收據鍵 |
 | `fxMath.js` | 純函式：多列換算、實付計算（免稅、刷卡）、小數位數取整（有單元測試） |
 | `fxSettings.js`、`useFxSettings.js` | 讀寫 `users/{uid}/settings/fx`（小數位數、預設金額、顯示符號、免稅與刷卡百分比、自訂匯率）；預設值與驗證為純函式（有單元測試）。換算列與實付幣別存在旅程文件上（`rows`、`payCurrency`） |
+| `FxCalculator.jsx` | 計算機本體（畫面與計算，不碰 Firestore）；`FxCalculatorPage.jsx` 是外層（目前旅程、換算列存取、記帳），並含訪客用的 `FxCalculatorGuest` |
+| `TripPicker.jsx` | 頁首的旅程選單（選旅程、不選旅程、新增、管理） |
+| `fxLocalPrefs.js` | 只存本機：每個帳本目前選的旅程；沒選旅程或訪客時的換算列與實付幣別 |
 | `FxKeypad.jsx` | 計算機鍵盤（截圖版面：收據鍵、C、⌫、÷ × − +、數字、00、小數點、＝）；算式規則沿用 `expression.js` |
 | `TripTrashPage.jsx` | 垃圾桶頁：還原與永久刪除，顯示剩餘天數（3.6，第六階段） |
 | `useTrashPurge.js` | 開啟匯率頁時自動永久刪除滿 30 天的旅程（3.6，第六階段） |

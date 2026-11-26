@@ -12,7 +12,7 @@
 |---|---|---|---|
 | P14 | 獨立帳號：多種登入方式與帳號綁定 | [設計](../archive/2026-11-14-p14-identity-design.md)、[計畫](../archive/2026-11-23-p14-identity-plan.md) | 已完成並上線（2026-11-23） |
 | P12 | 個人記帳（多帳本、帳戶、群組快照同步） | [設計](../archive/2026-11-14-p12-personal-ledger-design.md)、[計畫](../archive/2026-11-24-p12-ledger-plan.md)、現行說明 [個人記帳](../../guides/personal-ledger.md) | 已完成並上線（2026-11-25）：含設定頁四個分頁（基本、進階、分帳、資料）、固定收支、預算、年度檢視、CSV 與備份；待做項目見 guide 最後的「尚未做」 |
-| — | 匯率頁與旅程記帳 | [設計草稿](2026-11-26-fx-page-design.md)（已確認）；其他小功能仍在 `2026-11-14-fx-page-and-misc-backlog.md` | [~] 設計已確認；第一～三階段（資料層、`LedgerProvider` 抽出、旅程頁）已完成（2026-11-26） |
+| — | 匯率頁與旅程記帳 | [設計草稿](2026-11-26-fx-page-design.md)（已確認）；其他小功能仍在 `2026-11-14-fx-page-and-misc-backlog.md` | [~] 設計已確認；第一～四階段（資料層、`LedgerProvider` 抽出、旅程頁、計算機）已完成（2026-11-26） |
 | P18 | 首頁大改版：四大功能整合 | `2026-11-14-p18-home-redesign-backlog.md` | 第一階段已完成（2026-11-24）：主導覽列與 `/fx` 佔位頁；摘要卡片、`src/features/*` 搬移待匯率頁（P12 已完成） |
 
 ## 其他 Backlog

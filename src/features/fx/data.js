@@ -19,5 +19,9 @@ export const updateTrip = (uid, ledgerId, tripId, data) => {
   return updateDoc(doc(db, ...tripsPath(uid, ledgerId), tripId), patch)
 }
 
+// 計算機的換算列與實付幣別（存在旅程文件上，換裝置不用重設）；patch：{ rows?, payCurrency? }
+export const setTripCalc = (uid, ledgerId, tripId, patch) =>
+  updateDoc(doc(db, ...tripsPath(uid, ledgerId), tripId), patch)
+
 export const setTripArchived = (uid, ledgerId, tripId, archived) =>
   updateDoc(doc(db, ...tripsPath(uid, ledgerId), tripId), { archived })
