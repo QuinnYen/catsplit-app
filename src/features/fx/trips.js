@@ -1,24 +1,36 @@
-// 旅程（匯率頁）的輸入驗證與列表整理，純函式。設計見 docs/superpowers/specs/2026-11-26-fx-page-design.md
-import { isValidDate } from '../ledger/entryDraft.js'
-import { shortDate } from '../ledger/dates.js'
-
+// 旅程（匯率頁）的輸入驗證與列表整理，純函式。設計見 docs/superpowers/archive/2026-11-26-fx-page-design.md
 export const TRIP_NAME_MAX = 20
+
+const validCode = (code) => typeof code === 'string' && code.length === 3
+
+// 預算（選填）：大於 0、小於 10 億的數字，最多兩位小數；空字串代表不設預算
+const parseBudget = (raw) => {
+  const text = String(raw ?? '').trim()
+  if (text === '') return { ok: true, value: null }
+  const n = Number(text.replace(/,/g, ''))
+  if (!Number.isFinite(n) || !(n > 0) || n >= 1e9) return { ok: false }
+  return { ok: true, value: Math.round(n * 100) / 100 }
+}
 
 /**
  * 新增或編輯旅程的輸入 → 要寫入的欄位（不含 createdAt）。
- * @returns { ok: true, data } | { ok: false, reason }   reason：name、currency、date、dateOrder
- * 沒填的日期不放進 data（編輯時由資料層移除舊值）。
+ * currency 是旅行地貨幣、homeCurrency 是母國貨幣（兩者不能相同，預算與總花費都以母國貨幣顯示）、budget 選填（母國貨幣）。
+ * @returns { ok: true, data } | { ok: false, reason }   reason：name、currency、homeCurrency、sameCurrency、budget
+ * 沒填預算就不放進 data（編輯時由資料層移除舊值）。
  */
-export const buildTripData = ({ name, currency, startDate, endDate, countInStats }) => {
+export const buildTripData = ({ name, currency, homeCurrency, budget, countInStats }) => {
   const trimmed = String(name ?? '').trim().slice(0, TRIP_NAME_MAX)
   if (!trimmed) return { ok: false, reason: 'name' }
-  if (typeof currency !== 'string' || currency.length !== 3) return { ok: false, reason: 'currency' }
-  const start = startDate || ''
-  const end = endDate || ''
-  if ((start && !isValidDate(start)) || (end && !isValidDate(end))) return { ok: false, reason: 'date' }
-  if (start && end && end < start) return { ok: false, reason: 'dateOrder' }
-  return { ok: true, data: { name: trimmed, currency, countInStats: !!countInStats, ...(start && { startDate: start }), ...(end && { endDate: end }) } }
+  if (!validCode(currency)) return { ok: false, reason: 'currency' }
+  if (!validCode(homeCurrency)) return { ok: false, reason: 'homeCurrency' }
+  if (currency === homeCurrency) return { ok: false, reason: 'sameCurrency' }
+  const b = parseBudget(budget)
+  if (!b.ok) return { ok: false, reason: 'budget' }
+  return { ok: true, data: { name: trimmed, currency, homeCurrency, countInStats: !!countInStats, ...(b.value != null && { budget: b.value }) } }
 }
+
+// 旅程的母國貨幣：沒存（舊旅程）就是帳本的統計幣別
+export const tripHome = (trip, base) => (validCode(trip?.homeCurrency) ? trip.homeCurrency : base)
 
 // 建立時間新到舊；剛寫入、時間還沒回填（沒有 createdAt）的排最前
 const createdMs = (t) => t.createdAt?.toMillis?.() ?? Infinity
@@ -27,16 +39,5 @@ const newestFirst = (a, b) => {
   return Number.isNaN(d) ? 0 : d
 }
 
-// 列表分成「進行中」與「已封存」；垃圾桶中（有 deletedAt）的旅程不列出
-export const splitTrips = (trips) => {
-  const live = trips.filter((t) => !t.deletedAt).sort(newestFirst)
-  return { active: live.filter((t) => !t.archived), archived: live.filter((t) => t.archived) }
-}
-
-// 出發日與回程日顯示成「11/7–11/10」；只有一個日期顯示那一天；都沒有回空字串
-export const tripRange = (trip) => {
-  const { startDate, endDate } = trip
-  if (startDate && endDate) return startDate === endDate ? shortDate(startDate) : `${shortDate(startDate)}–${shortDate(endDate)}`
-  const one = startDate || endDate
-  return one ? shortDate(one) : ''
-}
+// 列表用：垃圾桶中（有 deletedAt）的旅程不列出，新到舊
+export const liveTrips = (trips) => trips.filter((t) => !t.deletedAt).sort(newestFirst)

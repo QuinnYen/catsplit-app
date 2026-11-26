@@ -1,4 +1,4 @@
-// 新增／編輯旅程的底部面板：名稱、旅遊幣別、出發與回程日（選填）、是否計入個人統計；編輯時可封存。
+// 新增／編輯旅程的底部面板：名稱、旅行地貨幣、母國貨幣、預算（選填，母國貨幣）、是否計入個人統計。
 // 「刪除旅程」只是移到垃圾桶（見 trash.js），30 天內可以還原。
 import { useState } from 'react'
 import { X } from 'lucide-react'
@@ -6,15 +6,15 @@ import { useI18n } from '../../i18n/I18nProvider'
 import CurrencySelect from '../../components/CurrencySelect'
 import { PINNED_CURRENCIES } from '../../config/currencies'
 import { useLedger } from '../ledger/LedgerContext'
-import { buildTripData, TRIP_NAME_MAX } from './trips'
-import { createTrip, updateTrip, setTripArchived, trashTrip } from './data'
+import { buildTripData, tripHome, TRIP_NAME_MAX } from './trips'
+import { createTrip, updateTrip, trashTrip } from './data'
 import { TRASH_DAYS } from './trash'
 
 const inputStyle = { display: 'block', width: '100%', marginTop: 6, border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '10px 12px', fontSize: 14, color: 'var(--cs-text)', background: 'var(--cs-card)', outline: 'none', boxSizing: 'border-box' }
 const labelStyle = { fontSize: 12, color: 'var(--cs-text-sub)' }
 const hintStyle = { fontSize: 11.5, color: 'var(--cs-text-mute)', marginTop: 6, lineHeight: 1.5 }
 
-// 預設旅遊幣別：日圓；帳本統計幣別本身就是日圓時改美元
+// 預設旅行地貨幣：日圓；母國貨幣本身就是日圓時改美元
 const defaultCurrency = (base) => (base === 'JPY' ? 'USD' : 'JPY')
 
 // trip：編輯時傳旅程文件；新增不傳。onClose(newTripId?)：新增成功時帶回新旅程 id。onTrashed：旅程移到垃圾桶後呼叫（明細頁用來離開這一頁）
@@ -23,15 +23,16 @@ const TripSheet = ({ trip, onClose, onTrashed }) => {
   const { t } = useI18n()
   const editing = !!trip
   const [name, setName] = useState(trip?.name ?? '')
-  const [currency, setCurrency] = useState(trip?.currency ?? defaultCurrency(ledger.baseCurrency))
-  const [startDate, setStartDate] = useState(trip?.startDate ?? '')
-  const [endDate, setEndDate] = useState(trip?.endDate ?? '')
+  // 母國貨幣預設是帳本的統計幣別（記帳仍以統計幣別存，母國貨幣只影響旅程明細的顯示與預算）
+  const [homeCurrency, setHomeCurrency] = useState(tripHome(trip, ledger.baseCurrency))
+  const [currency, setCurrency] = useState(trip?.currency ?? defaultCurrency(tripHome(trip, ledger.baseCurrency)))
+  const [budget, setBudget] = useState(trip?.budget != null ? String(trip.budget) : '')
   const [countInStats, setCountInStats] = useState(!!trip?.countInStats)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   const save = async () => {
-    const built = buildTripData({ name, currency, startDate, endDate, countInStats })
+    const built = buildTripData({ name, currency, homeCurrency, budget, countInStats })
     if (!built.ok) return setError(t(`fx.trip.err.${built.reason}`))
     setBusy(true)
     setError('')
@@ -45,19 +46,6 @@ const TripSheet = ({ trip, onClose, onTrashed }) => {
       }
     } catch (e) {
       console.error('Failed to save trip', e)
-      setError(t('fx.trip.failed'))
-      setBusy(false)
-    }
-  }
-
-  const toggleArchive = async () => {
-    setBusy(true)
-    setError('')
-    try {
-      await setTripArchived(uid, ledger.id, trip.id, !trip.archived)
-      onClose()
-    } catch (e) {
-      console.error('Failed to archive trip', e)
       setError(t('fx.trip.failed'))
       setBusy(false)
     }
@@ -98,20 +86,21 @@ const TripSheet = ({ trip, onClose, onTrashed }) => {
 
         <div>
           <div style={labelStyle}>{t('fx.trip.currency')}</div>
-          <div style={{ marginTop: 6 }}><CurrencySelect value={currency} onChange={setCurrency} exclude={[ledger.baseCurrency]} pinned={PINNED_CURRENCIES} /></div>
+          <div style={{ marginTop: 6 }}><CurrencySelect value={currency} onChange={setCurrency} exclude={[homeCurrency]} pinned={PINNED_CURRENCIES} /></div>
           <div style={hintStyle}>{t('fx.trip.currencyHint')}</div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <label style={labelStyle}>
-            {t('fx.trip.start')}
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
-          </label>
-          <label style={labelStyle}>
-            {t('fx.trip.end')}
-            <input type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} style={inputStyle} />
-          </label>
+        <div>
+          <div style={labelStyle}>{t('fx.trip.home')}</div>
+          <div style={{ marginTop: 6 }}><CurrencySelect value={homeCurrency} onChange={setHomeCurrency} exclude={[currency]} pinned={PINNED_CURRENCIES} /></div>
+          <div style={hintStyle}>{t('fx.trip.homeHint')}</div>
         </div>
+
+        <label style={labelStyle}>
+          {t('fx.trip.budget', { currency: homeCurrency })}
+          <input value={budget} onChange={(e) => setBudget(e.target.value)} inputMode="decimal" placeholder={t('fx.trip.budgetPlaceholder')} style={inputStyle} />
+          <div style={hintStyle}>{t('fx.trip.budgetHint')}</div>
+        </label>
 
         <div>
           <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 14, color: 'var(--cs-text)', cursor: 'pointer' }}>
@@ -129,10 +118,6 @@ const TripSheet = ({ trip, onClose, onTrashed }) => {
 
         {editing && (
           <>
-            <button onClick={toggleArchive} disabled={busy} style={{ width: '100%', padding: '10px 0', borderRadius: 6, border: '1px solid var(--cs-border)', background: 'transparent', color: 'var(--cs-text)', fontSize: 14, cursor: busy ? 'not-allowed' : 'pointer' }}>
-              {t(trip.archived ? 'fx.trip.unarchive' : 'fx.trip.archive')}
-            </button>
-            <div style={{ ...hintStyle, marginTop: -6 }}>{t('fx.trip.archiveHint')}</div>
             <button onClick={moveToTrash} disabled={busy} style={{ width: '100%', padding: '10px 0', borderRadius: 6, border: '1px solid var(--cs-danger)', background: 'transparent', color: 'var(--cs-danger)', fontSize: 14, cursor: busy ? 'not-allowed' : 'pointer' }}>{t('fx.trip.delete')}</button>
             <div style={{ ...hintStyle, marginTop: -6 }}>{t('fx.trip.deleteHint', { days: TRASH_DAYS })}</div>
           </>

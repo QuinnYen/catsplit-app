@@ -15,7 +15,7 @@ export const LIMITS = { accounts: 100, categories: 120, recurring: 300, trips: 2
 const LEDGER_FIELDS = ['name', 'baseCurrency', 'icon', 'color', 'monthStartDay', 'weekStartDay', 'yearStartMonth', 'monthBudget', 'yearBudget', 'holidayAdjust']
 const ACCOUNT_FIELDS = ['name', 'type', 'currency', 'initialBalance', 'balance', 'archived']
 const TX_FIELDS = ['type', 'accountId', 'amount', 'currency', 'exchangeRate', 'baseAmount', 'accountAmount', 'accountRate', 'toAccountId', 'toAmount', 'title', 'category', 'note', 'date', 'source', 'tripId']
-const TRIP_FIELDS = ['name', 'currency', 'startDate', 'endDate', 'countInStats', 'rows', 'payCurrency', 'archived']
+const TRIP_FIELDS = ['name', 'currency', 'homeCurrency', 'budget', 'countInStats']
 const CATEGORY_FIELDS = ['kind', 'key', 'name', 'order', 'budget']
 const RULE_FIELDS = ['kind', 'name', 'accountId', 'toAccountId', 'amount', 'category', 'note', 'frequency', 'startDate', 'endDate', 'dayOfMonth', 'rate', 'enabled', 'generatedThrough']
 

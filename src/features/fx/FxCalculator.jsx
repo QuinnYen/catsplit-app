@@ -9,7 +9,7 @@ import { PINNED_CURRENCIES, getCurrency } from '../../config/currencies'
 import { pressKey, evaluateExpression, commitExpression, hasOperator } from '../ledger/expression'
 import { todayStr } from '../ledger/dates'
 import { DEFAULT_FX_SETTINGS, adjustRates, convertRows, computePay, pairRate, usesCustom, formatFixed, formatExpr, roundTo, recordAmount } from './fxMath'
-import { shortcutList, payParams, anyOn } from './shortcuts'
+import { shortcutList, payParams, activeSet } from './shortcuts'
 import { useFxRates } from './hooks'
 import FxKeypad from './FxKeypad'
 import FxTabBar, { FX_TABBAR_HEIGHT } from './FxTabBar'
@@ -68,7 +68,8 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
     () => computePay({ amount: value, from: activeCode, pay: activeCode, rates: effRates, ...payParams(list, on) }),
     [value, activeCode, effRates, list, on],
   )
-  const showPay = anyOn(list, on) && !!pay
+  const act = useMemo(() => activeSet(list, on), [list, on]) // 開著而且顯示中的捷徑
+  const showPay = act.size > 0 && !!pay
   // 有開捷徑時，其他列顯示「實付金額」換算出來的數字（台幣列就是真正要付的台幣）
   const rowValues = useMemo(
     () => (showPay ? convertRows({ value: pay.total, from: activeCode, codes: rows, rates: effRates }) : plainValues),
@@ -149,13 +150,15 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
 
   const pct = (n) => parseFloat(n.toFixed(2))
   const labelOf = (x) => (x.labelKey ? t(x.labelKey, { pct: pct(x.percent) }) : t('fx.calc.customShortcut', { name: x.name, sign: x.sign > 0 ? '+' : '−', pct: pct(x.percent) }))
+  // 明細裡只寫名稱（百分比在設定頁看）：內建的用名稱文案，自訂的用自己取的名字
+  const nameOf = (x) => (x.labelKey ? t(`fx.calc.short.${x.id}`) : x.name)
   const toggle = (id) => setOn((prev) => { const next = new Set(prev); if (!next.delete(id)) next.add(id); return next })
   // 選中列下方的明細：免稅扣掉多少、各項加收多少、刷卡手續費（正負號與金額分開顯示）
   const byId = Object.fromEntries(list.map((x) => [x.id, x]))
   const payLines = !showPay ? [] : [
-    on.has('taxFree') && { key: 'taxFree', label: labelOf(byId.taxFree), sign: -1, amount: pay.taxDeduct },
-    ...pay.lines.map((l) => ({ key: l.key, label: labelOf(byId[l.key]), sign: l.amount < 0 ? -1 : 1, amount: Math.abs(l.amount) })),
-    on.has('card') && { key: 'card', label: labelOf(byId.card), sign: 1, amount: pay.fee },
+    act.has('taxFree') && { key: 'taxFree', label: nameOf(byId.taxFree), sign: -1, amount: pay.taxDeduct },
+    ...pay.lines.map((l) => ({ key: l.key, label: nameOf(byId[l.key]), sign: l.amount < 0 ? -1 : 1, amount: Math.abs(l.amount) })),
+    act.has('card') && { key: 'card', label: nameOf(byId.card), sign: 1, amount: pay.fee },
   ].filter(Boolean)
 
   return (
@@ -225,7 +228,7 @@ const FxCalculator = ({ base, settings = DEFAULT_FX_SETTINGS, currentTrip, rows,
       <div style={{ width: '100%', maxWidth: CALC_MAX_WIDTH, margin: '0 auto', boxSizing: 'border-box', background: 'var(--cs-soft)', borderTop: '1px solid var(--cs-border)', borderRadius: '16px 16px 0 0', padding: '8px 12px 10px', flexShrink: 0 }}>
         {/* 捷徑：一行可左右滑動；實付就是目前選中那一列的幣別，捷徑直接算在它上面 */}
         <div role="group" aria-label={t('fx.calc.shortcuts')} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {list.map((x) => <button key={x.id} onClick={() => toggle(x.id)} aria-pressed={on.has(x.id)} style={chip(on.has(x.id))}>{labelOf(x)}</button>)}
+          {list.filter((x) => x.visible).map((x) => <button key={x.id} onClick={() => toggle(x.id)} aria-pressed={on.has(x.id)} style={chip(on.has(x.id))}>{labelOf(x)}</button>)}
         </div>
 
         <FxKeypad onKey={onKey} onRecord={record} recordDisabled={!canRecord || !currentTrip} />

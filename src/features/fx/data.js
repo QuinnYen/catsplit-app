@@ -5,7 +5,8 @@ import { tripsPath, transactionsPath } from '../ledger/paths.js'
 import { fxSettingsPath } from './paths.js'
 import { purgeTrip as purgeTripCore } from './trashPurge.js'
 
-const OPTIONAL_DATES = ['startDate', 'endDate']
+// 早期版本寫過、現在不用的欄位（出發與回程日、旅程自己的換算列與實付幣別）：編輯旅程時順便從文件移除
+const LEGACY_FIELDS = ['startDate', 'endDate', 'rows', 'payCurrency']
 
 // data 是 buildTripData 的結果；回傳新旅程 id
 export const createTrip = async (uid, ledgerId, data) => {
@@ -14,15 +15,13 @@ export const createTrip = async (uid, ledgerId, data) => {
   return ref.id
 }
 
-// 編輯旅程：data 裡沒有的日期（使用者清空了）會從文件移除
+// 編輯旅程：data 裡沒有的預算（使用者清空了）會從文件移除，舊欄位一併清掉
 export const updateTrip = (uid, ledgerId, tripId, data) => {
   const patch = { ...data }
-  for (const key of OPTIONAL_DATES) if (!(key in data)) patch[key] = deleteField()
+  if (!('budget' in data)) patch.budget = deleteField()
+  for (const key of LEGACY_FIELDS) patch[key] = deleteField()
   return updateDoc(doc(db, ...tripsPath(uid, ledgerId), tripId), patch)
 }
-
-export const setTripArchived = (uid, ledgerId, tripId, archived) =>
-  updateDoc(doc(db, ...tripsPath(uid, ledgerId), tripId), { archived })
 
 // ---------- 計算機設定（users/{uid}/settings/fx）----------
 

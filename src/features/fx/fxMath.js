@@ -19,7 +19,8 @@ export const DEFAULT_FX_SETTINGS = {
   serviceFeePercent: 10, // 服務費（加收，以免稅後的金額為基準）
   addTaxPercent: 8, // 外加稅（價格不含稅時另外加收）
   tipPercent: 15, // 小費
-  customShortcuts: [], // 自訂捷徑：[{ id, name, percent, kind: 'add' | 'deduct' }]
+  showShortcuts: { card: true, taxFree: true, service: false, addTax: false, tip: false }, // 內建捷徑要不要出現在計算機的捷徑列（預設只開刷卡和免稅）
+  customShortcuts: [], // 自訂捷徑：[{ id, name, percent, kind: 'add' | 'deduct', visible }]，visible 沒寫就是顯示
   customRates: {}, // { 'JPY_TWD': 0.2 }：1 JPY = 0.2 TWD，優先於 API 匯率
 }
 

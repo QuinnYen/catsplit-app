@@ -9,7 +9,9 @@ import UserHeader from '../../components/UserHeader'
 import { useLedger } from '../ledger/LedgerContext'
 import { entryHeadline } from '../ledger/entryDraft'
 import { shortDate, todayStr, weekdayOf } from '../ledger/dates'
-import { useTripTransactions } from './hooks'
+import { useTripTransactions, useFxRates } from './hooks'
+import { pairRate } from './fxMath'
+import { tripHome } from './trips'
 import { tripTotals, groupByDate } from './tripSummary'
 import FxHomeButton from './FxHomeButton'
 import TripSheet from './TripSheet'
@@ -23,6 +25,12 @@ const TripDetailPage = () => {
   const trip = trips.find((x) => x.id === tripId && !x.deletedAt)
   const txs = useTripTransactions(uid, ledger.id, trip ? tripId : null)
   const base = ledger.baseCurrency
+  // 總花費與預算以母國貨幣顯示：帳目以統計幣別存（baseAmount），母國貨幣不同時用即時匯率換算（約略值）；匯率還沒到就先用統計幣別
+  const home = trip ? tripHome(trip, base) : base
+  const { rates, loading: ratesLoading } = useFxRates([base, home])
+  const k = home === base ? 1 : (ratesLoading ? null : pairRate(rates, base, home))
+  const shownCurrency = k != null ? home : base
+  const money = (v) => fmt.money(v * (k ?? 1), shownCurrency)
   const totals = useMemo(() => (trip && txs ? tripTotals(txs, trip) : null), [trip, txs])
   const groups = useMemo(() => (txs ? groupByDate(txs) : []), [txs])
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts])
@@ -48,7 +56,7 @@ const TripDetailPage = () => {
     const sub = [
       account?.name,
       !transfer && (tx.title || tx.note) ? label : null,
-      !transfer && tx.currency !== base ? `≈ ${fmt.money(tx.baseAmount, base)}` : null,
+      !transfer && tx.currency !== shownCurrency ? `≈ ${money(tx.baseAmount)}` : null,
     ].filter(Boolean).join(' · ')
     const tone = tx.type === 'income' ? 'var(--cs-rc-get)' : transfer ? 'var(--cs-text-sub)' : 'var(--cs-rc-owe)'
     const amountText = `${transfer ? '' : tx.type === 'income' ? '+' : '−'}${fmt.money(tx.amount, tx.currency)}`
@@ -78,19 +86,41 @@ const TripDetailPage = () => {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--cs-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trip.name}</div>
             <div style={{ fontSize: 12, color: 'var(--cs-text-sub)', marginTop: 2 }}>
-              {trip.currency} → {base}{totals ? ` · ${t('fx.trip.count', { n: totals.count })}` : ''}
+              {trip.currency} → {home}{totals ? ` · ${t('fx.trip.count', { n: totals.count })}` : ''}
             </div>
           </div>
         </div>
         <div style={{ background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 6 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '0.5px solid var(--cs-border)' }}>
             <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{t('fx.trip.total')}</span>
-            {trip.currency !== base && totals && <span style={{ fontSize: 13, color: 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>{fmt.money(totals.own, trip.currency)}</span>}
+            {trip.currency !== shownCurrency && totals && <span style={{ fontSize: 13, color: 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>{fmt.money(totals.own, trip.currency)}</span>}
           </div>
           <div style={{ padding: '14px 14px 16px', fontFamily: 'var(--cs-rc-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 32, fontWeight: 700, color: 'var(--cs-text)', textAlign: 'right' }}>
-            {totals ? fmt.money(totals.base, base) : '…'}
+            {totals ? `${k != null && home !== base ? '≈ ' : ''}${money(totals.base)}` : '…'}
           </div>
         </div>
+
+        {/* 預算（選填，母國貨幣）：進度條與剩餘；超過預算用警示色 */}
+        {trip.budget > 0 && (() => {
+          const budget = trip.budget
+          const spent = totals && k != null ? totals.base * k : null
+          const over = spent != null && spent > budget
+          const pct = spent != null ? Math.min(100, Math.max(0, (spent / budget) * 100)) : 0
+          return (
+            <div style={{ background: 'var(--cs-card)', border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '12px 14px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cs-text)' }}>{t('fx.trip.budgetTitle')}</span>
+                <span style={{ fontSize: 13, color: 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>{fmt.money(budget, home)}</span>
+              </div>
+              <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)} style={{ height: 8, borderRadius: 4, background: 'var(--cs-soft-2)', margin: '10px 0 8px', overflow: 'hidden' }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: over ? 'var(--cs-danger)' : 'var(--cs-rc-stamp)' }} />
+              </div>
+              <div style={{ fontSize: 12, color: over ? 'var(--cs-danger)' : 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>
+                {spent == null ? '…' : over ? t('fx.trip.over', { amount: fmt.money(spent - budget, home) }) : t('fx.trip.remaining', { amount: fmt.money(budget - spent, home) })}
+              </div>
+            </div>
+          )
+        })()}
 
         {txs === null && <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--cs-text-mute)', fontSize: 13 }}>{t('common.loading')}</div>}
         {txs?.length === 0 && <div style={{ textAlign: 'center', padding: '24px 8px', color: 'var(--cs-text-sub)', fontSize: 14, lineHeight: 1.7 }}>{t('fx.trip.empty')}</div>}
@@ -98,7 +128,7 @@ const TripDetailPage = () => {
           <div key={g.date} style={{ background: 'var(--cs-rc-card)', border: '0.5px solid var(--cs-border)', borderRadius: 6, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '10px 16px 8px', borderBottom: '1.5px dashed var(--cs-rc-rule)' }}>
               <b style={{ fontSize: 14, color: 'var(--cs-text)' }}>{t('ledger.day.header', { date: shortDate(g.date), weekday: t(`date.weekday.${weekdayOf(g.date)}`) })}</b>
-              <span style={{ fontSize: 12, color: 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>{fmt.money(g.net, base)}</span>
+              <span style={{ fontSize: 12, color: 'var(--cs-text-sub)', fontVariantNumeric: 'tabular-nums' }}>{money(g.net)}</span>
             </div>
             {g.items.map(renderRow)}
           </div>

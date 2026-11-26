@@ -11,8 +11,8 @@ export const useFxCalc = () => {
   const { uid, ledger, trips, tripsReady, showToast } = useLedger()
   const { t } = useI18n()
   const { settings, ready } = useFxSettings(uid)
-  // 封存與垃圾桶中的旅程不能選
-  const pickable = useMemo(() => trips.filter((x) => !x.deletedAt && !x.archived), [trips])
+  // 垃圾桶中的旅程不能選
+  const pickable = useMemo(() => trips.filter((x) => !x.deletedAt), [trips])
   // 目前旅程在「管理旅程」頁選，回到這裡時重新讀（頁面是重新掛載的）
   const [currentId] = useState(() => readCurrentTripId(localStorage, uid, ledger.id))
   const current = pickable.find((x) => x.id === currentId) ?? null

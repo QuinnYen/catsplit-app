@@ -58,6 +58,8 @@ test('欄位驗證：小數位數、預設金額、符號、百分比、自訂�
     await assertFails(w({ [field]: 101 }))
     await assertFails(w({ [field]: -1 }))
   }
+  await assertSucceeds(w({ showShortcuts: { card: true, taxFree: true, service: false, addTax: false, tip: false } }))
+  await assertFails(w({ showShortcuts: 'x' }))
   await assertSucceeds(w({ customShortcuts: [{ id: 'a', name: '折扣', percent: 5, kind: 'deduct' }] }))
   await assertFails(w({ customShortcuts: Array.from({ length: 9 }, (_, i) => ({ id: `i${i}`, name: 'n', percent: 1, kind: 'add' })) }))
   await assertFails(w({ customShortcuts: 'x' }))

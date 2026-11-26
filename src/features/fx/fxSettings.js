@@ -5,6 +5,7 @@ import { DEFAULT_FX_SETTINGS, roundTo, sanitizeRows } from './fxMath.js'
 export const MAX_CUSTOM_RATES = 20
 export const MAX_SHORTCUTS = 8
 export const SHORTCUT_NAME_MAX = 12
+export const BUILTIN_SHORTCUTS = ['card', 'taxFree', 'service', 'addTax', 'tip']
 export const PERCENT_FIELDS = ['taxFreePercent', 'cardFeePercent', 'serviceFeePercent', 'addTaxPercent', 'tipPercent']
 const RATE_KEY = /^[A-Z]{3}_[A-Z]{3}$/
 
@@ -46,6 +47,12 @@ export const parseShortcut = ({ name, percent, kind }) => {
   return { ok: true, value: { name: n, percent: roundTo(p, 2), kind } }
 }
 
+// 內建捷徑的顯示開關：每個都要是布林，缺少或壞掉的用預設值
+const cleanShowShortcuts = (v) => {
+  const src = v && typeof v === 'object' && !Array.isArray(v) ? v : {}
+  return Object.fromEntries(BUILTIN_SHORTCUTS.map((id) => [id, typeof src[id] === 'boolean' ? src[id] : DEFAULT_FX_SETTINGS.showShortcuts[id]]))
+}
+
 // 自訂捷徑：壞的項目、重複的 id 略過，最多 MAX_SHORTCUTS 個
 const cleanShortcuts = (v) => {
   if (!Array.isArray(v)) return []
@@ -56,7 +63,7 @@ const cleanShortcuts = (v) => {
     const r = parseShortcut({ name: typeof x.name === 'string' ? x.name : '', percent: typeof x.percent === 'number' ? x.percent : '', kind: x.kind })
     if (!r.ok) continue
     seen.add(x.id)
-    out.push({ id: x.id, ...r.value })
+    out.push({ id: x.id, ...r.value, visible: x.visible !== false })
   }
   return out.slice(0, MAX_SHORTCUTS)
 }
@@ -78,6 +85,7 @@ export const mergeFxSettings = (stored) => {
     serviceFeePercent: pick('serviceFeePercent'),
     addTaxPercent: pick('addTaxPercent'),
     tipPercent: pick('tipPercent'),
+    showShortcuts: cleanShowShortcuts(s.showShortcuts),
     customShortcuts: cleanShortcuts(s.customShortcuts),
     customRates: cleanCustomRates(s.customRates),
     rows: sanitizeRows(s.rows) ?? DEFAULT_FX_SETTINGS.rows,

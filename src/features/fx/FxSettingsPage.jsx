@@ -21,7 +21,8 @@ const tabButton = (active) => ({
 const controlStyle = { border: '0.5px solid var(--cs-border)', borderRadius: 6, padding: '8px 10px', fontSize: 14, color: 'var(--cs-text)', background: 'var(--cs-bg)', outline: 'none', textAlign: 'right' }
 
 // 數字輸入列：離開輸入框時驗證並儲存，不合法就還原並提示。外面用 key 帶上目前的值，雲端值改變時重新帶入
-const NumberRow = ({ field, label, hint, value, suffix, onSave }) => {
+// toggle：{ on, onChange(bool), label }，右邊多一個開關（捷徑要不要出現在計算機）
+const NumberRow = ({ field, label, hint, value, suffix, onSave, toggle }) => {
   const { t } = useI18n()
   const [text, setText] = useState(String(value))
   const [error, setError] = useState('')
@@ -49,6 +50,7 @@ const NumberRow = ({ field, label, hint, value, suffix, onSave }) => {
           inputMode="decimal" aria-label={label} style={{ ...controlStyle, width: 84 }}
         />
         {suffix && <span style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>{suffix}</span>}
+        {toggle && <input type="checkbox" role="switch" checked={toggle.on} onChange={(e) => toggle.onChange(e.target.checked)} aria-label={toggle.label} style={{ width: 20, height: 20, accentColor: 'var(--cs-rc-stamp)', flexShrink: 0, marginLeft: 8 }} />}
       </div>
     </div>
   )
@@ -71,7 +73,8 @@ const ShortcutRow = ({ item, onChange, onRemove }) => {
     setError('')
     setName(r.value.name)
     setPercent(String(r.value.percent))
-    if (r.value.name !== item.name || r.value.percent !== item.percent || r.value.kind !== item.kind) onChange({ id: item.id, ...r.value })
+    const visible = patch.visible ?? item.visible
+    if (r.value.name !== item.name || r.value.percent !== item.percent || r.value.kind !== item.kind || visible !== item.visible) onChange({ id: item.id, ...r.value, visible })
   }
   const blurOnEnter = (e) => e.key === 'Enter' && e.currentTarget.blur()
   return (
@@ -85,6 +88,7 @@ const ShortcutRow = ({ item, onChange, onRemove }) => {
         <input value={percent} onChange={(e) => setPercent(e.target.value)} onBlur={() => commit()} onKeyDown={blurOnEnter} inputMode="decimal" aria-label={t('fx.settings.shortcut.percent')} style={{ ...controlStyle, width: 52 }} />
         <span style={{ fontSize: 13, color: 'var(--cs-text-sub)' }}>%</span>
       </div>
+      <input type="checkbox" role="switch" checked={item.visible} onChange={(e) => commit({ visible: e.target.checked })} aria-label={t('fx.settings.shortcut.show', { name: item.name })} style={{ width: 20, height: 20, accentColor: 'var(--cs-rc-stamp)', flexShrink: 0, marginTop: 8 }} />
       <button onClick={onRemove} aria-label={t('fx.settings.shortcut.remove', { name: item.name })} style={{ background: 'none', border: 'none', color: 'var(--cs-danger)', fontSize: 13, cursor: 'pointer', padding: '8px 0' }}>{t('common.delete')}</button>
       {error && <div role="alert" style={{ fontSize: 12, color: 'var(--cs-danger)', width: '100%' }}>{error}</div>}
     </div>
@@ -203,18 +207,22 @@ const FxSettingsPage = () => {
               <>
                 <div style={{ ...card, overflow: 'hidden' }}>
                   {[
-                    ['cardFeePercent', 'fx.settings.cardFee', 'fx.settings.cardFeeHint'],
-                    ['taxFreePercent', 'fx.settings.taxFree', 'fx.settings.taxFreeHint'],
-                    ['serviceFeePercent', 'fx.settings.serviceFee', 'fx.settings.serviceFeeHint'],
-                    ['addTaxPercent', 'fx.settings.addTax', 'fx.settings.addTaxHint'],
-                    ['tipPercent', 'fx.settings.tip', 'fx.settings.tipHint'],
-                  ].map(([field, label, hint], i, all) => (
+                    ['cardFeePercent', 'card', 'fx.settings.cardFee', 'fx.settings.cardFeeHint'],
+                    ['taxFreePercent', 'taxFree', 'fx.settings.taxFree', 'fx.settings.taxFreeHint'],
+                    ['serviceFeePercent', 'service', 'fx.settings.serviceFee', 'fx.settings.serviceFeeHint'],
+                    ['addTaxPercent', 'addTax', 'fx.settings.addTax', 'fx.settings.addTaxHint'],
+                    ['tipPercent', 'tip', 'fx.settings.tip', 'fx.settings.tipHint'],
+                  ].map(([field, id, label, hint], i, all) => (
                     <div key={`${field}:${settings[field]}`} style={i === all.length - 1 ? { marginBottom: -1 } : undefined}>
-                      <NumberRow field={field} label={t(label)} hint={t(hint)} value={settings[field]} suffix="%" onSave={save} />
+                      <NumberRow
+                        field={field} label={t(label)} hint={t(hint)} value={settings[field]} suffix="%" onSave={save}
+                        toggle={{ on: settings.showShortcuts[id], label: t('fx.settings.shortcut.show', { name: t(label) }), onChange: (v) => save({ showShortcuts: { ...settings.showShortcuts, [id]: v } }) }}
+                      />
                     </div>
                   ))}
                 </div>
 
+                <div style={hintStyle}>{t('fx.settings.showHint')}</div>
                 <div style={{ fontSize: 13, color: 'var(--cs-text-sub)', paddingLeft: 4 }}>{t('fx.settings.customShortcuts')}</div>
                 <div style={{ ...card, overflow: 'hidden' }}>
                   {settings.customShortcuts.map((c) => (
@@ -226,7 +234,7 @@ const FxSettingsPage = () => {
                   ))}
                   <NewShortcut
                     disabled={settings.customShortcuts.length >= MAX_SHORTCUTS}
-                    onAdd={(value) => saveShortcuts([...settings.customShortcuts, { id: Math.random().toString(36).slice(2, 10), ...value }])}
+                    onAdd={(value) => saveShortcuts([...settings.customShortcuts, { id: Math.random().toString(36).slice(2, 10), ...value, visible: true }])}
                   />
                 </div>
                 <div style={hintStyle}>{t('fx.settings.customShortcutsHint', { max: MAX_SHORTCUTS })}</div>

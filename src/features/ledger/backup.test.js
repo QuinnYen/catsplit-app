@@ -108,7 +108,7 @@ test('backupFileName', () => {
 
 // ---------- 旅程（匯率頁）----------
 const trips = [
-  { id: 'tp1', name: '大分溫泉', currency: 'JPY', countInStats: true, rows: ['JPY', 'TWD'], payCurrency: 'JPY', createdAt: ts(4000) },
+  { id: 'tp1', name: '大分溫泉', currency: 'JPY', homeCurrency: 'TWD', budget: 30000, countInStats: true, createdAt: ts(4000) },
   { id: 'tp2', name: '舊旅程', currency: 'USD', deletedAt: ts(5000), createdAt: ts(4100) },
 ]
 const withTrips = () => buildBackup({
@@ -120,7 +120,8 @@ test('旅程：備份帶 trips 與 tripId，時間轉成毫秒，通過驗證', 
   const b = withTrips()
   assert.deepEqual(b.trips.map((t) => t.id), ['tp1', 'tp2'])
   assert.equal(b.trips[0].countInStats, true)
-  assert.deepEqual(b.trips[0].rows, ['JPY', 'TWD'])
+  assert.equal(b.trips[0].homeCurrency, 'TWD')
+  assert.equal(b.trips[0].budget, 30000)
   assert.equal(b.trips[0].createdAt, 4000)
   assert.equal(b.trips[1].deletedAt, 5000)
   assert.ok(!('deletedAt' in b.trips[0]))

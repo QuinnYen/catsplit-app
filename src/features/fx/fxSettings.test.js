@@ -39,7 +39,7 @@ test('mergeFxSettings：沒有文件或空文件用預設值', () => {
 
 test('mergeFxSettings：有的欄位用存的值，壞掉的欄位退回預設值', () => {
   const m = mergeFxSettings({ decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 999 })
-  assert.deepEqual(m, { decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 1.5, serviceFeePercent: 10, addTaxPercent: 8, tipPercent: 15, customShortcuts: [], customRates: {}, rows: ['TWD', 'JPY', 'USD'] })
+  assert.deepEqual(m, { decimals: 2, defaultAmount: 100, showSymbol: false, taxFreePercent: 8, cardFeePercent: 1.5, serviceFeePercent: 10, addTaxPercent: 8, tipPercent: 15, showShortcuts: { card: true, taxFree: true, service: false, addTax: false, tip: false }, customShortcuts: [], customRates: {}, rows: ['TWD', 'JPY', 'USD'] })
   assert.equal(mergeFxSettings({ decimals: '2' }).decimals, DEFAULT_FX_SETTINGS.decimals) // 型別不對
   assert.equal(mergeFxSettings({ decimals: 9 }).decimals, DEFAULT_FX_SETTINGS.decimals)
   assert.equal(mergeFxSettings({ showSymbol: 'no' }).showSymbol, true)
@@ -76,12 +76,18 @@ test('parseShortcut：名稱 1–12 字、百分比大於 0 到 100、加收或�
 })
 
 test('mergeFxSettings：自訂捷徑壞的略過、重複 id 只留第一個、最多 8 個', () => {
-  const good = { id: 'a', name: '折扣', percent: 5, kind: 'deduct' }
+  const good = { id: 'a', name: '折扣', percent: 5, kind: 'deduct', visible: true }
   const m = mergeFxSettings({ customShortcuts: [good, { ...good, name: '重複' }, { id: 'b', name: '', percent: 5, kind: 'add' }, { id: 'c', name: 'x', percent: 0, kind: 'add' }, null, { name: 'noid', percent: 5, kind: 'add' }] })
   assert.deepEqual(m.customShortcuts, [good])
   assert.deepEqual(mergeFxSettings({ customShortcuts: 'x' }).customShortcuts, [])
   const many = Array.from({ length: 12 }, (_, i) => ({ id: `i${i}`, name: `n${i}`, percent: 1, kind: 'add' }))
   assert.equal(mergeFxSettings({ customShortcuts: many }).customShortcuts.length, MAX_SHORTCUTS)
+})
+
+test('mergeFxSettings：捷徑顯示開關每個都要是布林，壞的用預設值；自訂捷徑 visible:false 保留', () => {
+  assert.deepEqual(mergeFxSettings({ showShortcuts: { card: false, service: true, tip: 'x' } }).showShortcuts, { card: false, taxFree: true, service: true, addTax: false, tip: false })
+  assert.deepEqual(mergeFxSettings({ showShortcuts: [1] }).showShortcuts, DEFAULT_FX_SETTINGS.showShortcuts)
+  assert.equal(mergeFxSettings({ customShortcuts: [{ id: 'a', name: 'x', percent: 1, kind: 'add', visible: false }] }).customShortcuts[0].visible, false)
 })
 
 test('mergeFxSettings 不改動預設值物件', () => {

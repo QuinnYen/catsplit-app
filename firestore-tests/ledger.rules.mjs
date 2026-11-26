@@ -409,11 +409,17 @@ test('旅程：本人可建立、讀取、更新、刪除；別人、未登入�
   await assertSucceeds(deleteDoc(tripRef(db, 'u1')))
 })
 
-test('旅程驗證：名稱、旅遊幣別、日期、開關、垃圾桶時間、換算列、實付幣別、未知欄位', async () => {
+test('旅程驗證：名稱、旅行地貨幣、母國貨幣、預算、開關、垃圾桶時間、舊欄位、未知欄位', async () => {
   const db = dbAs('u1')
   const w = (data, id) => setDoc(tripRef(db, 'u1', id), data)
-  await assertSucceeds(w(trip({ startDate: '2026-11-07', endDate: '2026-11-10', countInStats: false, archived: true, rows: ['JPY', 'TWD', 'CNY'], payCurrency: 'JPY' }), 'ok1'))
+  await assertSucceeds(w(trip({ startDate: '2026-11-07', endDate: '2026-11-10', countInStats: false, rows: ['JPY', 'TWD', 'CNY'], payCurrency: 'JPY' }), 'ok1'))
   await assertSucceeds(w(trip({ deletedAt: now() }), 'ok2'))
+  await assertSucceeds(w(trip({ homeCurrency: 'TWD', budget: 30000.5 }), 'ok3'))
+  await assertFails(w(trip({ homeCurrency: 'TW' }), 'h1'))
+  await assertFails(w(trip({ budget: 0 }), 'h2'))
+  await assertFails(w(trip({ budget: -1 }), 'h3'))
+  await assertFails(w(trip({ budget: 1000000000 }), 'h4'))
+  await assertFails(w(trip({ budget: '100' }), 'h5'))
   await assertFails(w(trip({ name: '' }), 'n1'))
   await assertFails(w(trip({ name: 'a'.repeat(21) }), 'n2'))
   await assertFails(w({ name: '旅程', createdAt: now() }, 'n3')) // 缺旅遊幣別
@@ -422,7 +428,7 @@ test('旅程驗證：名稱、旅遊幣別、日期、開關、垃圾桶時間�
   await assertFails(w(trip({ startDate: '2026/11/07' }), 'd1'))
   await assertFails(w(trip({ endDate: 20261110 }), 'd2'))
   await assertFails(w(trip({ countInStats: 'yes' }), 'b1'))
-  await assertFails(w(trip({ archived: 1 }), 'b2'))
+  await assertFails(w(trip({ archived: true }), 'b2')) // 封存功能已移除
   await assertFails(w(trip({ deletedAt: '2026-11-26' }), 't1'))
   await assertFails(w(trip({ rows: 'JPY' }), 'r1'))
   await assertFails(w(trip({ rows: ['JPY', 'TWD', 'CNY', 'USD', 'EUR', 'KRW', 'HKD'] }), 'r2')) // 最多 6 個

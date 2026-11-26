@@ -8,7 +8,7 @@ const rates = { USD: 1, JPY: 160, TWD: 32, CNY: 7.2 }
 const close = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`)
 
 test('預設設定：截圖的預設值', () => {
-  assert.deepEqual(DEFAULT_FX_SETTINGS, { rows: ['TWD', 'JPY', 'USD'], decimals: 1, defaultAmount: 1, showSymbol: true, taxFreePercent: 10, cardFeePercent: 1.5, serviceFeePercent: 10, addTaxPercent: 8, tipPercent: 15, customShortcuts: [], customRates: {} })
+  assert.deepEqual(DEFAULT_FX_SETTINGS, { rows: ['TWD', 'JPY', 'USD'], decimals: 1, defaultAmount: 1, showSymbol: true, taxFreePercent: 10, cardFeePercent: 1.5, serviceFeePercent: 10, addTaxPercent: 8, tipPercent: 15, showShortcuts: { card: true, taxFree: true, service: false, addTax: false, tip: false }, customShortcuts: [], customRates: {} })
 })
 
 test('預設換算列是台幣、日圓、美元', () => {

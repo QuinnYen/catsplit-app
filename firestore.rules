@@ -262,9 +262,10 @@ service cloud.firestore {
 
     // 旅程（匯率頁）：帳目以選填欄位 tripId 指向旅程文件，tripId 是否存在由前端保證（rules 無法檢查）。
     // countInStats：旅程帳目是否計入個人統計（沒有或 false 就不計入）；deletedAt：有值表示在垃圾桶；
-    // rows：計算機的換算列（最多 6 個幣別）；payCurrency：「實付」幣別
+    // currency：旅行地貨幣；homeCurrency：母國貨幣（沒有就是帳本統計幣別）；budget：預算（母國貨幣，選填）。
+    // startDate、endDate、rows、payCurrency 是早期版本寫過的欄位，現在不再寫入，但舊文件還有，要允許它們存在（否則舊旅程連移到垃圾桶都會被擋）。
     function validTrip(d) {
-      return d.keys().hasOnly(['name', 'currency', 'startDate', 'endDate', 'countInStats', 'deletedAt', 'rows', 'payCurrency', 'archived', 'createdAt'])
+      return d.keys().hasOnly(['name', 'currency', 'homeCurrency', 'budget', 'startDate', 'endDate', 'countInStats', 'deletedAt', 'rows', 'payCurrency', 'createdAt'])
         && d.keys().hasAll(['name', 'currency', 'createdAt'])
         && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
         && validCurrencyCode(d.currency)
@@ -274,6 +275,8 @@ service cloud.firestore {
         && (!('deletedAt' in d) || d.deletedAt is timestamp)
         && (!('rows' in d) || (d.rows is list && d.rows.size() <= 6))
         && (!('payCurrency' in d) || validCurrencyCode(d.payCurrency))
+        && (!('homeCurrency' in d) || validCurrencyCode(d.homeCurrency))
+        && (!('budget' in d) || (d.budget is number && d.budget > 0 && d.budget < 1000000000))
         && (!('archived' in d) || d.archived is bool)
         && d.createdAt is timestamp;
     }
@@ -360,7 +363,7 @@ service cloud.firestore {
       return v is number && v >= 0 && v <= 100;
     }
     function validFxSettings(d) {
-      return d.keys().hasOnly(['decimals', 'defaultAmount', 'showSymbol', 'taxFreePercent', 'cardFeePercent', 'serviceFeePercent', 'addTaxPercent', 'tipPercent', 'customShortcuts', 'customRates', 'rows'])
+      return d.keys().hasOnly(['decimals', 'defaultAmount', 'showSymbol', 'taxFreePercent', 'cardFeePercent', 'serviceFeePercent', 'addTaxPercent', 'tipPercent', 'showShortcuts', 'customShortcuts', 'customRates', 'rows'])
         && (!('decimals' in d) || (d.decimals is int && d.decimals >= 0 && d.decimals <= 3))
         && (!('defaultAmount' in d) || (d.defaultAmount is number && d.defaultAmount >= 0 && d.defaultAmount < 1000000000))
         && (!('showSymbol' in d) || d.showSymbol is bool)
@@ -369,6 +372,7 @@ service cloud.firestore {
         && (!('serviceFeePercent' in d) || validPercent(d.serviceFeePercent))
         && (!('addTaxPercent' in d) || validPercent(d.addTaxPercent))
         && (!('tipPercent' in d) || validPercent(d.tipPercent))
+        && (!('showShortcuts' in d) || d.showShortcuts is map)
         && (!('customShortcuts' in d) || (d.customShortcuts is list && d.customShortcuts.size() <= 8))
         && (!('customRates' in d) || (d.customRates is map && d.customRates.size() <= 20))
         && (!('rows' in d) || (d.rows is list && d.rows.size() >= 1 && d.rows.size() <= 6));

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { shortcutList, payParams, anyOn } from './shortcuts.js'
 import { computePay, DEFAULT_FX_SETTINGS } from './fxMath.js'
 
-const settings = { ...DEFAULT_FX_SETTINGS, customShortcuts: [{ id: 'a1', name: '折扣', percent: 5, kind: 'deduct' }] }
+const settings = { ...DEFAULT_FX_SETTINGS, showShortcuts: { card: true, taxFree: true, service: true, addTax: true, tip: true }, customShortcuts: [{ id: 'a1', name: '折扣', percent: 5, kind: 'deduct' }] }
 
 test('shortcutList：內建五個加自訂，扣除的自訂是負號', () => {
   const list = shortcutList(settings)
@@ -38,4 +38,17 @@ test('實付：外加稅、小費、扣除型自訂捷徑同樣以免稅後金�
   const r = computePay({ amount: 100, from: 'USD', pay: 'USD', rates: null, ...payParams(list, new Set(['addTax', 'tip', 'c:a1'])) })
   assert.deepEqual(r.lines.map((l) => l.amount), [8, 15, -5])
   assert.equal(r.total, 118)
+})
+
+test('預設只顯示刷卡和免稅；隱藏的捷徑不參與計算', () => {
+  const list = shortcutList(DEFAULT_FX_SETTINGS)
+  assert.deepEqual(list.filter((x) => x.visible).map((x) => x.id), ['card', 'taxFree'])
+  assert.equal(anyOn(list, new Set(['tip'])), false) // tip 被隱藏
+  assert.deepEqual(payParams(list, new Set(['service', 'taxFree'])).extras, [])
+  assert.equal(payParams(list, new Set(['service', 'taxFree'])).taxFree, true)
+})
+
+test('自訂捷徑沒寫 visible 就是顯示，寫 false 才隱藏', () => {
+  const list = shortcutList({ ...DEFAULT_FX_SETTINGS, customShortcuts: [{ id: 'a', name: 'x', percent: 1, kind: 'add' }, { id: 'b', name: 'y', percent: 1, kind: 'add', visible: false }] })
+  assert.deepEqual(list.filter((x) => x.id.startsWith('c:')).map((x) => x.visible), [true, false])
 })
